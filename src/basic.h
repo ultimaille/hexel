@@ -76,21 +76,21 @@ struct NamedVector {
 	int size(){ return collection.size(); }
 };
 
+
+namespace TestAndDocForNamedCollections{
 struct A{ void init(int i){ value = i; }	virtual int val(){ return value; }int value=0; };
 struct B:public A{ virtual int val(){ return value+1; } };
 
-
-namespace TestAndDocForNamedCollections{
 	template<class Collection>
 	void test_named_collections(Collection& collection){
 
 
 		// WARNING: add only empty elements: A and B must have default constructors !
-		B& b = collection.add<B>("B");  // to add an element, we need to specify its class (derived)
+		B& b = collection.template add<B>("B");  // to add an element, we need to specify its class (derived)
 		A& a = collection.add("A");		// elements of the root class don't need explicit type
 
 		// constructors are replaced by init methods that can be directly called here
-		collection.add<B>("C").init(3);
+		collection.template add<B>("C").init(3);
 
 		// acces to methods/members works as expected
 		std::cerr<<"a value/val      "<< a.value<<"   "<<a.val()<<std::endl;
@@ -104,7 +104,7 @@ namespace TestAndDocForNamedCollections{
 		// can test and acces to data from their names
 		if(collection.has("A")) std::cerr<<" A exists "<<collection["A"].val()<<std::endl;
 		if(collection.has("D")) std::cerr<<" C exists "<<collection["C"].val()<<std::endl;
-		collection.add<B>("D").init(40);
+		collection.template add<B>("D").init(40);
 		if(collection.has("D")) std::cerr<<" C exists "<<collection["C"].val()<<std::endl;
 
 		// can iterate on the collection
