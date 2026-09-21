@@ -1,17 +1,13 @@
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 #include <ultimaille/all.h>
-
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
 
 #include <cstdlib>
 #include <iostream>
-#include <map>
 
-#include <fstream>
-#include <sstream>
 #include <string>
 
 #include "basic.h"

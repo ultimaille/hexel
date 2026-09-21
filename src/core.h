@@ -1,4 +1,14 @@
-#include <set>
+#include <map>
+#include <fstream>
+#include <glad/gl.h>
+#include <GLFW/glfw3.h>
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+
+#include <ultimaille/all.h>
+#include "basic.h"
+
 using namespace UM;
 
 
@@ -344,7 +354,6 @@ struct LayerManager: public Registry<RenderLayer> {
 
 
 
-
 // -------------------------------------------------------------------------------
 //                                    Mouse + Keyboard States
 // -------------------------------------------------------------------------------
@@ -421,110 +430,29 @@ struct Event{
 
 namespace InteractionMode{ struct AbstractMode; }
 
-struct God{
+namespace God{
 	// current interaction mode (controls everything: it is the entry point for different tools)
-	static InteractionMode::AbstractMode* root_mode;
+	extern InteractionMode::AbstractMode* root_mode;
 
 	// datas actually manipulated by the modeler	
-	static XCF xcf;
+	extern XCF xcf;
 
 	// input state
-	static MouseState mouse;
-	static KeyboardState keys;
+	extern MouseState mouse;
+	extern KeyboardState keys;
 
 	// event that occurred since last frame
-	static std::vector<Event> events;
+	extern std::vector<Event> events;
 
 	// the camera
-	static Camera camera;
-	static LayerManager layers;							// layers to be combined into the final rendering
+	extern Camera camera;
+	extern LayerManager layers;							// layers to be combined into the final rendering
 
-	static WindowManager win_manager;
+	extern WindowManager win_manager;
 
 	// API dependant 
-	static Context context;
-	static ShaderManager shaders;
+	extern Context context;
+	extern ShaderManager shaders;
 };
 
-XCF God::xcf;
-LayerManager God::layers;
-ShaderManager God::shaders;
-InteractionMode::AbstractMode* God::root_mode;
-MouseState God::mouse;
-KeyboardState God::keys;
-Context God::context;
-Camera God::camera;
-std::vector<Event> God::events;
-WindowManager God::win_manager;
 
-
-
-
-
-
-// ------------------------------------------------------------
-// GLFW callbacks
-// ------------------------------------------------------------
-
-void framebuffer_size_callback(GLFWwindow* window,int width,int height){
-	glViewport(0,0,width,height);
-}
-
-void mouse_button_callback(GLFWwindow* window,int button,int action,int mods){
-	ImGui_ImplGlfw_MouseButtonCallback(window,button,action,mods);
-	if(button <0 || button>2) { Log::error("Do not manage mouses with more than 3 buttons"); return; }
-	God::mouse.mouseDragging[button] = (action == GLFW_PRESS);
-	if (God::mouse.mouseDragging[button])
-		God::events.push_back({Event::MOUSE_PRESSED,""});
-	else 
-		God::events.push_back({Event::MOUSE_RELEASED,""});
-}
-
-void cursor_position_callback(GLFWwindow* window,double mouseX,double mouseY){
-	ImGui_ImplGlfw_CursorPosCallback(window,mouseX,mouseY);
-	God::mouse.lastx=mouseX; std::swap(God::mouse.lastx,God::mouse.x);
-	God::mouse.lasty=mouseY; std::swap(God::mouse.lasty,God::mouse.y);
-}
-
-void scroll_callback(GLFWwindow* window,double xOffset,double yOffset){
-	ImGui_ImplGlfw_ScrollCallback(window,xOffset,yOffset);
-	God::mouse.set_wheel_event(yOffset);
-}
-
-
-
-
-
-
-
-// ------------------------------------------------------------
-//  drawback of everything a a .h file :(
-// ------------------------------------------------------------
-
-void OrthographicCamera::update(){
-	double wheel = God::mouse.get_wheel_event();
-	if(wheel!=0) {
-		plop(wheel);
-		zoom *= (1.+.1*wheel);
-		zoom = std::clamp(zoom,.2,5.);
-	}
-	if(!God::mouse.mouseDragging[1]) return;
-	if(!God::keys.pressed(ImGuiKey_LeftCtrl)) return;
-	rotX += .01*(God::mouse.y-God::mouse.lasty); rotX = std::clamp(rotX,-M_PI,M_PI);
-	rotY -= .01*(God::mouse.x-God::mouse.lastx); rotY = std::clamp(rotY,-M_PI/2.,M_PI/2.);
-}
-
-
-void KeyboardState::update(){
-	for(int k=512; k<ImGuiKey_Oem102; k++){
-		bool nv =ImGui::IsKeyDown(ImGuiKey(k));
-		if(nv!=data[k]) {
-			if(nv)
-				God::events.push_back({Event::KEY_PRESSED,""});
-			else
-				God::events.push_back({Event::KEY_RELEASED,""});
-			//plop(k); //====> run callbacks
-		}
-		data[k] =nv;
-	}
-}
