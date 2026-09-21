@@ -1,17 +1,19 @@
 #include "core.h"
 
-using namespace God;
+namespace God {
+    XCF xcf;
+    LayerManager layers;
+    ShaderManager shaders;
+    InteractionMode::AbstractMode* root_mode;
+    MouseState mouse;
+    KeyboardState keys;
+    Context context;
+    Camera camera;
+    std::vector<Event> events;
+    WindowManager win_manager;
+}
 
-XCF xcf;
-LayerManager layers;
-ShaderManager shaders;
-InteractionMode::AbstractMode* root_mode;
-MouseState mouse;
-KeyboardState keys;
-Context context;
-Camera camera;
-std::vector<Event> events;
-WindowManager win_manager;
+
 // ------------------------------------------------------------
 // GLFW callbacks
 // ------------------------------------------------------------
@@ -40,9 +42,6 @@ void scroll_callback(GLFWwindow* window,double xOffset,double yOffset){
 	ImGui_ImplGlfw_ScrollCallback(window,xOffset,yOffset);
 	God::mouse.set_wheel_event(yOffset);
 }
-
-
-
 
 
 // ------------------------------------------------------------
