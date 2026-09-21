@@ -103,7 +103,7 @@ struct RenderLambertTriangles: public RenderLayer{
 		Triangles&  tri = God::xcf[mm_name].triangles[triangle_name].mesh;
 
 
-		God::shaders.add("C:/NICO/prog/misc/hexel/src/shaders/","lamberttri");
+		God::shaders.add(std::string(SHADERS_DIR),"lamberttri");
 
 		ncorners = tri.ncorners();
 		BBox3 box;
@@ -246,11 +246,11 @@ namespace InteractionMode{
 
 
 			if(ImGui::Button("Create MultiMesh",ImVec2(180,40))){
-				God::xcf.load_multimesh("C:\\NICO\\data\\preprocessed\\mambo\\B0.step.mesh");
+				God::xcf.load_multimesh(std::string(TEST_INPUT_DIR) + "B0.step.mesh");
 				God::xcf["B0.step"].triangles["B0.step"].mesh.connect();
 				God::layers.add<RenderLambertTriangles>("Lambert").init("B0.step","B0.step");
 
-				God::xcf.load_multimesh("C:\\NICO\\data\\preprocessed\\mambo\\B1.step.mesh");
+				God::xcf.load_multimesh(std::string(TEST_INPUT_DIR) + "B1.step.mesh");
 				God::xcf["B1.step"].triangles["B1.step"].mesh.connect();
 				God::layers.add<RenderLambertTriangles>("Lambert2").init("B1.step","B1.step");
 				HexEdit* root  =static_cast<HexEdit*>(God::root_mode);

@@ -9,6 +9,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+add_definitions(-DTEST_INPUT_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/test-input/\")
+add_definitions(-DSHADERS_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/\")
+
 include(FetchContent)
 
 # ============================================================
