@@ -208,7 +208,6 @@ struct MultiMesh{
 	struct MeshAttr{
 		Mesh mesh;
 		Attributes attributes;
-		bool modified;
 	};
 
 

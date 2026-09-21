@@ -90,7 +90,7 @@ struct RenderLambertTriangles: public RenderLayer{
 	bool resync_with_data(){
 		if(!God::xcf.has(mm_name)) return false;
 		if(!God::xcf[mm_name].triangles.has(triangle_name)) return false;
-		if (!God::xcf[mm_name].triangles[triangle_name].modified) return true;
+//	if (!God::xcf[mm_name].triangles[triangle_name].modified) return true; // TODO: obsolete, à refaire avec la newsletter
 		Log::add("need to update vbo");
 		return true;
 	}
