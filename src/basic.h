@@ -7,75 +7,110 @@ struct Log{
 	inline static void abort(std::string msg0,std::string msg1=""){ std::cerr<<"FATAL ERROR"<<msg0<<" "<<msg1<<std::endl; }
 };
 
-// -------------------------------------------------------------------------------
-//                                    Named Collections
-// -------------------------------------------------------------------------------
-// => objects are too big and polymorph for storing them directly in the structure
-// => we can use unique_ptr with an interface using only references (no pointers for the users)
-// 
+// Registry<T> is a lightweight named container for polymorphic objects (=> all stored types must inherit from T).
+//
+// The registry owns instances through std::unique_ptr<T>, so callers can
+// manipulate them through the base interface without dealing with ownership.
+// Each object is associated with a unique string name, which makes lookup by
+// name convenient while preserving insertion order for iteration.
 
-
-
-/*
-template<class T>
-struct NamedMap {
-	std::map<std::string,std::unique_ptr<T>> collection;
-
-	template<class P> P& add(std::string name){
-		um_assert(!has(name));
-		std::unique_ptr<T>& ptr =  collection[name];
-		ptr  =std::make_unique<P>();
-		return static_cast<P&>(*ptr);
-	}
-
-	T& add(std::string name){ return add<T>(name); }
-
-	bool has(std::string name){ return collection.find(name)!=collection.end(); }
-
-	void remove(std::string name){ collection.erase(name); }
-
-	T& operator[](std::string name){
-		auto it = collection.find(name);
-		um_assert(it!=collection.end());
-		T& ptr = *(it->second.get());
-		return ptr;
-	}
-};
-*/
 
 template<class T>
-struct NamedVector {
-	typedef std::pair<std::string,std::unique_ptr<T>> elt;
-	std::vector<elt> collection;
+struct Registry {
+    struct Element {
+        std::string name;
+        std::unique_ptr<T> object;
+    };
+    std::vector<Element> collection;
 
-	template<class P> P& add(std::string name){
-		um_assert(!has(name));
-		collection.push_back({name,std::make_unique<P>()});
-		return static_cast<P&>(*collection.back().second.get());
-	}
+    template<class P, class... Args>
+        P& add(std::string name, Args&&... args) {
+            static_assert(std::is_base_of_v<T, P>);
+            assert(!contains(name));
 
-	T& add(std::string name){ return add<T>(name); }
+            auto object = std::make_unique<P>(
+                    std::forward<Args>(args)...
+                    );
 
-	int id(std::string name){
-		FOR(i,collection.size())
-			if(collection[i].first.compare(name)==0)
-				return i;
-		return -1;
-	}
-	bool has(std::string name){
-		int i = id(name);
-		return (i!=-1);
-	}
-	T& operator[](int i){
-		return *collection[i].second.get();
-	}
-	T& operator[](std::string name){
-		int i = id(name);
-		um_assert(i!=-1);
-		return *collection[i].second.get();
-	}
-	void pop_back(){ collection.pop_back(); }
-	int size(){ return collection.size(); }
+            collection.push_back({
+                    std::move(name),
+                    std::move(object)
+                    });
+
+            return static_cast<P&>(*collection.back().object);
+        }
+
+    template<class... Args>
+        T& add(std::string name, Args&&... args) {
+            return add<T>(
+                    std::move(name),
+                    std::forward<Args>(args)...
+                    );
+        }
+
+    bool contains(const std::string& name) const {
+        return find(name) != -1;
+    }
+
+    int find(const std::string& name) const {
+        for (int i = 0; i < static_cast<int>(collection.size()); ++i) {
+            if (collection[i].name == name)
+                return i;
+        }
+        return -1;
+    }
+
+    T& operator[](int index) {
+        assert(index >= 0);
+        assert(index < static_cast<int>(collection.size()));
+        return *collection[index].object;
+    }
+
+    const T& operator[](int index) const {
+        assert(index >= 0);
+        assert(index < static_cast<int>(collection.size()));
+        return *collection[index].object;
+    }
+
+    T& operator[](const std::string& name) {
+        int index = find(name);
+        assert(index >= 0);
+        assert(index < static_cast<int>(collection.size()));
+        return *collection[index].object;
+    }
+
+    const T& operator[](const std::string& name) const {
+        int index = find(name);
+        assert(index >= 0);
+        assert(index < static_cast<int>(collection.size()));
+        return *collection[index].object;
+    }
+
+    void pop_back() {
+        assert(!collection.empty());
+        collection.pop_back();
+    }
+
+    int size() const {
+        return static_cast<int>(collection.size());
+    }
+
+    void erase(int index) {
+        assert(index >= 0);
+        assert(index < static_cast<int>(collection.size()));
+        collection.erase(collection.begin() + index);
+    }
+
+    void erase(std::string &name) {
+        int index = find(name);
+        assert(index >= 0);
+        assert(index < static_cast<int>(collection.size()));
+        erase(index);
+    }
+
+    bool empty() const {
+        return collection.empty();
+    }
 };
 
 
@@ -104,10 +139,10 @@ struct B:public A{ virtual int val(){ return value+1; } };
 		std::cerr<<"acces by []  "<< collection["C"].value<<"   "<<collection["C"].val()<<std::endl;
 
 		// can test and acces to data from their names
-		if(collection.has("A")) std::cerr<<" A exists "<<collection["A"].val()<<std::endl;
-		if(collection.has("D")) std::cerr<<" C exists "<<collection["C"].val()<<std::endl;
+		if(collection.contains("A")) std::cerr<<" A exists "<<collection["A"].val()<<std::endl;
+		if(collection.contains("D")) std::cerr<<" C exists "<<collection["C"].val()<<std::endl;
 		collection.template add<B>("D").init(40);
-		if(collection.has("D")) std::cerr<<" C exists "<<collection["C"].val()<<std::endl;
+		if(collection.contains("D")) std::cerr<<" C exists "<<collection["C"].val()<<std::endl;
 
 		// can iterate on the collection
 		for(auto &[name,obj]:collection.collection)	std::cerr<<"  ===  "<<name<<"  "<<obj->val(); std::cerr<<std::endl;
@@ -118,7 +153,7 @@ struct B:public A{ virtual int val(){ return value+1; } };
 ////	NamedMap<A>    amap; test_named_collections(amap);
 ////	plop(amap.has("A")); amap.remove("A"); plop(amap.has("A"));
 
-		NamedVector<A> avec; test_named_collections(avec);
+		Registry<A> avec; test_named_collections(avec);
 		// with the vector, we can use direct access for e.g. iterating directly on indices
 		FOR(i,avec.size())	std::cerr<<"  ===  "<<i<<"  "<<avec[i].val(); std::cerr<<std::endl;
 		avec.pop_back();

@@ -19,6 +19,7 @@ struct Picker{
 // => possibilité de changer via l'implementation
 
 struct CameraInterface{
+    virtual ~CameraInterface() = default;
 	virtual mat4x4  projection_matrix(float width,float height)=0;
 	virtual mat4x4  view_matrix()=0;
 	virtual void update()=0;
@@ -234,7 +235,7 @@ struct XCF: public std::map<std::string, MultiMesh> {
 		std::string triname = std::filesystem::path(filename).stem().string();
         if (contains(triname))
             um_assert(false && "duplicate multimesh name");
-        auto& multimesh = (*this)[triname];
+        auto &multimesh = (*this)[triname];
         multimesh.load(filename, connect);
 	}
 };
@@ -316,6 +317,7 @@ struct ShaderManager: public std::map<std::string,GLuint> {
 
 
 struct RenderLayer{
+    virtual ~RenderLayer() = default;
 	virtual void render()		=0;
 	virtual void generate_gui(std::string name) =0;
 	virtual bool resync_with_data()=0;
@@ -324,7 +326,7 @@ struct RenderLayer{
 	bool visible;
 };
 
-struct LayerManager: public NamedVector<RenderLayer> {
+struct LayerManager: public Registry<RenderLayer> {
 	void render(){
 		FOR(i,size()) operator[](i).render();
 	}
@@ -384,10 +386,11 @@ struct KeyboardState{
 // -------------------------------------------------------------------------------
 // => are more or less independant of the mode
 struct Window{
+    virtual ~Window() = default;
 	virtual void generate_gui()=0;
 };
 struct WindowManager{
-	NamedVector<Window> wins;
+	Registry<Window> wins;
 	void show_gui(){
 		for(auto& [name,obj]:wins.collection) obj->generate_gui();
 	}
