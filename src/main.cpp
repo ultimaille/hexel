@@ -36,7 +36,7 @@ struct XCFViewer: public Window{
 
 
 		std::vector<std::string> mm_to_kill;
-		for(auto &[name,obj]:God::xcf.collection){
+		for(auto &[name,obj]:God::xcf){
 			if(ImGui::TreeNode(name.c_str())){
 				if(ImGui::Button("Delete MultiMesh"))
 					mm_to_kill.push_back(name);
@@ -45,7 +45,7 @@ struct XCFViewer: public Window{
 		}
 		for(auto name:mm_to_kill){
 			God::events.push_back({Event::MM_REMOVED,name});
-			God::xcf.remove(name);
+			God::xcf.erase(name);
 		}
 		ImGui::End();
 	}
@@ -88,8 +88,8 @@ struct RenderLambertTriangles: public RenderLayer{
 	}
 
 	bool resync_with_data(){
-		if(!God::xcf.has(mm_name)) return false;
-		if(!God::xcf[mm_name].triangles.has(triangle_name)) return false;
+		if(!God::xcf.contains(mm_name)) return false;
+		if(!God::xcf[mm_name].triangles.contains(triangle_name)) return false;
 //	if (!God::xcf[mm_name].triangles[triangle_name].modified) return true; // TODO: obsolete, à refaire avec la newsletter
 		Log::add("need to update vbo");
 		return true;
@@ -98,8 +98,8 @@ struct RenderLambertTriangles: public RenderLayer{
 	void init(std::string mm,std::string triangle){
 		triangle_name = triangle;
 		mm_name = mm;
-		um_assert(God::xcf.has(mm_name));
-		um_assert(God::xcf[mm_name].triangles.has(triangle_name));
+		um_assert(God::xcf.contains(mm_name));
+		um_assert(God::xcf[mm_name].triangles.contains(triangle_name));
 		Triangles&  tri = God::xcf[mm_name].triangles[triangle_name].mesh;
 
 
