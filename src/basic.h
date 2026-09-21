@@ -1,3 +1,5 @@
+#pragma once
+
 #define FOR(i, n) for(int i = 0; i < (int) n; i++)
 #define plop(x) {std::cerr << "|plop|=>"<<" line:"<< __LINE__ <<"  "<< #x <<" : " <<x<< "     in  "<< __FILE__ <<std::endl;}
 
@@ -112,6 +114,7 @@ struct Registry {
     }
 };
 
+/*
 
 namespace TestAndDocForNamedCollections{
 struct A{ void init(int i){ value = i; }	virtual int val(){ return value; }int value=0; };
@@ -159,3 +162,4 @@ struct B:public A{ virtual int val(){ return value+1; } };
 		FOR(i,avec.size())	std::cerr<<"  ===  "<<i<<"  "<<avec[i].val(); std::cerr<<std::endl;
 	}
 };
+*/
