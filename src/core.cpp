@@ -1,4 +1,6 @@
+#define _USE_MATH_DEFINES
 #include "core.h"
+#include <cmath>
 
 namespace God {
     XCF xcf;
