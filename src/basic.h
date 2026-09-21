@@ -14,17 +14,16 @@ struct Log{
 // Each object is associated with a unique string name, which makes lookup by
 // name convenient while preserving insertion order for iteration.
 
-
 template<class T>
 struct Registry {
     struct Element {
         std::string name;
         std::unique_ptr<T> object;
     };
-    std::vector<Element> collection;
+    std::vector<Element> registry;
 
     template<class P, class... Args>
-        P& add(std::string name, Args&&... args) {
+        P& emplace_back(std::string name, Args&&... args) {
             static_assert(std::is_base_of_v<T, P>);
             assert(!contains(name));
 
@@ -32,17 +31,17 @@ struct Registry {
                     std::forward<Args>(args)...
                     );
 
-            collection.push_back({
+            registry.push_back({
                     std::move(name),
                     std::move(object)
                     });
 
-            return static_cast<P&>(*collection.back().object);
+            return static_cast<P&>(*registry.back().object);
         }
 
     template<class... Args>
-        T& add(std::string name, Args&&... args) {
-            return add<T>(
+        T& emplace_back(std::string name, Args&&... args) {
+            return emplace_back<T>(
                     std::move(name),
                     std::forward<Args>(args)...
                     );
@@ -53,8 +52,8 @@ struct Registry {
     }
 
     int find(const std::string& name) const {
-        for (int i = 0; i < static_cast<int>(collection.size()); ++i) {
-            if (collection[i].name == name)
+        for (int i = 0; i < static_cast<int>(registry.size()); ++i) {
+            if (registry[i].name == name)
                 return i;
         }
         return -1;
@@ -62,54 +61,54 @@ struct Registry {
 
     T& operator[](int index) {
         assert(index >= 0);
-        assert(index < static_cast<int>(collection.size()));
-        return *collection[index].object;
+        assert(index < static_cast<int>(registry.size()));
+        return *registry[index].object;
     }
 
     const T& operator[](int index) const {
         assert(index >= 0);
-        assert(index < static_cast<int>(collection.size()));
-        return *collection[index].object;
+        assert(index < static_cast<int>(registry.size()));
+        return *registry[index].object;
     }
 
     T& operator[](const std::string& name) {
         int index = find(name);
         assert(index >= 0);
-        assert(index < static_cast<int>(collection.size()));
-        return *collection[index].object;
+        assert(index < static_cast<int>(registry.size()));
+        return *registry[index].object;
     }
 
     const T& operator[](const std::string& name) const {
         int index = find(name);
         assert(index >= 0);
-        assert(index < static_cast<int>(collection.size()));
-        return *collection[index].object;
+        assert(index < static_cast<int>(registry.size()));
+        return *registry[index].object;
     }
 
     void pop_back() {
-        assert(!collection.empty());
-        collection.pop_back();
+        assert(!registry.empty());
+        registry.pop_back();
     }
 
     int size() const {
-        return static_cast<int>(collection.size());
+        return static_cast<int>(registry.size());
     }
 
     void erase(int index) {
         assert(index >= 0);
-        assert(index < static_cast<int>(collection.size()));
-        collection.erase(collection.begin() + index);
+        assert(index < static_cast<int>(registry.size()));
+        registry.erase(registry.begin() + index);
     }
 
     void erase(std::string &name) {
         int index = find(name);
         assert(index >= 0);
-        assert(index < static_cast<int>(collection.size()));
+        assert(index < static_cast<int>(registry.size()));
         erase(index);
     }
 
     bool empty() const {
-        return collection.empty();
+        return registry.empty();
     }
 };
 
@@ -123,11 +122,11 @@ struct B:public A{ virtual int val(){ return value+1; } };
 
 
 		// WARNING: add only empty elements: A and B must have default constructors !
-		B& b = collection.template add<B>("B");  // to add an element, we need to specify its class (derived)
-		A& a = collection.add("A");		// elements of the root class don't need explicit type
+		B& b = collection.template emplace_back<B>("B");  // to add an element, we need to specify its class (derived)
+		A& a = collection.emplace_back("A");		// elements of the root class don't need explicit type
 
 		// constructors are replaced by init methods that can be directly called here
-		collection.template add<B>("C").init(3);
+		collection.template emplace_back<B>("C").init(3);
 
 		// acces to methods/members works as expected
 		std::cerr<<"a value/val      "<< a.value<<"   "<<a.val()<<std::endl;
@@ -141,11 +140,11 @@ struct B:public A{ virtual int val(){ return value+1; } };
 		// can test and acces to data from their names
 		if(collection.contains("A")) std::cerr<<" A exists "<<collection["A"].val()<<std::endl;
 		if(collection.contains("D")) std::cerr<<" C exists "<<collection["C"].val()<<std::endl;
-		collection.template add<B>("D").init(40);
+		collection.template emplace_back<B>("D").init(40);
 		if(collection.contains("D")) std::cerr<<" C exists "<<collection["C"].val()<<std::endl;
 
 		// can iterate on the collection
-		for(auto &[name,obj]:collection.collection)	std::cerr<<"  ===  "<<name<<"  "<<obj->val(); std::cerr<<std::endl;
+		for(auto &[name,obj]:collection.registry)	std::cerr<<"  ===  "<<name<<"  "<<obj->val(); std::cerr<<std::endl;
 
 	};
 

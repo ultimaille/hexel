@@ -214,8 +214,7 @@ struct MultiMesh{
 
 
 	PointSet points;
-    using TriangleEntry = MeshAttr<Triangles, SurfaceAttributes>;
-    std::map<std::string, TriangleEntry> triangles;
+    std::map<std::string, MeshAttr<Triangles, SurfaceAttributes>> triangles;
 
 	void load(std::string filename, bool connect = true){
 		std::filesystem::path path(filename);
@@ -332,8 +331,8 @@ struct LayerManager: public Registry<RenderLayer> {
 	}
 	void sync(){
 		FOR(i,size()) if (!operator[](i).resync_with_data()){
-			std::swap(collection[i],collection.back());
-			collection.pop_back();
+			std::swap(registry[i],registry.back());
+			registry.pop_back();
 		};
 	}
 	
@@ -392,7 +391,7 @@ struct Window{
 struct WindowManager{
 	Registry<Window> wins;
 	void show_gui(){
-		for(auto& [name,obj]:wins.collection) obj->generate_gui();
+		for(auto& [name,obj]:wins.registry) obj->generate_gui();
 	}
 };
 

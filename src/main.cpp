@@ -56,7 +56,7 @@ struct LayerViewer: public Window{
 		ImGui::SetNextWindowSize(ImVec2(150,400),ImGuiCond_Always);
 		ImGui::Begin("LayersConfig",nullptr,ImGuiWindowFlags_AlwaysAutoResize);
 
-		for(auto &[name,obj]:God::layers.collection){
+		for(auto &[name,obj]:God::layers.registry){
 			if(ImGui::TreeNode(name.c_str())){
 				obj->generate_gui(name);
 				ImGui::TreePop();
@@ -101,7 +101,6 @@ struct RenderLambertTriangles: public RenderLayer{
 		um_assert(God::xcf.contains(mm_name));
 		um_assert(God::xcf[mm_name].triangles.contains(triangle_name));
 		Triangles&  tri = God::xcf[mm_name].triangles[triangle_name].mesh;
-
 
 		God::shaders.add(std::string(SHADERS_DIR),"lamberttri");
 
@@ -248,11 +247,11 @@ namespace InteractionMode{
 			if(ImGui::Button("Create MultiMesh",ImVec2(180,40))){
 				God::xcf.load_multimesh(std::string(TEST_INPUT_DIR) + "B0.step.mesh");
 				God::xcf["B0.step"].triangles["B0.step"].mesh.connect();
-				God::layers.add<RenderLambertTriangles>("Lambert").init("B0.step","B0.step");
+				God::layers.emplace_back<RenderLambertTriangles>("Lambert").init("B0.step","B0.step");
 
 				God::xcf.load_multimesh(std::string(TEST_INPUT_DIR) + "B1.step.mesh");
 				God::xcf["B1.step"].triangles["B1.step"].mesh.connect();
-				God::layers.add<RenderLambertTriangles>("Lambert2").init("B1.step","B1.step");
+				God::layers.emplace_back<RenderLambertTriangles>("Lambert2").init("B1.step","B1.step");
 				HexEdit* root  =static_cast<HexEdit*>(God::root_mode);
 				root->set_mode(root->move_vertex);
 			}
@@ -277,8 +276,8 @@ int main(){
 	InteractionMode::HexEdit look;
 	InteractionMode::AbstractMode* root_mode=&look;
 
-	God::win_manager.wins.add<XCFViewer>("xcf_window");
-	God::win_manager.wins.add<LayerViewer>("layer_window");
+	God::win_manager.wins.emplace_back<XCFViewer>("xcf_window");
+	God::win_manager.wins.emplace_back<LayerViewer>("layer_window");
 	while(God::context.window_is_active()){
 		glfwPollEvents();
 		God::camera.update();
