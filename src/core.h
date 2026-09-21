@@ -211,29 +211,33 @@ struct MultiMesh{
 	};
 
 
-	PointSet points;
-	NamedMap<MeshAttr<Triangles,SurfaceAttributes>> triangles;
 
-	void load(std::string filename,bool connect = true){
+	PointSet points;
+    using TriangleEntry = MeshAttr<Triangles, SurfaceAttributes>;
+    std::map<std::string, TriangleEntry> triangles;
+
+	void load(std::string filename, bool connect = true){
 		std::filesystem::path path(filename);
 		std::string triname = path.stem().string();
-		auto& new_elt = triangles.add(triname);
-		Triangles& tri = new_elt.mesh;
-		new_elt.attributes =read_by_extension(filename,new_elt.mesh);
+        if (triangles.contains(triname))
+            um_assert(false && "duplicate mesh name");
+        triangles.try_emplace(triname);
+        auto& [tri, attributes] = triangles[triname];
+		attributes = read_by_extension(filename, tri);
 		if(connect) tri.connect();
 	}
 
 };
 
-struct XCF: public NamedMap<MultiMesh> {
+struct XCF: public std::map<std::string, MultiMesh> {
 	void load_multimesh(std::string filename,bool connect = true){
 		std::string triname = std::filesystem::path(filename).stem().string();
-		add(triname).load(filename,connect);
+        if (contains(triname))
+            um_assert(false && "duplicate multimesh name");
+        auto& multimesh = (*this)[triname];
+        multimesh.load(filename, connect);
 	}
 };
-
-
-
 
 // -------------------------------------------------------------------------------
 //                                    ShaderManager

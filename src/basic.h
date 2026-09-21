@@ -16,6 +16,7 @@ struct Log{
 
 
 
+/*
 template<class T>
 struct NamedMap {
 	std::map<std::string,std::unique_ptr<T>> collection;
@@ -40,6 +41,7 @@ struct NamedMap {
 		return ptr;
 	}
 };
+*/
 
 template<class T>
 struct NamedVector {
@@ -113,8 +115,8 @@ struct B:public A{ virtual int val(){ return value+1; } };
 	};
 
 	void test_named_collections(){
-		NamedMap<A>    amap; test_named_collections(amap);
-		plop(amap.has("A")); amap.remove("A"); plop(amap.has("A"));
+////	NamedMap<A>    amap; test_named_collections(amap);
+////	plop(amap.has("A")); amap.remove("A"); plop(amap.has("A"));
 
 		NamedVector<A> avec; test_named_collections(avec);
 		// with the vector, we can use direct access for e.g. iterating directly on indices
