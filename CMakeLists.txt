@@ -12,6 +12,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_definitions(-DTEST_INPUT_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/test-input/\")
 add_definitions(-DSHADERS_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/\")
 
+
 include(FetchContent)
 
 # ============================================================
@@ -114,6 +115,32 @@ include_directories(${ultimaille_SOURCE_DIR})
 
 find_package(OpenGL REQUIRED)
 
+
+
+
+
+
+
+# ============================================================
+# for windows user (nico): Put all dependencies in a folder of the .sln
+# ============================================================
+function(set_folder_recursive dir folder)
+    get_property(targets DIRECTORY "${dir}" PROPERTY BUILDSYSTEM_TARGETS)
+    foreach(target IN LISTS targets)
+        set_target_properties("${target}"
+            PROPERTIES FOLDER "${folder}"
+        )
+    endforeach()
+    get_property(subdirs DIRECTORY "${dir}" PROPERTY SUBDIRECTORIES)
+    foreach(subdir IN LISTS subdirs)
+        set_folder_recursive("${subdir}" "${folder}")
+    endforeach()
+endfunction()
+
+set_folder_recursive(
+    "${fmt_SOURCE_DIR}"
+    "Dependencies/fmt"
+)
 
 # ============================================================
 # Application
