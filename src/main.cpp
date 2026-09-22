@@ -10,9 +10,8 @@
 
 #include <string>
 
-#include "basic.h"
-
-#include "core.h"
+#include "core/basic.h"
+#include "core/core.h"
 
 
 
