@@ -44,7 +44,7 @@ namespace God{
 	extern Camera camera;
 	extern LayerManager layers;							// layers to be combined into the final rendering
 
-	extern PanelManager pan_manager;
+	extern PanelManager panels;
 
 	// API dependant 
 	extern WindowContext context;

@@ -271,15 +271,15 @@ int main(){
 	InteractionMode::HexEdit look;
 	InteractionMode::AbstractMode* root_mode=&look;
 
-	God::pan_manager.panels.emplace_back<XCFViewer>("xcf_window");
-	God::pan_manager.panels.emplace_back<LayerViewer>("layer_window");
+	God::panels.panels.emplace_back<XCFViewer>("xcf_window");
+	God::panels.panels.emplace_back<LayerViewer>("layer_window");
 	while(God::context.window_is_active()){
 		glfwPollEvents();
 		God::camera.update();
 		God::layers.sync();
 		God::context.begin_frame();
 		God::layers.render();
-		God::pan_manager.show_gui();
+		God::panels.show_gui();
 		root_mode->define_gui();
 		if(!ImGui::GetIO().WantCaptureKeyboard)
 			God::keys.update();

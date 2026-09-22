@@ -12,7 +12,7 @@ namespace God {
     WindowContext context;
     Camera camera;
     std::vector<Event> events;
-    PanelManager pan_manager;
+    PanelManager panels;
 }
 
 
