@@ -1,6 +1,6 @@
 #define _USE_MATH_DEFINES
-#include "core.h"
 #include <cmath>
+#include "core.h"
 
 namespace God {
     XCF xcf;
@@ -14,6 +14,4 @@ namespace God {
     std::vector<Event> events;
     PanelManager panels;
 }
-
-
 

@@ -1,4 +1,3 @@
-#include "camera.h"
 #include "core.h"
 
 void OrthographicCamera::update(){

@@ -1,5 +1,12 @@
 #pragma once
 
+#include <glad/gl.h>
+#include <GLFW/glfw3.h>
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+
+
 // -------------------------------------------------------------------------------
 //                                    CONTEXT
 // -------------------------------------------------------------------------------
@@ -150,5 +157,4 @@ struct Event{
 
 	std::string object_name;// a string that allows to find the element
 };
-
 

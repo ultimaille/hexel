@@ -1,13 +1,7 @@
 #pragma once
+
+#include <fstream>
 #include "core.h"
-
-
-// -------------------------------------------------------------------------------
-//                                    ShaderManager
-// -------------------------------------------------------------------------------
-// => construct a dictonary of shaders 
-// 
-
 
 struct ShaderManager: public std::map<std::string,GLuint> {
 	ShaderManager(){
