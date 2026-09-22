@@ -12,7 +12,7 @@ struct Panel{
 struct PanelManager{
 	Registry<Panel> panels;
 	void show_gui(){
-		for(auto& [name,obj] : panels.registry) obj->generate_gui();
+		for(auto& [name,obj] : panels) obj->generate_gui();
 	}
 };
 

@@ -51,7 +51,7 @@ struct LayerViewer: public Panel {
 		ImGui::SetNextWindowSize(ImVec2(150,400),ImGuiCond_Always);
 		ImGui::Begin("LayersConfig",nullptr,ImGuiWindowFlags_AlwaysAutoResize);
 
-		for(auto &[name,obj]:God::layers.registry){
+		for(auto &[name,obj]:God::layers){
 			if(ImGui::TreeNode(name.c_str())){
 				obj->generate_gui(name);
 				ImGui::TreePop();

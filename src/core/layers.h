@@ -20,18 +20,16 @@ struct RenderLayer{
 
 struct LayerManager: public Registry<RenderLayer> {
 	void render(){
-		FOR(i,size()) operator[](i).render();
+		for (auto& [name,obj] : *this)
+            obj->render();
 	}
 	void sync(){
 		FOR(i,size()) if (!operator[](i).resync_with_data()){
-			std::swap(registry[i],registry.back());
-			registry.pop_back();
+			std::swap(items[i],items.back());
+			pop_back();
 		};
 	}
-	
 	void produce_picking_image(int* data,int w,int h){ Log::add("To be implemented"); }
-
 };
-
 
 
