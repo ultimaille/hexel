@@ -123,7 +123,11 @@ add_executable(Hexel
     src/main.cpp
     src/core/basic.h
     src/core/picker.h
+    src/core/panels.h
+    src/core/layers.h
+    src/core/shaders.h
     src/core/core.h src/core/core.cpp
+    src/core/window.h src/core/window.cpp
     src/core/camera.h src/core/camera.cpp
     src/core/xcf.h src/core/xcf.cpp
 )
