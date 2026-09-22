@@ -21,7 +21,7 @@
 // -------------------------------------------------------------------------------
 
 
-struct XCFViewer: public Window{
+struct XCFViewer: public Panel {
 	void generate_gui(){
 		ImGui::SetNextWindowPos(ImVec2(10,10),ImGuiCond_Always);
 		ImGui::SetNextWindowSize(ImVec2(150,200),ImGuiCond_Always);
@@ -45,7 +45,7 @@ struct XCFViewer: public Window{
 		ImGui::End();
 	}
 };
-struct LayerViewer: public Window{
+struct LayerViewer: public Panel {
 	void generate_gui(){
 		ImGui::SetNextWindowPos(ImVec2(10,210),ImGuiCond_Always);
 		ImGui::SetNextWindowSize(ImVec2(150,400),ImGuiCond_Always);
@@ -271,15 +271,15 @@ int main(){
 	InteractionMode::HexEdit look;
 	InteractionMode::AbstractMode* root_mode=&look;
 
-	God::win_manager.wins.emplace_back<XCFViewer>("xcf_window");
-	God::win_manager.wins.emplace_back<LayerViewer>("layer_window");
+	God::pan_manager.panels.emplace_back<XCFViewer>("xcf_window");
+	God::pan_manager.panels.emplace_back<LayerViewer>("layer_window");
 	while(God::context.window_is_active()){
 		glfwPollEvents();
 		God::camera.update();
 		God::layers.sync();
 		God::context.begin_frame();
 		God::layers.render();
-		God::win_manager.show_gui();
+		God::pan_manager.show_gui();
 		root_mode->define_gui();
 		if(!ImGui::GetIO().WantCaptureKeyboard)
 			God::keys.update();

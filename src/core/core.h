@@ -30,7 +30,7 @@ void mouse_button_callback(GLFWwindow* window,int button,int action,int mods);
 void cursor_position_callback(GLFWwindow* window,double mouseX,double mouseY);
 void scroll_callback(GLFWwindow* window,double xOffset,double yOffset);
 
-struct Context{
+struct WindowContext{
 
 	void init(int w=1000,int h=1000){
 		init_glfw(w,h);
@@ -38,7 +38,7 @@ struct Context{
 		init_imgui();
 		init_mouse_call_backs();
 	}
-	~Context(){
+	~WindowContext(){
 		// Not sure I want to quit nicely... especially after the main
 		//ImGui_ImplOpenGL3_Shutdown();
 		//ImGui_ImplGlfw_Shutdown();
@@ -260,17 +260,17 @@ struct KeyboardState{
 };
 
 // -------------------------------------------------------------------------------
-//                                    Windows to explore things (layers/xcf/etc.)
+//                                    Panels to explore things (layers/xcf/etc.)
 // -------------------------------------------------------------------------------
 // => are more or less independant of the mode
-struct Window{
-    virtual ~Window() = default;
+struct Panel{
+    virtual ~Panel() = default;
 	virtual void generate_gui()=0;
 };
-struct WindowManager{
-	Registry<Window> wins;
+struct PanelManager{
+	Registry<Panel> panels;
 	void show_gui(){
-		for(auto& [name,obj]:wins.registry) obj->generate_gui();
+		for(auto& [name,obj] : panels.registry) obj->generate_gui();
 	}
 };
 
@@ -318,10 +318,10 @@ namespace God{
 	extern Camera camera;
 	extern LayerManager layers;							// layers to be combined into the final rendering
 
-	extern WindowManager win_manager;
+	extern PanelManager pan_manager;
 
 	// API dependant 
-	extern Context context;
+	extern WindowContext context;
 	extern ShaderManager shaders;
 };
 
