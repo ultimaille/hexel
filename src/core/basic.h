@@ -1,4 +1,5 @@
 #pragma once
+#include <ultimaille/all.h>
 
 #define FOR(i, n) for(int i = 0; i < (int) n; i++)
 #define plop(x) {std::cerr << "|plop|=>"<<" line:"<< __LINE__ <<"  "<< #x <<" : " <<x<< "     in  "<< __FILE__ <<std::endl;}
@@ -27,7 +28,7 @@ struct Registry {
     template<class P, class... Args>
         P& emplace_back(std::string name, Args&&... args) {
             static_assert(std::is_base_of_v<T, P>);
-            assert(!contains(name));
+            um_assert(!contains(name));
 
             auto object = std::make_unique<P>(
                     std::forward<Args>(args)...
@@ -54,41 +55,36 @@ struct Registry {
     }
 
     int find(const std::string& name) const {
-        for (int i = 0; i < size(); ++i) {
+        for (int i = 0; i < size(); ++i)
             if (items[i].name == name)
                 return i;
-        }
         return -1;
     }
 
     T& operator[](int index) {
-        assert(index >= 0);
-        assert(index < size());
+        um_assert(index >= 0 && index < size());
         return *items[index].object;
     }
 
     const T& operator[](int index) const {
-        assert(index >= 0);
-        assert(index < size());
+        um_assert(index >= 0 && index < size());
         return *items[index].object;
     }
 
     T& operator[](const std::string& name) {
         int index = find(name);
-        assert(index >= 0);
-        assert(index < size());
+        um_assert(index >= 0 && index < size());
         return *items[index].object;
     }
 
     const T& operator[](const std::string& name) const {
         int index = find(name);
-        assert(index >= 0);
-        assert(index < size());
+        um_assert(index >= 0 && index < size());
         return *items[index].object;
     }
 
     void pop_back() {
-        assert(!empty());
+        um_assert(!empty());
         items.pop_back();
     }
 
@@ -97,15 +93,13 @@ struct Registry {
     }
 
     void erase(int index) {
-        assert(index >= 0);
-        assert(index < size());
+        um_assert(index >= 0 && index < size());
         items.erase(begin() + index);
     }
 
     void erase(std::string &name) {
         int index = find(name);
-        assert(index >= 0);
-        assert(index < size());
+        um_assert(index >= 0 && index < size());
         erase(index);
     }
 
