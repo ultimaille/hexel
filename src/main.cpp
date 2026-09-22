@@ -242,11 +242,11 @@ namespace InteractionMode{
 			if(ImGui::Button("Create MultiMesh",ImVec2(180,40))){
 				God::xcf.load_multimesh(std::string(TEST_INPUT_DIR) + "B0.step.mesh");
 				God::xcf["B0.step"].triangles["B0.step"].mesh.connect();
-				God::layers.emplace_back<RenderLambertTriangles>("Lambert").init("B0.step","B0.step");
+				God::layers.emplace_back<RenderLambertTriangles>("Lambert").init("B0.step","triangles");
 
 				God::xcf.load_multimesh(std::string(TEST_INPUT_DIR) + "B1.step.mesh");
 				God::xcf["B1.step"].triangles["B1.step"].mesh.connect();
-				God::layers.emplace_back<RenderLambertTriangles>("Lambert2").init("B1.step","B1.step");
+				God::layers.emplace_back<RenderLambertTriangles>("Lambert2").init("B1.step","triangles");
 				HexEdit* root  =static_cast<HexEdit*>(God::root_mode);
 				root->set_mode(root->move_vertex);
 			}
