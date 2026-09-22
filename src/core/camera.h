@@ -102,32 +102,114 @@ struct TrackballCamera : public CameraInterface {
 		this->box = box;
 	}
 
-    vec3 mouse_to_sphere(vec2 p) {
-        // Screen coords to NDC
-        vec2 v{p.x / screen_size.x * 2. - 1., -(p.y / screen_size.y * 2. - 1.)};
-        // v = -v / 1.96f; // Division make the sphere radius greater than 1
-        // Division make the sphere radius greater than 1 therefore the border of the sphere is out of screen and this enable to not drag out of the sphere
-        v = -v / 2.;
+	vec3 mouse_to_sphere(vec2 p) {
+		// Screen coords to NDC
+		vec2 v{p.x / screen_size.x * 2. - 1., -(p.y / screen_size.y * 2. - 1.)};
+		// v = -v / 1.96f; // Division make the sphere radius greater than 1
+		// Division make the sphere radius greater than 1 therefore the border of the sphere is out of screen and this enable to not drag out of the sphere
+		v = -v / 2.;
 
-        // Compute magnitude of v (dist² to the center)
-        double mag = v * v;
-        vec3 p3{v.x, v.y, 0.};
+		// Compute magnitude of v (dist² to the center)
+		double mag = v * v;
+		vec3 p3{v.x, v.y, 0.};
 
-        if (mag > 1.0) {
-            p3 = p3.normalized();
-        } else {
-            p3 = {p3.x, p3.y, -sqrt(1.0 - mag)};
-        }
+		if (mag > 1.0) {
+			p3 = p3.normalized();
+		} else {
+			p3 = {p3.x, p3.y, -sqrt(1.0 - mag)};
+		}
 
-        return p3;
-    }
+		return p3;
+	}
+
+	void rotate(vec2 oldPos, vec2 newPos) {
+		// Compute 3D pos of 2D point on sphere
+		vec3 v0 = mouse_to_sphere(oldPos);
+		vec3 v1 = mouse_to_sphere(newPos);
+		// Compute axis of rotation from 3D points
+		vec3 ax = cross(v0, v1);
+
+		// Check length to avoid normalize issues (division by 0 can occurs)
+		if (ax.norm2() <= 0.00000001)
+			return;
+
+		// Compute angle between the two points on sphere
+		double angle = acos(std::clamp(v0 * v1, -1., 1.)) * 3.5 /* speed */;
+
+		// Create quaternion from axis, angle for rotation
+		auto q = angle_axis(angle, ax.normalized());
+		
+		// Translate view to origin for pivot
+		auto [min, max] = box;
+		auto c = (min + max) * .5f;
+
+		view = translate(view, c);
+
+		// Rotate view
+		view[0] = rotate(view[0], q);
+		view[1] = rotate(view[1], q);
+		view[2] = rotate(view[2], q);
+
+		// Translate view back
+		view = translate(view, -c);
+
+
+		// Just update to know where is the camera
+		// vec4 position(_pos.x, _pos.y, _pos.z, 1);
+		// vec4 pivot(_lookAt.x, _lookAt.y, _lookAt.z, 1);
+		// position = (q * (position - pivot)) + pivot;
+		// _pos = position;
+
+		auto cameraMatrix = view.invert();
+		auto camPos = cameraMatrix[3];
+		
+		// std::cout << "eye: " << _pos.x << ", " << _pos.y << ", " << _pos.z <<  std::endl;
+		// std::cout << "cam pos: " << camPos.x << ", " << camPos.y << ", " << camPos.z << ", " << camPos.w << std::endl;
+
+		pos = {camPos[0], camPos[1], camPos[2]};
+
+	}
 
 	mat4x4  view_matrix() override {
 		return view;
 	}
 
-	void update() override {
+	void update() override;
 
+	// Utils
+	Quaternion angle_axis(double angle, vec3 ax) {
+		double half_angle = angle * 0.5;
+		Quaternion q;
+		q.v = ax * sin(half_angle);
+		q.w = cos(half_angle);
+		return q;
+	}
+
+	vec3 rotatev3(vec3 v, Quaternion q) {
+		// Convert vec3 to quaternion (pure quaternion with w=0)
+		Quaternion p;
+		p.v = v;
+		p.w = 0.0;
+		
+		// Rotate: q * p * q_conjugate
+		Quaternion q_conj;
+		q_conj.v = -q.v;
+		q_conj.w = q.w;
+		
+		Quaternion result = q * p * q_conj;
+		return result.v;
+	}
+
+	vec4 rotate(vec4 v, Quaternion q) {
+		vec3 v3{v.data[0], v.data[1], v.data[2]};
+		vec3 res = rotatev3(v3, q);
+		return vec4{res.x, res.y, res.z, 0};
+	}
+
+	mat4x4 translate(mat4x4 m, vec3 v) {
+		mat4x4 res(m);
+		res[3] = m[0] * v[0] + m[1] * v[1] + m[2] * v[2] + m[3];
+		return res;
 	}
 
 	private:
