@@ -121,7 +121,8 @@ find_package(OpenGL REQUIRED)
 
 add_executable(Hexel
     src/main.cpp
-    src/core.cpp
+    src/core/core.cpp
+    src/core/camera.h src/core/camera.cpp
 )
 
 
