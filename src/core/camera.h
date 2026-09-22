@@ -176,11 +176,11 @@ struct TrackballCamera : public CameraInterface {
 		// Compute view rect size and divide by screen rect size 
 		// to get how many world unit per pixel
 		auto b = bounds();
-		vec2 viewDims{b.data[1] - b.data[0], b.data[3] - b.data[2]};
-		vec2 worldUnitPerPixel = div(viewDims, screen_size);
+		vec2 view_dims{b.data[1] - b.data[0], b.data[3] - b.data[2]};
+		vec2 world_unit_per_pixel = div(view_dims, screen_size);
 
 		// Get offset in world coordinates
-		vec2 offset = mul(worldUnitPerPixel, delta);
+		vec2 offset = mul(world_unit_per_pixel, delta);
 
         vec3 right = view.transpose()[0].xyz();
         vec3 up = view.transpose()[1].xyz();

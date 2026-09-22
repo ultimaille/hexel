@@ -24,10 +24,14 @@ void TrackballCamera::update(){
 		*/
 		zoom(wheel);
 	}
-	if(!God::mouse.mouseDragging[1]) return;
+	
 	if(God::keys.pressed(ImGuiKey_LeftCtrl)) {
-		rotate({God::mouse.lastx, God::mouse.lasty}, {God::mouse.x, God::mouse.y});
-	} else {
-		
+		if (God::mouse.mouseDragging[0]) {
+			auto dx = God::mouse.x - God::mouse.lastx;
+			auto dy = God::mouse.y - God::mouse.lasty;
+			pan({dx, dy});
+		} else if (God::mouse.mouseDragging[1]) {
+			rotate({God::mouse.lastx, God::mouse.lasty}, {God::mouse.x, God::mouse.y});
+		} 
 	}
 }
