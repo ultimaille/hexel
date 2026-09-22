@@ -139,7 +139,7 @@ endfunction()
 
 set_folder_recursive(
     "${fmt_SOURCE_DIR}"
-    "Dependencies/fmt"
+    "Dependencies"
 )
 
 # ============================================================
