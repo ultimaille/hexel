@@ -7,7 +7,7 @@
 using namespace UM;
 
 struct CameraInterface{
-    virtual ~CameraInterface() = default;
+	virtual ~CameraInterface() = default;
 	virtual mat4x4  projection_matrix(float width,float height)=0;
 	virtual mat4x4  view_matrix()=0;
 	virtual void update()=0;
@@ -106,7 +106,8 @@ struct TrackballCamera : public CameraInterface {
 		// Screen coords to NDC
 		vec2 v{p.x / screen_size.x * 2. - 1., -(p.y / screen_size.y * 2. - 1.)};
 		// v = -v / 1.96f; // Division make the sphere radius greater than 1
-		// Division make the sphere radius greater than 1 therefore the border of the sphere is out of screen and this enable to not drag out of the sphere
+		// Division make the sphere radius greater than 1 
+		// therefore the border of the sphere is out of screen and this enable to not drag out of the sphere
 		v = -v / 2.;
 
 		// Compute magnitude of v (dist² to the center)
@@ -170,6 +171,27 @@ struct TrackballCamera : public CameraInterface {
 
 	}
 
+	/*
+	void pan(vec2 delta) {
+		// Compute view rect size and divide by screen rect size 
+		// to get how many world unit per pixel
+		auto b = bounds();
+		vec2 viewDims{b.data[1] - b.data[0], b.data[3] - b.data[2]};
+		vec2 worldUnitPerPixel = div(viewDims, _screen);
+
+		// Get offset in world coordinates
+		vec2 offset = mul(worldUnitPerPixel, delta);
+
+		vec3 right = getRightVector();
+		vec3 up = getUpVector();
+
+
+		_view = sl::translate(_view, right * offset.x + up * -offset.y);
+
+		_pos = sl::vec4to3(_view.invert()[3]);
+	}
+	*/
+
 	void zoom(double delta) {
 		// fine-tuned using desmos graph with formula: (1/\ (1+\exp(-(x-c)/w)))*m*2
 		// goal is to have greater factor when around _zoomFactor >= 1
@@ -212,15 +234,34 @@ struct TrackballCamera : public CameraInterface {
 	}
 
 	vec4 rotate(vec4 v, Quaternion q) {
-		vec3 v3{v.data[0], v.data[1], v.data[2]};
-		vec3 res = rotatev3(v3, q);
-		return vec4{res.x, res.y, res.z, 0};
+		// Convert vec3 to quaternion (pure quaternion with w=0)
+		Quaternion p;
+		p.v = v.xyz();
+		p.w = 0.0;
+		
+		// Rotate: q * p * q_conjugate
+		Quaternion q_conj;
+		q_conj.v = -q.v;
+		q_conj.w = q.w;
+		
+		Quaternion result = q * p * q_conj;
+
+		vec3 res = result.v;
+		return {res.x, res.y, res.z, 0};
 	}
 
 	mat4x4 translate(mat4x4 m, vec3 v) {
 		mat4x4 res(m);
 		res[3] = m[0] * v[0] + m[1] * v[1] + m[2] * v[2] + m[3];
 		return res;
+	}
+
+	inline vec2 div(vec2 a, vec2 b) {
+		return {a.x / b.x, a.y / b.y};
+	}
+
+	inline vec2 mul(vec2 a, vec2 b) {
+		return {a.x * b.x, a.y * b.y};
 	}
 
 	// Sigmoid function for smooth zooming
