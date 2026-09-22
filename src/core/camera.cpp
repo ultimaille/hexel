@@ -22,6 +22,7 @@ void TrackballCamera::update(){
 		zoom_factor *= (1.+.1*wheel);
 		zoom_factor = std::clamp(zoom_factor,.2,5.);
 		*/
+		zoom(wheel);
 	}
 	if(!God::mouse.mouseDragging[1]) return;
 	if(!God::keys.pressed(ImGuiKey_LeftCtrl)) return;

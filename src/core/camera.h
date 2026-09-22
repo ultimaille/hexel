@@ -134,7 +134,7 @@ struct TrackballCamera : public CameraInterface {
 			return;
 
 		// Compute angle between the two points on sphere
-		double angle = acos(std::clamp(v0 * v1, -1., 1.)) * 3.5 /* speed */;
+		double angle = acos(std::clamp(v0 * v1, -1., 1.)) * 8.5 /* speed */;
 
 		// Create quaternion from axis, angle for rotation
 		auto q = angle_axis(angle, ax.normalized());
@@ -168,6 +168,17 @@ struct TrackballCamera : public CameraInterface {
 
 		pos = {camPos[0], camPos[1], camPos[2]};
 
+	}
+
+	void zoom(double delta) {
+		// fine-tuned using desmos graph with formula: (1/\ (1+\exp(-(x-c)/w)))*m*2
+		// goal is to have greater factor when around _zoomFactor >= 1
+		// Change m (max_value) for adjusting speed, but this influences c, w (center, width)
+		// Maybe we can found formula to adjust c, w automatically given m
+		// or just multiplying delta will be sufficient...
+		double factor = sigmoid(zoom_factor, 0.8f, 0.2f, 0.08f /* factor (max slope of sigmoid) */);
+		
+		zoom_factor = std::clamp(zoom_factor + delta * factor, 0., 10.);
 	}
 
 	mat4x4  view_matrix() override {
@@ -210,6 +221,11 @@ struct TrackballCamera : public CameraInterface {
 		mat4x4 res(m);
 		res[3] = m[0] * v[0] + m[1] * v[1] + m[2] * v[2] + m[3];
 		return res;
+	}
+
+	// Sigmoid function for smooth zooming
+	float sigmoid(float x, float center=45.f, float w = 90.f, float max_value = 1.f) {
+		return (1.f / (1.f + std::exp(-(x - center) / w))) * max_value * 2.;
 	}
 
 	private:
