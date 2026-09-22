@@ -25,7 +25,9 @@ void TrackballCamera::update(){
 		zoom(wheel);
 	}
 	if(!God::mouse.mouseDragging[1]) return;
-	if(!God::keys.pressed(ImGuiKey_LeftCtrl)) return;
-
-	rotate({God::mouse.lastx, God::mouse.lasty}, {God::mouse.x, God::mouse.y});
+	if(God::keys.pressed(ImGuiKey_LeftCtrl)) {
+		rotate({God::mouse.lastx, God::mouse.lasty}, {God::mouse.x, God::mouse.y});
+	} else {
+		
+	}
 }

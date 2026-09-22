@@ -171,26 +171,23 @@ struct TrackballCamera : public CameraInterface {
 
 	}
 
-	/*
+	
 	void pan(vec2 delta) {
 		// Compute view rect size and divide by screen rect size 
 		// to get how many world unit per pixel
 		auto b = bounds();
 		vec2 viewDims{b.data[1] - b.data[0], b.data[3] - b.data[2]};
-		vec2 worldUnitPerPixel = div(viewDims, _screen);
+		vec2 worldUnitPerPixel = div(viewDims, screen_size);
 
 		// Get offset in world coordinates
 		vec2 offset = mul(worldUnitPerPixel, delta);
 
-		vec3 right = getRightVector();
-		vec3 up = getUpVector();
+        vec3 right = view.transpose()[0].xyz();
+        vec3 up = view.transpose()[1].xyz();
 
-
-		_view = sl::translate(_view, right * offset.x + up * -offset.y);
-
-		_pos = sl::vec4to3(_view.invert()[3]);
+		view = translate(view, right * offset.x + up * -offset.y);
+		pos = view.invert()[3].xyz();
 	}
-	*/
 
 	void zoom(double delta) {
 		// fine-tuned using desmos graph with formula: (1/\ (1+\exp(-(x-c)/w)))*m*2
