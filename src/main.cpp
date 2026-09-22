@@ -10,7 +10,7 @@
 
 #include <string>
 
-#include "core/basic.h"
+#include <ultimaille/all.h>
 #include "core/core.h"
 
 

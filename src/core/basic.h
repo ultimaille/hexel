@@ -4,9 +4,9 @@
 #define plop(x) {std::cerr << "|plop|=>"<<" line:"<< __LINE__ <<"  "<< #x <<" : " <<x<< "     in  "<< __FILE__ <<std::endl;}
 
 struct Log{
-	inline static void add(std::string msg0,std::string msg1=""){ std::cerr<<"INFO: "     <<msg0<<" "<<msg1<<std::endl; }
-	inline static void error(std::string msg0,std::string msg1=""){ std::cerr<<"ERROR: "    <<msg0<<" "<<msg1<<std::endl; }
-	inline static void abort(std::string msg0,std::string msg1=""){ std::cerr<<"FATAL ERROR"<<msg0<<" "<<msg1<<std::endl; }
+    inline static void add(std::string msg0,std::string msg1=""){ std::cerr<<"INFO: "     <<msg0<<" "<<msg1<<std::endl; }
+    inline static void error(std::string msg0,std::string msg1=""){ std::cerr<<"ERROR: "    <<msg0<<" "<<msg1<<std::endl; }
+    inline static void abort(std::string msg0,std::string msg1=""){ std::cerr<<"FATAL ERROR"<<msg0<<" "<<msg1<<std::endl; }
 };
 
 // Registry<T> is a lightweight named container for polymorphic objects (=> all stored types must inherit from T).
@@ -114,52 +114,3 @@ struct Registry {
     }
 };
 
-/*
-
-namespace TestAndDocForNamedCollections{
-struct A{ void init(int i){ value = i; }	virtual int val(){ return value; }int value=0; };
-struct B:public A{ virtual int val(){ return value+1; } };
-
-	template<class Collection>
-	void test_named_collections(Collection& collection){
-
-
-		// WARNING: add only empty elements: A and B must have default constructors !
-		B& b = collection.template emplace_back<B>("B");  // to add an element, we need to specify its class (derived)
-		A& a = collection.emplace_back("A");		// elements of the root class don't need explicit type
-
-		// constructors are replaced by init methods that can be directly called here
-		collection.template emplace_back<B>("C").init(3);
-
-		// acces to methods/members works as expected
-		std::cerr<<"a value/val      "<< a.value<<"   "<<a.val()<<std::endl;
-		std::cerr<<"b value/val      "<< b.value<<"   "<<b.val()<<std::endl;
-		b.value=10;
-		std::cerr<<"new b value/val  "<< b.value<<"   "<<b.val()<<std::endl;
-
-		// acces by operator []
-		std::cerr<<"acces by []  "<< collection["C"].value<<"   "<<collection["C"].val()<<std::endl;
-
-		// can test and acces to data from their names
-		if(collection.contains("A")) std::cerr<<" A exists "<<collection["A"].val()<<std::endl;
-		if(collection.contains("D")) std::cerr<<" C exists "<<collection["C"].val()<<std::endl;
-		collection.template emplace_back<B>("D").init(40);
-		if(collection.contains("D")) std::cerr<<" C exists "<<collection["C"].val()<<std::endl;
-
-		// can iterate on the collection
-		for(auto &[name,obj]:collection.registry)	std::cerr<<"  ===  "<<name<<"  "<<obj->val(); std::cerr<<std::endl;
-
-	};
-
-	void test_named_collections(){
-////	NamedMap<A>    amap; test_named_collections(amap);
-////	plop(amap.has("A")); amap.remove("A"); plop(amap.has("A"));
-
-		Registry<A> avec; test_named_collections(avec);
-		// with the vector, we can use direct access for e.g. iterating directly on indices
-		FOR(i,avec.size())	std::cerr<<"  ===  "<<i<<"  "<<avec[i].val(); std::cerr<<std::endl;
-		avec.pop_back();
-		FOR(i,avec.size())	std::cerr<<"  ===  "<<i<<"  "<<avec[i].val(); std::cerr<<std::endl;
-	}
-};
-*/

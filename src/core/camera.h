@@ -53,16 +53,10 @@ struct OrthographicCamera: public CameraInterface{
 		return rx*ry;
 	}
 	virtual void update();
-
 };
 
-
-
-
-
-
-struct Camera{
-	Camera(){
+struct Camera {
+	Camera() {
 		impl = std::make_unique<OrthographicCamera>();
 	}
 	float* projection(float width,float height){
@@ -80,3 +74,4 @@ struct Camera{
 
 	std::unique_ptr<CameraInterface> impl;
 };
+
