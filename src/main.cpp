@@ -86,7 +86,7 @@ struct RenderLambertTriangles: public RenderLayer{
 		if(!God::xcf.contains(mm_name)) return false;
 		if(!God::xcf[mm_name].triangles.contains(triangle_name)) return false;
 //	if (!God::xcf[mm_name].triangles[triangle_name].modified) return true; // TODO: obsolete, à refaire avec la newsletter
-		Log::add("need to update vbo");
+		// Log::add("need to update vbo");
 		return true;
 	}
 
@@ -281,6 +281,8 @@ int main(){
 		God::layers.render();
 		God::panels.show_gui();
 		root_mode->define_gui();
+		if (!ImGui::GetIO().WantCaptureMouse)
+			God::mouse.update();
 		if(!ImGui::GetIO().WantCaptureKeyboard)
 			God::keys.update();
 		God::context.end_frame();

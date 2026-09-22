@@ -122,6 +122,8 @@ struct MouseState{
 		return ret;
 	}
 
+	void update();
+
 
 	bool mouseDragging[3] ;
 	double lastx,lasty,x,y;
