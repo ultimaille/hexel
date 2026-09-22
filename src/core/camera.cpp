@@ -12,4 +12,3 @@ void OrthographicCamera::update(){
 	rotX += .01*(God::mouse.y-God::mouse.lasty); rotX = std::clamp(rotX,-M_PI,M_PI);
 	rotY -= .01*(God::mouse.x-God::mouse.lastx); rotY = std::clamp(rotY,-M_PI/2.,M_PI/2.);
 }
-

@@ -1,4 +1,6 @@
 #pragma once
+#include <algorithm>
+
 #include <ultimaille/all.h>
 #include "basic.h"
 
@@ -9,6 +11,127 @@ struct CameraInterface{
 	virtual mat4x4  projection_matrix(float width,float height)=0;
 	virtual mat4x4  view_matrix()=0;
 	virtual void update()=0;
+};
+
+struct TrackballCamera : public CameraInterface {
+
+	double zoom_factor;
+	std::tuple<vec3, vec3> box;
+	vec2 screen_size;
+	double near_plane = 0.1, far_plane = 100.;
+	vec3 pos;
+
+	TrackballCamera() {
+		look_at_box({{-1.,-1.,-1.}, {1.,1.,1.}});
+	}
+
+	mat4x4 ortho(double left, double right, double bottom, double top, double zNear, double zFar) {
+		mat4x4 res = mat4x4::identity();
+		res[0][0] = 2. / (right - left);
+		res[1][1] = 2. / (top - bottom);
+		res[2][2] = - 2. / (zFar - zNear);
+		res[3][0] = - (right + left) / (right - left);
+		res[3][1] = - (top + bottom) / (top - bottom);
+		res[3][2] = - (zFar + zNear) / (zFar - zNear);
+		return res;
+	}
+
+	vec4 bounds() {
+		double z = zoom_factor + 0.00001f; // Add eps to avoid screen size = 0 at 100%
+
+		auto [min, max] = box;
+		auto wh = max - min;
+		auto half = wh / 2.f;
+
+		auto c = (min + max) * .5f;
+
+		double bound = wh.x > wh.y ? half.x : half.y;
+
+		double aspect = screen_size.x / screen_size.y;
+
+		return {
+			-bound * aspect * z,
+			bound * aspect * z,
+			-bound * z,
+			bound * z
+		};
+	}
+
+	mat4x4 projection_matrix(float width, float height) override {
+		screen_size = {width, height};
+		auto b = bounds();
+		return ortho(b.data[0], b.data[1], b.data[2], b.data[3], near_plane, far_plane);
+	}
+
+	mat4x4 look_at(vec3 eye, vec3 center, vec3 up) {
+		vec3 f = (center - eye).normalized();
+		vec3 s = cross(f, up).normalized();
+		vec3 u = cross(s, f);
+
+		mat4x4 res;
+		res[0][0] = s.x;
+		res[1][0] = s.y;
+		res[2][0] = s.z;
+		res[3][0] = 0;
+		res[0][1] = u.x;
+		res[1][1] = u.y;
+		res[2][1] = u.z;
+		res[3][1] = 0;
+		res[0][2] = -f.x;
+		res[1][2] = -f.y;
+		res[2][2] = -f.z;
+		res[3][2] = 0;
+		res[3][0] = -(s * eye);
+		res[3][1] = -(u * eye);
+		res[3][2] = (f * eye);
+		res[3][3] = 1;
+
+		return res;
+	}
+
+	void look_at_box(std::tuple<vec3, vec3> box) {
+		zoom_factor = 1.f;
+
+		auto [min, max] = box;
+		auto c = (min + max) * .5f;
+
+		// Setup view matrix
+		pos = {c.x, c.y, c.z + (max - min).norm2()};
+		
+		view = look_at(pos, c, {0.f, 1.f, 0.f} /* up vector */);
+		this->box = box;
+	}
+
+    vec3 mouse_to_sphere(vec2 p) {
+        // Screen coords to NDC
+        vec2 v{p.x / screen_size.x * 2. - 1., -(p.y / screen_size.y * 2. - 1.)};
+        // v = -v / 1.96f; // Division make the sphere radius greater than 1
+        // Division make the sphere radius greater than 1 therefore the border of the sphere is out of screen and this enable to not drag out of the sphere
+        v = -v / 2.;
+
+        // Compute magnitude of v (dist² to the center)
+        double mag = v * v;
+        vec3 p3{v.x, v.y, 0.};
+
+        if (mag > 1.0) {
+            p3 = p3.normalized();
+        } else {
+            p3 = {p3.x, p3.y, -sqrt(1.0 - mag)};
+        }
+
+        return p3;
+    }
+
+	mat4x4  view_matrix() override {
+		return view;
+	}
+
+	void update() override {
+
+	}
+
+	private:
+	mat4x4 view;
 };
 
 struct OrthographicCamera: public CameraInterface{
@@ -53,11 +176,13 @@ struct OrthographicCamera: public CameraInterface{
 		return rx*ry;
 	}
 	virtual void update();
+
 };
 
 struct Camera {
 	Camera() {
-		impl = std::make_unique<OrthographicCamera>();
+		// impl = std::make_unique<OrthographicCamera>();
+		impl = std::make_unique<TrackballCamera>();
 	}
 	float* projection(float width,float height){
 		mat4x4 m = impl->projection_matrix(width,height);
