@@ -271,8 +271,8 @@ int main(){
 	InteractionMode::HexEdit look;
 	InteractionMode::AbstractMode* root_mode=&look;
 
-	God::panels.panels.emplace_back<XCFViewer>("xcf_window");
-	God::panels.panels.emplace_back<LayerViewer>("layer_window");
+	God::panels.emplace_back<XCFViewer>("xcf_window");
+	God::panels.emplace_back<LayerViewer>("layer_window");
 	while(God::context.window_is_active()){
 		glfwPollEvents();
 		God::camera.update();

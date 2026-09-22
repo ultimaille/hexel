@@ -23,7 +23,7 @@ struct LayerManager: public Registry<RenderLayer> {
 		for (auto& [name,obj] : *this)
             obj->render();
 	}
-	void sync(){
+	void sync(){ // TODO: separate the cleanup logic from the update
 		FOR(i,size()) if (!operator[](i).resync_with_data()){
 			std::swap(items[i],items.back());
 			pop_back();
