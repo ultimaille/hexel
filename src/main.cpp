@@ -283,7 +283,7 @@ int main(){
 		root_mode->define_gui();
 		if (!ImGui::GetIO().WantCaptureMouse)
 			God::mouse.update();
-		if(!ImGui::GetIO().WantCaptureKeyboard)
+		if(!ImGui::GetIO().WantCaptureKeyboard || !ImGui::GetIO().WantCaptureMouse)
 			God::keys.update();
 		God::context.end_frame();
 	}
