@@ -9,10 +9,10 @@ namespace God {
     InteractionMode::AbstractMode* root_mode;
     MouseState mouse;
     KeyboardState keys;
-    Context context;
+    WindowContext context;
     Camera camera;
     std::vector<Event> events;
-    WindowManager win_manager;
+    PanelManager pan_manager;
 }
 
 

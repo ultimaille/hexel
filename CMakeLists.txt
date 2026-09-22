@@ -121,10 +121,12 @@ find_package(OpenGL REQUIRED)
 
 add_executable(Hexel
     src/main.cpp
-    src/core/core.cpp
+    src/core/basic.h
+    src/core/picker.h
+    src/core/core.h src/core/core.cpp
     src/core/camera.h src/core/camera.cpp
+    src/core/xcf.h src/core/xcf.cpp
 )
-
 
 target_link_libraries(Hexel PRIVATE
     ultimaille
@@ -132,3 +134,4 @@ target_link_libraries(Hexel PRIVATE
     glad_gl_core_33
     OpenGL::GL
 )
+

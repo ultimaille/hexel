@@ -1,3 +1,5 @@
+#pragma once
+
 #include <map>
 #include <fstream>
 #include <glad/gl.h>
@@ -7,30 +9,11 @@
 #include <imgui_impl_opengl3.h>
 
 #include <ultimaille/all.h>
+
 #include "basic.h"
-
 #include "camera.h"
-
-using namespace UM;
-
-
-struct Picker{
-	float* data; int w;int h; // any image structure would work
-	//Picker(){God::layers.produce_picking_image(data);}
-	//std::tuple<int,int> at(vec2 uv){
-		//...
-		//return {layerid,primitiveid};
-	//}
-	
-};
-
-// -------------------------------------------------------------------------------
-//                                    CAMERA
-// -------------------------------------------------------------------------------
-// => Access direct dans God::camera
-// => possibilité de changer via l'implementation
-
-
+#include "picker.h"
+#include "xcf.h"
 
 
 // -------------------------------------------------------------------------------
@@ -47,7 +30,7 @@ void mouse_button_callback(GLFWwindow* window,int button,int action,int mods);
 void cursor_position_callback(GLFWwindow* window,double mouseX,double mouseY);
 void scroll_callback(GLFWwindow* window,double xOffset,double yOffset);
 
-struct Context{
+struct WindowContext{
 
 	void init(int w=1000,int h=1000){
 		init_glfw(w,h);
@@ -55,7 +38,7 @@ struct Context{
 		init_imgui();
 		init_mouse_call_backs();
 	}
-	~Context(){
+	~WindowContext(){
 		// Not sure I want to quit nicely... especially after the main
 		//ImGui_ImplOpenGL3_Shutdown();
 		//ImGui_ImplGlfw_Shutdown();
@@ -135,46 +118,6 @@ struct Context{
 
 
 
-
-// -------------------------------------------------------------------------------
-//                                    XCF
-// -------------------------------------------------------------------------------
-// => placeholder 
-
-struct MultiMesh{
-	template<class Mesh,class Attributes>
-	struct MeshAttr{
-		Mesh mesh;
-		Attributes attributes;
-	};
-
-
-
-	PointSet points;
-    std::map<std::string, MeshAttr<Triangles, SurfaceAttributes>> triangles;
-
-	void load(std::string filename, bool connect = true){
-		std::filesystem::path path(filename);
-		std::string triname = path.stem().string();
-        if (triangles.contains(triname))
-            um_assert(false && "duplicate mesh name");
-        triangles.try_emplace(triname);
-        auto& [tri, attributes] = triangles[triname];
-		attributes = read_by_extension(filename, tri);
-		if(connect) tri.connect();
-	}
-
-};
-
-struct XCF: public std::map<std::string, MultiMesh> {
-	void load_multimesh(std::string filename,bool connect = true){
-		std::string triname = std::filesystem::path(filename).stem().string();
-        if (contains(triname))
-            um_assert(false && "duplicate multimesh name");
-        auto &multimesh = (*this)[triname];
-        multimesh.load(filename, connect);
-	}
-};
 
 // -------------------------------------------------------------------------------
 //                                    ShaderManager
@@ -317,17 +260,17 @@ struct KeyboardState{
 };
 
 // -------------------------------------------------------------------------------
-//                                    Windows to explore things (layers/xcf/etc.)
+//                                    Panels to explore things (layers/xcf/etc.)
 // -------------------------------------------------------------------------------
 // => are more or less independant of the mode
-struct Window{
-    virtual ~Window() = default;
+struct Panel{
+    virtual ~Panel() = default;
 	virtual void generate_gui()=0;
 };
-struct WindowManager{
-	Registry<Window> wins;
+struct PanelManager{
+	Registry<Panel> panels;
 	void show_gui(){
-		for(auto& [name,obj]:wins.registry) obj->generate_gui();
+		for(auto& [name,obj] : panels.registry) obj->generate_gui();
 	}
 };
 
@@ -375,10 +318,10 @@ namespace God{
 	extern Camera camera;
 	extern LayerManager layers;							// layers to be combined into the final rendering
 
-	extern WindowManager win_manager;
+	extern PanelManager pan_manager;
 
 	// API dependant 
-	extern Context context;
+	extern WindowContext context;
 	extern ShaderManager shaders;
 };
 
