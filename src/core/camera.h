@@ -43,12 +43,6 @@ struct CameraPose {
         pivot += right()*delta.x + up()*delta.y;
     }
 
-//  // move the camera toward/away from the pivot.
-//  void zoom(double factor) {
-//      um_assert(factor > 0);
-//      distance *= factor;
-//  }
-
     mat4x4 matrix() const {
         const mat3x3 R = orientation.rotation_matrix();
         const vec3   p = position();
@@ -147,22 +141,14 @@ struct TrackBallCamera : CameraInterface {
     void pan(vec2 delta, vec2 viewport) {
         um_assert(viewport.x > 0);
         um_assert(viewport.y > 0);
-
-        // Orthographic world units represented by one vertical pixel.
         const double world_units_per_pixel = projection.view_height / viewport.y;
-
         pose.pan({ -delta.x * world_units_per_pixel, delta.y * world_units_per_pixel });
     }
 
-
-    // Arcball rotation. The quaternion returned by trackball_rotation()
-    // is expressed in camera-local/screen coordinates, so apply it on
-    // the right side of the local-to-world orientation.
     void rotate(vec2 previous, vec2 current, vec2 viewport) {
         Quaternion q = trackball_rotation(previous, current, viewport);
         pose.orientation = pose.orientation * q;
     }
-
 
     mat4x4 projection_matrix() override {
         return projection.matrix();
@@ -177,8 +163,8 @@ struct TrackBallCamera : CameraInterface {
 
 
 
-#if 0
-struct TrackballCamera : public CameraInterface {
+#if 1
+struct TrackBallCameraBenjamin : public CameraInterface {
 
     double zoom_factor;
     std::tuple<vec3, vec3> box;
@@ -186,7 +172,7 @@ struct TrackballCamera : public CameraInterface {
     double near_plane = 0.1, far_plane = 100.;
     vec3 pos;
 
-    TrackballCamera() {
+    TrackBallCameraBenjamin() {
         look_at_box({{-1.,-1.,-1.}, {1.,1.,1.}});
     }
 
@@ -222,8 +208,8 @@ struct TrackballCamera : public CameraInterface {
         };
     }
 
-    mat4x4 projection_matrix(float width, float height) override {
-        screen_size = {width, height};
+    mat4x4 projection_matrix() override {
+//      screen_size = {width, height};
         auto b = bounds();
         return ortho(b.data[0], b.data[1], b.data[2], b.data[3], near_plane, far_plane);
     }
@@ -436,50 +422,10 @@ struct TrackballCamera : public CameraInterface {
 };
 #endif
 
-struct OrthographicCamera: public CameraInterface {
-    double zoom = 1.;
-    double rotX = 0.;
-    double rotY = 0.;
-
-    OrthographicProjection projection = {};
-
-    void resize(double width, double height) {
-        um_assert(width  > 0);
-        um_assert(height > 0);
-        projection.set_aspect_ratio(width/height);
-    }
-
-    mat4x4 projection_matrix() override {
-        mat4x4 m = projection.matrix();
-        m[3][3] /= zoom;
-        return m;
-    }
-
-    mat4x4 view_matrix() override {
-        mat4x4 rx= mat4x4::identity();
-        mat4x4 ry= mat4x4::identity();
-        {
-            double s = std::sin(rotX);
-            double c = std::cos(rotX);
-            rx[1][1] = c;  rx[1][2] = s;
-            rx[2][1] = -s; rx[2][2] = c;
-        }
-        {
-            double s = std::sin(rotY);
-            double c = std::cos(rotY);
-            ry[0][0] = c;  ry[0][2] = s;
-            ry[2][0] = -s; ry[2][2] = c;
-        }
-        return rx*ry;
-    }
-    virtual void update();
-
-};
-
 struct Camera {
     Camera() {
-       // impl = std::make_unique<OrthographicCamera>();
-        impl = std::make_unique<TrackBallCamera>();
+      impl = std::make_unique<TrackBallCameraBenjamin>();
+//        impl = std::make_unique<TrackBallCamera>();
     }
 
     float* projection(){
