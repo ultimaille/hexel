@@ -14,6 +14,7 @@ void OrthographicCamera::update(){
 	rotY -= .01*(God::mouse.x-God::mouse.lastx); rotY = std::clamp(rotY,-M_PI/2.,M_PI/2.);
 }
 
+#if 0
 void TrackballCamera::update(){
 	double wheel = God::mouse.get_wheel_event();
 	if(wheel!=0) {
@@ -35,3 +36,4 @@ void TrackballCamera::update(){
 		} 
 	}
 }
+#endif
