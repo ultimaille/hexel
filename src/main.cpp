@@ -150,12 +150,12 @@ struct RenderLambertTriangles: public RenderLayer{
 		glUseProgram(shaderProgram);
 
 		glBindVertexArray(VAO);
-		float model[16] = {1,0,0,0 ,0,1,0,0, 0,0,1,0 ,0,0,0,1};
-		auto [w,h] = God::context.screen_size();
-		glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"projection"),1,GL_FALSE,God::camera.projection(w,h));
+		const float model[16] = {1,0,0,0 ,0,1,0,0, 0,0,1,0 ,0,0,0,1};
+////	auto [w,h] = God::context.screen_size();
+		glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"projection"),1,GL_TRUE,God::camera.projection());
 
-		glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"view"),1,GL_FALSE,God::camera.view());
-		glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"model"),1,GL_FALSE,model);
+		glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"view"),1,GL_TRUE,God::camera.view());
+		glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"model"),1,GL_TRUE,model);
 
 		glUniform3f(glGetUniformLocation(shaderProgram,"lightPos"),1.0f,1.0f,0.0f);
 		glUniform3f(glGetUniformLocation(shaderProgram,"lightColor"),0.9f,0.5f,0.5f);

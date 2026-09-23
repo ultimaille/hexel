@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <numbers>
+#include <array>
 
 #include <ultimaille/all.h>
 #include "basic.h"
@@ -9,9 +10,9 @@ using namespace UM;
 
 struct CameraInterface {
     virtual ~CameraInterface() = default;
-    virtual mat4x4  projection_matrix(float width,float height)=0;
-    virtual mat4x4  view_matrix()=0;
-    virtual void update()=0;
+    virtual mat4x4 projection_matrix() = 0;
+    virtual mat4x4 view_matrix()       = 0;
+    virtual void update()              = 0;
 };
 
 struct CameraPose {
@@ -97,42 +98,39 @@ inline Quaternion trackball_rotation(vec2 previous, vec2 current, vec2 viewport)
 }
 
 struct OrthographicProjection {
-    double left   = -1;
-    double right  =  1;
-    double bottom = -1;
-    double top    =  1;
-    double near = 1e-3;
-    double far  = 1e+4;
+    vec2 center = {};
+    double view_height = 2; // in world units
+    double aspect = 1;
+    double near = -1e+2;
+    double far  = +1e+2;
 
-    void validate() const {
-        um_assert(right > left);
-        um_assert(top > bottom);
-        um_assert(far > near);
-    }
-
-    double width() const {
-        return right - left;
-    }
-
-    double height() const {
-        return top - bottom;
-    }
-
-    double depth() const {
-        return far - near;
+    void resize(double width, double height) {
+        um_assert(width > 0);
+        um_assert(height > 0);
+        aspect = width / height;
     }
 
     mat4x4 matrix() const {
-        validate();
+        um_assert(aspect > 0);
+        um_assert(view_height > 0);
+        um_assert(far > near);
+
+        const double view_width = view_height * aspect;
+        const double left   = center.x - view_width /2;
+        const double right  = center.x + view_width /2;
+        const double bottom = center.y - view_height/2;
+        const double top    = center.y + view_height/2;
+
         return {{
-                { 2/width(), 0,          0,          -(right +   left)/width()  },
-                { 0,         2/height(), 0,          -(top   + bottom)/height() },
-                { 0,         0,          -2/depth(), -(far   +   near)/depth()  },
-                { 0,         0,          0,          1                          }
+            { 2 / (right - left), 0,                  0,                 -(right + left) / (right - left) },
+            { 0,                  2 / (top - bottom), 0,                 -(top + bottom) / (top - bottom) },
+            { 0,                  0,                  -2 / (far - near), -(far + near) / (far - near)     },
+            { 0,                  0,                  0,                 1                                }
         }};
     }
 };
 
+/*
 struct PerspectiveProjection {
     double fov_y = 45 * std::numbers::pi / 180;
     double near = 1e-3;
@@ -151,12 +149,13 @@ struct PerspectiveProjection {
         }};
     }
 };
+*/
 
 struct TrackBallCamera : CameraInterface {
     CameraPose pose;
     OrthographicProjection projection;
 
-    mat4x4 projection_matrix(float width, float height) override;
+    mat4x4 projection_matrix() override;
     mat4x4 view_matrix() override;
     void update() override;
 };
@@ -425,6 +424,7 @@ struct OrthographicCamera: public CameraInterface {
     double rotX = 0.;
     double rotY = 0.;
 
+    OrthographicProjection projection = {};
     /*
     mat4x4 ortho(double  left,double right,double bottom,double top,double zNear,double zFar){
         mat4x4 m;
@@ -438,10 +438,14 @@ struct OrthographicCamera: public CameraInterface {
     }
     */
 
-    virtual mat4x4 projection_matrix(float width,float height) {
-        mat4x4 m = mat4x4::identity();
-        m[0][0] = height/width;
-        m[2][2] = .5;
+    void resize(double width, double height) {
+        projection.resize(width, height);
+    }
+
+    virtual mat4x4 projection_matrix() {
+        mat4x4 m = projection.matrix();
+//      m[0][0] = height/width;
+//      m[2][2] = .5;
         FOR(d,3)m[d][d]*=zoom;
         return m;
     }
@@ -472,13 +476,19 @@ struct Camera {
         impl = std::make_unique<OrthographicCamera>();
         //impl = std::make_unique<TrackballCamera>();
     }
-    float* projection(float width,float height){
-        mat4x4 m = impl->projection_matrix(width,height);
-        static float res[16]; FOR(i,16) res[i] = m[i/4][i%4]; return res;
+    float* projection(){
+        mat4x4 m = impl->projection_matrix();
+        static thread_local std::array<float, 16> result; // thread-local storage keeps the returned pointer valid after return.
+        for (int i = 0; i<16; ++i)
+            result[i] = static_cast<float>(m[i/4][i%4]);
+        return result.data();
     }
-    float* view(){
+    float* view() {
         mat4x4 m = impl->view_matrix();
-        static float res[16]; FOR(i,16) res[i] = m[i/4][i%4]; return res;
+        static thread_local std::array<float, 16> result;
+        for (int i = 0; i<16; ++i)
+            result[i] = static_cast<float>(m[i/4][i%4]);
+        return result.data();
     }
 
     void update(){
