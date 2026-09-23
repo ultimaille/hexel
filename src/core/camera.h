@@ -1,338 +1,196 @@
 #pragma once
 #include <algorithm>
+#include <numbers>
+#include <array>
 
 #include <ultimaille/all.h>
-#include "basic.h"
 
 using namespace UM;
 
-struct CameraInterface{
-	virtual ~CameraInterface() = default;
-	virtual mat4x4  projection_matrix(float width,float height)=0;
-	virtual mat4x4  view_matrix()=0;
-	virtual void update()=0;
+struct CameraInterface {
+    virtual ~CameraInterface()         = default;
+    virtual mat4x4 projection_matrix() = 0;
+    virtual mat4x4 view_matrix()       = 0;
+    virtual void update()              = 0;
 };
 
-struct TrackballCamera : public CameraInterface {
+struct CameraPose {
+    vec3 pivot = {};
+    Quaternion orientation = {}; // transforms camera-local vectors into world-space vectors
+    double distance = 1;
 
-	double zoom_factor;
-	std::tuple<vec3, vec3> box;
-	vec2 screen_size;
-	double near_plane = 0.1, far_plane = 100.;
-	vec3 pos;
+    CameraPose() = default;
 
-	TrackballCamera() {
-		look_at_box({{-1.,-1.,-1.}, {1.,1.,1.}});
-	}
+    vec3 position() const { return pivot + orientation.rotate({0, 0, distance}); }
+    vec3 forward()  const { return orientation.rotate({0, 0, -1}); }
+    vec3 up()       const { return orientation.rotate({0, 1,  0}); }
+    vec3 right()    const { return orientation.rotate({1, 0,  0}); }
 
-	mat4x4 ortho(double left, double right, double bottom, double top, double zNear, double zFar) {
-		mat4x4 res = mat4x4::identity();
-		res[0][0] = 2. / (right - left);
-		res[1][1] = 2. / (top - bottom);
-		res[2][2] = - 2. / (zFar - zNear);
-		res[3][0] = - (right + left) / (right - left);
-		res[3][1] = - (top + bottom) / (top - bottom);
-		res[3][2] = - (zFar + zNear) / (zFar - zNear);
-		return res;
-	}
+    // rotate the camera around the pivot
+    // q is a world-space rotation
+    void rotate(Quaternion q) {
+        orientation = q * orientation;
+    }
 
-	vec4 bounds() {
-		double z = zoom_factor + 0.00001f; // Add eps to avoid screen size = 0 at 100%
+    // translate the camera and pivot together in world space
+    void translate(vec3 delta) {
+        pivot += delta;
+    }
 
-		auto [min, max] = box;
-		auto wh = max - min;
-		auto half = wh / 2.f;
+    // pan in camera/screen space
+    void pan(vec2 delta) {
+        translate(right()*delta.x + up()*delta.y);
+    }
 
-		auto c = (min + max) * .5f;
-
-		double bound = wh.x > wh.y ? half.x : half.y;
-
-		double aspect = screen_size.x / screen_size.y;
-
-		return {
-			-bound * aspect * z,
-			bound * aspect * z,
-			-bound * z,
-			bound * z
-		};
-	}
-
-	mat4x4 projection_matrix(float width, float height) override {
-		screen_size = {width, height};
-		auto b = bounds();
-		return ortho(b.data[0], b.data[1], b.data[2], b.data[3], near_plane, far_plane);
-	}
-
-	mat4x4 look_at(vec3 eye, vec3 center, vec3 up) {
-		vec3 f = (center - eye).normalized();
-		vec3 s = cross(f, up).normalized();
-		vec3 u = cross(s, f);
-
-		mat4x4 res;
-		res[0][0] = s.x;
-		res[1][0] = s.y;
-		res[2][0] = s.z;
-		res[3][0] = 0;
-		res[0][1] = u.x;
-		res[1][1] = u.y;
-		res[2][1] = u.z;
-		res[3][1] = 0;
-		res[0][2] = -f.x;
-		res[1][2] = -f.y;
-		res[2][2] = -f.z;
-		res[3][2] = 0;
-		res[3][0] = -(s * eye);
-		res[3][1] = -(u * eye);
-		res[3][2] = (f * eye);
-		res[3][3] = 1;
-
-		return res;
-	}
-
-	void look_at_box(std::tuple<vec3, vec3> box) {
-		zoom_factor = 1.f;
-
-		auto [min, max] = box;
-		auto c = (min + max) * .5f;
-
-		// Setup view matrix
-		pos = {c.x, c.y, c.z + (max - min).norm2()};
-		
-		view = look_at(pos, c, {0.f, 1.f, 0.f} /* up vector */);
-		this->box = box;
-	}
-
-	vec3 mouse_to_sphere(vec2 p) {
-		// Screen coords to NDC
-		vec2 v{p.x / screen_size.x * 2. - 1., -(p.y / screen_size.y * 2. - 1.)};
-		// v = -v / 1.96f; // Division make the sphere radius greater than 1
-		// Division make the sphere radius greater than 1 
-		// therefore the border of the sphere is out of screen and this enable to not drag out of the sphere
-		v = -v / 2.;
-
-		// Compute magnitude of v (dist² to the center)
-		double mag = v * v;
-		vec3 p3{v.x, v.y, 0.};
-
-		if (mag > 1.0) {
-			p3 = p3.normalized();
-		} else {
-			p3 = {p3.x, p3.y, -sqrt(1.0 - mag)};
-		}
-
-		return p3;
-	}
-
-	void rotate(vec2 oldPos, vec2 newPos) {
-		// Compute 3D pos of 2D point on sphere
-		vec3 v0 = mouse_to_sphere(oldPos);
-		vec3 v1 = mouse_to_sphere(newPos);
-		// Compute axis of rotation from 3D points
-		vec3 ax = cross(v0, v1);
-
-		// Check length to avoid normalize issues (division by 0 can occurs)
-		if (ax.norm2() <= 0.00000001)
-			return;
-
-		// Compute angle between the two points on sphere
-		double angle = acos(std::clamp(v0 * v1, -1., 1.)) * 8.5 /* speed */;
-
-		// Create quaternion from axis, angle for rotation
-		auto q = angle_axis(angle, ax.normalized());
-		
-		// Translate view to origin for pivot
-		auto [min, max] = box;
-		auto c = (min + max) * .5f;
-
-		view = translate(view, c);
-
-		// Rotate view
-		view[0] = rotate(view[0], q);
-		view[1] = rotate(view[1], q);
-		view[2] = rotate(view[2], q);
-
-		// Translate view back
-		view = translate(view, -c);
-
-
-		// Just update to know where is the camera
-		// vec4 position(_pos.x, _pos.y, _pos.z, 1);
-		// vec4 pivot(_lookAt.x, _lookAt.y, _lookAt.z, 1);
-		// position = (q * (position - pivot)) + pivot;
-		// _pos = position;
-
-		auto cameraMatrix = view.invert();
-		auto camPos = cameraMatrix[3];
-		
-		// std::cout << "eye: " << _pos.x << ", " << _pos.y << ", " << _pos.z <<  std::endl;
-		// std::cout << "cam pos: " << camPos.x << ", " << camPos.y << ", " << camPos.z << ", " << camPos.w << std::endl;
-
-		pos = {camPos[0], camPos[1], camPos[2]};
-
-	}
-
-	
-	void pan(vec2 delta) {
-		// Compute view rect size and divide by screen rect size 
-		// to get how many world unit per pixel
-		auto b = bounds();
-		vec2 view_dims{b.data[1] - b.data[0], b.data[3] - b.data[2]};
-		vec2 world_unit_per_pixel = div(view_dims, screen_size);
-
-		// Get offset in world coordinates
-		vec2 offset = mul(world_unit_per_pixel, delta);
-
-        vec3 right = view.transpose()[0].xyz();
-        vec3 up = view.transpose()[1].xyz();
-
-		view = translate(view, right * offset.x + up * -offset.y);
-		pos = view.invert()[3].xyz();
-	}
-
-	void zoom(double delta) {
-		// fine-tuned using desmos graph with formula: (1/\ (1+\exp(-(x-c)/w)))*m*2
-		// goal is to have greater factor when around _zoomFactor >= 1
-		// Change m (max_value) for adjusting speed, but this influences c, w (center, width)
-		// Maybe we can found formula to adjust c, w automatically given m
-		// or just multiplying delta will be sufficient...
-		double factor = sigmoid(zoom_factor, 0.8f, 0.2f, 0.08f /* factor (max slope of sigmoid) */);
-		
-		zoom_factor = std::clamp(zoom_factor + delta * factor, 0., 10.);
-	}
-
-	mat4x4  view_matrix() override {
-		return view;
-	}
-
-	void update() override;
-
-	// Utils
-	Quaternion angle_axis(double angle, vec3 ax) {
-		double half_angle = angle * 0.5;
-		Quaternion q;
-		q.v = ax * sin(half_angle);
-		q.w = cos(half_angle);
-		return q;
-	}
-
-	vec3 rotatev3(vec3 v, Quaternion q) {
-		// Convert vec3 to quaternion (pure quaternion with w=0)
-		Quaternion p;
-		p.v = v;
-		p.w = 0.0;
-		
-		// Rotate: q * p * q_conjugate
-		Quaternion q_conj;
-		q_conj.v = -q.v;
-		q_conj.w = q.w;
-		
-		Quaternion result = q * p * q_conj;
-		return result.v;
-	}
-
-	vec4 rotate(vec4 v, Quaternion q) {
-		// Convert vec3 to quaternion (pure quaternion with w=0)
-		Quaternion p;
-		p.v = v.xyz();
-		p.w = 0.0;
-		
-		// Rotate: q * p * q_conjugate
-		Quaternion q_conj;
-		q_conj.v = -q.v;
-		q_conj.w = q.w;
-		
-		Quaternion result = q * p * q_conj;
-
-		vec3 res = result.v;
-		return {res.x, res.y, res.z, 0};
-	}
-
-	mat4x4 translate(mat4x4 m, vec3 v) {
-		mat4x4 res(m);
-		res[3] = m[0] * v[0] + m[1] * v[1] + m[2] * v[2] + m[3];
-		return res;
-	}
-
-	inline vec2 div(vec2 a, vec2 b) {
-		return {a.x / b.x, a.y / b.y};
-	}
-
-	inline vec2 mul(vec2 a, vec2 b) {
-		return {a.x * b.x, a.y * b.y};
-	}
-
-	// Sigmoid function for smooth zooming
-	float sigmoid(float x, float center=45.f, float w = 90.f, float max_value = 1.f) {
-		return (1.f / (1.f + std::exp(-(x - center) / w))) * max_value * 2.;
-	}
-
-	private:
-	mat4x4 view;
+    mat4x4 matrix() const {
+        const mat3x3 R = orientation.rotation_matrix();
+        const vec3   p = position();
+        const mat4x4 T = {{
+            {R[0][0], R[0][1], R[0][2], p.x},
+            {R[1][0], R[1][1], R[1][2], p.y},
+            {R[2][0], R[2][1], R[2][2], p.z},
+            {0,       0,       0,       1  }
+        }};
+        return T.invert();
+    }
 };
 
-struct OrthographicCamera: public CameraInterface{
-	double zoom = 1.;
-	double rotX = 0.;
-	double rotY = 0.;
+// compute the rotation generated by an arcball drag
+// previous and current are mouse positions in pixel coordinates;
+// viewport is the viewport size in pixels
+inline Quaternion arcball_rotation(vec2 previous, vec2 current, vec2 viewport) {
+    // map a screen position to the virtual trackball
+    const auto arcball_point = [](vec2 p, vec2 viewport) -> vec3 {
+        // the virtual sphere has radius 1 and is centered in the viewport
+        // the smaller viewport dimension is used so that the sphere remains circular
+        const auto [w, h] = viewport;
+        const double size = std::min(w, h);
 
-	mat4x4 ortho(double  left,double right,double bottom,double top,double zNear,double zFar){
-		mat4x4 m;
-		m[0][0] = 2. / (right - left);
-		m[1][1] = 2. / (top - bottom);
-		m[2][2] = - 2. / (zFar - zNear);
-		m[3][0] = - (right + left) / (right - left);
-		m[3][1] = - (top + bottom) / (top - bottom);
-		m[3][2] = - (zFar + zNear) / (zFar - zNear);
-		return m;
-	}
+        // screen coordinates:
+        //  (-1,+1) -------- (+1,+1)
+        //     |                |
+        //     |        0       |
+        //     |                |
+        //  (-1,-1) -------- (+1,-1)
 
-	virtual mat4x4 projection_matrix(float width,float height) {
-		mat4x4 m = mat4x4::identity();
-		m[0][0] = height/width;
-		m[2][2] = .5;
-		FOR(d,3)m[d][d]*=zoom;
-		return m;
-	}
+        const double x = (2*p.x - w)/size;
+        const double y = (h - 2*p.y)/size;
+        const double r2 = x*x + y*y;
 
-	virtual mat4x4 view_matrix(){
-		mat4x4 rx= mat4x4::identity();
-		mat4x4 ry= mat4x4::identity();
-		{
-			double s = std::sin(rotX);
-			double c = std::cos(rotX);
-			rx[1][1] = c;  rx[1][2] = s;
-			rx[2][1] = -s; rx[2][2] = c;
-		}
-		{
-			double s = std::sin(rotY);
-			double c = std::cos(rotY);
-			ry[0][0] = c;  ry[0][2] = s;
-			ry[2][0] = -s; ry[2][2] = c;
-		}
-		return rx*ry;
-	}
-	virtual void update();
+        if (r2 <= 1) // inside
+            return {x, y, -std::sqrt(1. - r2)};
 
+        // outside the sphere, project onto the equator
+        const double r = std::sqrt(r2);
+        return { x/r, y/r, 0 };
+    };
+
+    vec3 v0 = arcball_point(previous, viewport); // both points lie on the unit sphere,
+    vec3 v1 = arcball_point(current,  viewport); // so their dot product is cos(theta)
+    return Quaternion::shortest_rotation(v0, v1);
+}
+
+struct OrthographicProjection {
+    vec2 center = {};
+    double view_height = 2; // in world units
+    double aspect = 1;
+    double near = -1e+2;
+    double far  = +1e+2;
+
+    void set_aspect_ratio(double a) {
+        um_assert(a > 0);
+        aspect = a;
+    }
+
+    mat4x4 matrix() const {
+        um_assert(aspect > 0);
+        um_assert(view_height > 0);
+        um_assert(far > near);
+
+        const double view_width = view_height * aspect;
+
+        // map [-view_width/2, view_width/2] x [-view_height/2, view_height/2] world rectangle to normalized device coordinates [-1,1]^2
+        const double left   = center.x - view_width /2;
+        const double right  = center.x + view_width /2;
+        const double bottom = center.y - view_height/2;
+        const double top    = center.y + view_height/2;
+        return {{
+            { 2 / (right - left), 0,                  0,                 -(right + left) / (right - left) },
+            { 0,                  2 / (top - bottom), 0,                 -(top + bottom) / (top - bottom) },
+            { 0,                  0,                  -2 / (far - near), -(far + near) / (far - near)     },
+            { 0,                  0,                  0,                 1                                }
+        }};
+    }
+};
+
+struct TrackBallCamera : CameraInterface {
+    CameraPose pose;
+    OrthographicProjection projection;
+    static constexpr double wheel_zoom_speed = 1e-1;
+    static constexpr double min_view_height  = 1e-6;
+
+
+    void resize(double width, double height) {
+        um_assert(width  > 0);
+        um_assert(height > 0);
+        projection.set_aspect_ratio(width/height);
+    }
+
+    void zoom(double wheel) {
+        projection.view_height = std::max(
+                min_view_height, 
+                projection.view_height * std::exp(-wheel_zoom_speed * wheel) // mouse input controls the logarithm of the camera scale
+                );
+    }
+
+    void pan(vec2 delta, vec2 viewport) {
+        um_assert(viewport.x > 0);
+        um_assert(viewport.y > 0);
+        const double world_units_per_pixel = projection.view_height / viewport.y;
+        pose.pan({ -delta.x * world_units_per_pixel, delta.y * world_units_per_pixel });
+    }
+
+    void rotate(vec2 previous, vec2 current, vec2 viewport) {
+        Quaternion q = arcball_rotation(previous, current, viewport);
+        pose.orientation = pose.orientation * q;
+    }
+
+    mat4x4 projection_matrix() override {
+        return projection.matrix();
+    }
+
+    mat4x4 view_matrix() override {
+        return pose.matrix();
+    }
+
+    void update() override;
 };
 
 struct Camera {
-	Camera() {
-		// impl = std::make_unique<OrthographicCamera>();
-		impl = std::make_unique<TrackballCamera>();
-	}
-	float* projection(float width,float height){
-		mat4x4 m = impl->projection_matrix(width,height);
-		static float res[16]; FOR(i,16) res[i] = m[i/4][i%4]; return res;
-	}
-	float* view(){
-		mat4x4 m = impl->view_matrix();
-		static float res[16]; FOR(i,16) res[i] = m[i/4][i%4]; return res;
-	}
+    std::unique_ptr<CameraInterface> impl;
 
-	void update(){
-		impl->update();
-	}
+    Camera() {
+        impl = std::make_unique<TrackBallCamera>();
+    }
 
-	std::unique_ptr<CameraInterface> impl;
+    float* projection(){
+        mat4x4 m = impl->projection_matrix();
+        static thread_local std::array<float, 16> result; // thread-local storage keeps the returned pointer valid after return.
+        for (int i = 0; i<16; ++i)
+            result[i] = static_cast<float>(m[i/4][i%4]);
+        return result.data();
+    }
+
+    float* view() {
+        mat4x4 m = impl->view_matrix();
+        static thread_local std::array<float, 16> result;
+        for (int i = 0; i<16; ++i)
+            result[i] = static_cast<float>(m[i/4][i%4]);
+        return result.data();
+    }
+
+    void update(){
+        impl->update();
+    }
 };
 
