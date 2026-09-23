@@ -49,7 +49,7 @@ struct CameraPose {
         distance *= factor;
     }
 
-    mat4x4 view_matrix() const {
+    mat4x4 matrix() const {
         const mat3x3 R = orientation.rotation_matrix();
         const vec3   p = position();
         const mat4x4 T = {{
@@ -133,10 +133,12 @@ struct TrackBallCamera : CameraInterface {
     CameraPose pose;
     OrthographicProjection projection;
 
-    mat4x4 projection_matrix() override;
+    mat4x4 projection_matrix() override {
+        return projection.matrix();
+    }
 
     mat4x4 view_matrix() override {
-        return pose.view_matrix();
+        return pose.matrix();
     }
 
     void update() override;
