@@ -43,11 +43,11 @@ struct CameraPose {
         pivot += right()*delta.x + up()*delta.y;
     }
 
-    // move the camera toward/away from the pivot.
-    void zoom(double factor) {
-        um_assert(factor > 0);
-        distance *= factor;
-    }
+//  // move the camera toward/away from the pivot.
+//  void zoom(double factor) {
+//      um_assert(factor > 0);
+//      distance *= factor;
+//  }
 
     mat4x4 matrix() const {
         const mat3x3 R = orientation.rotation_matrix();
@@ -133,6 +133,37 @@ struct TrackBallCamera : CameraInterface {
     CameraPose pose;
     OrthographicProjection projection;
 
+    void resize(double width, double height) {
+        um_assert(width  > 0);
+        um_assert(height > 0);
+        projection.set_aspect_ratio(width/height);
+    }
+
+    void zoom(double factor) {
+        um_assert(factor > 0);
+        projection.view_height *= factor;
+    }
+
+    void pan(vec2 delta, vec2 viewport) {
+        um_assert(viewport.x > 0);
+        um_assert(viewport.y > 0);
+
+        // Orthographic world units represented by one vertical pixel.
+        const double world_units_per_pixel = projection.view_height / viewport.y;
+
+        pose.pan({ -delta.x * world_units_per_pixel, delta.y * world_units_per_pixel });
+    }
+
+
+    // Arcball rotation. The quaternion returned by trackball_rotation()
+    // is expressed in camera-local/screen coordinates, so apply it on
+    // the right side of the local-to-world orientation.
+    void rotate(vec2 previous, vec2 current, vec2 viewport) {
+        Quaternion q = trackball_rotation(previous, current, viewport);
+        pose.orientation = pose.orientation * q;
+    }
+
+
     mat4x4 projection_matrix() override {
         return projection.matrix();
     }
@@ -143,6 +174,8 @@ struct TrackBallCamera : CameraInterface {
 
     void update() override;
 };
+
+
 
 #if 0
 struct TrackballCamera : public CameraInterface {
@@ -445,8 +478,8 @@ struct OrthographicCamera: public CameraInterface {
 
 struct Camera {
     Camera() {
-        impl = std::make_unique<OrthographicCamera>();
-        //impl = std::make_unique<TrackballCamera>();
+       // impl = std::make_unique<OrthographicCamera>();
+        impl = std::make_unique<TrackBallCamera>();
     }
 
     float* projection(){
