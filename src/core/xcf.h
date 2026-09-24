@@ -83,7 +83,7 @@ namespace UM {
             for(int c = 0; c<8; c++){
                 std::cerr<<"Load "<< collection_names[c] <<"\n";
                 switch(c){
-                case 0: load_mesh(filename,"polyline",polylines,connect); break;
+                case 0: load_mesh(filename,"polylines",polylines,connect); break;
                 case 1: load_mesh(filename,"triangles",triangles,connect); break;
                 case 2: load_mesh(filename,"quads",quads,connect); break;
                 case 3: load_mesh(filename,"polygons",polygons,connect); break;
