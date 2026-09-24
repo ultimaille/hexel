@@ -109,15 +109,6 @@ struct WindowContext{
 
 struct MouseState{
 
-	void set_wheel_event(double v){
-		wheel_event_speed=v;
-	}
-	double get_wheel_event(bool consume=true){
-		double ret = wheel_event_speed;
-		if(consume) wheel_event_speed=0;
-		return ret;
-	}
-
 	void update();
 
 	bool mouseDragging[3] = {false};

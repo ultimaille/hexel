@@ -236,7 +236,7 @@ struct PointRenderer : public Renderer{
 		glGenBuffers(1,&vbo);
 		glBindVertexArray(vao);
 		glBindBuffer(GL_ARRAY_BUFFER,vbo);
-		glBufferData(GL_ARRAY_BUFFER,3*pts_size * sizeof(float),pts,GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER,pts_size * sizeof(float),pts,GL_STATIC_DRAW);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,0,nullptr);
 		glBindVertexArray(0);

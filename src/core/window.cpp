@@ -32,7 +32,7 @@ void cursor_position_callback(GLFWwindow* window, double mouseX, double mouseY){
 
 void scroll_callback(GLFWwindow* window,double xOffset,double yOffset){
     ImGui_ImplGlfw_ScrollCallback(window,xOffset,yOffset);
-    God::mouse.set_wheel_event(yOffset);
+    God::mouse.wheel_event_speed = yOffset;
     God::events.push_back({Event::MOUSE_SCROLLED, ""});
 }
 
