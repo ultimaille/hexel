@@ -36,18 +36,7 @@ struct WindowContext {
     }
 
     ~WindowContext() {
-        if (ImGui::GetCurrentContext() != nullptr) {
-            ImGui_ImplOpenGL3_Shutdown();
-            ImGui_ImplGlfw_Shutdown();
-            ImGui::DestroyContext();
-        }
-
-        if (window != nullptr) {
-            glfwDestroyWindow(window);
-            window = nullptr;
-        }
-
-        glfwTerminate();
+//      TODO: add a correct shutdown();
     }
 
     void init_mouse_call_backs() {
