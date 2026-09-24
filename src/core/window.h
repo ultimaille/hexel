@@ -108,11 +108,7 @@ struct WindowContext{
 // -------------------------------------------------------------------------------
 
 struct MouseState{
-	MouseState(){
-		FOR(i,3) mouseDragging[i] = false;
-		x = 0.0; y = 0.0; lastx = 0.0; lasty = 0.0;
-		wheel_event_speed=0;
-	}
+
 	void set_wheel_event(double v){
 		wheel_event_speed=v;
 	}
@@ -124,10 +120,9 @@ struct MouseState{
 
 	void update();
 
-
-	bool mouseDragging[3] ;
-	double lastx,lasty,x,y;
-	double wheel_event_speed;
+	bool mouseDragging[3] = {false};
+	double lastx = 0.,lasty = 0.,x = 0.,y = 0.;
+	double wheel_event_speed = 0.;
 };
 
 struct KeyboardState{

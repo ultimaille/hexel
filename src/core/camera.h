@@ -8,7 +8,7 @@ struct CameraInterface {
     virtual ~CameraInterface() = default;
     virtual mat4x4 projection_matrix() const = 0;
     virtual mat4x4 view_matrix()       const = 0;
-    virtual void on(Event event)                    = 0;
+    virtual void handle(Event event)                    = 0;
 };
 
 struct CameraPose {
@@ -62,7 +62,7 @@ struct TrackBallCamera : CameraInterface {
     mat4x4 projection_matrix() const override;
     mat4x4 view_matrix() const override;
 
-    void on(Event event) override;
+    void handle(Event event) override;
 };
 
 struct Camera {
@@ -70,6 +70,6 @@ struct Camera {
 
     float* projection() const;
     float* view() const;
-    void on(Event event);
+    void handle(Event event);
 };
 

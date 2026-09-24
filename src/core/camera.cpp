@@ -122,7 +122,7 @@ mat4x4 TrackBallCamera::view_matrix() const {
     return pose.matrix();
 }
 
-void TrackBallCamera::on(Event event) {
+void TrackBallCamera::handle(Event event) {
     auto [width, height] = God::context.screen_size();
     const vec2 viewport = {
         static_cast<double>(width),
@@ -131,20 +131,22 @@ void TrackBallCamera::on(Event event) {
 
     resize(viewport.x, viewport.y);
 
-    const double wheel = God::mouse.get_wheel_event();
-    if (wheel != 0)
-        zoom(wheel);
+    if (event.even_type == Event::MOUSE_SCROLLED) {
+        const double wheel = God::mouse.get_wheel_event();
+        if (wheel != 0)
+            zoom(wheel);
+    } else if (event.even_type == Event::MOUSE_MOVED) {
+        if (!God::keys.pressed(GLFW_KEY_LEFT_CONTROL))
+            return;
 
-    if (!God::keys.pressed(GLFW_KEY_LEFT_CONTROL))
-        return;
+        vec2 a = { God::mouse.lastx, God::mouse.lasty };
+        vec2 b = { God::mouse.x,     God::mouse.y     };
 
-    vec2 a = { God::mouse.lastx, God::mouse.lasty };
-    vec2 b = { God::mouse.x,     God::mouse.y     };
-
-    if (God::mouse.mouseDragging[0])
-        pan(b-a, viewport);
-    else if (God::mouse.mouseDragging[1])
-        rotate(a, b, viewport);
+        if (God::mouse.mouseDragging[0])
+            pan(b-a, viewport);
+        else if (God::mouse.mouseDragging[1])
+            rotate(a, b, viewport);
+    }
 }
 
 float* Camera::projection() const {
@@ -163,7 +165,7 @@ float* Camera::view() const {
     return result.data();
 }
 
-void Camera::on(Event event) {
-    impl->on(event);
+void Camera::handle(Event event) {
+    impl->handle(event);
 }
 

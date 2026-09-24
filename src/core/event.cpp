@@ -2,10 +2,10 @@
 
 void EventManager::dispatch() {
 	while (!events.empty()) {
-		auto event = events.back();
-		events.pop_back();
-		God::camera.on(event);
+		auto event = events.front();
+		events.pop();
+		God::camera.handle(event);
 		// for (auto &l : God::layers)
-		// 	l.on(event);
+		// 	l.handle(event);
 	}
 }

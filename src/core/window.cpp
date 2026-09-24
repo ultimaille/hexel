@@ -21,16 +21,19 @@ void mouse_button_callback(GLFWwindow* window,int button,int action,int mods){
 void cursor_position_callback(GLFWwindow* window, double mouseX, double mouseY){
     ImGui_ImplGlfw_CursorPosCallback(window,mouseX,mouseY);
     
-    // God::mouse.lastx=mouseX; 
-    // std::swap(God::mouse.lastx,God::mouse.x);
+    God::mouse.lastx=mouseX; 
+    std::swap(God::mouse.lastx,God::mouse.x);
     
-    // God::mouse.lasty=mouseY; 
-    // std::swap(God::mouse.lasty,God::mouse.y);
+    God::mouse.lasty=mouseY; 
+    std::swap(God::mouse.lasty,God::mouse.y);
+
+    God::events.push_back({Event::MOUSE_MOVED, ""});
 }
 
 void scroll_callback(GLFWwindow* window,double xOffset,double yOffset){
     ImGui_ImplGlfw_ScrollCallback(window,xOffset,yOffset);
     God::mouse.set_wheel_event(yOffset);
+    God::events.push_back({Event::MOUSE_SCROLLED, ""});
 }
 
 void KeyboardState::update(){
@@ -50,11 +53,11 @@ void KeyboardState::update(){
 }
 
 void MouseState::update() {
-    double mx, my;
-    glfwGetCursorPos(God::context.window, &mx, &my);
-    lastx = x;
-    lasty = y;
-    x = mx;
-    y = my;
-    God::events.push_back({Event::MOUSE_MOVED, ""});
+    // double mx, my;
+    // glfwGetCursorPos(God::context.window, &mx, &my);
+    // lastx = x;
+    // lasty = y;
+    // x = mx;
+    // y = my;
+    // God::events.push_back({Event::MOUSE_MOVED, ""});
 }

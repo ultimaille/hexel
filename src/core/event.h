@@ -11,6 +11,7 @@ struct Event{
         MOUSE_MOVED,
         MOUSE_PRESSED,
         MOUSE_RELEASED,
+        MOUSE_SCROLLED,
         KEY_PRESSED,
         KEY_RELEASED,
         MM_REMOVED,
@@ -24,15 +25,11 @@ struct Event{
 struct EventManager {
 
     void push_back(Event event) {
-        events.push_back(event);
+        events.emplace(event);
     }
 
     void dispatch();
 
-    void clear() {
-        events.clear();
-    }
-
-    std::vector<Event> events;
+    std::queue<Event> events;
 
 };

@@ -588,7 +588,6 @@ int main(){
 			God::keys.update();
 
 		God::events.dispatch();
-		God::events.clear();
 		
 		God::context.end_frame();
 	}
