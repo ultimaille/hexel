@@ -4,6 +4,7 @@ in vec2 TexCoord;
 
 uniform sampler2D source_color;
 uniform sampler2D source_depth;
+uniform mat4 projection;
 uniform mat4 inverse_projection;
 
 out vec4 FragColor;
@@ -16,14 +17,8 @@ vec3 reconstruct_view_position(vec2 uv, float depth) {
 
 void main() {
     float depth = texture(source_depth, TexCoord).r;
-
-    if (depth >= 1.0) {
-        FragColor = texture(source_color, TexCoord);
-        return;
-    }
-
     vec3 position = reconstruct_view_position(TexCoord, depth);
-    float visualization = clamp((position.z + 100.0) / 200.0, 0.0, 1.0);
+    float visualization = clamp((position.z + 1.0) / 2.0, 0.0, 1.0);
 
     FragColor = vec4(
         visualization,
@@ -32,4 +27,3 @@ void main() {
         1.0
     );
 }
-

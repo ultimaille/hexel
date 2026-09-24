@@ -29,8 +29,7 @@ struct SSAO : RenderLayer {
         if (!target.valid())
             return;
 
-
-        // allocate a temporary copy target for this render pass only
+        // temporary copy of the current render target
         RenderTarget copy;
         copy.init(target.width, target.height);
         copy_target_to_source(target, copy);
@@ -38,6 +37,7 @@ struct SSAO : RenderLayer {
         target.bind();
 
         glDisable(GL_DEPTH_TEST);
+        glDepthMask(GL_FALSE);
         glDisable(GL_BLEND);
 
         glUseProgram(program);
@@ -46,19 +46,37 @@ struct SSAO : RenderLayer {
         glBindTexture(GL_TEXTURE_2D, copy.color);
         glUniform1i(glGetUniformLocation(program, "source_color"), 0);
 
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, copy.depth);
+        glUniform1i(glGetUniformLocation(program, "source_depth"), 1);
+
+        glUniformMatrix4fv(glGetUniformLocation(program, "projection"), 0, GL_TRUE, God::camera.projection());
+        glUniformMatrix4fv(glGetUniformLocation(program, "inverse_projection"), 1, GL_TRUE, God::camera.inverse_projection());
+
         draw_quad();
+
+        // TODO this does not match the philosophy of "each guy must setup its own environment"
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
     }
 
 private:
     void copy_target_to_source(const RenderTarget& source, const RenderTarget& destination) {
         glBindFramebuffer(GL_READ_FRAMEBUFFER, source.framebuffer);
+        um_assert(glCheckFramebufferStatus(GL_READ_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destination.framebuffer);
+        um_assert(glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+
         glBlitFramebuffer(
             0, 0, source.width, source.height,
             0, 0, destination.width, destination.height,
             GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT,
             GL_NEAREST
         );
+
+        GLenum error = glGetError();
+        um_assert(error == GL_NO_ERROR);
     }
 
     void initialize_quad() {
