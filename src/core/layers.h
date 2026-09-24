@@ -19,7 +19,7 @@ struct LayerManager: public Registry<RenderLayer> {
     void handle(Event event) { // TODO: separate the cleanup logic from the update
 
         // clean up
-        if (event.even_type == Event::RENDER_LAYER_REMOVED) {
+        if (event.event_type == Event::RENDER_LAYER_REMOVED) {
             // int i = find(event.object_name);
             // operator[](i).clean();
             erase(event.object_name);

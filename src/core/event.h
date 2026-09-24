@@ -18,7 +18,7 @@ struct Event{
         MM_REMOVED,
         TRIANGLES_REMOVED,
         TRIANGLES_UPDATED
-    } even_type;
+    } event_type;
 
     std::string object_name;// a string that allows to find the element
 };

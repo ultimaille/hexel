@@ -131,11 +131,11 @@ void TrackBallCamera::handle(Event event) {
 
     resize(viewport.x, viewport.y);
 
-    if (event.even_type == Event::MOUSE_SCROLLED) {
+    if (event.event_type == Event::MOUSE_SCROLLED) {
         const double wheel = God::mouse.wheel_event_speed;
         if (wheel != 0)
             zoom(wheel);
-    } else if (event.even_type == Event::MOUSE_MOVED) {
+    } else if (event.event_type == Event::MOUSE_MOVED) {
         if (!God::keys.pressed(GLFW_KEY_LEFT_CONTROL))
             return;
 
