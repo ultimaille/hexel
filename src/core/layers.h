@@ -5,7 +5,7 @@ struct RenderLayer {
     virtual ~RenderLayer() = default;
     virtual void render() = 0;
     virtual void generate_gui(std::string name) = 0;
-    virtual bool resync_with_data()=0;
+    virtual bool resync_with_data() = 0;
     virtual void render_primitive_id()              { Log::add("To be implemented"); }
     virtual void render_constant_color(int layerid) { Log::add("To be implemented"); }
     bool visible;

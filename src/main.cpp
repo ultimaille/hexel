@@ -459,6 +459,7 @@ struct RenderTubes: public RenderLayer{
 
 
 
+#include "ssao.h"
 
 
 
@@ -548,6 +549,7 @@ namespace InteractionMode{
 				root->set_mode(root->move_vertex);
 
 				God::layers.emplace_back<RenderLambertTriangles>("Lambert").init("B1.step","triangles");
+				God::layers.emplace_back<SSAO>("Fuchsia").init();
 				God::layers.emplace_back<RenderLambertTriangles>("Lambert2").init("B0.step","triangles");
 				God::layers.emplace_back<RenderSpheres>("RenderSpheres").init("B0.step","triangles");
 				God::layers.emplace_back<RenderTubes>("RenderTubes").init("B0.step","polylines");
