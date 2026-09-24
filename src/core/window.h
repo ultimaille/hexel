@@ -131,8 +131,8 @@ struct MouseState{
 };
 
 struct KeyboardState{
-	// adressed by ImGuiKey
-	bool pressed(ImGuiKey key){ return data[key]; }
+	
+	bool pressed(int key /* GLFW_KEY_? */){ return data[key]; }
 
 	void update();
 

@@ -34,23 +34,25 @@ void scroll_callback(GLFWwindow* window,double xOffset,double yOffset){
 }
 
 void KeyboardState::update(){
-    for(int k=512; k<ImGuiKey_Oem102; k++){
-        bool nv =ImGui::IsKeyDown(ImGuiKey(k));
-        if(nv!=data[k]) {
+    // Poll key states for keys 0 to GLFW_KEY_LAST
+    for(int k = 0; k <= GLFW_KEY_LAST; k++){
+        int state = glfwGetKey(God::context.window, k);
+        bool nv = (state == GLFW_PRESS);
+        
+        if(nv != data[k]) {
             if(nv)
-                God::events.push_back({Event::KEY_PRESSED,""});
+                God::events.push_back({Event::KEY_PRESSED, ""});
             else
-                God::events.push_back({Event::KEY_RELEASED,""});
-            //plop(k); //====> run callbacks
+                God::events.push_back({Event::KEY_RELEASED, ""});
         }
-        data[k] =nv;
+        data[k] = nv;
     }
 }
 
 void MouseState::update() {
-	double mx, my;
-	glfwGetCursorPos(God::context.window, &mx, &my);
-	lastx = x;
+    double mx, my;
+    glfwGetCursorPos(God::context.window, &mx, &my);
+    lastx = x;
     lasty = y;
     x = mx;
     y = my;

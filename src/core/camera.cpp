@@ -135,7 +135,7 @@ void TrackBallCamera::update() {
     if (wheel != 0)
         zoom(wheel);
 
-    if (!God::keys.pressed(ImGuiKey_LeftCtrl))
+    if (!God::keys.pressed(GLFW_KEY_LEFT_CONTROL))
         return;
 
     vec2 a = { God::mouse.lastx, God::mouse.lasty };
