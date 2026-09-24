@@ -14,6 +14,7 @@ struct Event{
         MOUSE_SCROLLED,
         KEY_PRESSED,
         KEY_RELEASED,
+        RENDER_LAYER_REMOVED,
         MM_REMOVED,
         TRIANGLES_REMOVED,
         TRIANGLES_UPDATED

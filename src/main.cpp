@@ -82,7 +82,7 @@ struct RenderLambertTriangles: public RenderLayer{
 		ImGui::ColorEdit3(("MyColor##"+name).c_str(),(float*)&color,ImGuiColorEditFlags_None);
 	}
 
-	bool resync_with_data(){
+	bool handle(Event event){
 		if(!God::xcf.contains(mm_name)) return false;
 		if(!God::xcf[mm_name].triangles.contains(triangle_name)) return false;
 //	if (!God::xcf[mm_name].triangles[triangle_name].modified) return true; // TODO: obsolete, à refaire avec la newsletter
@@ -289,7 +289,7 @@ struct RenderSpheres: public RenderLayer{
 		ImGui::ColorEdit3(("MyColor##"+name).c_str(),(float*)&pts_renderer.color,ImGuiColorEditFlags_None);
 	}
 
-	bool resync_with_data(){
+	bool handle(Event event){
 		if(!God::xcf.contains(mm_name)) return false;
 		if(!God::xcf[mm_name].triangles.contains(triangle_name)) return false;
 		return true;
@@ -424,7 +424,7 @@ struct RenderTubes: public RenderLayer{
 		ImGui::ColorEdit3(("MyColor##"+name).c_str(),(float*)&segment_renderer.color,ImGuiColorEditFlags_None);
 	}
 
-	bool resync_with_data(){
+	bool handle(Event event){
 		if(!God::xcf.contains(mm_name)) return false;
 		if(!God::xcf[mm_name].polylines.contains(polyline_name)) return false;
 		return true;
