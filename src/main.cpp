@@ -373,8 +373,8 @@ struct SegmentRenderer: public Renderer{
 		glDisable(GL_LINE_SMOOTH);
 		GLfloat range[2];
 		glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE,range);
-
-		printf("Line width range: %f .. %f\n",range[0],range[1]);		double radius =.55;
+		//printf("Line width range: %f .. %f\n",range[0],range[1]);		
+		double radius =.55;
 		auto [w,h] = God::context.screen_size();
 		float lineWidth =
 			2.0f
@@ -543,13 +543,13 @@ namespace InteractionMode{
 				God::xcf.load_multimesh(std::string(TEST_INPUT_DIR) + "B0.step.mesh",true);
 				
 
-				//God::xcf.load_multimesh(std::string(TEST_INPUT_DIR) + "B1.step.mesh",true);
+				God::xcf.load_multimesh(std::string(TEST_INPUT_DIR) + "B1.step.mesh",true);
 				HexEdit* root  =static_cast<HexEdit*>(God::root_mode);
 				root->set_mode(root->move_vertex);
 
-				//God::layers.emplace_back<RenderLambertTriangles>("Lambert").init("B1.step","triangles");
-				//God::layers.emplace_back<RenderLambertTriangles>("Lambert2").init("B0.step","triangles");
-				//God::layers.emplace_back<RenderSpheres>("RenderSpheres").init("B0.step","triangles");
+				God::layers.emplace_back<RenderLambertTriangles>("Lambert").init("B1.step","triangles");
+				God::layers.emplace_back<RenderLambertTriangles>("Lambert2").init("B0.step","triangles");
+				God::layers.emplace_back<RenderSpheres>("RenderSpheres").init("B0.step","triangles");
 				God::layers.emplace_back<RenderTubes>("RenderTubes").init("B0.step","polylines");
 
 			}
