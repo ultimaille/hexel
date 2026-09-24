@@ -4,6 +4,7 @@
 #include "camera.h"
 #include "picker.h"
 #include "xcf.h"
+#include "render_target.h"
 #include "window.h"
 #include "panels.h"
 #include "layers.h"
