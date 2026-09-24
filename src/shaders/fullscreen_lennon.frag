@@ -26,7 +26,7 @@ void main() {
     );
 
     // Blend rather than completely replacing the source image.
-    vec3 final_color = mix(source, rose, 0.15);
+    vec3 final_color = mix(source, rose, 0.5);
 
     FragColor = vec4(final_color, 1.0);
 }

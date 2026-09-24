@@ -27,7 +27,7 @@ struct WindowContext {
         glfwGetFramebufferSize(window, &framebuffer_width, &framebuffer_height);
 
         if (framebuffer_width > 0 && framebuffer_height > 0) {
-            render_target.initialize(framebuffer_width, framebuffer_height);
+            render_target.init(framebuffer_width, framebuffer_height);
             glViewport(0, 0, framebuffer_width, framebuffer_height);
         }
 

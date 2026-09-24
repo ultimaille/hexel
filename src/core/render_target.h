@@ -24,7 +24,7 @@ struct RenderTarget {
         return framebuffer != 0 && color != 0 && depth != 0 && width > 0 && height > 0;
     }
 
-    void initialize(int w, int h) {
+    void init(int w, int h) {
         um_assert(w > 0);
         um_assert(h > 0);
         um_assert(framebuffer == 0);
@@ -42,7 +42,7 @@ struct RenderTarget {
         um_assert(h > 0);
 
         if (framebuffer == 0) {
-            initialize(w, h);
+            init(w, h);
             return;
         }
 
@@ -50,7 +50,7 @@ struct RenderTarget {
     }
 
     void bind() const {
-        um_assert( framebuffer != 0 && color != 0 && depth != 0 && width > 0 && height > 0 );
+        um_assert(framebuffer != 0 && color != 0 && depth != 0 && width > 0 && height > 0);
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
         glViewport(0, 0, width, height);
     }
@@ -65,28 +65,25 @@ struct RenderTarget {
 
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
-
         glClearColor(r, g, b, a);
         glClearDepth(1.);
-
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
     void destroy() {
-        if (depth != 0) {
+        if (depth) {
             glDeleteTextures(1, &depth);
             depth = 0;
         }
-        if (color != 0) {
+        if (color) {
             glDeleteTextures(1, &color);
             color = 0;
         }
-        if (framebuffer != 0) {
+        if (framebuffer) {
             glDeleteFramebuffers(1, &framebuffer);
             framebuffer = 0;
         }
-        width = 0;
-        height = 0;
+        width = height = 0;
     }
 
     void allocate(int w, int h) {
@@ -96,14 +93,11 @@ struct RenderTarget {
         um_assert(color != 0);
         um_assert(depth != 0);
 
-        GLint previous_framebuffer = 0; // TODO veriy whether we actually need these
-        GLint previous_texture     = 0; // but we can never be safe enough :)
-
-        glGetIntegerv(GL_FRAMEBUFFER_BINDING, &previous_framebuffer);
-        glGetIntegerv(GL_TEXTURE_BINDING_2D, &previous_texture);
-
         width = w;
         height = h;
+
+        // /!\ Explicit-binding policy: do not restore previous GL state.
+        // The caller owns and restores the bindings it needs.
 
         // color buffer
         glBindTexture(GL_TEXTURE_2D, color);
@@ -136,10 +130,6 @@ struct RenderTarget {
         GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
         if (status != GL_FRAMEBUFFER_COMPLETE)
             Log::error("RenderTarget framebuffer is incomplete");
-
-        // Restore the bindings that existed before allocation.
-        glBindFramebuffer(GL_FRAMEBUFFER, static_cast<GLuint>(previous_framebuffer));
-        glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(previous_texture));
     }
 };
 
