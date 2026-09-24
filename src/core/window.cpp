@@ -56,4 +56,5 @@ void MouseState::update() {
     lasty = y;
     x = mx;
     y = my;
+    God::events.push_back({Event::MOUSE_MOVED, ""});
 }

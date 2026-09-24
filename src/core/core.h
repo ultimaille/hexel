@@ -5,10 +5,12 @@
 #include "picker.h"
 #include "xcf.h"
 #include "window.h"
-#include "event.h"
+// #include "event.h"
 #include "panels.h"
 #include "layers.h"
 #include "shaders.h"
+
+struct EventManager;
 
 namespace InteractionMode { struct AbstractMode; }
 

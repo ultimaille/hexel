@@ -122,11 +122,11 @@ mat4x4 TrackBallCamera::view_matrix() const {
     return pose.matrix();
 }
 
-void TrackBallCamera::update() {
+void TrackBallCamera::on(Event event) {
     auto [width, height] = God::context.screen_size();
     const vec2 viewport = {
         static_cast<double>(width),
-            static_cast<double>(height)
+        static_cast<double>(height)
     };
 
     resize(viewport.x, viewport.y);
@@ -163,7 +163,7 @@ float* Camera::view() const {
     return result.data();
 }
 
-void Camera::update() {
-    impl->update();
+void Camera::on(Event event) {
+    impl->on(event);
 }
 

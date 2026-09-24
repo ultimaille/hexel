@@ -157,6 +157,7 @@ add_executable(Hexel
     src/core/window.h src/core/window.cpp
     src/core/camera.h src/core/camera.cpp
     src/core/xcf.h src/core/xcf.cpp
+    src/core/event.h src/core/event.cpp
 )
 
 target_link_libraries(Hexel PRIVATE

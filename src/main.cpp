@@ -578,8 +578,6 @@ int main(){
 	God::panels.emplace_back<LayerViewer>("layer_window");
 	while(God::context.window_is_active()){
 		glfwPollEvents();
-		God::camera.update();
-		God::layers.sync();
 		God::context.begin_frame();
 		God::layers.render();
 		God::panels.show_gui();
@@ -588,6 +586,10 @@ int main(){
 			God::mouse.update();
 		if(!ImGui::GetIO().WantCaptureKeyboard || !ImGui::GetIO().WantCaptureMouse)
 			God::keys.update();
+
+		God::events.dispatch();
+		God::events.clear();
+		
 		God::context.end_frame();
 	}
 	return EXIT_SUCCESS;
