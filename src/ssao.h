@@ -3,7 +3,7 @@
 #include "core/core.h"
 
 struct SSAO : RenderLayer {
-    GLuint program  = 0;
+    const std::string name = "ssao";
     GLuint quad_vao = 0;
     GLuint quad_vbo = 0;
 
@@ -19,12 +19,12 @@ struct SSAO : RenderLayer {
     bool resync_with_data() override { return true; }
 
     void init() {
-        God::shaders.add(std::string(SHADERS_DIR), "fullscreen_lennon");
-        program = God::shaders["fullscreen_lennon"];
+        God::shaders.add(std::string(SHADERS_DIR), name);
         initialize_quad();
     }
 
     void render() override {
+        GLuint program = God::shaders[name];
         RenderTarget& target = God::context.render_target;
         if (!target.valid())
             return;

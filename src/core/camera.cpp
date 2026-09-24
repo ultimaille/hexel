@@ -147,20 +147,26 @@ void TrackBallCamera::update() {
         rotate(a, b, viewport);
 }
 
-float* Camera::projection() const {
-    mat4x4 m = impl->projection_matrix();
+float *row_major(const mat4x4 &m) {
     static thread_local std::array<float, 16> result; // thread-local storage keeps the returned pointer valid after return.
     for (int i = 0; i<16; ++i)
         result[i] = static_cast<float>(m[i/4][i%4]);
     return result.data();
 }
 
+float* Camera::projection() const {
+    mat4x4 m = impl->projection_matrix();
+    return row_major(m);
+}
+
 float* Camera::view() const {
     mat4x4 m = impl->view_matrix();
-    static thread_local std::array<float, 16> result;
-    for (int i = 0; i<16; ++i)
-        result[i] = static_cast<float>(m[i/4][i%4]);
-    return result.data();
+    return row_major(m);
+}
+
+float* Camera::inverse_projection() const {
+    mat4x4 m = impl->projection_matrix().invert();
+    return row_major(m);
 }
 
 void Camera::update() {
