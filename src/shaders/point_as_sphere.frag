@@ -40,34 +40,6 @@ void main()
 
 
 
-
-//    // ------------------------------------------------------------
-//    // Intersection rayon / sphère
-//    // ------------------------------------------------------------
-//
-//    vec3 CO = O-C;
-//    float a = dot(v,v); // =1
-//    float b = 2.* dot(CO, v);
-//    float c = dot(CO, CO) - R*R;
-// 
-//    float delta = b * b - 4.*a*c;
-//
-//    if (delta < 0.0) discard;
-//
-//    // Intersection la plus proche de la caméra
-//    float sqrt_delta = sqrt(delta);
-//
-//    float t = (-b - sqrt_delta)/(2.*a);
-//    if (t < 0.0) t =(-b + sqrt_delta)/(2.*a);
-//    if (t < 0.0)   discard;
-//
-//
-//    // ------------------------------------------------------------
-//    // Position réelle sur la sphère
-//    // ------------------------------------------------------------
-//
-//    vec3 I = O + t * v;
-//
     // ------------------------------------------------------------
     // Intersection rayon / sphère
     // ------------------------------------------------------------
@@ -79,7 +51,6 @@ void main()
 
     vec3 I = P-sqrt(R*R-cp2)*v;
 
-    //vec3 I = P;
 
 
 
@@ -87,11 +58,6 @@ void main()
     // ------------------------------------------------------------
     // Normale réelle
     // ------------------------------------------------------------
-
-//    float d = 100.*sqrt(dot(I - C,I - C));//-R*R;
-//    FragColor = vec4(d,d,d,1.0);
-//    return;        
-//
     vec3 normal = normalize( I - C );
 
 
@@ -137,100 +103,3 @@ void main()
             1.0
         );
         }
-//    // ------------------------------------------------------------
-//    // Intersection rayon / sphère
-//    // ------------------------------------------------------------
-//
-//    vec3 oc = C-O;
-//
-//
-//
-//
-//    float b = -dot(oc, dir);
-//    // b est negatif
-//    //FragColor =vec4( b,0.1*b,.01*b, 1.0 );return;
-//
-//    float c2 =
-//        dot(oc, oc) -
-//        R * R;
-//
-//    float discriminant =
-//        b * b - c2;
-//
-//    if (discriminant < 0.0)
-//        discard;
-//
-//
-//    // Intersection la plus proche de la caméra
-//    float sqrtDiscriminant =
-//        sqrt(discriminant);
-//
-//    float t =
-//        -b - sqrtDiscriminant;
-//
-//    if (t < 0.0)
-//    {
-//        t =
-//            -b + sqrtDiscriminant;
-//    }
-//
-//    if (t < 0.0)
-//        discard;
-//
-//
-//    // ------------------------------------------------------------
-//    // Position réelle sur la sphère
-//    // ------------------------------------------------------------
-//
-//    vec3 spherePosition = O + t * dir;
-//
-//
-//    // ------------------------------------------------------------
-//    // Normale réelle
-//    // ------------------------------------------------------------
-//
-//    vec3 normal = normalize( spherePosition - C );
-//
-//
-//    // ------------------------------------------------------------
-//    // Vraie profondeur de la sphère
-//    // ------------------------------------------------------------
-//
-//    vec4 clipPosition =
-//        projection *
-//        vec4(spherePosition, 1.0);
-//
-//    float ndcDepth =
-//        clipPosition.z /
-//        clipPosition.w;
-//
-//    gl_FragDepth =
-//        ndcDepth * 0.5 + 0.5;
-//
-//
-//    // ------------------------------------------------------------
-//    // Éclairage
-//    // ------------------------------------------------------------
-//
-//    //vec3 lightDirection =normalize(vec3(-1.0, -1.0, 1.0));
-//
-//    float diffuse =
-//        max(
-//            dot(normal, light_direction),
-//            0.0
-//        );
-//
-//    float lighting =
-//        0.25 + 0.75 * diffuse;
-//
-//
-//    // ------------------------------------------------------------
-//    // Couleur
-//    // ------------------------------------------------------------
-//
-//    FragColor =
-//        vec4(
-//            color * lighting,
-//            1.0
-//        );
-//}

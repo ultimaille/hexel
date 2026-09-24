@@ -154,7 +154,6 @@ struct RenderLambertTriangles: public RenderLayer{
 		const float model[16] = {1,0,0,0 ,0,1,0,0, 0,0,1,0 ,0,0,0,1};
 ////	auto [w,h] = God::context.screen_size();
 		glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"projection"),1,GL_TRUE,God::camera.projection());
-
 		glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"view"),1,GL_TRUE,God::camera.view());
 		glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"model"),1,GL_TRUE,model);
 
@@ -197,20 +196,20 @@ struct Renderer{
 
 	void declare_projection_matrix(){
 		auto [w,h] = God::context.screen_size();
-		glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"projection"),1,GL_FALSE,God::camera.projection(w,h));
+		glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"projection"),1,GL_TRUE,God::camera.projection());
 	}
 	void declare_inv_projection_matrix(){
 		auto [w,h] = God::context.screen_size();
-		mat4x4 inv_proj = God::camera.impl->projection_matrix(w,h).invert();
+		mat4x4 inv_proj = God::camera.impl->projection_matrix().invert();
 		static float inv_proj_float[16]; FOR(i,16) inv_proj_float[i] = inv_proj[i/4][i%4];
-		glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"inv_projection"),1,GL_FALSE,inv_proj_float);
+		glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"inv_projection"),1,GL_TRUE,inv_proj_float);
 	}
 	void declare_view_matrix(){
-		glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"view"),1,GL_FALSE,God::camera.view());
+		glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"view"),1,GL_TRUE,God::camera.view());
 	}
 	void declare_model_matrix(){
 		float model[16] = {1,0,0,0 ,0,1,0,0, 0,0,1,0 ,0,0,0,1};
-		glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"model"),1,GL_FALSE,model);
+		glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"model"),1,GL_TRUE,model);
 	}
 	void declare_light_direction(){
 		glUniform3fv(glGetUniformLocation(shaderProgram,"light_direction"),1,light_direction);
@@ -231,7 +230,7 @@ struct PointRenderer : public Renderer{
 	int radius_in_pixel=5;
 
 
-	void init(float* pts,int pts_size){
+		void init(float* pts,int pts_size){
 		npts = pts_size/3;
 		glGenVertexArrays(1,&vao);
 		glGenBuffers(1,&vbo);
@@ -263,7 +262,7 @@ struct PointRenderer : public Renderer{
 
 		auto [w,h] = God::context.screen_size();
 
-		float pointRadius = 2.*double(radius_in_pixel)/(God::camera.impl->projection_matrix(w,h)[1][1]*double(h));
+		float pointRadius = 2.*double(radius_in_pixel)/(God::camera.impl->projection_matrix()[1][1]*double(h));
 		glUniform1f(glGetUniformLocation(shaderProgram,"R"),pointRadius);
 		glUniform3fv(glGetUniformLocation(shaderProgram,"color"),1,color);
 		glBindVertexArray(vao);
@@ -312,7 +311,6 @@ struct RenderSpheres: public RenderLayer{
 			FOR(d,3) vertices[3*v+d] = 2.*(v.pos()-box.center())[d]/box.size().norm();
 		}
 		pts_renderer.init(vertices.data(),vertices.size());
-
 	}
 
 
@@ -372,13 +370,16 @@ struct SegmentRenderer: public Renderer{
 		glEnable(GL_DEPTH_TEST);
 		shaderProgram=God::shaders["segment_as_tube"];
 		glUseProgram(shaderProgram);
-		
-		double radius =.55;
+		glDisable(GL_LINE_SMOOTH);
+		GLfloat range[2];
+		glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE,range);
+
+		printf("Line width range: %f .. %f\n",range[0],range[1]);		double radius =.55;
 		auto [w,h] = God::context.screen_size();
 		float lineWidth =
 			2.0f
 			* radius
-			* God::camera.impl->projection_matrix(w,h)[1][1]
+			* God::camera.impl->projection_matrix()[1][1]
 			* float(h);
 
 		//glLineWidth(2.*lineWidth);
@@ -419,6 +420,7 @@ struct RenderTubes: public RenderLayer{
 
 
 	void generate_gui(std::string name){
+
 		ImGui::ColorEdit3(("MyColor##"+name).c_str(),(float*)&segment_renderer.color,ImGuiColorEditFlags_None);
 	}
 
@@ -536,17 +538,18 @@ namespace InteractionMode{
 			ImGui::InputText("input text",str0,128);
 
 
-			if(ImGui::Button("Create MultiMesh",ImVec2(180,40))){
+			//if(ImGui::Button("Create MultiMesh",ImVec2(180,40)))
+			{
 				God::xcf.load_multimesh(std::string(TEST_INPUT_DIR) + "B0.step.mesh",true);
 				
 
-				God::xcf.load_multimesh(std::string(TEST_INPUT_DIR) + "B1.step.mesh",true);
+				//God::xcf.load_multimesh(std::string(TEST_INPUT_DIR) + "B1.step.mesh",true);
 				HexEdit* root  =static_cast<HexEdit*>(God::root_mode);
 				root->set_mode(root->move_vertex);
 
-				God::layers.emplace_back<RenderLambertTriangles>("Lambert").init("B1.step","triangles");
-				God::layers.emplace_back<RenderLambertTriangles>("Lambert2").init("B0.step","triangles");
-				God::layers.emplace_back<RenderSpheres>("RenderSpheres").init("B0.step","triangles");
+				//God::layers.emplace_back<RenderLambertTriangles>("Lambert").init("B1.step","triangles");
+				//God::layers.emplace_back<RenderLambertTriangles>("Lambert2").init("B0.step","triangles");
+				//God::layers.emplace_back<RenderSpheres>("RenderSpheres").init("B0.step","triangles");
 				God::layers.emplace_back<RenderTubes>("RenderTubes").init("B0.step","polylines");
 
 			}

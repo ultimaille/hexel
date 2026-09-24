@@ -16,56 +16,43 @@ uniform vec3 color;
 
 void main()
 {
-    FragColor =vec4(color,1.0); return;
+    //FragColor =vec4(color,1.0); return;
     // ============================================================
     // 1. Rayon caméra passant par le fragment
     // ============================================================
 
     vec2 ndc;
 
-    ndc.x =
-        2.0 * gl_FragCoord.x / viewport.x - 1.0;
-
-    ndc.y =
-        2.0 * gl_FragCoord.y / viewport.y - 1.0;
+    ndc.x = 2.0 * gl_FragCoord.x / viewport.x - 1.0;
+    ndc.y = 2.0 * gl_FragCoord.y / viewport.y - 1.0;
 
 
-    vec4 nearPoint =
-        inv_projection *
-        vec4(ndc, -1.0, 1.0);
-
+    vec4 nearPoint = inv_projection * vec4(ndc, -1.0, 1.0);
     nearPoint.xyz /= nearPoint.w;
 
 
-    vec4 farPoint =
-        inv_projection *
-        vec4(ndc, 1.0, 1.0);
-
-    farPoint.xyz /= farPoint.w;
 
 
-    vec3 rayOrigin =
-        nearPoint.xyz;
+    vec3 O = nearPoint.xyz;
 
-    vec3 rayDirection =
-        normalize(farPoint.xyz - nearPoint.xyz);
+    vec3 v = vec3(0,0,-1);
 
 
     // ============================================================
     // 2. Axe du cylindre
     // ============================================================
 
-    vec3 axis =
-        vP1 - vP0;
+    vec3 axis = vP1 - vP0;
+    
+    float f = 100.*cross(normalize(vP1 - vP0),O-vP0).z;
+    FragColor =vec4(0,f,1.-f,1.0); return;
 
-    float lengthAxis =
-        length(axis);
+    float lengthAxis = length(axis);
 
     if (lengthAxis < 0.000001)
         discard;
 
-    vec3 w =
-        axis / lengthAxis;
+    vec3 w = axis / lengthAxis;
 
 
     // ============================================================
@@ -74,31 +61,21 @@ void main()
     // On retire la composante parallèle à l'axe.
     // ============================================================
 
-    vec3 delta =
-        rayOrigin - vP0;
+    vec3 delta =O - vP0;
 
-    vec3 dPerp =
-        rayDirection -
-        dot(rayDirection, w) * w;
+    vec3 dPerp =v -dot(v, w) * w;
 
-    vec3 deltaPerp =
-        delta -
-        dot(delta, w) * w;
+    vec3 deltaPerp =delta -dot(delta, w) * w;
 
 
-    float A =
-        dot(dPerp, dPerp);
+    float A =dot(dPerp, dPerp);
 
-    float B =
-        2.0 * dot(dPerp, deltaPerp);
+    float B =2.0 * dot(dPerp, deltaPerp);
 
-    float C =
-        dot(deltaPerp, deltaPerp)
-        - R * R;
+    float C =dot(deltaPerp, deltaPerp)- R * R;
 
 
-    float discriminant =
-        B * B - 4.0 * A * C;
+    float discriminant = B * B - 4.0 * A * C;
 
 
     float bestT = 1e30;
@@ -111,22 +88,19 @@ void main()
 
     if (A > 0.0000001 && discriminant >= 0.0)
     {
-        float sqrtD =
-            sqrt(discriminant);
+        float sqrtD = sqrt(discriminant);
 
-        float t0 =
-            (-B - sqrtD) / (2.0 * A);
+        float t0 = (-B - sqrtD) / (2.0 * A);
 
-        float t1 =
-            (-B + sqrtD) / (2.0 * A);
+        float t1 = (-B + sqrtD) / (2.0 * A);
 
 
         // Première intersection
         if (t0 >= 0.0)
         {
             vec3 hitPosition =
-                rayOrigin +
-                t0 * rayDirection;
+                O +
+                t0 * v;
 
             float axial =
                 dot(
@@ -147,8 +121,8 @@ void main()
         if (t1 >= 0.0 && t1 < bestT)
         {
             vec3 hitPosition =
-                rayOrigin +
-                t1 * rayDirection;
+                O +
+                t1 * v;
 
             float axial =
                 dot(
@@ -170,77 +144,33 @@ void main()
     // 5. Caps du cylindre
     // ============================================================
 
-    float rayAxis =
-        dot(rayDirection, w);
-
-
-    if (abs(rayAxis) > 0.0000001)
-    {
-        // --------------------------------------------------------
-        // Cap P0
-        // --------------------------------------------------------
-
-        float tCap0 =
-            dot(vP0 - rayOrigin, w) /
-            rayAxis;
-
-        if (tCap0 >= 0.0 && tCap0 < bestT)
-        {
-            vec3 p =
-                rayOrigin +
-                tCap0 * rayDirection;
-
-            vec3 radial =
-                p - vP0;
-
-            radial -=
-                dot(radial, w) * w;
-
-            if (dot(radial, radial)
-                <= R * R)
-            {
-                bestT = tCap0;
-                hit = true;
-            }
-        }
-
-
-        // --------------------------------------------------------
-        // Cap P1
-        // --------------------------------------------------------
-
-        float tCap1 =
-            dot(vP1 - rayOrigin, w) /
-            rayAxis;
-
-        if (tCap1 >= 0.0 && tCap1 < bestT)
-        {
-            vec3 p =
-                rayOrigin +
-                tCap1 * rayDirection;
-
-            vec3 radial =
-                p - vP1;
-
-            radial -=
-                dot(radial, w) * w;
-
-            if (dot(radial, radial)
-                <= R * R)
-            {
-                bestT = tCap1;
-                hit = true;
-            }
-        }
-    }
-
-
     // ============================================================
     // 6. Pas d'intersection
     // ============================================================
 
     if (!hit)
         discard;
+    FragColor =vec4(color,1.0); return;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     // ============================================================
@@ -248,8 +178,8 @@ void main()
     // ============================================================
 
     vec3 hitPosition =
-        rayOrigin +
-        bestT * rayDirection;
+        O +
+        bestT * v;
 
 
     // ============================================================
