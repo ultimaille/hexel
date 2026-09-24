@@ -5,6 +5,7 @@
 #include "picker.h"
 #include "xcf.h"
 #include "window.h"
+#include "event.h"
 #include "panels.h"
 #include "layers.h"
 #include "shaders.h"
@@ -16,7 +17,7 @@ namespace God {
     extern XCF xcf;
     extern MouseState mouse;
     extern KeyboardState keys;
-    extern std::vector<Event> events;
+    extern EventManager events;
     extern Camera camera;
     extern LayerManager layers;
     extern PanelManager panels;

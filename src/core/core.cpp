@@ -11,7 +11,7 @@ namespace God {
     KeyboardState keys;
     WindowContext context;
     Camera camera;
-    std::vector<Event> events;
+    EventManager events;
     PanelManager panels;
 }
 
