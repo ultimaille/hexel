@@ -59,6 +59,7 @@ mat4x4 OrthographicProjection::matrix() const {
 Quaternion TrackBallCamera::arcball_rotation(vec2 previous, vec2 current, vec2 viewport) const {
     // map a screen position to the virtual trackball
     const auto arcball_point = [](vec2 p, vec2 viewport) -> vec3 {
+        std::cerr << p << std::endl;
         // the virtual sphere has radius 1 and is centered in the viewport
         // the smaller viewport dimension is used so that the sphere remains circular
         const auto [w, h] = viewport;
@@ -76,7 +77,7 @@ Quaternion TrackBallCamera::arcball_rotation(vec2 previous, vec2 current, vec2 v
         const double r2 = x*x + y*y;
 
         if (r2 <= 1) // inside
-            return {x, y, -std::sqrt(1. - r2)};
+            return {x, y, std::sqrt(1 - r2)};
 
         // outside the sphere, project onto the equator
         const double r = std::sqrt(r2);
@@ -85,7 +86,7 @@ Quaternion TrackBallCamera::arcball_rotation(vec2 previous, vec2 current, vec2 v
 
     vec3 v0 = arcball_point(previous, viewport); // both points lie on the unit sphere,
     vec3 v1 = arcball_point(current,  viewport); // so their dot product is cos(theta)
-    return Quaternion::shortest_rotation(v0, v1);
+    return Quaternion::shortest_rotation(v1, v0);
 }
 
 
