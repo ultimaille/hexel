@@ -56,13 +56,13 @@ vec3 read_position(vec2 uv) {
 vec2 horizon_point(in vec2 from, in vec2 dir) {
     vec2 result;
     float horizon_delta = -100000.0;
-    float from_z = texture(source_depth, from).r;
+    float from_z = get_obj_z(from);
     float step = (1.0 / width);
     float r = 2.0 * step;
     vec2 cur_point = from + r * dir;
 
     while (!outside(cur_point)) {
-        float z = texture(source_depth, cur_point).r;
+        float z = get_obj_z(cur_point);
 
         float delta_z = (z - from_z) / r;
         if (delta_z > horizon_delta) {
