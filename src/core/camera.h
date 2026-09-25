@@ -8,7 +8,7 @@ struct CameraInterface {
     virtual ~CameraInterface() = default;
     virtual mat4x4 projection_matrix() const = 0;
     virtual mat4x4 view_matrix()       const = 0;
-    virtual void handle(Event event)                    = 0;
+    virtual void handle(Event event)         = 0;
 };
 
 struct CameraPose {

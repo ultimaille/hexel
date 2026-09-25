@@ -23,34 +23,35 @@ float ao_strength = 2.0f;
 
     void generate_gui(std::string) override {
         ImGui::SliderFloat(
-        ("Radius##" + name).c_str(),
-        &horizon_radius_pixels,
-        1.0f,
-        200.0f
-    );
+                ("Radius##" + name).c_str(),
+                &horizon_radius_pixels,
+                1.0f,
+                200.0f
+                );
 
-    ImGui::SliderFloat(
-        ("Bias##" + name).c_str(),
-        &horizon_bias,
-        0.0f,
-        0.2f
-    );
+        ImGui::SliderFloat(
+                ("Bias##" + name).c_str(),
+                &horizon_bias,
+                0.0f,
+                0.2f
+                );
 
-    ImGui::SliderInt(
-        ("Steps##" + name).c_str(),
-        &horizon_steps,
-        1,
-        32
-    );
+        ImGui::SliderInt(
+                ("Steps##" + name).c_str(),
+                &horizon_steps,
+                1,
+                32
+                );
 
-    ImGui::SliderFloat(
-        ("Strength##" + name).c_str(),
-        &ao_strength,
-        0.0f,
-        8.0f
-    );
+        ImGui::SliderFloat(
+                ("Strength##" + name).c_str(),
+                &ao_strength,
+                0.0f,
+                8.0f
+                );
     }
-//  bool resync_with_data() override { return true; }
+
+    bool handle(Event) override { return true; }
 
     void init() {
         God::shaders.add(std::string(SHADERS_DIR), name);
