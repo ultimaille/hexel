@@ -70,6 +70,8 @@ struct Camera {
 
     float* projection() const;
     float* view() const;
+    float* inverse_projection() const;
+    void update();
     void handle(Event event);
 };
 

@@ -154,7 +154,7 @@ struct RenderLambertTriangles: public RenderLayer{
 		glBindVertexArray(VAO);
 		const float model[16] = {1,0,0,0 ,0,1,0,0, 0,0,1,0 ,0,0,0,1};
 ////	auto [w,h] = God::context.screen_size();
-		glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"projection"),1,GL_TRUE,God::camera.projection());
+		glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"projection"), 1, GL_TRUE, God::camera.projection());
 		glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"view"),1,GL_TRUE,God::camera.view());
 		glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"model"),1,GL_TRUE,model);
 
@@ -201,9 +201,7 @@ struct Renderer{
 	}
 	void declare_inv_projection_matrix(){
 		auto [w,h] = God::context.screen_size();
-		mat4x4 inv_proj = God::camera.impl->projection_matrix().invert();
-		static float inv_proj_float[16]; FOR(i,16) inv_proj_float[i] = inv_proj[i/4][i%4];
-		glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"inv_projection"),1,GL_TRUE,inv_proj_float);
+		glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"inv_projection"),1,GL_TRUE,God::camera.inverse_projection());
 	}
 	void declare_view_matrix(){
 		glUniformMatrix4fv(glGetUniformLocation(shaderProgram,"view"),1,GL_TRUE,God::camera.view());
@@ -460,6 +458,7 @@ struct RenderTubes: public RenderLayer{
 
 
 
+#include "ssao.h"
 
 
 
@@ -551,6 +550,7 @@ namespace InteractionMode{
 				God::layers.emplace_back<RenderLambertTriangles>("Lambert").init("B1.step","triangles");
 				God::layers.emplace_back<RenderLambertTriangles>("Lambert2").init("B0.step","triangles");
 				God::layers.emplace_back<RenderSpheres>("RenderSpheres").init("B0.step","triangles");
+////						God::layers.emplace_back<SSAO>("SSAO").init();
 				God::layers.emplace_back<RenderTubes>("RenderTubes").init("B0.step","polylines");
 
 			}
