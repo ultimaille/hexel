@@ -1,6 +1,13 @@
+#version 330 core
+
+in vec2 TexCoord;
+
 uniform sampler2D source_ao;
 uniform vec2 blur_direction;
+uniform float texel_size;
 uniform int blur_radius;
+
+out vec4 FragColor;
 
 float gaussian_weight(float x, float sigma) {
     return exp(-0.5 * (x * x) / (sigma * sigma));

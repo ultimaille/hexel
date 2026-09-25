@@ -27,7 +27,7 @@ struct SSAO : RenderLayer {
 
     void init() {
         God::shaders.add(std::string(SHADERS_DIR), ao_name);
-//      God::shaders.add(std::string(SHADERS_DIR), blur_name);
+        God::shaders.add(std::string(SHADERS_DIR), blur_name);
         God::shaders.add(std::string(SHADERS_DIR), composite_name);
         initialize_quad();
         initialize_random_texture();
@@ -39,17 +39,11 @@ struct SSAO : RenderLayer {
         if (!target.valid())
             return;
 
-//      GLuint blurprogram = God::shaders[blurname];
-//      RenderTarget& blurtarget = God::context.render_target;
-//      if (!blurtarget.valid())
-//          return;
-
         RenderTarget ao;
         ao.init(target.width, target.height);
 //      if (!ao.valid()) return;
 
         {
-            // temporary copy of the current render target
             ao.bind();
 
             glDisable(GL_DEPTH_TEST);
@@ -77,6 +71,43 @@ struct SSAO : RenderLayer {
 
             draw_quad();
         }
+
+        RenderTarget blur;
+        blur.init(target.width, target.height);
+        {
+            GLuint blur_program = God::shaders[blur_name];
+            blur.bind();
+
+            glUseProgram(blur_program);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, ao.color);
+            glUniform1i(glGetUniformLocation(blur_program, "source_ao"), 0);
+
+            glUniform2f(glGetUniformLocation(blur_program, "blur_direction"), 1.0f, 0.0f);
+            glUniform1f(glGetUniformLocation(blur_program, "texel_size"), 1.0f / float(target.width));
+            glUniform1i(glGetUniformLocation(blur_program, "blur_radius"), 10);
+
+            draw_quad();
+        }
+        copy_target_to_source(blur, ao);
+        {
+            GLuint blur_program = God::shaders[blur_name];
+            blur.bind();
+
+            glUseProgram(blur_program);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, ao.color);
+            glUniform1i(glGetUniformLocation(blur_program, "source_ao"), 0);
+
+            glUniform2f(glGetUniformLocation(blur_program, "blur_direction"), 0.0f, 1.0f);
+            glUniform1f(glGetUniformLocation(blur_program, "texel_size"), 1.0f / float(target.height));
+            glUniform1i(glGetUniformLocation(blur_program, "blur_radius"), 10);
+
+            draw_quad();
+        }
+        copy_target_to_source(blur, ao);
 
         target.bind();
 
