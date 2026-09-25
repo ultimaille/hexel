@@ -35,6 +35,24 @@ bool outside(vec2 uv) {
 }
 
 void main() {
+/*    const vec2 directions[4] = vec2[](
+            vec2( 1.0,  0.0),
+            vec2(-1.0,  0.0),
+            vec2( 0.0,  1.0),
+            vec2( 0.0, -1.0)
+            );
+*/
+const vec2 directions[8] = vec2[](
+    vec2( 1.0,  0.0),
+    vec2(-1.0,  0.0),
+    vec2( 0.0,  1.0),
+    vec2( 0.0, -1.0),
+    normalize(vec2( 1.0,  1.0)),
+    normalize(vec2(-1.0,  1.0)),
+    normalize(vec2( 1.0, -1.0)),
+    normalize(vec2(-1.0, -1.0))
+);
+
     vec4 source = texture(source_color, TexCoord);
     float center_depth = texture(source_depth, TexCoord).r;
 
@@ -98,7 +116,18 @@ void main() {
     float horizon = 0.0;
     float valid_samples = 0.0;
 
-    vec2 screen_direction = vec2(1.0, 0.0);
+float occlusion = 0.0;
+float valid_directions = 0.0;
+
+for (int direction_index = 0;
+     direction_index < 8;
+     ++direction_index) {
+
+    vec2 screen_direction =
+        directions[direction_index];
+
+    float horizon = 0.0;
+    float valid_samples = 0.0;
 
     for (int i = 1; i <= 32; ++i) {
         if (i > horizon_steps) {
@@ -144,46 +173,49 @@ void main() {
         vec3 direction =
             offset / distance_to_sample;
 
-        /*
-         * Positive values mean that the sampled surface rises into the
-         * current surface's normal hemisphere.
-         */
-        float elevation =
-            dot(normal, direction);
+float elevation = max(
+    dot(normal, direction),
+    0.0
+);
 
-        horizon = max(horizon, elevation);
+float distance_weight =
+    1.0 - smoothstep(
+        0.0,
+        horizon_radius_pixels,
+        t * horizon_radius_pixels
+    );
+
+horizon = max(
+    horizon,
+    elevation * distance_weight
+);
+
         valid_samples += 1.0;
     }
 
-    if (valid_samples == 0.0) {
-        FragColor = source;
-        return;
+    if (valid_samples > 0.0) {
+        float directional_occlusion =
+            max(horizon - horizon_bias, 0.0);
+
+        occlusion += directional_occlusion;
+        valid_directions += 1.0;
     }
+}
 
-    /*
-     * Remove a small amount of self-occlusion caused by depth precision
-     * and normal reconstruction.
-     */
-    float occlusion = max(
-        horizon - horizon_bias,
-        0.0
-    );
+if (valid_directions > 0.0) {
+    occlusion /= valid_directions;
+}
 
-    float ao = clamp(
-        1.0 - ao_strength * occlusion,
-        0.0,
-        1.0
-    );
+float ao = clamp(
+    1.0 - ao_strength * occlusion,
+    0.0,
+    1.0
+);
 
-    /*
-     * Debug output:
-     *
-     * FragColor = vec4(vec3(1.0 - occlusion), 1.0);
-     */
+FragColor = vec4(
+    source.rgb * ao,
+    source.a
+);
+    
 
-    FragColor = vec4(
-        source.rgb * ao,
-        source.a
-    );
-    FragColor = vec4(vec3(1.0 - occlusion), 1.0);
 }
