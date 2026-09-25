@@ -6,9 +6,12 @@
 #include "xcf.h"
 #include "render_target.h"
 #include "window.h"
+// #include "event.h"
 #include "panels.h"
 #include "layers.h"
 #include "shaders.h"
+
+struct EventManager;
 
 namespace InteractionMode { struct AbstractMode; }
 
@@ -17,7 +20,7 @@ namespace God {
     extern XCF xcf;
     extern MouseState mouse;
     extern KeyboardState keys;
-    extern std::vector<Event> events;
+    extern EventManager events;
     extern Camera camera;
     extern LayerManager layers;
     extern PanelManager panels;

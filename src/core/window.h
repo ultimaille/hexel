@@ -133,26 +133,12 @@ struct WindowContext {
 // -------------------------------------------------------------------------------
 
 struct MouseState{
-	MouseState() {
-		FOR(i,3) mouseDragging[i] = false;
-		x = 0.0; y = 0.0; lastx = 0.0; lasty = 0.0;
-		wheel_event_speed=0;
-	}
-	void set_wheel_event(double v) {
-		wheel_event_speed=v;
-	}
-	double get_wheel_event(bool consume=true) {
-		double ret = wheel_event_speed;
-		if(consume) wheel_event_speed=0;
-		return ret;
-	}
 
 	void update();
 
-
-	bool mouseDragging[3] ;
-	double lastx,lasty,x,y;
-	double wheel_event_speed;
+	bool mouseDragging[3] = {false};
+	double lastx = 0.,lasty = 0.,x = 0.,y = 0.;
+	double wheel_event_speed = 0.;
 };
 
 struct KeyboardState{
@@ -164,24 +150,3 @@ struct KeyboardState{
 	std::array<bool,2048> data;
 
 };
-
-
-// -------------------------------------------------------------------------------
-//                                    Events
-// -------------------------------------------------------------------------------
-// we need some way to have objects interactions. Messages, listeners and callback would not simplify the conception
-struct Event{
-	enum {
-		MOUSE_MOVED,
-		MOUSE_PRESSED,
-		MOUSE_RELEASED,
-		KEY_PRESSED,
-		KEY_RELEASED,
-		MM_REMOVED,
-		TRIANGLES_REMOVED,
-		TRIANGLES_UPDATED
-	} even_type;
-
-	std::string object_name;// a string that allows to find the element
-};
-

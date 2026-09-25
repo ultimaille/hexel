@@ -1,5 +1,6 @@
 #pragma once
 #include <ultimaille/all.h>
+#include "event.h"
 
 using namespace UM;
 
@@ -7,7 +8,7 @@ struct CameraInterface {
     virtual ~CameraInterface() = default;
     virtual mat4x4 projection_matrix() const = 0;
     virtual mat4x4 view_matrix()       const = 0;
-    virtual void update()                    = 0;
+    virtual void handle(Event event)                    = 0;
 };
 
 struct CameraPose {
@@ -61,7 +62,7 @@ struct TrackBallCamera : CameraInterface {
     mat4x4 projection_matrix() const override;
     mat4x4 view_matrix() const override;
 
-    void update() override;
+    void handle(Event event) override;
 };
 
 struct Camera {
@@ -71,5 +72,6 @@ struct Camera {
     float* view() const;
     float* inverse_projection() const;
     void update();
+    void handle(Event event);
 };
 

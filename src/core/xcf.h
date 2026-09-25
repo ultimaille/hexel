@@ -134,6 +134,7 @@ namespace UM {
             auto &multimesh = (*this)[triname];
             multimesh.load_geogram(filename,connect);
         }
+        void erase(const std::string& name);
     };
 }
 

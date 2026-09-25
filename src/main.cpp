@@ -39,7 +39,6 @@ struct XCFViewer: public Panel {
 			}
 		}
 		for(auto name:mm_to_kill){
-			God::events.push_back({Event::MM_REMOVED,name});
 			God::xcf.erase(name);
 		}
 		ImGui::End();
@@ -82,13 +81,15 @@ struct RenderLambertTriangles: public RenderLayer{
 		ImGui::ColorEdit3(("MyColor##"+name).c_str(),(float*)&color,ImGuiColorEditFlags_None);
 	}
 
-	bool resync_with_data(){
-		if(!God::xcf.contains(mm_name)) return false;
-		if(!God::xcf[mm_name].triangles.contains(triangle_name)) return false;
-//	if (!God::xcf[mm_name].triangles[triangle_name].modified) return true; // TODO: obsolete, à refaire avec la newsletter
+	bool handle(Event event){
+		//	if (!God::xcf[mm_name].triangles[triangle_name].modified) return true; // TODO: obsolete, à refaire avec la newsletter
 		// Log::add("need to update vbo");
 		return true;
 	}
+
+	// bool is_cleanup_ready() override {
+	// 	return !God::xcf.contains(mm_name) || God::xcf[mm_name].triangles.contains(triangle_name);
+	// }
 
 	void init(std::string mm,std::string triangle){
 		triangle_name = triangle;
@@ -234,7 +235,7 @@ struct PointRenderer : public Renderer{
 		glGenBuffers(1,&vbo);
 		glBindVertexArray(vao);
 		glBindBuffer(GL_ARRAY_BUFFER,vbo);
-		glBufferData(GL_ARRAY_BUFFER,3*pts_size * sizeof(float),pts,GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER,pts_size * sizeof(float),pts,GL_STATIC_DRAW);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,0,nullptr);
 		glBindVertexArray(0);
@@ -287,7 +288,7 @@ struct RenderSpheres: public RenderLayer{
 		ImGui::ColorEdit3(("MyColor##"+name).c_str(),(float*)&pts_renderer.color,ImGuiColorEditFlags_None);
 	}
 
-	bool resync_with_data(){
+	bool handle(Event event){
 		if(!God::xcf.contains(mm_name)) return false;
 		if(!God::xcf[mm_name].triangles.contains(triangle_name)) return false;
 		return true;
@@ -422,7 +423,7 @@ struct RenderTubes: public RenderLayer{
 		ImGui::ColorEdit3(("MyColor##"+name).c_str(),(float*)&segment_renderer.color,ImGuiColorEditFlags_None);
 	}
 
-	bool resync_with_data(){
+	bool handle(Event event){
 		if(!God::xcf.contains(mm_name)) return false;
 		if(!God::xcf[mm_name].polylines.contains(polyline_name)) return false;
 		return true;
@@ -578,8 +579,6 @@ int main(){
 	God::panels.emplace_back<LayerViewer>("layer_window");
 	while(God::context.window_is_active()){
 		glfwPollEvents();
-		God::camera.update();
-		God::layers.sync();
 		God::context.begin_frame();
 		God::layers.render();
 		God::panels.show_gui();
@@ -588,6 +587,9 @@ int main(){
 			God::mouse.update();
 		if(!ImGui::GetIO().WantCaptureKeyboard || !ImGui::GetIO().WantCaptureMouse)
 			God::keys.update();
+
+		God::events.dispatch();
+		
 		God::context.end_frame();
 	}
 	return EXIT_SUCCESS;
