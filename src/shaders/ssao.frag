@@ -218,4 +218,14 @@ FragColor = vec4(
 );
     
 
+// Horizon:
+FragColor = vec4(vec3(horizon), 1.0);
+
+// Normal:
+FragColor = vec4(normal * 0.5 + 0.5, 1.0);
+
+// AO:
+FragColor = vec4(vec3(ao), 1.0);
+
+
 }

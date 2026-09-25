@@ -7,6 +7,12 @@ struct SSAO : RenderLayer {
     GLuint quad_vao = 0;
     GLuint quad_vbo = 0;
 
+float horizon_radius_pixels = 40.0f;
+float horizon_bias = 0.02f;
+int horizon_steps = 16;
+float ao_strength = 2.0f;
+
+
     SSAO() {
         visible = true;
     }
@@ -15,7 +21,35 @@ struct SSAO : RenderLayer {
         destroy();
     }
 
-    void generate_gui(std::string) override {}
+    void generate_gui(std::string) override {
+        ImGui::SliderFloat(
+        ("Radius##" + name).c_str(),
+        &horizon_radius_pixels,
+        1.0f,
+        200.0f
+    );
+
+    ImGui::SliderFloat(
+        ("Bias##" + name).c_str(),
+        &horizon_bias,
+        0.0f,
+        0.2f
+    );
+
+    ImGui::SliderInt(
+        ("Steps##" + name).c_str(),
+        &horizon_steps,
+        1,
+        32
+    );
+
+    ImGui::SliderFloat(
+        ("Strength##" + name).c_str(),
+        &ao_strength,
+        0.0f,
+        8.0f
+    );
+    }
     bool resync_with_data() override { return true; }
 
     void init() {
@@ -53,10 +87,10 @@ struct SSAO : RenderLayer {
         glUniformMatrix4fv(glGetUniformLocation(program, "inverse_projection"), 1, GL_TRUE, God::camera.inverse_projection());
         glUniform2f(glGetUniformLocation(program, "texel_size"), 1/float(target.width), 1/float(target.height));
 
-        glUniform1f(glGetUniformLocation(program, "horizon_radius_pixels"), 40.0f);
-        glUniform1f(glGetUniformLocation(program, "horizon_bias"), 0.02f);
-        glUniform1i(glGetUniformLocation(program, "horizon_steps"), 16);
-        glUniform1f(glGetUniformLocation(program, "ao_strength"), 2.0f);
+        glUniform1f(glGetUniformLocation(program, "horizon_radius_pixels"), horizon_radius_pixels);
+        glUniform1f(glGetUniformLocation(program, "horizon_bias"), horizon_bias);
+        glUniform1i(glGetUniformLocation(program, "horizon_steps"), horizon_steps);
+        glUniform1f(glGetUniformLocation(program, "ao_strength"), ao_strength);
 
         draw_quad();
 
