@@ -4,228 +4,126 @@ in vec2 TexCoord;
 
 uniform sampler2D source_color;
 uniform sampler2D source_depth;
+uniform sampler2D random_texture;
 uniform mat4 inverse_projection;
-uniform vec2 texel_size;
 
-uniform float horizon_radius_pixels;
-uniform float horizon_bias;
-uniform int horizon_steps;
-uniform float ao_strength;
+uniform float max_radius;
+uniform float step_mul;
 
 out vec4 FragColor;
 
+float width  = float(textureSize(source_depth,0).x);
+float height = float(textureSize(source_depth,0).y);
+
+const float PI = 3.14159265359;
+
+vec3 get_obj_coords(in vec2 uv) {
+    vec4 p = vec4(uv, texture(source_depth, uv).r, 1.);
+    // Map [0,1] to [-1,1]
+    p.xyz = p.xyz * 2. - 1.;
+    p = inverse_projection * p;
+    if (p.w != 0.) {
+        p.xyz /= p.w;
+    }
+    return vec3(p);
+}
+
+float get_obj_z(in vec2 uv) {
+    float depth = texture(source_depth, uv).r;
+    // For background points, return infinite value.
+    if (depth >= 1.) {
+        return -10000.;
+    }
+    // Map from range 0 to 1 to range -1 to 1
+    depth = depth * 2. - 1.;
+    float z = (depth * inverse_projection[2][2] + inverse_projection[3][2]) / (depth * inverse_projection[2][3] + inverse_projection[3][3]);
+    return z;
+}
+
 vec3 reconstruct_view_position(vec2 uv, float depth) {
-    vec4 clip_position = vec4(
-        uv * 2.0 - 1.0,
-        depth * 2.0 - 1.0,
-        1.0
-    );
-
-    vec4 view_position =
-        inverse_projection * clip_position;
-
+    vec4 clip_position = vec4(uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
+    vec4 view_position = inverse_projection * clip_position;
     return view_position.xyz / view_position.w;
 }
 
 bool outside(vec2 uv) {
-    return uv.x < 0.0 ||
-           uv.x > 1.0 ||
-           uv.y < 0.0 ||
-           uv.y > 1.0;
+    return uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0;
 }
 
-void main() {
-/*    const vec2 directions[4] = vec2[](
+vec3 read_position(vec2 uv) {
+    return reconstruct_view_position(uv, get_obj_z(uv));
+}
+
+vec2 horizon_point(in vec2 from, in vec2 dir) {
+    vec2 result;
+    float horizon_delta = -100000.0;
+    float from_z = get_obj_z(from);
+    float step = (1.0 / width);
+    float r = 2.0 * step;
+    vec2 cur_point = from + r * dir;
+
+    while (!outside(cur_point)) {
+        float z = get_obj_z(cur_point);
+
+        float delta_z = (z - from_z) / r;
+        if (delta_z > horizon_delta) {
+            horizon_delta = delta_z;
+            result = cur_point;
+        }
+        if (r > max_radius) {
+            break;
+        }
+        r += step;
+        step *= step_mul;
+        cur_point = from + r * dir;
+    }
+    return result;
+}
+
+float horizon_angle(in vec2 from, in vec3 from3D, in vec2 dir, in vec3 normal) {
+    vec3 horizon = get_obj_coords(horizon_point(from, dir)) - from3D;
+    return acos ( dot(normal, horizon) / length(horizon) );
+}
+
+float my_noise() {
+    vec2 random_size = vec2(textureSize(random_texture, 0));
+    vec2 random_uv = TexCoord * vec2(width, height) / random_size;
+    return texture(random_texture, fract(random_uv)).r;
+}
+
+float ambient_occlusion(in vec2 from) {
+    const int nb_directions = 7;
+    vec2 directions[8] = vec2[](
             vec2( 1.0,  0.0),
             vec2(-1.0,  0.0),
             vec2( 0.0,  1.0),
-            vec2( 0.0, -1.0)
+            vec2( 0.0, -1.0),
+            normalize(vec2( 1.0,  1.0)),
+            normalize(vec2(-1.0,  1.0)),
+            normalize(vec2( 1.0, -1.0)),
+            normalize(vec2(-1.0, -1.0))
             );
-*/
-const vec2 directions[8] = vec2[](
-    vec2( 1.0,  0.0),
-    vec2(-1.0,  0.0),
-    vec2( 0.0,  1.0),
-    vec2( 0.0, -1.0),
-    normalize(vec2( 1.0,  1.0)),
-    normalize(vec2(-1.0,  1.0)),
-    normalize(vec2( 1.0, -1.0)),
-    normalize(vec2(-1.0, -1.0))
-);
+    float angle_step = 2.0 * PI / (nb_directions);
+    float cur_angle = my_noise() * 2. * PI ;
+    float occlusion_factor = 0.0;
+    vec3 from3D = get_obj_coords(from);
+    for (int i=0; i < nb_directions; i++) {
+        vec2 dir = vec2(cos(cur_angle), sin(cur_angle));
+//      dir = directions[i];
 
-    vec4 source = texture(source_color, TexCoord);
-    float center_depth = texture(source_depth, TexCoord).r;
-
-    // Keep pixels with no geometry unchanged.
-    if (center_depth >= 0.999999) {
-        FragColor = source;
-        return;
+        float h_angle = horizon_angle(from, from3D, dir, vec3(0., 0., 1.));
+        cur_angle += angle_step;
+        occlusion_factor += h_angle;
     }
-
-    vec3 center =
-        reconstruct_view_position(
-            TexCoord,
-            center_depth
-        );
-
-    /*
-     * Estimate the view-space normal from two neighboring positions.
-     */
-    vec2 uv_x = TexCoord + vec2(texel_size.x, 0.0);
-    vec2 uv_y = TexCoord + vec2(0.0, texel_size.y);
-
-    if (outside(uv_x) || outside(uv_y)) {
-        FragColor = source;
-        return;
-    }
-
-    float depth_x = texture(source_depth, uv_x).r;
-    float depth_y = texture(source_depth, uv_y).r;
-
-    if (depth_x >= 0.999999 || depth_y >= 0.999999) {
-        FragColor = source;
-        return;
-    }
-
-    vec3 position_x =
-        reconstruct_view_position(uv_x, depth_x);
-
-    vec3 position_y =
-        reconstruct_view_position(uv_y, depth_y);
-
-    vec3 normal = normalize(
-        cross(position_x - center, position_y - center)
-    );
-
-    /*
-     * Orient the normal toward the camera. The camera is at the origin
-     * in view space, so -center points approximately toward it.
-     */
-    if (dot(normal, -center) < 0.0) {
-        normal = -normal;
-    }
-
-    /*
-     * One-direction horizon search:
-     *
-     *     center → +screen-X
-     *
-     * horizon stores the greatest elevation of a sampled surface relative
-     * to the current surface normal.
-     */
-    float horizon = 0.0;
-    float valid_samples = 0.0;
-
-float occlusion = 0.0;
-float valid_directions = 0.0;
-
-for (int direction_index = 0;
-     direction_index < 8;
-     ++direction_index) {
-
-    vec2 screen_direction =
-        directions[direction_index];
-
-    float horizon = 0.0;
-    float valid_samples = 0.0;
-
-    for (int i = 1; i <= 32; ++i) {
-        if (i > horizon_steps) {
-            break;
-        }
-
-        float t =
-            float(i) / float(horizon_steps);
-
-        vec2 sample_uv =
-            TexCoord +
-            screen_direction *
-            texel_size *
-            (t * horizon_radius_pixels);
-
-        if (outside(sample_uv)) {
-            break;
-        }
-
-        float sample_depth =
-            texture(source_depth, sample_uv).r;
-
-        if (sample_depth >= 0.999999) {
-            continue;
-        }
-
-        vec3 sample_position =
-            reconstruct_view_position(
-                sample_uv,
-                sample_depth
-            );
-
-        vec3 offset =
-            sample_position - center;
-
-        float distance_to_sample =
-            length(offset);
-
-        if (distance_to_sample < 0.000001) {
-            continue;
-        }
-
-        vec3 direction =
-            offset / distance_to_sample;
-
-float elevation = max(
-    dot(normal, direction),
-    0.0
-);
-
-float distance_weight =
-    1.0 - smoothstep(
-        0.0,
-        horizon_radius_pixels,
-        t * horizon_radius_pixels
-    );
-
-horizon = max(
-    horizon,
-    elevation * distance_weight
-);
-
-        valid_samples += 1.0;
-    }
-
-    if (valid_samples > 0.0) {
-        float directional_occlusion =
-            max(horizon - horizon_bias, 0.0);
-
-        occlusion += directional_occlusion;
-        valid_directions += 1.0;
-    }
+    return occlusion_factor / (float(nb_directions) * (PI / 2.0));
 }
 
-if (valid_directions > 0.0) {
-    occlusion /= valid_directions;
+void main() {
+    if (texture(source_depth, TexCoord).r >= 1.0) {
+        FragColor = vec4(1.0);
+        return;
+    }
+    float g = ambient_occlusion(TexCoord);
+    FragColor = vec4(vec3(g), 1.0);
 }
 
-float ao = clamp(
-    1.0 - ao_strength * occlusion,
-    0.0,
-    1.0
-);
-
-FragColor = vec4(
-    source.rgb * ao,
-    source.a
-);
-    
-
-// Horizon:
-FragColor = vec4(vec3(horizon), 1.0);
-
-// Normal:
-FragColor = vec4(normal * 0.5 + 0.5, 1.0);
-
-// AO:
-FragColor = vec4(vec3(ao), 1.0);
-
-
-}

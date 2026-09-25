@@ -1,17 +1,16 @@
 #pragma once
 
+#include <array>
 #include "core/core.h"
 
 struct SSAO : RenderLayer {
-    const std::string name = "ssao";
+    const std::string ao_name = "ssao";
+    const std::string blur_name = "ssao_blur";
+    const std::string composite_name = "ssao_composite";
+
     GLuint quad_vao = 0;
     GLuint quad_vbo = 0;
-
-float horizon_radius_pixels = 40.0f;
-float horizon_bias = 0.02f;
-int horizon_steps = 16;
-float ao_strength = 2.0f;
-
+    GLuint random_texture = 0;
 
     SSAO() {
         visible = true;
@@ -22,81 +21,121 @@ float ao_strength = 2.0f;
     }
 
     void generate_gui(std::string) override {
-        ImGui::SliderFloat(
-        ("Radius##" + name).c_str(),
-        &horizon_radius_pixels,
-        1.0f,
-        200.0f
-    );
-
-    ImGui::SliderFloat(
-        ("Bias##" + name).c_str(),
-        &horizon_bias,
-        0.0f,
-        0.2f
-    );
-
-    ImGui::SliderInt(
-        ("Steps##" + name).c_str(),
-        &horizon_steps,
-        1,
-        32
-    );
-
-    ImGui::SliderFloat(
-        ("Strength##" + name).c_str(),
-        &ao_strength,
-        0.0f,
-        8.0f
-    );
     }
-//  bool resync_with_data() override { return true; }
+
+    bool handle(Event) override { return true; }
 
     void init() {
-        God::shaders.add(std::string(SHADERS_DIR), name);
+        God::shaders.add(std::string(SHADERS_DIR), ao_name);
+        God::shaders.add(std::string(SHADERS_DIR), blur_name);
+        God::shaders.add(std::string(SHADERS_DIR), composite_name);
         initialize_quad();
+        initialize_random_texture();
     }
 
     void render() override {
-        GLuint program = God::shaders[name];
+        GLuint ao_program = God::shaders[ao_name];
         RenderTarget& target = God::context.render_target;
         if (!target.valid())
             return;
 
-        // temporary copy of the current render target
-        RenderTarget copy;
-        copy.init(target.width, target.height);
-        copy_target_to_source(target, copy);
+        RenderTarget ao;
+        ao.init(target.width, target.height);
+//      if (!ao.valid()) return;
+
+        {
+            ao.bind();
+
+            glDisable(GL_DEPTH_TEST);
+            glDepthMask(GL_FALSE);
+            glDisable(GL_BLEND);
+
+            glUseProgram(ao_program);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, target.color);
+            glUniform1i(glGetUniformLocation(ao_program, "source_color"), 0);
+
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, target.depth);
+            glUniform1i(glGetUniformLocation(ao_program, "source_depth"), 1);
+
+            glActiveTexture(GL_TEXTURE2);
+            glBindTexture(GL_TEXTURE_2D, random_texture);
+            glUniform1i(glGetUniformLocation(ao_program, "random_texture"), 2);
+
+            glUniformMatrix4fv(glGetUniformLocation(ao_program, "inverse_projection"), 1, GL_TRUE, God::camera.inverse_projection());
+
+            glUniform1f(glGetUniformLocation(ao_program, "max_radius"), 0.5f);
+            glUniform1f(glGetUniformLocation(ao_program, "step_mul"), 1.2f);
+
+            draw_quad();
+        }
+
+        RenderTarget blur;
+        blur.init(target.width, target.height);
+        {
+            GLuint blur_program = God::shaders[blur_name];
+            blur.bind();
+
+            glUseProgram(blur_program);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, ao.color);
+            glUniform1i(glGetUniformLocation(blur_program, "source_ao"), 0);
+
+            glUniform2f(glGetUniformLocation(blur_program, "blur_direction"), 1.0f, 0.0f);
+            glUniform1f(glGetUniformLocation(blur_program, "texel_size"), 1.0f / float(target.width));
+            glUniform1i(glGetUniformLocation(blur_program, "blur_radius"), 10);
+
+            draw_quad();
+        }
+        copy_target_to_source(blur, ao);
+        {
+            GLuint blur_program = God::shaders[blur_name];
+            blur.bind();
+
+            glUseProgram(blur_program);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, ao.color);
+            glUniform1i(glGetUniformLocation(blur_program, "source_ao"), 0);
+
+            glUniform2f(glGetUniformLocation(blur_program, "blur_direction"), 0.0f, 1.0f);
+            glUniform1f(glGetUniformLocation(blur_program, "texel_size"), 1.0f / float(target.height));
+            glUniform1i(glGetUniformLocation(blur_program, "blur_radius"), 10);
+
+            draw_quad();
+        }
+        copy_target_to_source(blur, ao);
 
         target.bind();
 
-        glDisable(GL_DEPTH_TEST);
-        glDepthMask(GL_FALSE);
-        glDisable(GL_BLEND);
+        {
+            GLuint composite_program = God::shaders[composite_name];
 
-        glUseProgram(program);
+            RenderTarget copy;
+            copy.init(target.width, target.height);
+            //      if (!copy.valid()) return;
+            copy_target_to_source(target, copy);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, copy.color);
-        glUniform1i(glGetUniformLocation(program, "source_color"), 0);
+            target.bind();
+            glUseProgram(composite_program);
 
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, copy.depth);
-        glUniform1i(glGetUniformLocation(program, "source_depth"), 1);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, copy.color);
+            glUniform1i(glGetUniformLocation(composite_program, "source_color"), 0);
 
-        glUniformMatrix4fv(glGetUniformLocation(program, "inverse_projection"), 1, GL_TRUE, God::camera.inverse_projection());
-        glUniform2f(glGetUniformLocation(program, "texel_size"), 1/float(target.width), 1/float(target.height));
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, ao.color);
+            glUniform1i(glGetUniformLocation(composite_program, "source_ao"), 1);
 
-        glUniform1f(glGetUniformLocation(program, "horizon_radius_pixels"), horizon_radius_pixels);
-        glUniform1f(glGetUniformLocation(program, "horizon_bias"), horizon_bias);
-        glUniform1i(glGetUniformLocation(program, "horizon_steps"), horizon_steps);
-        glUniform1f(glGetUniformLocation(program, "ao_strength"), ao_strength);
-
-        draw_quad();
-
+            draw_quad();
+        }
         // TODO this does not match the philosophy of "each guy must setup its own environment"
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
     }
 
 private:
@@ -140,12 +179,38 @@ private:
         glEnableVertexAttribArray(1);
     }
 
+    void initialize_random_texture() {
+        constexpr int width  = 32;
+        constexpr int height = 32;
+
+        std::array<float, width * height> values;
+        uint32_t state = 0x12345678u;
+        for (float& value : values) {
+            state = 1664525u * state + 1013904223u;
+            value = float(state & 0x00ffffffu) / float(0x01000000u);
+        }
+
+        glGenTextures(1, &random_texture);
+        glBindTexture(GL_TEXTURE_2D, random_texture);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, values.data());
+    }
+
     void draw_quad() {
         glBindVertexArray(quad_vao);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     }
 
     void destroy() {
+        if (random_texture != 0) {
+            glDeleteTextures(1, &random_texture);
+            random_texture = 0;
+        }
+
         if (quad_vbo != 0) {
             glDeleteBuffers(1, &quad_vbo);
             quad_vbo = 0;
