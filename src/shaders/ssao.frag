@@ -77,7 +77,6 @@ vec2 horizon_point(in vec2 from, in vec2 dir) {
         step *= step_mul;
         cur_point = from + r * dir;
     }
-
     return result;
 }
 
@@ -104,17 +103,16 @@ float ambient_occlusion(in vec2 from) {
             normalize(vec2( 1.0, -1.0)),
             normalize(vec2(-1.0, -1.0))
             );
-
     float angle_step = 2.0 * PI / (nb_directions);
     float cur_angle = my_noise() * 2. * PI ;
     float occlusion_factor = 0.0;
     vec3 from3D = get_obj_coords(from);
     for (int i=0; i < nb_directions; i++) {
         vec2 dir = vec2(cos(cur_angle), sin(cur_angle));
-//        dir = directions[i];
+//      dir = directions[i];
 
         float h_angle = horizon_angle(from, from3D, dir, vec3(0., 0., 1.));
-       cur_angle += angle_step;
+        cur_angle += angle_step;
         occlusion_factor += h_angle;
     }
     return occlusion_factor / (float(nb_directions) * (PI / 2.0));
@@ -122,6 +120,7 @@ float ambient_occlusion(in vec2 from) {
 
 void main() {
     if (texture(source_depth, TexCoord).r >= 1.0) {
+        FragColor = vec4(1.0);
         return;
     }
     float g = ambient_occlusion(TexCoord);

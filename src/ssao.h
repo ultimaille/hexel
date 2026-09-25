@@ -4,7 +4,10 @@
 #include "core/core.h"
 
 struct SSAO : RenderLayer {
-    const std::string name = "ssao";
+    const std::string ao_name = "ssao";
+    const std::string blur_name = "ssao_blur";
+    const std::string composite_name = "ssao_composite";
+
     GLuint quad_vao = 0;
     GLuint quad_vbo = 0;
     GLuint random_texture = 0;
@@ -17,59 +20,91 @@ struct SSAO : RenderLayer {
         destroy();
     }
 
-
     void generate_gui(std::string) override {
     }
 
     bool handle(Event) override { return true; }
 
     void init() {
-        God::shaders.add(std::string(SHADERS_DIR), name);
+        God::shaders.add(std::string(SHADERS_DIR), ao_name);
+//      God::shaders.add(std::string(SHADERS_DIR), blur_name);
+        God::shaders.add(std::string(SHADERS_DIR), composite_name);
         initialize_quad();
         initialize_random_texture();
     }
 
     void render() override {
-        GLuint program = God::shaders[name];
+        GLuint ao_program = God::shaders[ao_name];
         RenderTarget& target = God::context.render_target;
         if (!target.valid())
             return;
 
-        // temporary copy of the current render target
-        RenderTarget copy;
-        copy.init(target.width, target.height);
-        copy_target_to_source(target, copy);
+//      GLuint blurprogram = God::shaders[blurname];
+//      RenderTarget& blurtarget = God::context.render_target;
+//      if (!blurtarget.valid())
+//          return;
+
+        RenderTarget ao;
+        ao.init(target.width, target.height);
+//      if (!ao.valid()) return;
+
+        {
+            // temporary copy of the current render target
+            ao.bind();
+
+            glDisable(GL_DEPTH_TEST);
+            glDepthMask(GL_FALSE);
+            glDisable(GL_BLEND);
+
+            glUseProgram(ao_program);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, target.color);
+            glUniform1i(glGetUniformLocation(ao_program, "source_color"), 0);
+
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, target.depth);
+            glUniform1i(glGetUniformLocation(ao_program, "source_depth"), 1);
+
+            glActiveTexture(GL_TEXTURE2);
+            glBindTexture(GL_TEXTURE_2D, random_texture);
+            glUniform1i(glGetUniformLocation(ao_program, "random_texture"), 2);
+
+            glUniformMatrix4fv(glGetUniformLocation(ao_program, "inverse_projection"), 1, GL_TRUE, God::camera.inverse_projection());
+
+            glUniform1f(glGetUniformLocation(ao_program, "max_radius"), 0.5f);
+            glUniform1f(glGetUniformLocation(ao_program, "step_mul"), 1.2f);
+
+            draw_quad();
+        }
 
         target.bind();
 
-        glDisable(GL_DEPTH_TEST);
-        glDepthMask(GL_FALSE);
-        glDisable(GL_BLEND);
+        {
+            GLuint composite_program = God::shaders[composite_name];
 
-        glUseProgram(program);
+            RenderTarget copy;
+            copy.init(target.width, target.height);
+            //      if (!copy.valid()) return;
+            copy_target_to_source(target, copy);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, copy.color);
-        glUniform1i(glGetUniformLocation(program, "source_color"), 0);
+            target.bind();
+            glUseProgram(composite_program);
 
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, copy.depth);
-        glUniform1i(glGetUniformLocation(program, "source_depth"), 1);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, copy.color);
+            glUniform1i(glGetUniformLocation(composite_program, "source_color"), 0);
 
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, random_texture);
-        glUniform1i(glGetUniformLocation(program, "random_texture"), 2);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, ao.color);
+            glUniform1i(glGetUniformLocation(composite_program, "source_ao"), 1);
 
-        glUniformMatrix4fv(glGetUniformLocation(program, "inverse_projection"), 1, GL_TRUE, God::camera.inverse_projection());
-
-        glUniform1f(glGetUniformLocation(program, "max_radius"), 0.5f);
-        glUniform1f(glGetUniformLocation(program, "step_mul"), 1.2f);       
-
-        draw_quad();
-
+            draw_quad();
+        }
         // TODO this does not match the philosophy of "each guy must setup its own environment"
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
     }
 
 private:
@@ -114,19 +149,14 @@ private:
     }
 
     void initialize_random_texture() {
-        constexpr int width = 32;
+        constexpr int width  = 32;
         constexpr int height = 32;
 
         std::array<float, width * height> values;
-
-        // Deterministic pseudo-random values in [0, 1).
-        // A fixed pattern makes debugging reproducible.
         uint32_t state = 0x12345678u;
-
         for (float& value : values) {
             state = 1664525u * state + 1013904223u;
-            value = float(state & 0x00ffffffu) /
-                float(0x01000000u);
+            value = float(state & 0x00ffffffu) / float(0x01000000u);
         }
 
         glGenTextures(1, &random_texture);
