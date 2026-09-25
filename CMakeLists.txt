@@ -149,7 +149,7 @@ set_folder_recursive(
 add_executable(Hexel
     src/main.cpp
     src/core/basic.h
-    src/core/picker.h
+    src/core/picker.h src/core/picker.cpp
     src/core/panels.h
     src/core/layers.h
     src/core/shaders.h

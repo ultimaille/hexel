@@ -12,7 +12,7 @@
 
 #include <ultimaille/all.h>
 #include "core/core.h"
-
+#include "core/picker.h"
 
 
 
@@ -224,20 +224,41 @@ struct PointRenderer : public Renderer{
 	GLuint vao,vbo;
 	int npts;
 
+	struct v3 {
+		float x, y, z;
+	};
+
+	struct Vertex {
+		float pos[3];
+		//v3 pos;
+		int id;
+	};
 
 	float color[3] = {.5,1,.5};
 	int radius_in_pixel=5;
 
 
-		void init(float* pts,int pts_size){
-		npts = pts_size/3;
+	void init(std::vector<Vertex> vertices){
+		shaderProgram=God::shaders["point_as_sphere"];
+
+		//npts = pts_size/3;
+		npts = vertices.size();
 		glGenVertexArrays(1,&vao);
 		glGenBuffers(1,&vbo);
 		glBindVertexArray(vao);
 		glBindBuffer(GL_ARRAY_BUFFER,vbo);
-		glBufferData(GL_ARRAY_BUFFER,pts_size * sizeof(float),pts,GL_STATIC_DRAW);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,0,nullptr);
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+		
+		GLuint loc = glGetAttribLocation(shaderProgram, "aPosition");
+		glEnableVertexAttribArray(loc);
+		glVertexAttribPointer(loc, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, pos));
+
+		
+		loc = glGetAttribLocation(shaderProgram, "vertex_index");
+		glEnableVertexAttribArray(loc);
+		glVertexAttribIPointer(loc, 1, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, id));
+		
+
 		glBindVertexArray(0);
 		um_assert(no_gl_error());
 	}
@@ -249,7 +270,6 @@ struct PointRenderer : public Renderer{
 		um_assert(no_gl_error());
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_PROGRAM_POINT_SIZE);
-		shaderProgram=God::shaders["point_as_sphere"];
 		glUseProgram(shaderProgram);
 
 		declare_projection_matrix();
@@ -284,11 +304,21 @@ struct RenderSpheres: public RenderLayer{
 	PointRenderer pts_renderer;
 
 
+
 	void generate_gui(std::string name){
 		ImGui::ColorEdit3(("MyColor##"+name).c_str(),(float*)&pts_renderer.color,ImGuiColorEditFlags_None);
 	}
 
 	bool handle(Event event){
+		
+		if (event.event_type == Event::MOUSE_PRESSED) {
+			
+			Picker picker;
+			auto [layer_id, primitive_id] = picker.at({God::mouse.x, God::mouse.y});
+			Log::add("layer id: " + std::to_string(layer_id));
+			Log::add("primitive id: " + std::to_string(primitive_id));
+		}
+
 		if(!God::xcf.contains(mm_name)) return false;
 		if(!God::xcf[mm_name].triangles.contains(triangle_name)) return false;
 		return true;
@@ -305,11 +335,23 @@ struct RenderSpheres: public RenderLayer{
 		for(auto v:tri.iter_vertices()) box.add(v.pos());
 
 		//npts = tri.nverts();
-		std::vector<float> vertices(3*tri.nverts(),0);
+		//std::vector<float> vertices(3*tri.nverts(),0);
+		/*
 		for(auto v:tri.iter_vertices()){
 			FOR(d,3) vertices[3*v+d] = 2.*(v.pos()-box.center())[d]/box.size().norm();
+		}*/
+
+		std::vector<PointRenderer::Vertex> vertices(tri.nverts());
+		for(auto v : tri.iter_vertices()) {
+			auto r = 2.*(v.pos()-box.center());
+
+			double x = r[0]/box.size().norm();
+			double y = r[1]/box.size().norm();
+			double z = r[2]/box.size().norm();
+			vertices[v] = {{static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)}, v};
 		}
-		pts_renderer.init(vertices.data(),vertices.size());
+
+		pts_renderer.init(vertices);
 	}
 
 
@@ -578,19 +620,22 @@ int main(){
 	God::panels.emplace_back<XCFViewer>("xcf_window");
 	God::panels.emplace_back<LayerViewer>("layer_window");
 	while(God::context.window_is_active()){
+
 		glfwPollEvents();
-		God::context.begin_frame();
-		God::layers.render();
-		God::panels.show_gui();
-		root_mode->define_gui();
 		if (!ImGui::GetIO().WantCaptureMouse)
 			God::mouse.update();
 		if(!ImGui::GetIO().WantCaptureKeyboard || !ImGui::GetIO().WantCaptureMouse)
 			God::keys.update();
 
-		God::events.dispatch();
+
+		God::context.begin_frame();
+		God::layers.render();
+		God::panels.show_gui();
+		root_mode->define_gui();
+
 		
 		God::context.end_frame();
+		God::events.dispatch();
 	}
 	return EXIT_SUCCESS;
 }

@@ -1,8 +1,12 @@
 #version 330 core
 
-in vec3 C; // centre de la sphere
+// Color output
+layout(location = 0) out vec4 FragColor;
+layout(location = 2) out vec4 FragVertexIndexColor;
 
-out vec4 FragColor;
+flat in int fragVertexIndex;
+
+in vec3 C; // centre de la sphere
 
 uniform mat4 projection;
 uniform mat4 inv_projection;
@@ -13,6 +17,13 @@ uniform vec2 viewport;
 
 uniform vec3 color;
 uniform vec3 light_direction;
+
+vec3 encode_id(int id) {
+    int r = id & 0x000000FF;
+    int g = (id & 0x0000FF00) >> 8;
+    int b = (id & 0x00FF0000) >> 16;
+    return vec3(r / 255.f, g / 255.f, b / 255.f); 
+}
 
 void main()
 {
@@ -102,4 +113,6 @@ void main()
             color * lighting,
             1.0
         );
-        }
+
+    FragVertexIndexColor = vec4(encode_id(fragVertexIndex), 1.);
+}
