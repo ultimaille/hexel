@@ -39,7 +39,6 @@ struct XCFViewer: public Panel {
 			}
 		}
 		for(auto name:mm_to_kill){
-			God::events.push_back({Event::MM_REMOVED,name});
 			God::xcf.erase(name);
 		}
 		ImGui::End();
@@ -83,12 +82,14 @@ struct RenderLambertTriangles: public RenderLayer{
 	}
 
 	bool handle(Event event){
-		if(!God::xcf.contains(mm_name)) return false;
-		if(!God::xcf[mm_name].triangles.contains(triangle_name)) return false;
-//	if (!God::xcf[mm_name].triangles[triangle_name].modified) return true; // TODO: obsolete, à refaire avec la newsletter
+		//	if (!God::xcf[mm_name].triangles[triangle_name].modified) return true; // TODO: obsolete, à refaire avec la newsletter
 		// Log::add("need to update vbo");
 		return true;
 	}
+
+	// bool is_cleanup_ready() override {
+	// 	return !God::xcf.contains(mm_name) || God::xcf[mm_name].triangles.contains(triangle_name);
+	// }
 
 	void init(std::string mm,std::string triangle){
 		triangle_name = triangle;
