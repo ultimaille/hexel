@@ -7,10 +7,10 @@ struct SSAO : RenderLayer {
     GLuint quad_vao = 0;
     GLuint quad_vbo = 0;
 
-float horizon_radius_pixels = 40.0f;
-float horizon_bias = 0.02f;
-int horizon_steps = 16;
-float ao_strength = 2.0f;
+float radius_px = 32.0f;
+float bias = 0.02f;
+int steps = 16;
+float strength = 2.0f;
 
 
     SSAO() {
@@ -24,28 +24,28 @@ float ao_strength = 2.0f;
     void generate_gui(std::string) override {
         ImGui::SliderFloat(
                 ("Radius##" + name).c_str(),
-                &horizon_radius_pixels,
+                &radius_px,
                 1.0f,
                 200.0f
                 );
 
         ImGui::SliderFloat(
                 ("Bias##" + name).c_str(),
-                &horizon_bias,
+                &bias,
                 0.0f,
                 0.2f
                 );
 
         ImGui::SliderInt(
                 ("Steps##" + name).c_str(),
-                &horizon_steps,
+                &steps,
                 1,
                 32
                 );
 
         ImGui::SliderFloat(
                 ("Strength##" + name).c_str(),
-                &ao_strength,
+                &strength,
                 0.0f,
                 8.0f
                 );
@@ -86,12 +86,9 @@ float ao_strength = 2.0f;
         glUniform1i(glGetUniformLocation(program, "source_depth"), 1);
 
         glUniformMatrix4fv(glGetUniformLocation(program, "inverse_projection"), 1, GL_TRUE, God::camera.inverse_projection());
-        glUniform2f(glGetUniformLocation(program, "texel_size"), 1/float(target.width), 1/float(target.height));
 
-        glUniform1f(glGetUniformLocation(program, "horizon_radius_pixels"), horizon_radius_pixels);
-        glUniform1f(glGetUniformLocation(program, "horizon_bias"), horizon_bias);
-        glUniform1i(glGetUniformLocation(program, "horizon_steps"), horizon_steps);
-        glUniform1f(glGetUniformLocation(program, "ao_strength"), ao_strength);
+        glUniform1f(glGetUniformLocation(program, "max_radius"), 0.5f);
+        glUniform1f(glGetUniformLocation(program, "step_mul"), 1.2f);       
 
         draw_quad();
 
