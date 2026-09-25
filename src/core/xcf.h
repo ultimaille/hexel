@@ -1,5 +1,6 @@
 #pragma once
 
+#include "basic.h"
 #include <map>
 #include <ultimaille/all.h>
 
@@ -81,7 +82,7 @@ namespace UM {
                 "tetrahedra","hexahedra","wedges","pyramids"
             };
             for(int c = 0; c<8; c++){
-                std::cerr<<"Load "<< collection_names[c] <<"\n";
+                //std::cerr<<"Load "<< collection_names[c] <<"\n";
                 switch(c){
                 case 0: load_mesh(filename,"polylines",polylines,connect); break;
                 case 1: load_mesh(filename,"triangles",triangles,connect); break;
@@ -93,6 +94,26 @@ namespace UM {
                 case 7: load_mesh(filename,"pyramids",pyramids,connect); break;
                 }
             }
+            std::string primitives_loaded= "";
+            if(polylines["polylines"].mesh.nedges()==0)                                     polylines.erase("polylines");
+            else primitives_loaded+="polylines ";
+
+            if(triangles["triangles"].mesh.nfacets()==0)                                    triangles.erase("triangles");
+            else primitives_loaded+="triangles ";
+            if(quads["quads"].mesh.nfacets()==0)                                            quads.erase("quads");
+            else primitives_loaded+="quads ";
+            if(polygons["polygons"].mesh.nfacets()==triangles["triangles"].mesh.nfacets())  polygons.erase("polygons");
+            else 
+            if(polygons["polygons"].mesh.nfacets()==quads["quads"].mesh.nfacets())          polygons.erase("polygons");
+            else primitives_loaded+="Polygons ";
+
+            if(tetrahedra["tetrahedra"].mesh.ncells()==0)                                   tetrahedra.erase("tetrahedra");
+            else primitives_loaded+="tetrahedra ";
+            if(hexahedra["hexahedra"].mesh.ncells()==0)                                     hexahedra.erase("hexahedra");
+            else primitives_loaded+="hexahedra ";
+            if(pyramids["pyramids"].mesh.ncells()==0)                                       pyramids.erase("pyramids");
+            else primitives_loaded+="pyramid ";
+            Log::add("primitives loaded in .geogram: " +primitives_loaded);
         }
 
 
