@@ -18,7 +18,7 @@ out float Value;
 
 void main(){
     if (value==-1)  Value = -1;
-    else  Value  = value ;//texture_repeat;
+    else  Value  = value * texture_repeat;
     // ------------------------------------------------------------
     // Centre de la sphère en espace caméra
     // ------------------------------------------------------------

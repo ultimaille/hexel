@@ -157,7 +157,8 @@ struct PointRenderer: public SimplexRenderer{
 	}
 
 	void init(float* pts,int pts_size){
-		God::shaders.add(std::string(SHADERS_DIR),"point_as_sphere");
+		if (!God::shaders.contains("point_as_sphere"))
+			God::shaders.add(std::string(SHADERS_DIR),"point_as_sphere");
 		shaderProgram=God::shaders["point_as_sphere"];
 		init_colormap(0);
 		npts = pts_size;
@@ -231,7 +232,8 @@ struct SegmentRenderer: public SimplexRenderer{
 
 	void init(float* pts,int nedges){
 		glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE,range);
-		God::shaders.add(std::string(SHADERS_DIR),"segment_as_tube");
+		if(!God::shaders.contains("segment_as_tube"))
+			God::shaders.add(std::string(SHADERS_DIR),"segment_as_tube");
 		shaderProgram=God::shaders["segment_as_tube"];
 
 		init_colormap(0);
@@ -299,6 +301,8 @@ struct TriangleRenderer: public SimplexRenderer{
 
 	void init(float* pts,int ntriangles){
 		color_map_prop=0;
+		if(!God::shaders.contains("triangle"))
+			God::shaders.add(std::string(SHADERS_DIR),"triangle");
 		shaderProgram=God::shaders["triangle"];
 		init_colormap(0);
 		npts = ntriangles*3;
