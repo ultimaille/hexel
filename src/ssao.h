@@ -1,17 +1,13 @@
 #pragma once
 
+#include <array>
 #include "core/core.h"
 
 struct SSAO : RenderLayer {
     const std::string name = "ssao";
     GLuint quad_vao = 0;
     GLuint quad_vbo = 0;
-
-float radius_px = 32.0f;
-float bias = 0.02f;
-int steps = 16;
-float strength = 2.0f;
-
+    GLuint random_texture = 0;
 
     SSAO() {
         visible = true;
@@ -21,34 +17,8 @@ float strength = 2.0f;
         destroy();
     }
 
+
     void generate_gui(std::string) override {
-        ImGui::SliderFloat(
-                ("Radius##" + name).c_str(),
-                &radius_px,
-                1.0f,
-                200.0f
-                );
-
-        ImGui::SliderFloat(
-                ("Bias##" + name).c_str(),
-                &bias,
-                0.0f,
-                0.2f
-                );
-
-        ImGui::SliderInt(
-                ("Steps##" + name).c_str(),
-                &steps,
-                1,
-                32
-                );
-
-        ImGui::SliderFloat(
-                ("Strength##" + name).c_str(),
-                &strength,
-                0.0f,
-                8.0f
-                );
     }
 
     bool handle(Event) override { return true; }
@@ -56,6 +26,7 @@ float strength = 2.0f;
     void init() {
         God::shaders.add(std::string(SHADERS_DIR), name);
         initialize_quad();
+        initialize_random_texture();
     }
 
     void render() override {
@@ -84,6 +55,10 @@ float strength = 2.0f;
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, copy.depth);
         glUniform1i(glGetUniformLocation(program, "source_depth"), 1);
+
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, random_texture);
+        glUniform1i(glGetUniformLocation(program, "random_texture"), 2);
 
         glUniformMatrix4fv(glGetUniformLocation(program, "inverse_projection"), 1, GL_TRUE, God::camera.inverse_projection());
 
@@ -138,12 +113,43 @@ private:
         glEnableVertexAttribArray(1);
     }
 
+    void initialize_random_texture() {
+        constexpr int width = 32;
+        constexpr int height = 32;
+
+        std::array<float, width * height> values;
+
+        // Deterministic pseudo-random values in [0, 1).
+        // A fixed pattern makes debugging reproducible.
+        uint32_t state = 0x12345678u;
+
+        for (float& value : values) {
+            state = 1664525u * state + 1013904223u;
+            value = float(state & 0x00ffffffu) /
+                float(0x01000000u);
+        }
+
+        glGenTextures(1, &random_texture);
+        glBindTexture(GL_TEXTURE_2D, random_texture);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, values.data());
+    }
+
     void draw_quad() {
         glBindVertexArray(quad_vao);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     }
 
     void destroy() {
+        if (random_texture != 0) {
+            glDeleteTextures(1, &random_texture);
+            random_texture = 0;
+        }
+
         if (quad_vbo != 0) {
             glDeleteBuffers(1, &quad_vbo);
             quad_vbo = 0;

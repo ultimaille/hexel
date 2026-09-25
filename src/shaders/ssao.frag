@@ -4,6 +4,7 @@ in vec2 TexCoord;
 
 uniform sampler2D source_color;
 uniform sampler2D source_depth;
+uniform sampler2D random_texture;
 uniform mat4 inverse_projection;
 
 uniform float max_radius;
@@ -85,8 +86,14 @@ float horizon_angle(in vec2 from, in vec3 from3D, in vec2 dir, in vec3 normal) {
     return acos ( dot(normal, horizon) / length(horizon) );
 }
 
+float my_noise() {
+    vec2 random_size = vec2(textureSize(random_texture, 0));
+    vec2 random_uv = TexCoord * vec2(width, height) / random_size;
+    return texture(random_texture, fract(random_uv)).r;
+}
+
 float ambient_occlusion(in vec2 from) {
-    int nb_directions = 8;
+    const int nb_directions = 7;
     vec2 directions[8] = vec2[](
             vec2( 1.0,  0.0),
             vec2(-1.0,  0.0),
@@ -99,21 +106,19 @@ float ambient_occlusion(in vec2 from) {
             );
 
     float angle_step = 2.0 * PI / (nb_directions);
-
-//  float cur_angle = my_noise() * 2. * PI ;
+    float cur_angle = my_noise() * 2. * PI ;
     float occlusion_factor = 0.0;
     vec3 from3D = get_obj_coords(from);
     for (int i=0; i < nb_directions; i++) {
-//      vec2 dir = vec2(cos(cur_angle), sin(cur_angle));
-        vec2 dir = directions[i];
+        vec2 dir = vec2(cos(cur_angle), sin(cur_angle));
+//        dir = directions[i];
 
         float h_angle = horizon_angle(from, from3D, dir, vec3(0., 0., 1.));
-//      cur_angle += angle_step;
+       cur_angle += angle_step;
         occlusion_factor += h_angle;
     }
     return occlusion_factor / (float(nb_directions) * (PI / 2.0));
 }
-
 
 void main() {
     if (texture(source_depth, TexCoord).r >= 1.0) {
