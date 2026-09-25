@@ -50,7 +50,7 @@ float ao_strength = 2.0f;
         8.0f
     );
     }
-    bool resync_with_data() override { return true; }
+//  bool resync_with_data() override { return true; }
 
     void init() {
         God::shaders.add(std::string(SHADERS_DIR), name);
