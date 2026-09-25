@@ -1,21 +1,30 @@
 #version 330 core
 
 in vec3 C; // centre de la sphere
+in float Value;
 
 out vec4 FragColor;
 
 uniform mat4 projection;
 uniform mat4 inv_projection;
 
-uniform float R;
 
+uniform vec3 light_direction;
+uniform vec3 color;
+uniform sampler1D colormap;
+uniform float ambient_prop;
+uniform float color_map_prop;
+
+
+uniform float R;
 uniform vec2 viewport;
 
-uniform vec3 color;
-uniform vec3 light_direction;
 
 void main()
 {
+    if(Value==-1) 
+        discard;
+
     // ------------------------------------------------------------
     // Coordonnées écran -> NDC
     // ------------------------------------------------------------
@@ -45,14 +54,9 @@ void main()
     // ------------------------------------------------------------
 
     vec3 P = O+dot(v , C-O)*v;
-
     float cp2 = dot(C-P,C-P);
     if (cp2>R*R) discard;
-
     vec3 I = P-sqrt(R*R-cp2)*v;
-
-
-
 
 
     // ------------------------------------------------------------
@@ -65,41 +69,19 @@ void main()
     // Vraie profondeur de la sphère
     // ------------------------------------------------------------
 
-    vec4 clipPosition =
-        projection *
-        vec4(I, 1.0);
-
-    float ndcDepth =
-        clipPosition.z /
-        clipPosition.w;
-
-    gl_FragDepth =
-        ndcDepth * 0.5 + 0.5;
+    vec4 clipPosition =projection *vec4(I, 1.0);
+    float ndcDepth = clipPosition.z / clipPosition.w;
+    gl_FragDepth = ndcDepth * 0.5 + 0.5;
 
 
     // ------------------------------------------------------------
     // Éclairage
     // ------------------------------------------------------------
 
-    //vec3 lightDirection =normalize(vec3(-1.0, -1.0, 1.0));
 
-    float diffuse =
-        max(
-            dot(normal, light_direction),
-            0.0
-        );
+    float diffuse =max(dot(normal, light_direction),0.0);
+    vec4 blend_color = color_map_prop * vec4(texture(colormap, Value).rgb,1.) + (1.-color_map_prop)*vec4(color,1.);
+    float coeff = ambient_prop+(1.-ambient_prop)*diffuse;
+    FragColor = coeff*blend_color;
 
-    float lighting =
-        0.25 + 0.75 * diffuse;
-
-
-    // ------------------------------------------------------------
-    // Couleur
-    // ------------------------------------------------------------
-
-    FragColor =
-        vec4(
-            color * lighting,
-            1.0
-        );
-        }
+}
