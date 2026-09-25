@@ -7,143 +7,183 @@ uniform sampler2D source_depth;
 uniform mat4 inverse_projection;
 uniform vec2 texel_size;
 
+uniform float horizon_radius_pixels;
+uniform float horizon_bias;
+uniform int horizon_steps;
+uniform float ao_strength;
+
 out vec4 FragColor;
 
 vec3 reconstruct_view_position(vec2 uv, float depth) {
-    vec4 clip_position = vec4(uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
-    vec4 view_position = inverse_projection * clip_position;
+    vec4 clip_position = vec4(
+        uv * 2.0 - 1.0,
+        depth * 2.0 - 1.0,
+        1.0
+    );
+
+    vec4 view_position =
+        inverse_projection * clip_position;
+
     return view_position.xyz / view_position.w;
 }
 
 bool outside(vec2 uv) {
-    return uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0;
+    return uv.x < 0.0 ||
+           uv.x > 1.0 ||
+           uv.y < 0.0 ||
+           uv.y > 1.0;
 }
 
 void main() {
     vec4 source = texture(source_color, TexCoord);
     float center_depth = texture(source_depth, TexCoord).r;
 
-    // Keep the background unchanged.
-    if (center_depth >= 1.0) {
+    // Keep pixels with no geometry unchanged.
+    if (center_depth >= 0.999999) {
         FragColor = source;
         return;
     }
 
-    vec3 center = reconstruct_view_position(TexCoord, center_depth);
+    vec3 center =
+        reconstruct_view_position(
+            TexCoord,
+            center_depth
+        );
 
     /*
-     * Estimate the surface normal from neighboring reconstructed positions.
+     * Estimate the view-space normal from two neighboring positions.
      */
-    vec3 px = reconstruct_view_position(
-        TexCoord + vec2(texel_size.x, 0.0),
-        texture(
-            source_depth,
-            TexCoord + vec2(texel_size.x, 0.0)
-        ).r
-    );
+    vec2 uv_x = TexCoord + vec2(texel_size.x, 0.0);
+    vec2 uv_y = TexCoord + vec2(0.0, texel_size.y);
 
-    vec3 py = reconstruct_view_position(
-        TexCoord + vec2(0.0, texel_size.y),
-        texture(
-            source_depth,
-            TexCoord + vec2(0.0, texel_size.y)
-        ).r
-    );
+    if (outside(uv_x) || outside(uv_y)) {
+        FragColor = source;
+        return;
+    }
+
+    float depth_x = texture(source_depth, uv_x).r;
+    float depth_y = texture(source_depth, uv_y).r;
+
+    if (depth_x >= 0.999999 || depth_y >= 0.999999) {
+        FragColor = source;
+        return;
+    }
+
+    vec3 position_x =
+        reconstruct_view_position(uv_x, depth_x);
+
+    vec3 position_y =
+        reconstruct_view_position(uv_y, depth_y);
 
     vec3 normal = normalize(
-        cross(px - center, py - center)
+        cross(position_x - center, position_y - center)
     );
 
     /*
-     * Use a small fixed kernel for this milestone.
-     * The offsets are in pixel units.
+     * Orient the normal toward the camera. The camera is at the origin
+     * in view space, so -center points approximately toward it.
      */
-    const vec2 offsets[8] = vec2[](
-        vec2( 1.0,  0.0),
-        vec2(-1.0,  0.0),
-        vec2( 0.0,  1.0),
-        vec2( 0.0, -1.0),
-        vec2( 2.0,  0.0),
-        vec2(-2.0,  0.0),
-        vec2( 0.0,  2.0),
-        vec2( 0.0, -2.0)
-    );
+    if (dot(normal, -center) < 0.0) {
+        normal = -normal;
+    }
 
-    float occlusion = 0.0;
+    /*
+     * One-direction horizon search:
+     *
+     *     center → +screen-X
+     *
+     * horizon stores the greatest elevation of a sampled surface relative
+     * to the current surface normal.
+     */
+    float horizon = 0.0;
     float valid_samples = 0.0;
 
-    for (int i = 0; i < 8; ++i) {
-        vec2 uv =
-            TexCoord + offsets[i] * texel_size;
+    vec2 screen_direction = vec2(1.0, 0.0);
 
-        if (outside(uv)) {
-            continue;
+    for (int i = 1; i <= 32; ++i) {
+        if (i > horizon_steps) {
+            break;
+        }
+
+        float t =
+            float(i) / float(horizon_steps);
+
+        vec2 sample_uv =
+            TexCoord +
+            screen_direction *
+            texel_size *
+            (t * horizon_radius_pixels);
+
+        if (outside(sample_uv)) {
+            break;
         }
 
         float sample_depth =
-            texture(source_depth, uv).r;
+            texture(source_depth, sample_uv).r;
 
-        if (sample_depth >= 1.0) {
+        if (sample_depth >= 0.999999) {
             continue;
         }
 
         vec3 sample_position =
             reconstruct_view_position(
-                uv,
+                sample_uv,
                 sample_depth
             );
 
-        vec3 direction =
+        vec3 offset =
             sample_position - center;
 
         float distance_to_sample =
-            length(direction);
+            length(offset);
 
-        if (distance_to_sample < 0.00001) {
+        if (distance_to_sample < 0.000001) {
             continue;
         }
 
-        valid_samples += 1.0;
-
-        vec3 direction_normalized =
-            direction / distance_to_sample;
+        vec3 direction =
+            offset / distance_to_sample;
 
         /*
-         * A neighboring surface lying in the center pixel's normal
-         * hemisphere contributes to occlusion. The distance falloff
-         * prevents distant samples from dominating.
+         * Positive values mean that the sampled surface rises into the
+         * current surface's normal hemisphere.
          */
-        float facing =
-            max(dot(normal, direction_normalized), 0.0);
+        float elevation =
+            dot(normal, direction);
 
-        float falloff =
-            1.0 - smoothstep(
-                0.0,
-                0.15,
-                distance_to_sample
-            );
-
-        occlusion += facing * falloff;
+        horizon = max(horizon, elevation);
+        valid_samples += 1.0;
     }
 
-    if (valid_samples > 0.0) {
-        occlusion /= valid_samples;
+    if (valid_samples == 0.0) {
+        FragColor = source;
+        return;
     }
 
     /*
-     * Keep the effect deliberately exaggerated for debugging.
+     * Remove a small amount of self-occlusion caused by depth precision
+     * and normal reconstruction.
      */
-    float strength = 2.0;
+    float occlusion = max(
+        horizon - horizon_bias,
+        0.0
+    );
+
     float ao = clamp(
-        1.0 - strength * occlusion,
+        1.0 - ao_strength * occlusion,
         0.0,
         1.0
     );
+
+    /*
+     * Debug output:
+     *
+     * FragColor = vec4(vec3(1.0 - occlusion), 1.0);
+     */
 
     FragColor = vec4(
         source.rgb * ao,
         source.a
     );
-//  FragColor = vec4(vec3(1.0 - occlusion), 1.0);
-
+    FragColor = vec4(vec3(1.0 - occlusion), 1.0);
 }

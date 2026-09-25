@@ -53,6 +53,11 @@ struct SSAO : RenderLayer {
         glUniformMatrix4fv(glGetUniformLocation(program, "inverse_projection"), 1, GL_TRUE, God::camera.inverse_projection());
         glUniform2f(glGetUniformLocation(program, "texel_size"), 1/float(target.width), 1/float(target.height));
 
+        glUniform1f(glGetUniformLocation(program, "horizon_radius_pixels"), 40.0f);
+        glUniform1f(glGetUniformLocation(program, "horizon_bias"), 0.02f);
+        glUniform1i(glGetUniformLocation(program, "horizon_steps"), 16);
+        glUniform1f(glGetUniformLocation(program, "ao_strength"), 2.0f);
+
         draw_quad();
 
         // TODO this does not match the philosophy of "each guy must setup its own environment"
