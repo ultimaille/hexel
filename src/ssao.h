@@ -50,8 +50,8 @@ struct SSAO : RenderLayer {
         glBindTexture(GL_TEXTURE_2D, copy.depth);
         glUniform1i(glGetUniformLocation(program, "source_depth"), 1);
 
-        glUniformMatrix4fv(glGetUniformLocation(program, "projection"), 0, GL_TRUE, God::camera.projection());
         glUniformMatrix4fv(glGetUniformLocation(program, "inverse_projection"), 1, GL_TRUE, God::camera.inverse_projection());
+        glUniform2f(glGetUniformLocation(program, "texel_size"), 1/float(target.width), 1/float(target.height));
 
         draw_quad();
 
