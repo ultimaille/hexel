@@ -12,7 +12,7 @@ out vec3 Normal;
 
 uniform int layer_id;
 flat out int frag_layer_id;
-flat out int frag_vertex_id;
+flat out int frag_primitive_id;
 
 void main(){
     vec4 viewPos = view * vec4(aPos, 1.0);
@@ -21,6 +21,6 @@ void main(){
     aNormal;
     gl_Position = projection * viewPos;
     
-    frag_vertex_id = gl_VertexID;
+    frag_primitive_id = gl_VertexID / 3;
     frag_layer_id = layer_id;
 }

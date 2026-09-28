@@ -37,7 +37,7 @@ struct RenderLambertTriangles: public RenderLayer{
 	}
 
 	virtual int primitive_id(int vertex_id) {
-		return vertex_id / 3; // triangle id from vertex id
+		return vertex_id; // triangle id from vertex id
 	}
 
 };
@@ -118,7 +118,7 @@ struct RenderTubes: public RenderLayer{
 	}
 
 	virtual int primitive_id(int vertex_id) {
-		return vertex_id / 2; // edge id from vertex id
+		return vertex_id; // edge id from vertex id
 	}
 };
 
