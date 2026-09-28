@@ -248,34 +248,21 @@ struct TriangleRenderer: public SimplexRenderer{
 	};
 
 	void init_from_mesh(Triangles& tri,CornerAttribute<float>& value){
-		std::vector<Vertex> data(tri.ncorners());
-		for(auto h:tri.iter_halfedges())  {			
-			auto &p = h.from().pos();
-			auto n = Triangle3(h.facet()).normal();
-
-			data[h] = {
-				.pos = {static_cast<float>(p.x), static_cast<float>(p.y), static_cast<float>(p.z)},
-				.n = {static_cast<float>(n.x), static_cast<float>(n.y), static_cast<float>(n.z)},
-				.v = value[h]
-			};
-		}
-
-		init(data);
+		init();
+		push(tri, value);
 	}
 
-	void init(std::vector<Vertex> &vertices){
+	void init(){
 		color_map_prop=0;
 		if(!God::shaders.contains("triangle"))
 			God::shaders.add(std::string(SHADERS_DIR),"triangle");
 		shaderProgram=God::shaders["triangle"];
 		load_colormap(0,colormap);
-		npts = vertices.size();
 
 		glGenVertexArrays(1,&vao);
 		glGenBuffers(1,&vbo);
 		glBindVertexArray(vao);
 		glBindBuffer(GL_ARRAY_BUFFER,vbo);
-		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex),vertices.data(),GL_STATIC_DRAW);
 
 		// position
 		glEnableVertexAttribArray(0);
@@ -289,6 +276,34 @@ struct TriangleRenderer: public SimplexRenderer{
 
 		glBindVertexArray(0);
 		um_assert(no_gl_error());
+	}
+
+	void push(Triangles& tri, CornerAttribute<float>& value) {
+		std::vector<Vertex> vertices(tri.ncorners());
+		npts = vertices.size();
+
+		for(auto h:tri.iter_halfedges())  {			
+			auto &p = h.from().pos();
+			auto n = Triangle3(h.facet()).normal();
+
+			vertices[h] = {
+				.pos = {
+					static_cast<float>(p.x), 
+					static_cast<float>(p.y), 
+					static_cast<float>(p.z)
+				},
+				.n = {
+					static_cast<float>(n.x), 
+					static_cast<float>(n.y), 
+					static_cast<float>(n.z)
+				},
+				.v = value[h]
+			};
+		}
+
+		glBindVertexArray(vao);
+		glBindBuffer(GL_ARRAY_BUFFER,vbo);
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex),vertices.data(),GL_STATIC_DRAW);
 	}
 
 	void render(){
