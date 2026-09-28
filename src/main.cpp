@@ -35,6 +35,7 @@ namespace InteractionMode{
 			God::root_mode = this;
 
 			{
+
 				God::xcf.load_multimesh(std::string(TEST_INPUT_DIR) + "B0.step.mesh", true);
 				God::xcf.load_multimesh(std::string(TEST_INPUT_DIR) + "B1.step.mesh", true);
 

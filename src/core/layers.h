@@ -7,10 +7,12 @@ struct RenderLayer {
     virtual ~RenderLayer() = default;
     virtual void render() = 0;
     virtual void generate_gui(std::string name) = 0;
+    
     virtual bool handle(Event event) = 0;
+    virtual bool require(ObjectId object) = 0;
+
     virtual void render_primitive_id()              { Log::add("To be implemented"); }
     virtual void render_constant_color(int layerid) { Log::add("To be implemented"); }
-    // virtual bool is_cleanup_ready() { return false; }
     bool visible;
 
     int id() const {
@@ -29,17 +31,23 @@ struct LayerManager: public Registry<RenderLayer> {
         for (auto& [name,obj] : *this)
             obj->render();
     }
-    void handle(Event event) { // TODO: separate the cleanup logic from the update
-
-        //// clean up
-        //if (event.event_type == Event::RENDER_LAYER_REMOVED) {
-        //    erase(event.object_name);
-        //}
+    void handle(Event event) { 
+        if (event.who.is_a(mouse)) return;
 
         // dispatch events
         for (auto& [name,obj] : *this) {
             obj->handle(event);
         }
+
+        plop(event.what_happened);
+        std::vector<std::string> to_kill;
+        if (event.what_happened == KILLED) for (int i = 0; i < this->size(); i++) {
+            plop("KILLED");
+            if ((*this)[i].require(event.who))
+                erase(i);
+        }
+       
+
     }
 
     void produce_picking_image(int* data,int w,int h) { Log::add("To be implemented"); }

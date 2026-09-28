@@ -13,6 +13,11 @@ struct RenderLambertTriangles: public RenderLayer{
 	}
 
 	bool handle(Event event) {return true;}
+	bool require(ObjectId object) {
+		if (!God::xcf.contains(mm_name)) return true;
+		if (!God::xcf[mm_name].triangles.contains(triangle_name)) return true;
+		return object.is(&God::xcf[mm_name].triangles[triangle_name]);
+	}
 
 	void init(std::string mm,std::string triangle){
 		triangle_name = triangle;
@@ -61,6 +66,7 @@ struct RenderSpheres: public RenderLayer{
 		}
 		return true; 
 	}
+	bool require(ObjectId object) { return false; }
 
 	void init(std::string mm){
 		mm_name = mm;
@@ -96,6 +102,7 @@ struct RenderTubes: public RenderLayer{
 	}
 
 	bool handle(Event event) { return true; }
+	bool require(ObjectId object) { return false; }
 
 	void init(std::string mm,std::string polyline){
 		polyline_name = polyline;

@@ -4,9 +4,10 @@
 #include <queue>
                                                      #
 
-enum EventIdChunk{
+enum ObjectIdChunk{
     xcf,
         pointset,
+        polylines,
         triangles,quads,polygons,
         tetrahedra,hexahedra,wedges,pyramids,
     layer,
@@ -15,20 +16,21 @@ enum EventIdChunk{
     key,
 };
 
-enum EventType {
-    CREATED,KILLED,UPDATED
-};
-struct EventId {
-    EventId(std::vector<EventIdChunk> hardpath, std::vector<std::string> softpath) : hardpath(hardpath),softpath(softpath) {}
-    std::vector<EventIdChunk> hardpath;
+
+struct ObjectId {
+    ObjectId(std::vector<ObjectIdChunk> hardpath, std::vector<std::string> softpath) : hardpath(hardpath),softpath(softpath) {}
+    std::vector<ObjectIdChunk> hardpath;
     std::vector<std::string> softpath;
-    bool is_a(EventIdChunk e);
+    bool is_a(ObjectIdChunk e);
     bool is(void* object);
 };
 
+enum EventType {
+    CREATED, KILLED, UPDATED
+};
 struct Event {
-    Event(EventId p_who, EventType p_what_happened):who(p_who), what_happened(p_what_happened){}
-    EventId who;
+    Event(ObjectId p_who, EventType p_what_happened):who(p_who), what_happened(p_what_happened){}
+    ObjectId who;
     EventType what_happened;
 };
 
