@@ -62,20 +62,6 @@ void main()
     float coeff = ambient_prop+(1.-ambient_prop)*diffuse;
     FragColor = coeff*blend_color;
 
-    float lighting =
-        0.25 + 0.75 * diffuse;
-
-
-    // ------------------------------------------------------------
-    // Couleur
-    // ------------------------------------------------------------
-
-    FragColor =
-        vec4(
-            color * lighting,
-            1.0
-        );
-
     FragLayerIdColor = vec4(encode_id(frag_layer_id), 1.);
     FragVertexIdColor = vec4(encode_id(frag_vertex_id), 1.);
 }
