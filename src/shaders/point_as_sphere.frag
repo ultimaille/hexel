@@ -2,7 +2,7 @@
 
 in vec3 C; // centre de la sphere
 in float Value;
-// Color output
+// outputs
 layout(location = 0) out vec4 FragColor;
 layout(location = 1) out vec4 FragLayerIdColor;
 layout(location = 2) out vec4 FragVertexIdColor;
