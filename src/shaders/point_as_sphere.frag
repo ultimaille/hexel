@@ -2,8 +2,11 @@
 
 in vec3 C; // centre de la sphere
 in float Value;
+// Color output
+layout(location = 0) out vec4 FragColor;
+layout(location = 2) out vec4 FragVertexIndexColor;
 
-out vec4 FragColor;
+flat in int fragVertexIndex;
 
 uniform mat4 projection;
 uniform mat4 inv_projection;
@@ -16,7 +19,15 @@ uniform float R;
 uniform vec2 viewport;
 
 
-void main(){
+vec3 encode_id(int id) {
+    int r = id & 0x000000FF;
+    int g = (id & 0x0000FF00) >> 8;
+    int b = (id & 0x00FF0000) >> 16;
+    return vec3(r / 255.f, g / 255.f, b / 255.f); 
+}
+
+void main()
+{
     if(Value==-1) 
         discard;
 
@@ -49,4 +60,19 @@ void main(){
     float coeff = ambient_prop+(1.-ambient_prop)*diffuse;
     FragColor = coeff*blend_color;
 
+    float lighting =
+        0.25 + 0.75 * diffuse;
+
+
+    // ------------------------------------------------------------
+    // Couleur
+    // ------------------------------------------------------------
+
+    FragColor =
+        vec4(
+            color * lighting,
+            1.0
+        );
+
+    FragVertexIndexColor = vec4(encode_id(fragVertexIndex), 1.);
 }
