@@ -59,6 +59,7 @@ namespace InteractionMode{
 				God::layers.emplace_back<SSAO>("SSAO").init();
 				God::layers.emplace_back<RenderSpheres>("RenderSpheres").init("B0.step");
 				God::layers.emplace_back<RenderTubes>("RenderTubes").init("B0.step", "polylines");
+				std::swap(God::layers.items[0],God::layers.items[1]);
 
 			}
 		}
