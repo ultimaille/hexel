@@ -14,10 +14,8 @@ struct XCFExplorer: public Panel {
 					mm_to_kill.push_back(name);
 			}
 		}
-		for(auto name:mm_to_kill){
-			God::events.push_back({Event::MM_REMOVED,name});
+		for(auto name:mm_to_kill)
 			God::xcf.erase(name);
-		}
 		ImGui::End();
 	}
 };

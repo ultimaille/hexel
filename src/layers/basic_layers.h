@@ -48,9 +48,9 @@ struct RenderSpheres: public RenderLayer{
 	}
 
 	bool handle(Event event) { 
-		if (event.event_type == Event::MOUSE_PRESSED) {			
+		if (event.who.is_a(mouse) && God::mouse.clicked(0)) {			
 			Picker picker;
-			auto [layer_id, primitive_id] = picker.at({God::mouse.x, God::mouse.y});
+			auto [layer_id, primitive_id] = picker.at({God::mouse.current_state.x, God::mouse.current_state.y});
 			Log::add("layer id: " + std::to_string(layer_id));
 			Log::add("primitive id: " + std::to_string(primitive_id));
 		}
@@ -66,7 +66,6 @@ struct RenderSpheres: public RenderLayer{
 		PointAttribute<float> value(ps);
 		FOR(v,ps.size()){
 			value[v] = ps[v][0];
-			//if(ps[v][0]>0) value[v] = -1;
 		}
 		primitive_renderer.init_from_mesh(ps,value);
 	}

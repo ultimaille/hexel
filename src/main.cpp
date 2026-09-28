@@ -98,7 +98,6 @@ int main(){
 	God::panels.emplace_back<XCFExplorer>("xcf_window");
 	God::panels.emplace_back<LayerExplorer>("layer_window");
 	while(God::context.window_is_active()){
-
 		glfwPollEvents();
 		God::context.begin_frame();
 		God::layers.render();
@@ -108,8 +107,8 @@ int main(){
 			God::mouse.update();
 		if(!ImGui::GetIO().WantCaptureKeyboard || !ImGui::GetIO().WantCaptureMouse)
 			God::keys.update();
-		God::events.dispatch();
 		God::context.end_frame();
+		God::events.dispatch();
 	}
 	return EXIT_SUCCESS;
 }

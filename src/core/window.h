@@ -134,11 +134,20 @@ struct WindowContext {
 
 struct MouseState{
 
+    struct State {
+        double x=0, y=0;
+        double wheel_speed=0;
+        bool button_pressed[3]={ false, false, false};
+    };
 	void update();
 
-	bool mouseDragging[3] = {false};
-	double lastx = 0.,lasty = 0.,x = 0.,y = 0.;
-	double wheel_event_speed = 0.;
+    bool last_button_pressed[3] = { false };
+    bool button_pressed[3] = { false };
+    bool clicked(int button) { return button_pressed[button] && !last_button_pressed[button]; };
+    bool released(int button) { return !button_pressed[button] && last_button_pressed[button]; };
+
+    State current_state;
+    State last_state;
 };
 
 struct KeyboardState{

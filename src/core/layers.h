@@ -28,23 +28,10 @@ struct LayerManager: public Registry<RenderLayer> {
     }
     void handle(Event event) { // TODO: separate the cleanup logic from the update
 
-        // //
-        // if (event.event_type == Event::MM_REMOVED) {
-        //     // Check if layer want to die
-        //     for (auto& [name,obj] : *this) {
-        //         if (obj->is_cleanup_ready()) {
-        //             // obj->clean();
-        //             erase(event.object_name);
-        //         }
-        //     }
-        // }
-
-        // clean up
-        if (event.event_type == Event::RENDER_LAYER_REMOVED) {
-            // int i = find(event.object_name);
-            // operator[](i).clean();
-            erase(event.object_name);
-        }
+        //// clean up
+        //if (event.event_type == Event::RENDER_LAYER_REMOVED) {
+        //    erase(event.object_name);
+        //}
 
         // dispatch events
         for (auto& [name,obj] : *this) {
