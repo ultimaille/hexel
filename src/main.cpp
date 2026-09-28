@@ -54,8 +54,8 @@ namespace InteractionMode{
 
 				HexEdit* root = static_cast<HexEdit*>(God::root_mode);
 
-				God::layers.emplace_back<RenderLambertTriangles>("Lambert3").init("B1.step", "triangles");
-				// quitte à modifier un fichier pour tester les branches, autant péter le main :)
+				God::layers.emplace_back<RenderLambertTriangles>("Lambert0").init("B0.step", "triangles");
+				God::layers.emplace_back<RenderLambertTriangles>("Lambert1").init("B1.step", "triangles");
 				God::layers.emplace_back<SSAO>("SSAO").init();
 				God::layers.emplace_back<RenderSpheres>("RenderSpheres").init("B0.step");
 				God::layers.emplace_back<RenderTubes>("RenderTubes").init("B0.step", "polylines");
