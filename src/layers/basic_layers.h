@@ -35,6 +35,11 @@ struct RenderLambertTriangles: public RenderLayer{
 	void render(){
 		primitive_renderer.render();
 	}
+
+	virtual int primitive_id(int vertex_id) {
+		return vertex_id / 3; // triangle id from vertex id
+	}
+
 };
 
 struct RenderSpheres: public RenderLayer{
@@ -110,6 +115,10 @@ struct RenderTubes: public RenderLayer{
 
 	void render(){
 		primitive_renderer.render();
+	}
+
+	virtual int primitive_id(int vertex_id) {
+		return vertex_id / 2; // edge id from vertex id
 	}
 };
 

@@ -2,8 +2,8 @@
 
 struct Picker{
 
-    std::vector<unsigned char> layer_data;
-    std::vector<unsigned char> primitive_data;
+    std::vector<unsigned char> layer_ids;
+    std::vector<unsigned char> vertex_ids;
 
     Picker();
     Picker(vec4 rect);
@@ -20,24 +20,7 @@ struct Picker{
                     b * 256 * 256;
     }
 
-    std::tuple<int,int> at(vec2 uv) {
-        const int x = static_cast<int>(uv.x);
-        const int y = static_cast<int>(uv.y);
-        const int w = static_cast<int>(rect[2]);
-        const int h = static_cast<int>(rect[3]);
-        // Vérification des bornes pour éviter tout crash hors image
-        if (x < 0 || x >= w || y < 0 || y >= h) {
-            return {-1, -1};
-        }
-
-        // Inversion de l'axe Y : l'origine OpenGL est en bas à gauche
-        int flipped_y = h - 1 - y;
-
-        int off = (flipped_y * w + x) * 4;
-        int layer_id = decode(layer_data, off);
-        int primitive_id = decode(primitive_data, off);
-        return {layer_id, primitive_id};
-    }
+    std::tuple<int,int> at(vec2 uv);
 
     private:
     vec4 rect;
