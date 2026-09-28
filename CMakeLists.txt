@@ -146,19 +146,13 @@ set_folder_recursive(
 # Application
 # ============================================================
 
-add_executable(Hexel
-    src/main.cpp
-    src/core/basic.h
-    src/core/picker.h
-    src/core/panels.h
-    src/core/layers.h
-    src/core/shaders.h
-    src/core/core.h src/core/core.cpp
-    src/core/window.h src/core/window.cpp
-    src/core/camera.h src/core/camera.cpp
-    src/core/xcf.h src/core/xcf.cpp
-    src/core/event.h src/core/event.cpp
+file(GLOB_RECURSE HEXEL_SOURCES
+    CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h"
 )
+
+add_executable(Hexel ${HEXEL_SOURCES})
 
 target_link_libraries(Hexel PRIVATE
     ultimaille

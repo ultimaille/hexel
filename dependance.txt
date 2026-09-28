@@ -1,0 +1,18 @@
+Layer 
+	=> XCF -> MM -> mesh -> attribute
+	=> shader
+
+Panel
+	=> XCF
+	=> Layer
+	=> Tool
+	=> window
+Tool
+	=>XCF
+	=> mouse
+	=> keyboard
+Camera
+	=> mouse
+	=> keyboard
+window
+

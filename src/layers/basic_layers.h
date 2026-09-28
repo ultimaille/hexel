@@ -1,12 +1,6 @@
 #include "basic_renderers.h"
 
 
-
-
-
-
-
-
 struct RenderLambertTriangles: public RenderLayer{
 	std::string mm_name;
 	std::string triangle_name;
@@ -19,6 +13,7 @@ struct RenderLambertTriangles: public RenderLayer{
 	}
 
 	bool handle(Event event) {return true;}
+
 	void init(std::string mm,std::string triangle){
 		triangle_name = triangle;
 		mm_name = mm;
@@ -29,45 +24,28 @@ struct RenderLambertTriangles: public RenderLayer{
 		if(!God::shaders.contains("triangle"))
 			God::shaders.add(std::string(SHADERS_DIR),"triangle");
 
-
 		CornerAttribute<float> value(tri);
 		for(auto h:tri.iter_halfedges())  {
 			value[h] = h.from().pos()[0];
-			if(h.from().pos().x>0) value[h]  = -1;
+			//if(h.from().pos().x>0) value[h]  = -1;
 		}
 		primitive_renderer.init_from_mesh(tri,value);
-
 	}
+
 	void render(){
 		primitive_renderer.render();
 	}
 };
 
-
-
-
-
-
-
-
-
-
-
-
 struct RenderSpheres: public RenderLayer{
-
 	std::string mm_name;
 	PointRenderer primitive_renderer;
 
-
 	void generate_gui(std::string name){
 		primitive_renderer.generate_gui("name");
-
-		//ImGui::ColorEdit3(("MyColor##"+name).c_str(),(float*)&pts_renderer.color,ImGuiColorEditFlags_None);
 	}
 
 	bool handle(Event event) { return true; }
-
 
 	void init(std::string mm){
 		mm_name = mm;
@@ -78,12 +56,10 @@ struct RenderSpheres: public RenderLayer{
 		PointAttribute<float> value(ps);
 		FOR(v,ps.size()){
 			value[v] = ps[v][0];
-			if(ps[v][0]>0) value[v] = -1;
-
+			//if(ps[v][0]>0) value[v] = -1;
 		}
 		primitive_renderer.init_from_mesh(ps,value);
 	}
-
 
 	void render(){
 		primitive_renderer.render();
@@ -94,30 +70,16 @@ struct RenderSpheres: public RenderLayer{
 
 
 
-
-
-
-
-
-
-
-
-
 struct RenderTubes: public RenderLayer{
-
 	std::string mm_name;
 	std::string polyline_name;
-
-
 	SegmentRenderer primitive_renderer;
-
 
 	void generate_gui(std::string name){
 		primitive_renderer.generate_gui(name);
 	}
 
 	bool handle(Event event) { return true; }
-
 
 	void init(std::string mm,std::string polyline){
 		polyline_name = polyline;
@@ -129,11 +91,10 @@ struct RenderTubes: public RenderLayer{
 		PointAttribute<float> value(pl,0);
 		for(auto v:pl.iter_vertices()) {
 			value[v]= v.pos()[0];
-			if(v.pos().x>0) value[v] = -1;
+			//if(v.pos().x>0) value[v] = -1;
 		}
 		primitive_renderer.init_from_mesh(pl,value);
 	}
-
 
 	void render(){
 		primitive_renderer.render();

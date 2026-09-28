@@ -9,10 +9,9 @@ struct XCFExplorer: public Panel {
 
 		std::vector<std::string> mm_to_kill;
 		for(auto &[name,obj]:God::xcf){
-			if(ImGui::TreeNode(name.c_str())){
+			if (ImGui::CollapsingHeader(name.c_str())){
 				if(ImGui::Button("Delete MultiMesh"))
 					mm_to_kill.push_back(name);
-				ImGui::TreePop();
 			}
 		}
 		for(auto name:mm_to_kill){
