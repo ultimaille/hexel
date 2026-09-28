@@ -241,42 +241,51 @@ struct TriangleRenderer: public SimplexRenderer{
 
 	using SimplexRenderer::SimplexRenderer;
 
+	struct Vertex {
+		float pos[3];
+		float n[3];
+		float v;
+	};
+
 	void init_from_mesh(Triangles& tri,CornerAttribute<float>& value){
-		std::vector<float> data(7*tri.ncorners());
-		for(auto h:tri.iter_halfedges())  {
-			int h_id = h;
-			int lh = h_id%3;
-			vec3 n = Triangle3(h.facet()).normal();
-			FOR(d,3) data[7*h_id + d] = h.from().pos()[d];
-			FOR(d,3) data[7*h_id +3+ d] = n[d];
-			data[7*h_id +6] = value[h];
+		std::vector<Vertex> data(tri.ncorners());
+		for(auto h:tri.iter_halfedges())  {			
+			auto &p = h.from().pos();
+			auto n = Triangle3(h.facet()).normal();
+
+			data[h] = {
+				.pos = {static_cast<float>(p.x), static_cast<float>(p.y), static_cast<float>(p.z)},
+				.n = {static_cast<float>(n.x), static_cast<float>(n.y), static_cast<float>(n.z)},
+				.v = value[h]
+			};
 		}
-		init(data.data(),tri.nfacets());
+
+		init(data);
 	}
 
-	void init(float* pts,int ntriangles){
+	void init(std::vector<Vertex> &vertices){
 		color_map_prop=0;
 		if(!God::shaders.contains("triangle"))
 			God::shaders.add(std::string(SHADERS_DIR),"triangle");
 		shaderProgram=God::shaders["triangle"];
 		load_colormap(0,colormap);
-		npts = ntriangles*3;
+		npts = vertices.size();
 
 		glGenVertexArrays(1,&vao);
 		glGenBuffers(1,&vbo);
 		glBindVertexArray(vao);
 		glBindBuffer(GL_ARRAY_BUFFER,vbo);
-		glBufferData(GL_ARRAY_BUFFER,7*npts* sizeof(float),pts,GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex),vertices.data(),GL_STATIC_DRAW);
 
 		// position
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,7 * sizeof(float),(void*)0);
+		glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, pos));
 		// normale
 		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,7 * sizeof(float),(void*)(3 * sizeof(float)));
+		glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, n));
 		// value
 		glEnableVertexAttribArray(2);
-		glVertexAttribPointer(2,1,GL_FLOAT,GL_FALSE,7 * sizeof(float),(void*)(6 * sizeof(float)));
+		glVertexAttribPointer(2,1,GL_FLOAT,GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, v));
 
 		glBindVertexArray(0);
 		um_assert(no_gl_error());
