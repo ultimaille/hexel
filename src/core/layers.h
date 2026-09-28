@@ -1,5 +1,6 @@
 #pragma once
 #include "core.h"
+#include <optional>
 
 struct RenderLayer {
     RenderLayer() : _id(max_id) { ++max_id; }
@@ -15,6 +16,8 @@ struct RenderLayer {
     int id() const {
         return _id;
     }
+
+    virtual int primitive_id(int vertex_id) { return vertex_id; } // TODO to pure virtual
 
     protected:
     static inline int max_id = 0;
@@ -54,6 +57,13 @@ struct LayerManager: public Registry<RenderLayer> {
 
     void produce_picking_image(int* data,int w,int h) { Log::add("To be implemented"); }
 
+    std::optional<std::reference_wrapper<RenderLayer>> find_by_id(int id) {
+        for (auto &[name, obj] : *this) {
+            if (obj->id())
+                return *obj;
+        }
+        return std::nullopt;
+    }
 };
 
 
