@@ -27,7 +27,8 @@ struct RenderLayer {
 struct LayerManager: public Registry<RenderLayer> {
     void render() {
         for (auto& [name,obj] : *this)
-            obj->render();
+            if (obj->visible)
+                obj->render();
     }
     void handle(Event event) { // TODO: separate the cleanup logic from the update
 
