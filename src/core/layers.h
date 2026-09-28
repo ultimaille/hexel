@@ -2,6 +2,7 @@
 #include "core.h"
 
 struct RenderLayer {
+    RenderLayer() : _id(max_id) { ++max_id; }
     virtual ~RenderLayer() = default;
     virtual void render() = 0;
     virtual void generate_gui(std::string name) = 0;
@@ -10,6 +11,14 @@ struct RenderLayer {
     virtual void render_constant_color(int layerid) { Log::add("To be implemented"); }
     // virtual bool is_cleanup_ready() { return false; }
     bool visible;
+
+    int id() const {
+        return _id;
+    }
+
+    protected:
+    static inline int max_id = 0;
+    int _id;
 };
 
 struct LayerManager: public Registry<RenderLayer> {

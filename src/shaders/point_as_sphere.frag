@@ -4,9 +4,11 @@ in vec3 C; // centre de la sphere
 in float Value;
 // Color output
 layout(location = 0) out vec4 FragColor;
-layout(location = 2) out vec4 FragVertexIndexColor;
+layout(location = 1) out vec4 FragLayerIdColor;
+layout(location = 2) out vec4 FragVertexIdColor;
 
-flat in int fragVertexIndex;
+flat in int frag_layer_id;
+flat in int frag_vertex_id;
 
 uniform mat4 projection;
 uniform mat4 inv_projection;
@@ -74,5 +76,6 @@ void main()
             1.0
         );
 
-    FragVertexIndexColor = vec4(encode_id(fragVertexIndex), 1.);
+    FragLayerIdColor = vec4(encode_id(frag_layer_id), 1.);
+    FragVertexIdColor = vec4(encode_id(frag_vertex_id), 1.);
 }

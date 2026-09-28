@@ -231,7 +231,7 @@ struct RenderTarget {
         if (err != GL_NO_ERROR)
             Log::error("Picking glReadPixels error: " + std::to_string(err));
 
-        // glReadBuffer(GL_COLOR_ATTACHMENT0);
+        glReadBuffer(GL_COLOR_ATTACHMENT0);
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
     }
 };
