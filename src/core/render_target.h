@@ -23,7 +23,7 @@ struct RenderTarget {
     }
 
     bool valid() const {
-        return framebuffer != 0 && color != 0 && depth != 0 && layer != 0 && primitive != 0 && width > 0 && height > 0;
+        return framebuffer && color && depth && layer && primitive && width > 0 && height > 0;
     }
 
     void init(int w, int h) {
@@ -54,7 +54,7 @@ struct RenderTarget {
     }
 
     void bind() const {
-        um_assert(framebuffer != 0 && color != 0 && depth != 0 && width > 0 && height > 0);
+        um_assert(framebuffer && color && depth && width > 0 && height > 0);
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
         glViewport(0, 0, width, height);
     }
@@ -100,6 +100,14 @@ struct RenderTarget {
             glDeleteTextures(1, &color);
             color = 0;
         }
+        if (layer) {
+            glDeleteTextures(1, &layer);
+            layer = 0;
+        }
+        if (primitive) {
+            glDeleteTextures(1, &primitive);
+            primitive = 0;
+        }
         if (framebuffer) {
             glDeleteFramebuffers(1, &framebuffer);
             framebuffer = 0;
@@ -110,11 +118,11 @@ struct RenderTarget {
     void allocate(int w, int h) {
         um_assert(w > 0);
         um_assert(h > 0);
-        um_assert(framebuffer != 0);
-        um_assert(color != 0);
-        um_assert(layer != 0);
-        um_assert(primitive != 0);
-        um_assert(depth != 0);
+        um_assert(framebuffer);
+        um_assert(color);
+        um_assert(layer);
+        um_assert(primitive);
+        um_assert(depth);
 
         width = w;
         height = h;
