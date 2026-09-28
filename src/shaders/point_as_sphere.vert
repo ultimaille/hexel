@@ -2,7 +2,6 @@
 
 layout(location = 0) in vec3 aPosition;
 layout(location = 1) in float value;
-layout(location = 2) in int vertex_index;
 
 uniform mat4 view;
 uniform mat4 projection;
@@ -15,7 +14,9 @@ uniform vec2 viewport;
 out vec3 C;
 out float Value;
 
-flat out int fragVertexIndex;
+uniform int layer_id;
+flat out int frag_layer_id;
+flat out int frag_vertex_id;
 
 void main(){
     if (value==-1)  Value = -1;
@@ -25,5 +26,6 @@ void main(){
     C = centerView.xyz;
     gl_Position = projection * centerView;
     gl_PointSize = 2.*R* projection[1][1]* viewport.y;
-    fragVertexIndex = vertex_index;
+    frag_vertex_id = gl_VertexID;
+    frag_layer_id = layer_id;
 }

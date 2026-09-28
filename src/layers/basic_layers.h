@@ -6,7 +6,7 @@ struct RenderLambertTriangles: public RenderLayer{
 	std::string triangle_name;
 	TriangleRenderer primitive_renderer;
 
-	RenderLambertTriangles(){}
+	RenderLambertTriangles() : primitive_renderer{_id} {}
 
 	void generate_gui(std::string name){
 		primitive_renderer.generate_gui("name");
@@ -41,11 +41,21 @@ struct RenderSpheres: public RenderLayer{
 	std::string mm_name;
 	PointRenderer primitive_renderer;
 
+	RenderSpheres() : primitive_renderer{_id} {}
+
 	void generate_gui(std::string name){
 		primitive_renderer.generate_gui("name");
 	}
 
-	bool handle(Event event) { return true; }
+	bool handle(Event event) { 
+		if (event.event_type == Event::MOUSE_PRESSED) {			
+			Picker picker;
+			auto [layer_id, primitive_id] = picker.at({God::mouse.x, God::mouse.y});
+			Log::add("layer id: " + std::to_string(layer_id));
+			Log::add("primitive id: " + std::to_string(primitive_id));
+		}
+		return true; 
+	}
 
 	void init(std::string mm){
 		mm_name = mm;
@@ -74,6 +84,8 @@ struct RenderTubes: public RenderLayer{
 	std::string mm_name;
 	std::string polyline_name;
 	SegmentRenderer primitive_renderer;
+
+	RenderTubes() : primitive_renderer{_id} {}
 
 	void generate_gui(std::string name){
 		primitive_renderer.generate_gui(name);

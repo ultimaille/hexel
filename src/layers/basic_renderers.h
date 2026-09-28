@@ -26,8 +26,9 @@ struct SimplexRenderer{
 	float ambient_prop=.5;
 	GLuint shaderProgram;
 	float light_direction[3] = { 1,1,1 };
+	int layer_id = -1;
 
-
+	SimplexRenderer(int layer_id) : layer_id(layer_id) {}
 
 	void generate_gui(std::string name){
 		ImGui::PushItemWidth(120);
@@ -67,6 +68,7 @@ struct SimplexRenderer{
 		auto [w, h] = God::context.screen_size();
 		glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_TRUE, God::camera.projection());
 		glUniform3fv(glGetUniformLocation(shaderProgram, "light_direction"), 1, light_direction);
+		glUniform1i(glGetUniformLocation(shaderProgram,"layer_id"),layer_id);
 	}
 
 	// declare uniforms for raytraced primitives (sphere and cylinder)
@@ -90,6 +92,8 @@ struct SimplexRenderer{
 
 struct PointRenderer: public SimplexRenderer{
 	int radius_in_pixel=2;
+
+	using SimplexRenderer::SimplexRenderer;
 
 	void generate_gui(std::string name){
 		ImGui::PushItemWidth(80);
@@ -152,6 +156,8 @@ struct PointRenderer: public SimplexRenderer{
 };
 struct SegmentRenderer: public SimplexRenderer{
 	GLfloat range[2];
+
+	using SimplexRenderer::SimplexRenderer;
 
 	int line_width=10;
 	float origin_scale = 1.;
@@ -232,6 +238,9 @@ struct SegmentRenderer: public SimplexRenderer{
 
 
 struct TriangleRenderer: public SimplexRenderer{
+
+	using SimplexRenderer::SimplexRenderer;
+
 	void init_from_mesh(Triangles& tri,CornerAttribute<float>& value){
 		std::vector<float> data(7*tri.ncorners());
 		for(auto h:tri.iter_halfedges())  {

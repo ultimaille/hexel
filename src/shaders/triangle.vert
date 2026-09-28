@@ -12,6 +12,10 @@ out vec3 FragPos;
 out vec3 Normal;
 out float Value;
 
+uniform int layer_id;
+flat out int frag_layer_id;
+flat out int frag_vertex_id;
+
 void main(){
     if (value==-1)  Value = -1;
     else  Value  = value * texture_repeat;
@@ -20,5 +24,7 @@ void main(){
     FragPos = viewPos.xyz;
     Normal = normalize(mat3(transpose(inverse(view))) * aNormal);
     gl_Position = projection * viewPos;
+    frag_vertex_id = gl_VertexID;
+    frag_layer_id = layer_id;
 }
  

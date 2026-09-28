@@ -4,7 +4,13 @@ flat in vec3 A;
 flat in vec3 B;
 in float value;
 
-out vec4 FragColor;
+// outputs
+layout(location = 0) out vec4 FragColor;
+layout(location = 1) out vec4 FragLayerIdColor;
+layout(location = 2) out vec4 FragVertexIdColor;
+
+flat in int frag_layer_id;
+flat in int frag_vertex_id;
 
 uniform mat4 projection;
 uniform mat4 inv_projection;
@@ -19,6 +25,12 @@ uniform sampler1D colormap;
 uniform float ambient_prop;
 uniform float color_map_prop;
 
+vec3 encode_id(int id) {
+    int r = id & 0x000000FF;
+    int g = (id & 0x0000FF00) >> 8;
+    int b = (id & 0x00FF0000) >> 16;
+    return vec3(r / 255.f, g / 255.f, b / 255.f); 
+}
 
 void main(){
     if(value==-1) discard;
@@ -71,4 +83,6 @@ void main(){
     vec4 blend_color = color_map_prop * vec4(texture(colormap, value).rgb,1.) + (1.-color_map_prop)*vec4(color,1.);
     float coeff = ambient_prop+(1.-ambient_prop)*diffuse;
     FragColor = coeff*blend_color;
+    FragLayerIdColor = vec4(encode_id(frag_layer_id), 1.);
+    FragVertexIdColor = vec4(encode_id(frag_vertex_id), 1.);
 }
