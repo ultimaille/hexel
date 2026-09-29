@@ -103,6 +103,7 @@ struct SimplexRenderer{
 		glUniform2f(glGetUniformLocation(shaderProgram, "viewport"), float(w), float(h));
 	}
 
+	// TODO probably move this elsewhere
 	std::array<float, 2> range(std::vector<float>& data) {
 		float min = std::numeric_limits<float>::max(); 
 		float max = std::numeric_limits<float>::min();

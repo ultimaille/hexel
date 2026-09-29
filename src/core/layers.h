@@ -10,6 +10,7 @@ struct RenderLayer {
     virtual bool handle(Event event) = 0;
     virtual void render_primitive_id()              { Log::add("To be implemented"); }
     virtual void render_constant_color(int layerid) { Log::add("To be implemented"); }
+    virtual void destroy() {}
     // virtual bool is_cleanup_ready() { return false; }
     bool visible;
 
@@ -64,6 +65,11 @@ struct LayerManager: public Registry<RenderLayer> {
                 return *obj;
         }
         return std::nullopt;
+    }
+
+    void destroy() {
+        for (auto& [name,obj] : *this)
+            obj->destroy();
     }
 };
 
