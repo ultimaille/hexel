@@ -275,7 +275,7 @@ static void load_colormap(int id, GLuint& colormap) {
 	glBindTexture(GL_TEXTURE_1D, colormap);
 	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	unsigned char data[3 * 64];
 	FOR(p, 64)FOR(c, 3) {
 		auto sample = colormaps[id].sample(float(p)/63.);
