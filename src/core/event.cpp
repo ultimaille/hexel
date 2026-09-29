@@ -2,43 +2,68 @@
 #include "core.h"
 
 
-    bool ObjectId::is_a(ObjectIdChunk e) {
-        um_assert(!hardpath.empty());
-        return hardpath.back() == e;
-    }
+const std::string chunk_xcf = "xcf";
+const std::string chunk_pointset = "pointset";
+const std::string chunk_polylines = "polylines";
+const std::string chunk_triangles = "triangles";
+const std::string chunk_quads = "quads";
+const std::string chunk_polygons = "polygons";
+const std::string chunk_tetrahedra = "tetrahedra";
+const std::string chunk_hexahedra = "hexahedra";
+const std::string chunk_wedges = "wedges";
+const std::string chunk_pyramids = "pyramids";
+const std::string chunk_layer = "layer";
+const std::string chunk_camera = "camera";
+const std::string chunk_mouse = "mouse";
+const std::string chunk_key = "key";
 
-    bool ObjectId::is(void* object) {
-        um_assert(!hardpath.empty());
-        if (is_a(mouse)) return static_cast<void*>(&God::mouse) == object;
-        if (is_a(camera)) return static_cast<void*>(&God::camera) == object;
 
-        if (hardpath[0] == xcf) {
-            if (!God::xcf.contains(softpath[0])) return false;
-            // return a multimesh
-            if (hardpath.size() == 1) 
-                return static_cast<void*>(&God::xcf[softpath[0]]) == object;
+void ObjectId::emit(EventType e) {
+    God::events.push_back(Event(*this, e));
+}
+
+
+    void* ObjectId::ptr() {
+        um_assert(!chunks.empty());
+        if (chunks[0]==chunk_mouse)
+            return &God::mouse;
+        if (chunks[0]==chunk_camera)
+            return &God::camera;
+
+
+        if (chunks[0]==chunk_xcf){
+            // return the xcf
+            if (chunks.size()==1) return &God::xcf;
+
+            // returns a multimesh
+            um_assert(chunks.size() > 1);
+            std::string mm = chunks[1];
+            if (!God::xcf.contains(mm)) return NULL;
+            if (chunks.size() == 2)
+                return &God::xcf[mm];
             
-            // return a pointset or a combinatorial structure
-            if (hardpath[1] == pointset) return static_cast<void*>(&God::xcf[softpath[0]].pointset) == object;
-            um_assert(softpath.size()==2);
-            if (hardpath[1] == polylines) {
-                return static_cast<void*>(&God::xcf[softpath[0]].polylines[softpath[1]]) == object;
+            // return a pointset 
+            um_assert(chunks.size() > 2);
+            if (chunks[2] == chunk_pointset) return &God::xcf[mm].pointset;
+           
+            // return a mesh+attributes
+            um_assert(chunks.size() > 3);
+            std::string mesh = chunks[3];
+            if (chunks[2] == chunk_polylines) {
+                if (!God::xcf[mm].polylines.contains(mesh)) return NULL;
+                return &God::xcf[mm].polylines[mesh];
             }
-            if (hardpath[1] == triangles) {
-                if (!God::xcf[softpath[0]].triangles.contains(softpath[1])) return false;
-                return static_cast<void*>(&God::xcf[softpath[0]].triangles[softpath[1]]) == object;
+            if (chunks[2] == chunk_triangles) {
+                if (!God::xcf[mm].triangles.contains(mesh)) return NULL;
+                return &God::xcf[mm].triangles[mesh];
             }
-
-            if (hardpath[1] == quads) return static_cast<void*>(&God::xcf[softpath[0]].quads[softpath[1]]) == object;
-            if (hardpath[1] == polygons) return static_cast<void*>(&God::xcf[softpath[0]].polygons[softpath[1]]) == object;
-            
-            if (hardpath[1] == tetrahedra) return static_cast<void*>(&God::xcf[softpath[0]].tetrahedra[softpath[1]]) == object;
-            if (hardpath[1] == hexahedra) return static_cast<void*>(&God::xcf[softpath[0]].hexahedra[softpath[1]]) == object;
-            if (hardpath[1] == wedges) return static_cast<void*>(&God::xcf[softpath[0]].wedges[softpath[1]]) == object;
-            if (hardpath[1] == pyramids) return static_cast<void*>(&God::xcf[softpath[0]].pyramids[softpath[1]]) == object;
-
+            if (chunks[2] == chunk_quads) {
+                if (!God::xcf[mm].quads.contains(mesh)) return NULL;
+                return &God::xcf[mm].quads[mesh];
+            }
         }
-        return false;
+        um_assert(!"should not reach this point");
+        return NULL;
     }
 
 

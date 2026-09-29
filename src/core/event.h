@@ -2,32 +2,50 @@
 #include <vector>
 #include <string>
 #include <queue>
-                                                     #
-
-enum ObjectIdChunk{
-    xcf,
-        pointset,
-        polylines,
-        triangles,quads,polygons,
-        tetrahedra,hexahedra,wedges,pyramids,
-    layer,
-    camera,
-    mouse,
-    key,
-};
+#include <iostream>
 
 
-struct ObjectId {
-    ObjectId(std::vector<ObjectIdChunk> hardpath, std::vector<std::string> softpath) : hardpath(hardpath),softpath(softpath) {}
-    std::vector<ObjectIdChunk> hardpath;
-    std::vector<std::string> softpath;
-    bool is_a(ObjectIdChunk e);
-    bool is(void* object);
-};
+extern const std::string chunk_xcf;
+extern const std::string chunk_pointset;
+extern const std::string chunk_polylines;
+extern const std::string chunk_triangles;
+extern const std::string chunk_quads;
+extern const std::string chunk_polygons;
+extern const std::string chunk_tetrahedra;
+extern const std::string chunk_hexahedra;
+extern const std::string chunk_wedges;
+extern const std::string chunk_pyramids;
+extern const std::string chunk_layer;
+extern const std::string chunk_camera;
+extern const std::string chunk_mouse;
+extern const std::string chunk_key;
+
+
 
 enum EventType {
     CREATED, KILLED, UPDATED
 };
+
+struct ObjectId {
+    ObjectId(std::vector<std::string> p_chunks = {}) : chunks(p_chunks) {}
+    std::vector<std::string> chunks;
+    void* ptr();
+    void emit(EventType e);
+    inline void show() {
+        for (auto c : chunks) std::cerr << " ==> " << c;
+        std::cerr << std::endl;
+    }
+};
+
+inline bool operator==(const ObjectId& a, const  ObjectId& b) {
+    if (a.chunks.size() != b.chunks.size()) return false;
+    for (int i = 0; i < a.chunks.size(); i++)
+        if (a.chunks[i].compare(b.chunks[i]) != 0) return false;
+    return true;
+}
+
+
+
 struct Event {
     Event(ObjectId p_who, EventType p_what_happened):who(p_who), what_happened(p_what_happened){}
     ObjectId who;

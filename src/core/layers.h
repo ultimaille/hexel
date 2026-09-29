@@ -6,14 +6,18 @@ struct RenderLayer {
     RenderLayer() : _id(max_id) { ++max_id; }
     virtual ~RenderLayer() = default;
     virtual void render() = 0;
-    virtual void generate_gui(std::string name) = 0;
+    virtual void reset() { Log::error("reset called for a layer that does not implement it"); };
+    virtual void generate_gui(std::string name) {
+        if (ImGui::TreeNode((name).c_str())) 
+            ImGui::TreePop();
+    }
     
     virtual bool handle(Event event) = 0;
     virtual bool require(ObjectId object) = 0;
 
     virtual void render_primitive_id()              { Log::add("To be implemented"); }
     virtual void render_constant_color(int layerid) { Log::add("To be implemented"); }
-    bool visible;
+    bool visible =true;
 
     int id() const {
         return _id;
@@ -32,22 +36,23 @@ struct LayerManager: public Registry<RenderLayer> {
             obj->render();
     }
     void handle(Event event) { 
-        if (event.who.is_a(mouse)) return;
+        if (event.who == ObjectId({ chunk_mouse })) return;
 
         // dispatch events
-        for (auto& [name,obj] : *this) {
-            obj->handle(event);
-        }
+        for (auto& [name,obj] : *this) obj->handle(event);
 
-        plop(event.what_happened);
+
+        // manage lifecycle events (KILLED MESH)
         std::vector<std::string> to_kill;
-        if (event.what_happened == KILLED) for (int i = 0; i < this->size(); i++) {
-            plop("KILLED");
+        if (event.what_happened == KILLED) for (int i = 0; i < this->size(); i) {
             if ((*this)[i].require(event.who))
                 erase(i);
+            else i++;
         }
-       
-
+        if (event.what_happened == UPDATED) 
+            for(auto& shad:items)
+                if (shad.object->require(event.who)) 
+                    shad.object->reset();
     }
 
     void produce_picking_image(int* data,int w,int h) { Log::add("To be implemented"); }

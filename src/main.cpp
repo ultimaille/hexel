@@ -44,9 +44,6 @@ namespace InteractionMode{
 				for (auto name : { "B0.step","B1.step" })
 				{
 					Triangles& tri = God::xcf[name].triangles["triangles"].mesh;
-					//BBox3 box;
-					//for (auto v : tri.iter_vertices()) box.add(v.pos());
-					//for (auto v : tri.iter_vertices()) v.pos() = 2. * (v.pos() - box.center()) / box.size().norm();
 					for (auto v : tri.iter_vertices()) box.add(v.pos());
 				}
 				TrackBallCamera& cam = dynamic_cast<TrackBallCamera&>(*God::camera.impl);
@@ -55,30 +52,30 @@ namespace InteractionMode{
 
 				HexEdit* root = static_cast<HexEdit*>(God::root_mode);
 
-				God::layers.emplace_back<RenderLambertTriangles>("Lambert0").init("B0.step", "triangles");
-				God::layers.emplace_back<RenderLambertTriangles>("Lambert1").init("B1.step", "triangles");
+				God::layers.emplace_back<RenderLambertTriangles>("Lambert0").init(ObjectId({ chunk_xcf, "B0.step",chunk_triangles, "triangles" }));
+				God::layers.emplace_back<RenderLambertTriangles>("Lambert0bis").init(ObjectId({ chunk_xcf, "B0.step",chunk_triangles, "triangles" }));
+				God::layers.emplace_back<RenderLambertTriangles>("Lambert1").init(ObjectId({ chunk_xcf, "B1.step",chunk_triangles, "triangles" }));
 				God::layers.emplace_back<SSAO>("SSAO").init();
-				God::layers.emplace_back<RenderSpheres>("RenderSpheres").init("B0.step");
-				God::layers.emplace_back<RenderTubes>("RenderTubes").init("B0.step", "polylines");
+				God::layers.emplace_back<RenderSpheres>("RenderSpheres").init(ObjectId({ chunk_xcf, "B0.step",chunk_pointset }));
+				God::layers.emplace_back<RenderTubes>("RenderTubes").init(ObjectId({ chunk_xcf, "B0.step",chunk_polylines , "polylines" }));
 				std::swap(God::layers.items[0],God::layers.items[1]);
 
 			}
 		}
 
 		void define_gui() {
-			return;
-			//ImGui::Begin("Load XCF", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-			//{
-			//	ImGui::Text("Load XCF");
-			//	ImGui::Separator();
-			//	static char str0[128] = "Hello, world!";
-			//	ImGui::InputText("input text", str0, 128);
-			//	if (ImGui::Button("Create MultiMesh", ImVec2(180, 40))) {
-			//		Log::add("Button pressed");
-			//	}
-			//}
+			ImGui::Begin("ModeWindow", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+			{
+				ImGui::Text("ModeWindow");
+				ImGui::Separator();
+				static char str0[128] = "Hello, world!";
+				ImGui::InputText("input text", str0, 128);
+				if (ImGui::Button("Create MultiMesh", ImVec2(180, 40))) {
+					Log::add("Button pressed");
+				}
+			}
 
-			//ImGui::End();
+			ImGui::End();
 		}
 	};
 

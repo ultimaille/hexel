@@ -50,11 +50,13 @@ struct SimplexRenderer{
 			ImGui::InputInt("#texture_repeat",&texture_repeat);
 			texture_repeat = std::clamp(texture_repeat,1,1000000);
 		}
+
 		ImGui::PopItemWidth();
 	}
 
 	void shared_setup_before_rendering(){
 		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
 		glUseProgram(shaderProgram);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_1D,colormap);
@@ -251,6 +253,7 @@ struct TriangleRenderer: public SimplexRenderer{
 			FOR(d,3) data[7*h_id +3+ d] = n[d];
 			data[7*h_id +6] = value[h];
 		}
+		
 		init(data.data(),tri.nfacets());
 	}
 

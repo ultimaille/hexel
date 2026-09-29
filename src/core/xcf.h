@@ -1,6 +1,7 @@
 #pragma once
 
 #include "basic.h"
+#include "event.h"
 #include <map>
 #include <ultimaille/all.h>
 
@@ -148,14 +149,27 @@ namespace UM {
     };
 
     struct XCF: public std::map<std::string,MultiMesh> {
+
+        MultiMesh& operator[](std::string str) {
+            if (!contains(str)) {
+                plop(str);
+                abort();
+            }
+            return  std::map<std::string, MultiMesh>::operator[](str);
+        }
+        MultiMesh& add(std::string str);
         void load_multimesh(std::string filename,bool connect = true){
             std::string triname = std::filesystem::path(filename).stem().string();
             if(contains(triname))
                 um_assert(false && "duplicate multimesh name");
-            auto &multimesh = (*this)[triname];
+            MultiMesh& multimesh = add(triname);
             multimesh.load_geogram(filename,connect);
         }
         void kill_multimesh(const std::string& name);
+        void kill_mesh(ObjectId obj);
+
+        MultiMesh::MeshAttr<Triangles, SurfaceAttributes>& add_triangles(std::string mm_name, std::string tri_name);
+
     };
 }
 
