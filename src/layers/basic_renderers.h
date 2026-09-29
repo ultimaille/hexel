@@ -50,11 +50,20 @@ struct SimplexRenderer{
 				glDeleteTextures(1, &colormap);
 				load_colormap(texture_id, colormap);
 			}
-			if (ImGui::InputFloat2(("range##range"+name).c_str(), data_range)) {
-				
-			}
+			ImGui::InputFloat2(("range##range"+name).c_str(), data_range);
 			if (ImGui::InputInt(("texture repeat##texture_repeat"+name).c_str(),&texture_repeat)) {
-				texture_repeat = std::clamp(texture_repeat,1,1000000);
+				if (texture_repeat > 1) {
+					glBindTexture(GL_TEXTURE_1D, colormap);
+					glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+					glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+					glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+					texture_repeat = std::clamp(texture_repeat,1,1000000);
+				} else {
+					glBindTexture(GL_TEXTURE_1D, colormap);
+					glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+					glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+					glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+				}
 			}
 			if (ImGui::SmallButton(("autorange##autorange"+name).c_str())) {
 				std::copy(data_autorange, data_autorange + 2, data_range);

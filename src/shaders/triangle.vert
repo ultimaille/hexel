@@ -8,7 +8,6 @@ uniform mat4 view;
 uniform mat4 projection;
 uniform float texture_repeat;
 uniform vec2 data_range;
-uniform vec2 selected_range = vec2(4, 5);
 
 out vec3 FragPos;
 out vec3 Normal;
@@ -21,10 +20,7 @@ flat out int frag_primitive_id;
 void main(){
     if (value==-1)  Value = -1;
     else  {
-        // float rl = data_range.y - data_range.x;
-        // float repeat = rl / texture_repeat;;
         Value = (value - data_range.x) / (data_range.y - data_range.x);
-        Value = clamp(Value, 0., 0.99);
         Value = Value * texture_repeat;
     }
 
