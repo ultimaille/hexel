@@ -64,32 +64,32 @@ struct RenderTarget {
         glViewport(0, 0, w, h);
     }
 
-    void clear(float r = 0, float g = 0, float b = 0, float a = 1) const {
-        bind();
-
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LESS);
-        glClearColor(r, g, b, a);
-        glClearDepth(1.);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    }
-
     // void clear(float r = 0, float g = 0, float b = 0, float a = 1) const {
     //     bind();
+
     //     glEnable(GL_DEPTH_TEST);
     //     glDepthFunc(GL_LESS);
-        
-    //     // Clear attachment 0 (color)
-    //     float color_clear[4] = {r, g, b, a};
-    //     glClearBufferfv(GL_COLOR, 0, color_clear);
-
-    //     // Clear attachment 1 & 2 (layer and primitive IDs) to zero/background
-    //     float zero_clear[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-    //     glClearBufferfv(GL_COLOR, 1, zero_clear);
-    //     glClearBufferfv(GL_COLOR, 2, zero_clear);
-
-    //     glClear(GL_DEPTH_BUFFER_BIT);
+    //     glClearColor(r, g, b, a);
+    //     glClearDepth(1.);
+    //     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // }
+
+    void clear(float r = 0, float g = 0, float b = 0, float a = 1) const {
+        bind();
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+        
+        // Clear attachment 0 (color)
+        float color_clear[4] = {r, g, b, a};
+        glClearBufferfv(GL_COLOR, 0, color_clear);
+
+        // Clear attachment 1 & 2 (layer and primitive IDs) to zero/background
+        float zero_clear[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+        glClearBufferfv(GL_COLOR, 1, zero_clear);
+        glClearBufferfv(GL_COLOR, 2, zero_clear);
+
+        glClear(GL_DEPTH_BUFFER_BIT);
+    }
 
     void destroy() {
         if (depth) {
@@ -147,41 +147,36 @@ struct RenderTarget {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
 
-        // // layer id buffer
-        // glBindTexture(GL_TEXTURE_2D, layer);
-        // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        // layer id buffer
+        glBindTexture(GL_TEXTURE_2D, layer);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-        // // primitive id buffer
-        // glBindTexture(GL_TEXTURE_2D, primitive);
-        // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        // primitive id buffer
+        glBindTexture(GL_TEXTURE_2D, primitive);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
         // framebuffer attachments
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color, 0);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth, 0);
-        // glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, layer, 0);
-        // glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, primitive, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, layer, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, primitive, 0);
 
-        // constexpr GLenum draw_buffers[] = {
-        //     GL_COLOR_ATTACHMENT0,
-        //     GL_COLOR_ATTACHMENT1,
-        //     GL_COLOR_ATTACHMENT2
-        // };
-
-        // glDrawBuffers(3, draw_buffers);
         constexpr GLenum draw_buffers[] = {
             GL_COLOR_ATTACHMENT0,
+            GL_COLOR_ATTACHMENT1,
+            GL_COLOR_ATTACHMENT2
         };
 
-        glDrawBuffers(1, draw_buffers);
+        glDrawBuffers(3, draw_buffers);
 
         GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
         if (status != GL_FRAMEBUFFER_COMPLETE)
