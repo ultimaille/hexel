@@ -9,7 +9,7 @@ struct RenderLambertTriangles: public RenderLayer{
 	RenderLambertTriangles() : primitive_renderer{_id} {}
 
 	void generate_gui(std::string name){
-		primitive_renderer.generate_gui("name");
+		primitive_renderer.generate_gui(name);
 	}
 
 	bool handle(Event event) {return true;}
@@ -29,6 +29,8 @@ struct RenderLambertTriangles: public RenderLayer{
 			value[h] = h.from().pos()[0];
 			//if(h.from().pos().x>0) value[h]  = -1;
 		}
+		// here multiple overload of the same function for different types of attributes ?
+		// ou on mappe les attributs sur un corner attribute ?
 		primitive_renderer.init_from_mesh(tri,value);
 	}
 

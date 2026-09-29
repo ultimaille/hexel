@@ -1,4 +1,5 @@
 #include "colormap.h"
+#include <array>
 
 bool no_gl_error() {
 	switch(glGetError()){
@@ -21,6 +22,8 @@ struct SimplexRenderer{
 	GLuint colormap;
 	int texture_repeat=4;
 	int texture_id=0;
+	float data_autorange[2] = {0,0};
+	float data_range[2] = {0,0};
 	float color[3] = {.5,.8,.5};
 	float color_map_prop=1;
 	float ambient_prop=.5;
@@ -47,8 +50,15 @@ struct SimplexRenderer{
 				glDeleteTextures(1, &colormap);
 				load_colormap(texture_id, colormap);
 			}
-			ImGui::InputInt("#texture_repeat",&texture_repeat);
-			texture_repeat = std::clamp(texture_repeat,1,1000000);
+			if (ImGui::InputFloat2(("range##range"+name).c_str(), data_range)) {
+				
+			}
+			if (ImGui::InputInt(("texture repeat##texture_repeat"+name).c_str(),&texture_repeat)) {
+				texture_repeat = std::clamp(texture_repeat,1,1000000);
+			}
+			if (ImGui::SmallButton(("autorange##autorange"+name).c_str())) {
+				std::copy(data_autorange, data_autorange + 2, data_range);
+			}
 		}
 		ImGui::PopItemWidth();
 	}
@@ -60,6 +70,7 @@ struct SimplexRenderer{
 		glBindTexture(GL_TEXTURE_1D,colormap);
 		glBindVertexArray(vao);
 		glUniform1f(glGetUniformLocation(shaderProgram,"texture_repeat"),texture_repeat);
+		glUniform2fv(glGetUniformLocation(shaderProgram,"data_range"),1, data_range);
 		glUniform1f(glGetUniformLocation(shaderProgram,"color_map_prop"),color_map_prop);
 		glUniform1f(glGetUniformLocation(shaderProgram,"ambient_prop"),ambient_prop);
 		glUniform1i(glGetUniformLocation(shaderProgram,"colormap"),0);
@@ -81,6 +92,18 @@ struct SimplexRenderer{
 	void declare_viewport() {
 		auto [w, h] = God::context.screen_size();
 		glUniform2f(glGetUniformLocation(shaderProgram, "viewport"), float(w), float(h));
+	}
+
+	std::array<float, 2> range(std::vector<float>& data) {
+		float min = std::numeric_limits<float>::max(); 
+		float max = std::numeric_limits<float>::min();
+		for (int i = 0; i < data.size(); ++i) {
+			auto x = data[i];
+			min = std::min(min, x);
+			max = std::max(max, x);
+		}
+
+		return {min, max};
 	}
 };
 
@@ -247,7 +270,7 @@ struct TriangleRenderer: public SimplexRenderer{
 		float v;
 	};
 
-	void init_from_mesh(Triangles& tri,CornerAttribute<float>& value){
+	void init_from_mesh(Triangles& tri, CornerAttribute<float>& value){
 		init();
 		push(tri, value);
 	}
@@ -279,10 +302,16 @@ struct TriangleRenderer: public SimplexRenderer{
 	}
 
 	void push(Triangles& tri, CornerAttribute<float>& value) {
+
+		// compute data range
+		auto r = range(value.ptr->data);
+		std::copy(r.begin(), r.end(), data_autorange);
+		std::copy(data_autorange, data_autorange + 2, data_range);
+
 		std::vector<Vertex> vertices(tri.ncorners());
 		npts = vertices.size();
 
-		for(auto h:tri.iter_halfedges())  {			
+		for(auto h:tri.iter_halfedges())  {
 			auto &p = h.from().pos();
 			auto n = Triangle3(h.facet()).normal();
 
