@@ -9,6 +9,7 @@ struct RenderLambertTriangles: public RenderLayer{
 	RenderLambertTriangles() : primitive_renderer{_id} {}
 
 	void generate_gui(std::string name){
+		RenderLayer::generate_gui(name);
 		primitive_renderer.generate_gui(name);
 	}
 
@@ -55,6 +56,7 @@ struct RenderSpheres: public RenderLayer{
 	RenderSpheres() : primitive_renderer{_id} {}
 
 	void generate_gui(std::string name){
+		RenderLayer::generate_gui(name);
 		primitive_renderer.generate_gui("name");
 	}
 
@@ -103,6 +105,7 @@ struct RenderTubes: public RenderLayer{
 	RenderTubes() : primitive_renderer{_id} {}
 
 	void generate_gui(std::string name){
+		RenderLayer::generate_gui(name);
 		primitive_renderer.generate_gui(name);
 	}
 

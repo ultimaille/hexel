@@ -6,7 +6,9 @@ struct RenderLayer {
     RenderLayer() : _id(max_id) { ++max_id; }
     virtual ~RenderLayer() = default;
     virtual void render() = 0;
-    virtual void generate_gui(std::string name) = 0;
+    virtual void generate_gui(std::string name) {
+        ImGui::Checkbox(("visible##visible"+name).c_str(),&visible);
+    }
     virtual bool handle(Event event) = 0;
     virtual void render_primitive_id()              { Log::add("To be implemented"); }
     virtual void render_constant_color(int layerid) { Log::add("To be implemented"); }
