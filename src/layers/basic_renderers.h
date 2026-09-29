@@ -20,7 +20,7 @@ struct SimplexRenderer{
 	GLuint vao,vbo;
 	int npts;
 	GLuint colormap;
-	int texture_repeat=4;
+	int texture_repeat=1;
 	int texture_id=0;
 	float data_autorange[2] = {0,0};
 	float data_range[2] = {0,0};
@@ -103,6 +103,19 @@ struct SimplexRenderer{
 		glUniform2f(glGetUniformLocation(shaderProgram, "viewport"), float(w), float(h));
 	}
 
+	virtual void destroy() {
+		if (vao != 0) {
+			glDeleteVertexArrays(1, &vao);
+		}
+		if (vbo != 0) {
+			glDeleteBuffers(1, &vbo);
+		}
+		if (shaderProgram != 0) {
+			glDeleteShader(shaderProgram);
+		}
+	}
+
+	protected:
 	// TODO probably move this elsewhere
 	std::array<float, 2> range(std::vector<float>& data) {
 		float min = std::numeric_limits<float>::max(); 
@@ -116,16 +129,10 @@ struct SimplexRenderer{
 		return {min, max};
 	}
 
-	virtual void destroy() {
-		if (vao != 0) {
-			glDeleteVertexArrays(1, &vao);
-		}
-		if (vbo != 0) {
-			glDeleteBuffers(1, &vbo);
-		}
-		if (shaderProgram != 0) {
-			glDeleteShader(shaderProgram);
-		}
+	void compute_range(std::vector<float>& data) {
+		auto r = range(data);
+		std::copy(r.begin(), r.end(), data_autorange);
+		std::copy(data_autorange, data_autorange + 2, data_range);
 	}
 };
 
@@ -142,12 +149,14 @@ struct PointRenderer: public SimplexRenderer{
 
 	void generate_gui(std::string name){
 		ImGui::PushItemWidth(80);
-		ImGui::InputInt("point size",&radius_in_pixel);
+		ImGui::InputInt(("point size##point_size"+name).c_str(),&radius_in_pixel);
 		ImGui::PopItemWidth();
 		SimplexRenderer::generate_gui(name);
 	}
 
 	void init_from_mesh(PointSet &ps,PointAttribute<float>& value){
+		compute_range(value.ptr->data);
+
 		std::vector<float> vertices(4*ps.size(),0);
 		FOR(v,ps.size()){
 			FOR(d,3) vertices[4*v+d] = ps[v][d];
@@ -217,6 +226,8 @@ struct SegmentRenderer: public SimplexRenderer{
 
 
 	void init_from_mesh(PolyLine& pl,PointAttribute<float>& value){
+		compute_range(value.ptr->data);
+
 		std::vector<float> vertices(16*pl.nedges(),0);
 		for(auto e:pl.iter_edges()){
 			FOR(d,3) vertices[16*e+d] = e.from().pos()[d];
@@ -324,11 +335,7 @@ struct TriangleRenderer: public SimplexRenderer{
 	}
 
 	void push(Triangles& tri, CornerAttribute<float>& value) {
-
-		// compute data range
-		auto r = range(value.ptr->data);
-		std::copy(r.begin(), r.end(), data_autorange);
-		std::copy(data_autorange, data_autorange + 2, data_range);
+		compute_range(value.ptr->data);
 
 		std::vector<Vertex> vertices(tri.ncorners());
 		npts = vertices.size();
