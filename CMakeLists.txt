@@ -154,6 +154,8 @@ file(GLOB_RECURSE HEXEL_SOURCES
 
 add_executable(Hexel ${HEXEL_SOURCES})
 
+target_include_directories(Hexel PRIVATE ${CMAKE_SOURCE_DIR}/src)
+
 target_link_libraries(Hexel PRIVATE
     ultimaille
     imgui

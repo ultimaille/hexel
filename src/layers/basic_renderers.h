@@ -1,3 +1,4 @@
+#pragma once
 #include "colormap.h"
 #include <array>
 
@@ -30,6 +31,14 @@ struct SimplexRenderer{
 	GLuint shaderProgram;
 	float light_direction[3] = { 1,1,1 };
 	int layer_id = -1;
+
+	struct Clipping {
+		int mode = 1; // {0 = cell, 1 = std, 2 = slice}
+		float normal[3] = {0,1,0};
+		float pos[3] = {0.5,0.5,0.5};
+		bool invert{false};
+		bool enabled{false};
+	} clipping;
 
 	SimplexRenderer(int layer_id) : layer_id(layer_id) {}
 
@@ -68,7 +77,9 @@ struct SimplexRenderer{
 			if (ImGui::SmallButton(("autorange##autorange"+name).c_str())) {
 				std::copy(data_autorange, data_autorange + 2, data_range);
 			}
+
 		}
+		ImGui::Checkbox("clip", &clipping.enabled);
 
 		ImGui::PopItemWidth();
 	}
@@ -90,6 +101,13 @@ struct SimplexRenderer{
 		auto [w, h] = God::context.screen_size();
 		glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_TRUE, God::camera.projection());
 		glUniform3fv(glGetUniformLocation(shaderProgram, "light_direction"), 1, light_direction);
+
+		glUniform1i(glGetUniformLocation(shaderProgram,"clipping.mode"), clipping.mode);
+		glUniform3fv(glGetUniformLocation(shaderProgram,"clipping.normal"), 1, clipping.normal);
+		glUniform3fv(glGetUniformLocation(shaderProgram,"clipping.pos"), 1, clipping.pos);
+		glUniform1i(glGetUniformLocation(shaderProgram,"clipping.invert"), clipping.invert);
+		glUniform1i(glGetUniformLocation(shaderProgram,"clipping.enabled"), clipping.enabled);
+
 		glUniform1i(glGetUniformLocation(shaderProgram,"layer_id"),layer_id);
 	}
 
@@ -134,6 +152,14 @@ struct SimplexRenderer{
 		auto r = range(data);
 		std::copy(r.begin(), r.end(), data_autorange);
 		std::copy(data_autorange, data_autorange + 2, data_range);
+	}
+
+	constexpr std::array<float, 3> to_float3(const vec3 &v) {
+		return {
+			static_cast<float>(v.x),
+			static_cast<float>(v.y),
+			static_cast<float>(v.z)
+		};
 	}
 };
 
@@ -299,9 +325,11 @@ struct TriangleRenderer: public SimplexRenderer{
 	using SimplexRenderer::SimplexRenderer;
 
 	struct Vertex {
+		// float pos[3];
 		float pos[3];
-		float n[3];
-		float v;
+		float n[3]; // normal
+		float v; // value
+		float b[3]; // bary
 	};
 
 	void init_from_mesh(Triangles& tri, CornerAttribute<float>& value){
@@ -324,12 +352,15 @@ struct TriangleRenderer: public SimplexRenderer{
 		// position
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, pos));
-		// normale
+		// normal
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, n));
 		// value
 		glEnableVertexAttribArray(2);
 		glVertexAttribPointer(2,1,GL_FLOAT,GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, v));
+		// bary
+		glEnableVertexAttribArray(3);
+		glVertexAttribPointer(3,3,GL_FLOAT,GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, b));
 
 		glBindVertexArray(0);
 		um_assert(no_gl_error());
@@ -341,23 +372,51 @@ struct TriangleRenderer: public SimplexRenderer{
 		std::vector<Vertex> vertices(tri.ncorners());
 		npts = vertices.size();
 
-		for(auto h:tri.iter_halfedges())  {
-			auto &p = h.from().pos();
-			auto n = Triangle3(h.facet()).normal();
+		// for(auto h:tri.iter_halfedges())  {
+		// 	auto &p = h.from().pos();
+		// 	auto n = Triangle3(h.facet()).normal();
 
-			vertices[h] = {
-				.pos = {
-					static_cast<float>(p.x), 
-					static_cast<float>(p.y), 
-					static_cast<float>(p.z)
-				},
-				.n = {
-					static_cast<float>(n.x), 
-					static_cast<float>(n.y), 
-					static_cast<float>(n.z)
-				},
-				.v = value[h]
-			};
+		// 	vertices[h] = {
+		// 		.pos = {
+		// 			static_cast<float>(p.x), 
+		// 			static_cast<float>(p.y), 
+		// 			static_cast<float>(p.z)
+		// 		},
+		// 		.n = {
+		// 			static_cast<float>(n.x), 
+		// 			static_cast<float>(n.y), 
+		// 			static_cast<float>(n.z)
+		// 		},
+		// 		.v = value[h]
+		// 	};
+		// }
+		for(auto f : tri.iter_facets())  {
+			for (int lv = 0; lv < 3; ++lv) {
+				auto h = f * 3 + lv;
+				vec3 p = f.vertex(lv);
+				auto t = Triangle3(f);
+				auto n = t.normal();
+				auto b = t.bary_verts();
+
+				vertices[h] = {
+					.pos = {
+						static_cast<float>(p.x),
+						static_cast<float>(p.y),
+						static_cast<float>(p.z)
+					},
+					.n = {
+						static_cast<float>(n.x),
+						static_cast<float>(n.y),
+						static_cast<float>(n.z)
+					},
+					.v = value[h],
+					.b = {
+						static_cast<float>(b.x),
+						static_cast<float>(b.y),
+						static_cast<float>(b.z)
+					}
+				};
+			}
 		}
 
 		glBindVertexArray(vao);
