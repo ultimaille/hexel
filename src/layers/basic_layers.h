@@ -42,6 +42,10 @@ struct RenderLambertTriangles: public RenderLayer{
 		return vertex_id; // triangle id from vertex id
 	}
 
+	void destroy() {
+		primitive_renderer.destroy();
+	}
+
 };
 
 struct RenderSpheres: public RenderLayer{
@@ -80,6 +84,10 @@ struct RenderSpheres: public RenderLayer{
 
 	void render(){
 		primitive_renderer.render();
+	}
+
+	void destroy() {
+		primitive_renderer.destroy();
 	}
 };
 
@@ -121,6 +129,10 @@ struct RenderTubes: public RenderLayer{
 
 	virtual int primitive_id(int vertex_id) {
 		return vertex_id; // edge id from vertex id
+	}
+
+	void destroy() {
+		primitive_renderer.destroy();
 	}
 };
 
