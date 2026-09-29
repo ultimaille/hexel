@@ -6,11 +6,11 @@ in float Value;
 
 // outputs
 out vec4 FragColor;
-layout(location = 1) out vec4 FragLayerIdColor;
-layout(location = 2) out vec4 FragPrimitiveIdColor;
+// layout(location = 1) out vec4 FragLayerIdColor;
+// layout(location = 2) out vec4 FragPrimitiveIdColor;
 
-flat in int frag_layer_id;
-flat in int frag_primitive_id;
+// flat in int frag_layer_id;
+// flat in int frag_primitive_id;
 
 uniform vec3 light_direction;
 uniform vec3 color;
@@ -31,6 +31,6 @@ void main(){
     vec4 blend_color = color_map_prop * vec4(texture(colormap, Value).rgb,1.) + (1.-color_map_prop)*vec4(color,1.);
     float coeff = ambient_prop+(1.-ambient_prop)*max(dot(Normal, light_direction), 0.0);
     FragColor = coeff*blend_color;
-    FragLayerIdColor = vec4(encode_id(frag_layer_id), 1.);
-    FragPrimitiveIdColor = vec4(encode_id(frag_primitive_id), 1.);
+    // FragLayerIdColor = vec4(encode_id(frag_layer_id), 1.);
+    // FragPrimitiveIdColor = vec4(encode_id(frag_primitive_id), 1.);
 }

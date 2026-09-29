@@ -62,6 +62,8 @@ struct WindowContext {
         int version = gladLoadGL(reinterpret_cast<GLADloadfunc>(glfwGetProcAddress));
         um_assert(version != 0);
         Log::add(std::string("OpenGL version: ") + std::string((char*)glGetString(GL_VERSION)));
+        // Disable VSync
+        glfwSwapInterval(0);
     }
 
     void init_imgui() {

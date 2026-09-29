@@ -147,6 +147,8 @@ void TrackBallCamera::handle(Event event) {
         else if (God::mouse.mouseDragging[1])
             rotate(a, b, viewport);
     }
+
+    rotate({0,0}, {4,0}, viewport);
 }
 
 float *row_major(const mat4x4 &m) {
