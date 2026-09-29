@@ -111,5 +111,7 @@ int main(){
 		God::events.dispatch();
 		God::context.end_frame();
 	}
+	God::layers.destroy();
+	God::context.destroy();
 	return EXIT_SUCCESS;
 }
