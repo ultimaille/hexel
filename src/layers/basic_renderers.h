@@ -57,13 +57,13 @@ struct SimplexRenderer{
 					glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 					glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 					glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-					texture_repeat = std::clamp(texture_repeat,1,1000000);
 				} else {
 					glBindTexture(GL_TEXTURE_1D, colormap);
 					glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 					glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 					glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 				}
+					texture_repeat = std::clamp(texture_repeat,1,1000000);
 			}
 			if (ImGui::SmallButton(("autorange##autorange"+name).c_str())) {
 				std::copy(data_autorange, data_autorange + 2, data_range);
