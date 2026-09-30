@@ -35,6 +35,8 @@ namespace UM {
             collection.try_emplace(mesh_name);
             auto& [mesh,attributes] = collection[mesh_name];
             attributes = read_by_extension(mesh_file,mesh);
+            if (mesh.nverts()==0)
+                attributes.points = {};
             mesh.points = pointset;
             if(connect) mesh.connect();
         }
@@ -52,7 +54,6 @@ namespace UM {
                 "tetrahedra","hexahedra","wedges","pyramids"
             };
             for(int c = 0; c<8; c++){
-                std::cerr<<"Load "<< collection_names[c] <<"\n";
                 std::filesystem::path mesh_path = path / collection_names[c];
                 if(!std::filesystem::exists(mesh_path)) continue;
                 for(const auto& entry : std::filesystem::directory_iterator(mesh_path)){
@@ -112,21 +113,29 @@ namespace UM {
             else primitives_loaded+="tetrahedra ";
             if(hexahedra["hexahedra"].mesh.ncells()==0)                                     hexahedra.erase("hexahedra");
             else primitives_loaded+="hexahedra ";
-            if(pyramids["pyramids"].mesh.ncells()==0)                                       pyramids.erase("pyramids");
-            else primitives_loaded+="pyramid ";
+            if (wedges["wedges"].mesh.ncells() == 0)                                       wedges.erase("wedges");
+            else primitives_loaded += "pyramid ";
+            if (pyramids["pyramids"].mesh.ncells() == 0)                                       pyramids.erase("pyramids");
+            else primitives_loaded += "pyramid ";
             Log::add("primitives loaded in .geogram: " +primitives_loaded);
         }
 
 
 
         template<class T>
-        void save_meshes(std::filesystem::path mesh_path,T& collection){
+        void save_meshes(std::filesystem::path mesh_path,T& collection,bool geogram_compatible=false){
             if(collection.empty()) return;
             std::filesystem::create_directory(mesh_path);
-            for(auto& [name,obj]:collection)
-                write_by_extension((mesh_path.string() + std::string("/")+ name+std::string(".geogram")),obj.mesh,obj.attributes);
+            for (auto& [name, obj] : collection) {
+                PointSet empty;
+                if (obj.attributes.points.empty() && !geogram_compatible)
+                    obj.mesh.points = empty;
+                write_by_extension((mesh_path.string() + std::string("/") + name + std::string(".geogram")), obj.mesh, obj.attributes);
+                if (obj.attributes.points.empty() && !geogram_compatible)
+                    obj.mesh.points = pointset;
+            }
         }
-        void save_to_path(std::string filename){
+        void save_to_path(std::string filename, bool geogram_compatible = false){
             std::filesystem::path path(filename);
             if(std::filesystem::exists(path)){
                 std::cerr<<"Erase directory\n";
@@ -135,16 +144,16 @@ namespace UM {
             std::filesystem::create_directory(path);
             write_by_extension((path / "pointset.geogram").string(),pointset,pointset_attributes);
 
-            save_meshes(path /"polylines",polylines);
+            save_meshes(path /"polylines"   ,polylines  ,geogram_compatible);
 
-            save_meshes(path /"triangles",triangles);
-            save_meshes(path /"quads",quads);
-            save_meshes(path /"polygons",polygons);
+            save_meshes(path /"triangles"   ,triangles  ,geogram_compatible);
+            save_meshes(path /"quads"       ,quads      ,geogram_compatible);
+            save_meshes(path /"polygons"    ,polygons   ,geogram_compatible);
 
-            save_meshes(path /"tetrahedra",tetrahedra);
-            save_meshes(path /"hexahedra",hexahedra);
-            save_meshes(path /"wedges",wedges);
-            save_meshes(path /"pyramids",pyramids);
+            save_meshes(path /"tetrahedra"  ,tetrahedra ,geogram_compatible);
+            save_meshes(path /"hexahedra"   ,hexahedra  ,geogram_compatible);
+            save_meshes(path /"wedges"      ,wedges     ,geogram_compatible);
+            save_meshes(path /"pyramids"    ,pyramids   ,geogram_compatible);
         }
     };
 
@@ -152,7 +161,6 @@ namespace UM {
 
         MultiMesh& operator[](std::string str) {
             if (!contains(str)) {
-                plop(str);
                 abort();
             }
             return  std::map<std::string, MultiMesh>::operator[](str);
@@ -163,6 +171,9 @@ namespace UM {
             if(contains(triname))
                 um_assert(false && "duplicate multimesh name");
             MultiMesh& multimesh = add(triname);
+            if (std::filesystem::is_directory(filename))
+                multimesh.load_from_path(filename, connect);
+            else
             multimesh.load_geogram(filename,connect);
         }
         void kill_multimesh(const std::string& name);
