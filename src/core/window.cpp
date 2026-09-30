@@ -11,49 +11,29 @@ void framebuffer_size_callback(GLFWwindow* window,int width,int height){
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
     ImGui_ImplGlfw_MouseButtonCallback(window,button,action,mods);
     um_assert(button >= 0 && button < MouseState::ButtonCount);
-
     God::mouse.current.buttons[button] = (action == GLFW_PRESS);
-    God::events.push_back({ ObjectId({chunk_mouse}), EventType::UPDATED });
+    ObjectId({chunk_mouse}).emit( EventType::UPDATED );
 }
 
 void cursor_position_callback(GLFWwindow* window, double x, double y) {
     ImGui_ImplGlfw_CursorPosCallback(window, x, y);
-//  if (God::mouse.current.x != x || God::mouse.current.y != y)
-    God::events.push_back({ ObjectId({chunk_mouse}), EventType::UPDATED });
+    ObjectId({chunk_mouse}).emit( EventType::UPDATED );
     God::mouse.current.x = x;
     God::mouse.current.y = y;
 }
 
-void scroll_callback(GLFWwindow* window, double xOffset, double yOffset) {
-    ImGui_ImplGlfw_ScrollCallback(window, xOffset, yOffset);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+    ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
+    God::mouse.wheel_speed = yoffset;
+    ObjectId({chunk_mouse}).emit( EventType::UPDATED );
+}
 
-    if (yOffset != 0) {
-        God::mouse.wheel_speed = yOffset;
-        God::events.push_back({ ObjectId({chunk_mouse}), EventType::UPDATED });
+void KeyboardState::update() {
+    for (int k = 0; k <= GLFW_KEY_LAST; ++k) {
+        bool down = glfwGetKey(God::context.window, k) == GLFW_PRESS;
+        if (down != keys[k])
+            ObjectId({chunk_key}).emit( EventType::UPDATED );
+        keys[k] = down;
     }
 }
-
-void KeyboardState::update(){
-    // Poll key states for keys 0 to GLFW_KEY_LAST
-    for(int k = 0; k <= GLFW_KEY_LAST; k++){
-        int state = glfwGetKey(God::context.window, k);
-        bool nv = (state == GLFW_PRESS);
-        
-        if(nv != data[k]) 
-            God::events.push_back({ ObjectId({chunk_key}),EventType::UPDATED });
-        
-        data[k] = nv;
-    }
-}
-
-/*
-void MouseState::update() {
-    double mx, my;
-    glfwGetCursorPos(God::context.window, &mx, &my);
-    if (current_state.x != mx || current_state.y != my)
-        God::events.push_back({ ObjectId({chunk_mouse}),EventType::UPDATED });
-    current_state.x = mx;
-    current_state.y = my;
-}
-*/
 

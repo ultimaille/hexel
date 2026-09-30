@@ -98,14 +98,15 @@ int main() {
         God::mouse.wheel_speed = 0;
         God::mouse.previous = God::mouse.current;
         glfwPollEvents();
+        if(!ImGui::GetIO().WantCaptureKeyboard || !ImGui::GetIO().WantCaptureMouse)
+            God::keys.update();
+        God::events.dispatch();
+
         God::context.begin_frame();
         God::layers.render();
         God::panels.show_gui();
         God::root_mode->define_gui();
-        if(!ImGui::GetIO().WantCaptureKeyboard || !ImGui::GetIO().WantCaptureMouse)
-            God::keys.update();
         God::context.end_frame();
-        God::events.dispatch();
     }
     God::layers.destroy();
     God::context.destroy();

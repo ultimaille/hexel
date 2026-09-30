@@ -9,9 +9,9 @@
 #include "render_target.h"
 
 void framebuffer_size_callback(GLFWwindow* window,int width,int height);
-void mouse_button_callback(GLFWwindow* window,int button,int action,int mods);
-void cursor_position_callback(GLFWwindow* window,double mouseX,double mouseY);
-void scroll_callback(GLFWwindow* window,double xOffset,double yOffset);
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+void cursor_position_callback(GLFWwindow* window, double x, double y);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 struct WindowContext {
     GLFWwindow* window = nullptr;
@@ -159,12 +159,10 @@ struct MouseState {
     }
 };
 
-struct KeyboardState{
-	
-	bool pressed(int key /* GLFW_KEY_? */) { return data[key]; }
-
-	void update();
-
-	std::array<bool,2048> data;
-
+struct KeyboardState {
+    static constexpr int ButtonCount = GLFW_KEY_LAST + 1;
+    bool pressed(int k /* GLFW_KEY_? */) { return keys[k]; }
+    void update();
+    std::array<bool, ButtonCount> keys = {};
 };
+

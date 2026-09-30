@@ -19,7 +19,7 @@ const std::string chunk_key = "key";
 
 
 void ObjectId::emit(EventType e) {
-    God::events.push_back(Event(*this, e));
+    God::events.queue.emplace(Event(*this, e));
 }
 
 
@@ -68,9 +68,9 @@ void ObjectId::emit(EventType e) {
 
 
 void EventManager::dispatch() {
-    while (!events.empty()) {
-        auto event = events.front();
-        events.pop();
+    while (!queue.empty()) {
+        auto event = queue.front();
+        queue.pop();
         God::camera.handle(event);
         God::layers.handle(event);
     }
