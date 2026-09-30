@@ -38,16 +38,11 @@ struct ObjectId {
 };
 
 inline bool operator==(const ObjectId& a, const  ObjectId& b) {
-    if (a.chunks.size() != b.chunks.size()) return false;
-    for (int i = 0; i < a.chunks.size(); i++)
-        if (a.chunks[i].compare(b.chunks[i]) != 0) return false;
-    return true;
+    return a.chunks == b.chunks;
 }
 
-
-
 struct Event {
-    Event(ObjectId p_who, EventType p_what_happened):who(p_who), what_happened(p_what_happened){}
+//    Event(ObjectId p_who, EventType p_what_happened) : who(p_who), what_happened(p_what_happened) {}
     ObjectId who;
     EventType what_happened;
 };
