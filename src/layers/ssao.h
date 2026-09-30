@@ -1,7 +1,7 @@
 #pragma once
 
 #include <array>
-#include "core/core.h"
+#include "../core/core.h"
 
 struct SSAO : RenderLayer {
     const std::string ao_name = "ssao";

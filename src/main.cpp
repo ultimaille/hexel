@@ -17,7 +17,7 @@
 #include "panels/layer_explorer.h"
 
 #include "layers/basic_layers.h"
-#include "ssao.h"
+#include "layers/ssao.h"
 
 // -------------------------------------------------------------------------------
 //                                    Modes to define the behavior of a specific application
