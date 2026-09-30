@@ -8,9 +8,10 @@ struct RenderLayer {
     virtual void render() = 0;
     virtual void reset() { Log::error("reset called for a layer that does not implement it"); };
     virtual void generate_gui(std::string name) {
-        if (ImGui::TreeNode((name).c_str())) 
+        if (ImGui::TreeNode((name).c_str())) {
+            ImGui::Checkbox(("visible##visible"+name).c_str(),&visible);
             ImGui::TreePop();
-        ImGui::Checkbox(("visible##visible"+name).c_str(),&visible);
+        }
     }
     
     virtual bool handle(Event event) = 0;

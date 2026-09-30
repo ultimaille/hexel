@@ -29,7 +29,8 @@ struct RenderLambertTriangles: public RenderLayer{
 	void init(ObjectId obj){
 		mesh = obj;
 		um_assert(obj.ptr() != NULL);
-		auto& [tri, attr] = *((MultiMesh::MeshAttr<Triangles, SurfaceAttributes>*) obj.ptr());
+        Triangles &tri = obj;
+        SurfaceAttributes &attr = obj;
 
 		if(!God::shaders.contains("triangle"))
 			God::shaders.add(std::string(SHADERS_DIR),"triangle");
@@ -74,9 +75,9 @@ struct RenderSpheres: public RenderLayer{
 	}
 
 	bool handle(Event event) { 
-		if (event.who == ObjectId({ chunk_mouse }) && God::mouse.clicked(0)) {
+		if (event.who == ObjectId({ chunk_mouse }) && God::mouse.clicked(GLFW_MOUSE_BUTTON_LEFT)) {
 			Picker picker;
-			auto [layer_id, primitive_id] = picker.at({God::mouse.current_state.x, God::mouse.current_state.y});
+			auto [layer_id, primitive_id] = picker.at({God::mouse.current.x, God::mouse.current.y});
 			Log::add("layer id: " + std::to_string(layer_id));
 			Log::add("primitive id: " + std::to_string(primitive_id));
 		}
@@ -89,7 +90,8 @@ struct RenderSpheres: public RenderLayer{
 
 	void init(ObjectId obj){
 		mesh = obj;
-		auto& [ps, attr] = *((MultiMesh::MeshAttr<PointSet, PointSetAttributes>*) obj.ptr());
+        PointSet &ps = obj;
+        PointSetAttributes &attr = obj;
 
 		God::shaders.add(std::string(SHADERS_DIR),"point_as_sphere");
 
@@ -137,7 +139,8 @@ struct RenderTubes: public RenderLayer{
 
 	void init(ObjectId obj){
 		mesh = obj;
-		auto& [pl, attr] = *((MultiMesh::MeshAttr<PolyLine, PolyLineAttributes>*) obj.ptr());
+        PolyLine &pl = obj;
+        PolyLineAttributes &attr = obj;
 
 		PointAttribute<float> value(pl,0);
 		for(auto v:pl.iter_vertices()) 

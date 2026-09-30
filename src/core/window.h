@@ -9,9 +9,9 @@
 #include "render_target.h"
 
 void framebuffer_size_callback(GLFWwindow* window,int width,int height);
-void mouse_button_callback(GLFWwindow* window,int button,int action,int mods);
-void cursor_position_callback(GLFWwindow* window,double mouseX,double mouseY);
-void scroll_callback(GLFWwindow* window,double xOffset,double yOffset);
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+void cursor_position_callback(GLFWwindow* window, double x, double y);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 struct WindowContext {
     GLFWwindow* window = nullptr;
@@ -136,30 +136,33 @@ struct WindowContext {
 //                                    Mouse + Keyboard States
 // -------------------------------------------------------------------------------
 
-struct MouseState{
-
+struct MouseState {
+    static constexpr int ButtonCount = GLFW_MOUSE_BUTTON_LAST + 1;
     struct State {
-        double x=0, y=0;
-        double wheel_speed=0;
-        bool button_pressed[3]={ false, false, false};
+        double x = 0, y = 0;
+        bool buttons[ButtonCount] = {};
     };
-	void update();
 
-    bool last_button_pressed[3] = { false };
-    bool button_pressed[3] = { false };
-    bool clicked(int button) { return button_pressed[button] && !last_button_pressed[button]; };
-    bool released(int button) { return !button_pressed[button] && last_button_pressed[button]; };
+    double wheel_speed = 0;
+    State current = {}, previous = {};
 
-    State current_state;
-    State last_state;
+    bool clicked(int button) const {
+        return current.buttons[button] && !previous.buttons[button];
+    }
+
+    bool released(int button) const {
+        return !current.buttons[button] && previous.buttons[button];
+    }
+
+    bool down(int button) const {
+        return current.buttons[button];
+    }
 };
 
-struct KeyboardState{
-	
-	bool pressed(int key /* GLFW_KEY_? */) { return data[key]; }
-
-	void update();
-
-	std::array<bool,2048> data;
-
+struct KeyboardState {
+    static constexpr int ButtonCount = GLFW_KEY_LAST + 1;
+    bool pressed(int k /* GLFW_KEY_? */) { return keys[k]; }
+    void update();
+    std::array<bool, ButtonCount> keys = {};
 };
+

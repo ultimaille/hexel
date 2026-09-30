@@ -9,7 +9,13 @@ struct XCFExplorer: public Panel {
 		for(auto &[mm_name,mm]:God::xcf){
 			if (ImGui::CollapsingHeader(mm_name.c_str())) {
 
-				auto imgui_str = [&](std::string str, std::string suffix ="") {return (str + "##" + mm_name+suffix).c_str();};
+				auto imgui_str = [&](std::string str, std::string suffix ="") {
+
+    static thread_local std::string s;
+    s = (str + "##" + mm_name+suffix);
+                return s.c_str();
+
+                };
 
 				if (ImGui::TreeNode(imgui_str("pointset" ))) {
 					//... show shaders
@@ -19,7 +25,6 @@ struct XCFExplorer: public Panel {
 					//... show shaders
 					ImGui::TreePop();
 				}
-
 
 
 				// show interface for the collection of triangles

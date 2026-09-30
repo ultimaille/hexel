@@ -17,7 +17,7 @@
 #include "panels/layer_explorer.h"
 
 #include "layers/basic_layers.h"
-#include "ssao.h"
+#include "layers/ssao.h"
 
 // -------------------------------------------------------------------------------
 //                                    Modes to define the behavior of a specific application
@@ -112,24 +112,24 @@ namespace InteractionMode{
 
 
 
-int main(){
+int main() {
     God::context.init();
     InteractionMode::HexEdit look;
-
     God::panels.emplace_back<XCFExplorer>("xcf_window");
     God::panels.emplace_back<LayerExplorer>("layer_window");
-    while (God::context.window_is_active()){
+    while(God::context.window_is_active()){
+        God::mouse.wheel_speed = 0;
+        God::mouse.previous = God::mouse.current;
         glfwPollEvents();
+        if(!ImGui::GetIO().WantCaptureKeyboard || !ImGui::GetIO().WantCaptureMouse)
+            God::keys.update();
+        God::events.dispatch();
+
         God::context.begin_frame();
         God::layers.render();
         God::panels.show_gui();
         God::root_mode->define_gui();
-        if (!ImGui::GetIO().WantCaptureMouse)
-            God::mouse.update();
-        if (!ImGui::GetIO().WantCaptureKeyboard || !ImGui::GetIO().WantCaptureMouse)
-            God::keys.update();
         God::context.end_frame();
-        God::events.dispatch();
     }
     God::layers.destroy();
     God::context.destroy();

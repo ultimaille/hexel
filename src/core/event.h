@@ -4,6 +4,9 @@
 #include <queue>
 #include <iostream>
 
+#include <ultimaille/all.h>
+
+using namespace UM;
 
 extern const std::string chunk_xcf;
 extern const std::string chunk_pointset;
@@ -27,9 +30,32 @@ enum EventType {
 };
 
 struct ObjectId {
-    ObjectId(std::vector<std::string> p_chunks = {}) : chunks(p_chunks) {}
     std::vector<std::string> chunks;
     void* ptr();
+    operator PointSet&() {
+        return *static_cast<PointSet*>(ptr());
+    }
+
+    operator PointSetAttributes&() {
+        return *static_cast<PointSetAttributes*>(ptr());
+    }
+
+    operator PolyLine&() {
+        return *static_cast<PolyLine*>(ptr());
+    }
+
+    operator PolyLineAttributes&() {
+        return *static_cast<PolyLineAttributes*>(ptr());
+    }
+
+    operator Triangles&() {
+        return *static_cast<Triangles*>(ptr());
+    }
+
+    operator SurfaceAttributes&() {
+        return *static_cast<SurfaceAttributes*>(ptr());
+    }
+
     void emit(EventType e);
     inline void show() {
         for (auto c : chunks) std::cerr << " ==> " << c;
@@ -38,25 +64,16 @@ struct ObjectId {
 };
 
 inline bool operator==(const ObjectId& a, const  ObjectId& b) {
-    if (a.chunks.size() != b.chunks.size()) return false;
-    for (int i = 0; i < a.chunks.size(); i++)
-        if (a.chunks[i].compare(b.chunks[i]) != 0) return false;
-    return true;
+    return a.chunks == b.chunks;
 }
 
-
-
 struct Event {
-    Event(ObjectId p_who, EventType p_what_happened):who(p_who), what_happened(p_what_happened){}
     ObjectId who;
     EventType what_happened;
 };
 
-
 struct EventManager {
-    void push_back(Event event) {
-        events.emplace(event);
-    }
     void dispatch();
-    std::queue<Event> events;
+    std::queue<Event> queue;
 };
+
