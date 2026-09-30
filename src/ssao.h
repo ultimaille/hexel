@@ -13,7 +13,7 @@ struct SSAO : RenderLayer {
     GLuint random_texture = 0;
 
     SSAO() {
-        visible = true;
+        visible = false;
     }
 
     ~SSAO() override {
