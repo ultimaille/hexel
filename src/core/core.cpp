@@ -3,7 +3,7 @@
 #include "core.h"
 
 namespace God {
-    XCF xcf;
+    UM::XCF xcf;
     LayerManager layers;
     ShaderManager shaders;
     InteractionMode::AbstractMode* root_mode;

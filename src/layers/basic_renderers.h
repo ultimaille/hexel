@@ -69,11 +69,13 @@ struct SimplexRenderer{
 				std::copy(data_autorange, data_autorange + 2, data_range);
 			}
 		}
+
 		ImGui::PopItemWidth();
 	}
 
 	void shared_setup_before_rendering(){
 		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
 		glUseProgram(shaderProgram);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_1D,colormap);

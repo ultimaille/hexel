@@ -2,25 +2,34 @@
 
 
 struct RenderLambertTriangles: public RenderLayer{
-	std::string mm_name;
-	std::string triangle_name;
+	ObjectId mesh;
 	TriangleRenderer primitive_renderer;
 
 	RenderLambertTriangles() : primitive_renderer{_id} {}
 
 	void generate_gui(std::string name){
-		RenderLayer::generate_gui(name);
-		primitive_renderer.generate_gui(name);
+		if (ImGui::TreeNode((name).c_str())) {
+			primitive_renderer.generate_gui(name);
+  		RenderLayer::generate_gui(name);
+			ImGui::Checkbox(("visible##" + name).c_str(), &visible);
+			ImGui::TreePop();
+		}
 	}
 
 	bool handle(Event event) {return true;}
+	bool require(ObjectId object) {
+		return object==mesh;
+	}
+	void reset() {
+		// TODO free vba/vbo/texture
+		init(mesh);
+	}
 
-	void init(std::string mm,std::string triangle){
-		triangle_name = triangle;
-		mm_name = mm;
-		um_assert(God::xcf.contains(mm_name));
-		um_assert(God::xcf[mm_name].triangles.contains(triangle_name));
-		Triangles&  tri = God::xcf[mm_name].triangles[triangle_name].mesh;
+	
+	void init(ObjectId obj){
+		mesh = obj;
+		um_assert(obj.ptr() != NULL);
+		auto& [tri, attr] = *((MultiMesh::MeshAttr<Triangles, SurfaceAttributes>*) obj.ptr());
 
 		if(!God::shaders.contains("triangle"))
 			God::shaders.add(std::string(SHADERS_DIR),"triangle");
@@ -28,7 +37,6 @@ struct RenderLambertTriangles: public RenderLayer{
 		CornerAttribute<float> value(tri);
 		for(auto h:tri.iter_halfedges())  {
 			value[h] = h.from().pos()[0];
-			//if(h.from().pos().x>0) value[h]  = -1;
 		}
 		// here multiple overload of the same function for different types of attributes ?
 		// ou on mappe les attributs sur un corner attribute ?
@@ -36,6 +44,7 @@ struct RenderLambertTriangles: public RenderLayer{
 	}
 
 	void render(){
+		if(visible)
 		primitive_renderer.render();
 	}
 
@@ -50,42 +59,49 @@ struct RenderLambertTriangles: public RenderLayer{
 };
 
 struct RenderSpheres: public RenderLayer{
-	std::string mm_name;
+	ObjectId mesh;
 	PointRenderer primitive_renderer;
 
 	RenderSpheres() : primitive_renderer{_id} {}
 
 	void generate_gui(std::string name){
+		if (ImGui::TreeNode((name).c_str())) {
+			primitive_renderer.generate_gui(name);
 		RenderLayer::generate_gui(name);
-		primitive_renderer.generate_gui("name");
+			ImGui::Checkbox(("visible##" + name).c_str(), &visible);
+			ImGui::TreePop();
+		}
 	}
 
 	bool handle(Event event) { 
-		if (event.event_type == Event::MOUSE_PRESSED) {			
+		if (event.who == ObjectId({ chunk_mouse }) && God::mouse.clicked(0)) {
 			Picker picker;
-			auto [layer_id, primitive_id] = picker.at({God::mouse.x, God::mouse.y});
+			auto [layer_id, primitive_id] = picker.at({God::mouse.current_state.x, God::mouse.current_state.y});
 			Log::add("layer id: " + std::to_string(layer_id));
 			Log::add("primitive id: " + std::to_string(primitive_id));
 		}
 		return true; 
 	}
+	bool require(ObjectId object) {
+		return object==mesh;
+	}
 
-	void init(std::string mm){
-		mm_name = mm;
-		um_assert(God::xcf.contains(mm_name));
-		PointSet&  ps = God::xcf[mm_name].pointset;
+
+	void init(ObjectId obj){
+		mesh = obj;
+		auto& [ps, attr] = *((MultiMesh::MeshAttr<PointSet, PointSetAttributes>*) obj.ptr());
+
 		God::shaders.add(std::string(SHADERS_DIR),"point_as_sphere");
 
 		PointAttribute<float> value(ps);
 		FOR(v,ps.size()){
 			value[v] = ps[v][0];
-			//if(ps[v][0]>0) value[v] = -1;
 		}
 		primitive_renderer.init_from_mesh(ps,value);
 	}
 
 	void render(){
-		primitive_renderer.render();
+		if (visible)primitive_renderer.render();
 	}
 
 	void destroy() {
@@ -98,36 +114,39 @@ struct RenderSpheres: public RenderLayer{
 
 
 struct RenderTubes: public RenderLayer{
-	std::string mm_name;
-	std::string polyline_name;
+	ObjectId mesh;
 	SegmentRenderer primitive_renderer;
 
 	RenderTubes() : primitive_renderer{_id} {}
 
-	void generate_gui(std::string name){
+	void generate_gui(std::string name) {
+		if (ImGui::TreeNode((name).c_str())) {
+			primitive_renderer.generate_gui(name);
 		RenderLayer::generate_gui(name);
-		primitive_renderer.generate_gui(name);
+			ImGui::Checkbox(("visible##" + name).c_str(), &visible);
+			ImGui::TreePop();
+		}
+
 	}
 
 	bool handle(Event event) { return true; }
+	bool require(ObjectId object) {
+		return object==mesh;
+	}
 
-	void init(std::string mm,std::string polyline){
-		polyline_name = polyline;
-		mm_name = mm;
-		um_assert(God::xcf.contains(mm_name));
-		um_assert(God::xcf[mm_name].polylines.contains(polyline_name));
-		PolyLine&  pl= God::xcf[mm_name].polylines[polyline_name].mesh;
+
+	void init(ObjectId obj){
+		mesh = obj;
+		auto& [pl, attr] = *((MultiMesh::MeshAttr<PolyLine, PolyLineAttributes>*) obj.ptr());
 
 		PointAttribute<float> value(pl,0);
-		for(auto v:pl.iter_vertices()) {
+		for(auto v:pl.iter_vertices()) 
 			value[v]= v.pos()[0];
-			//if(v.pos().x>0) value[v] = -1;
-		}
 		primitive_renderer.init_from_mesh(pl,value);
 	}
 
 	void render(){
-		primitive_renderer.render();
+		if (visible)primitive_renderer.render();
 	}
 
 	virtual int primitive_id(int vertex_id) {
