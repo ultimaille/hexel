@@ -20,6 +20,9 @@ struct SSAO : RenderLayer {
         destroy();
     }
 
+    void generate_gui(std::string name) override {
+		RenderLayer::generate_gui(name);
+    }
 
     bool handle(Event) override { return true; }
     bool require(ObjectId object) { return false; }

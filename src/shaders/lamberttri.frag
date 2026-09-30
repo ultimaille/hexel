@@ -6,10 +6,10 @@ in vec3 Normal;
 // outputs
 layout(location = 0) out vec4 FragColor;
 layout(location = 1) out vec4 FragLayerIdColor;
-layout(location = 2) out vec4 FragVertexIdColor;
+layout(location = 2) out vec4 FragPrimitiveIdColor;
 
 flat in int frag_layer_id;
-flat in int frag_vertex_id;
+flat in int frag_primitive_id;
 
 uniform vec3 light_direction;
 uniform vec3 color;
@@ -28,5 +28,5 @@ void main()
     float coeff = .2+.8*max(dot(N, L), 0.0);
     FragColor = vec4(coeff * color, 1.0);
     FragLayerIdColor = vec4(encode_id(frag_layer_id), 1.);
-    FragVertexIdColor = vec4(encode_id(frag_vertex_id), 1.);
+    FragPrimitiveIdColor = vec4(encode_id(frag_primitive_id), 1.);
 }

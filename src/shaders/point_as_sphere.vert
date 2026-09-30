@@ -6,6 +6,7 @@ layout(location = 1) in float value;
 uniform mat4 view;
 uniform mat4 projection;
 uniform float texture_repeat;
+uniform vec2 data_range;
 
 uniform float R;
 uniform vec2 viewport;
@@ -20,7 +21,10 @@ flat out int frag_vertex_id;
 
 void main(){
     if (value==-1)  Value = -1;
-    else  Value  = value * texture_repeat;
+    else  {
+        Value = (value - data_range.x) / (data_range.y - data_range.x);
+        Value = Value * texture_repeat;
+    }
 
     vec4 centerView = view * vec4(aPosition, 1.0);
     C = centerView.xyz;

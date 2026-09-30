@@ -1,4 +1,5 @@
 #include "colormap.h"
+#include <array>
 
 bool no_gl_error() {
 	switch(glGetError()){
@@ -19,8 +20,10 @@ struct SimplexRenderer{
 	GLuint vao,vbo;
 	int npts;
 	GLuint colormap;
-	int texture_repeat=4;
+	int texture_repeat=1;
 	int texture_id=0;
+	float data_autorange[2] = {0,0};
+	float data_range[2] = {0,0};
 	float color[3] = {.5,.8,.5};
 	float color_map_prop=1;
 	float ambient_prop=.5;
@@ -47,8 +50,24 @@ struct SimplexRenderer{
 				glDeleteTextures(1, &colormap);
 				load_colormap(texture_id, colormap);
 			}
-			ImGui::InputInt("#texture_repeat",&texture_repeat);
-			texture_repeat = std::clamp(texture_repeat,1,1000000);
+			ImGui::InputFloat2(("range##range"+name).c_str(), data_range);
+			if (ImGui::InputInt(("texture repeat##texture_repeat"+name).c_str(),&texture_repeat)) {
+				if (texture_repeat > 1) {
+					glBindTexture(GL_TEXTURE_1D, colormap);
+					glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+					glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+					glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+				} else {
+					glBindTexture(GL_TEXTURE_1D, colormap);
+					glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+					glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+					glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+				}
+					texture_repeat = std::clamp(texture_repeat,1,1000000);
+			}
+			if (ImGui::SmallButton(("autorange##autorange"+name).c_str())) {
+				std::copy(data_autorange, data_autorange + 2, data_range);
+			}
 		}
 
 		ImGui::PopItemWidth();
@@ -62,6 +81,7 @@ struct SimplexRenderer{
 		glBindTexture(GL_TEXTURE_1D,colormap);
 		glBindVertexArray(vao);
 		glUniform1f(glGetUniformLocation(shaderProgram,"texture_repeat"),texture_repeat);
+		glUniform2fv(glGetUniformLocation(shaderProgram,"data_range"),1, data_range);
 		glUniform1f(glGetUniformLocation(shaderProgram,"color_map_prop"),color_map_prop);
 		glUniform1f(glGetUniformLocation(shaderProgram,"ambient_prop"),ambient_prop);
 		glUniform1i(glGetUniformLocation(shaderProgram,"colormap"),0);
@@ -84,6 +104,38 @@ struct SimplexRenderer{
 		auto [w, h] = God::context.screen_size();
 		glUniform2f(glGetUniformLocation(shaderProgram, "viewport"), float(w), float(h));
 	}
+
+	virtual void destroy() {
+		if (vao != 0) {
+			glDeleteVertexArrays(1, &vao);
+		}
+		if (vbo != 0) {
+			glDeleteBuffers(1, &vbo);
+		}
+		if (shaderProgram != 0) {
+			glDeleteShader(shaderProgram);
+		}
+	}
+
+	protected:
+	// TODO probably move this elsewhere
+	std::array<float, 2> range(std::vector<float>& data) {
+		float min = std::numeric_limits<float>::max(); 
+		float max = std::numeric_limits<float>::min();
+		for (int i = 0; i < data.size(); ++i) {
+			auto x = data[i];
+			min = std::min(min, x);
+			max = std::max(max, x);
+		}
+
+		return {min, max};
+	}
+
+	void compute_range(std::vector<float>& data) {
+		auto r = range(data);
+		std::copy(r.begin(), r.end(), data_autorange);
+		std::copy(data_autorange, data_autorange + 2, data_range);
+	}
 };
 
 
@@ -99,12 +151,14 @@ struct PointRenderer: public SimplexRenderer{
 
 	void generate_gui(std::string name){
 		ImGui::PushItemWidth(80);
-		ImGui::InputInt("point size",&radius_in_pixel);
+		ImGui::InputInt(("point size##point_size"+name).c_str(),&radius_in_pixel);
 		ImGui::PopItemWidth();
 		SimplexRenderer::generate_gui(name);
 	}
 
 	void init_from_mesh(PointSet &ps,PointAttribute<float>& value){
+		compute_range(value.ptr->data);
+
 		std::vector<float> vertices(4*ps.size(),0);
 		FOR(v,ps.size()){
 			FOR(d,3) vertices[4*v+d] = ps[v][d];
@@ -174,6 +228,8 @@ struct SegmentRenderer: public SimplexRenderer{
 
 
 	void init_from_mesh(PolyLine& pl,PointAttribute<float>& value){
+		compute_range(value.ptr->data);
+
 		std::vector<float> vertices(16*pl.nedges(),0);
 		for(auto e:pl.iter_edges()){
 			FOR(d,3) vertices[16*e+d] = e.from().pos()[d];
@@ -243,46 +299,71 @@ struct TriangleRenderer: public SimplexRenderer{
 
 	using SimplexRenderer::SimplexRenderer;
 
-	void init_from_mesh(Triangles& tri,CornerAttribute<float>& value){
-		std::vector<float> data(7*tri.ncorners());
-		for(auto h:tri.iter_halfedges())  {
-			int h_id = h;
-			int lh = h_id%3;
-			vec3 n = Triangle3(h.facet()).normal();
-			FOR(d,3) data[7*h_id + d] = h.from().pos()[d];
-			FOR(d,3) data[7*h_id +3+ d] = n[d];
-			data[7*h_id +6] = value[h];
-		}
-		
-		init(data.data(),tri.nfacets());
+	struct Vertex {
+		float pos[3];
+		float n[3];
+		float v;
+	};
+
+	void init_from_mesh(Triangles& tri, CornerAttribute<float>& value){
+		init();
+		push(tri, value);
 	}
 
-	void init(float* pts,int ntriangles){
+	void init(){
 		color_map_prop=0;
 		if(!God::shaders.contains("triangle"))
 			God::shaders.add(std::string(SHADERS_DIR),"triangle");
 		shaderProgram=God::shaders["triangle"];
 		load_colormap(0,colormap);
-		npts = ntriangles*3;
 
 		glGenVertexArrays(1,&vao);
 		glGenBuffers(1,&vbo);
 		glBindVertexArray(vao);
 		glBindBuffer(GL_ARRAY_BUFFER,vbo);
-		glBufferData(GL_ARRAY_BUFFER,7*npts* sizeof(float),pts,GL_STATIC_DRAW);
 
 		// position
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,7 * sizeof(float),(void*)0);
+		glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, pos));
 		// normale
 		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,7 * sizeof(float),(void*)(3 * sizeof(float)));
+		glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, n));
 		// value
 		glEnableVertexAttribArray(2);
-		glVertexAttribPointer(2,1,GL_FLOAT,GL_FALSE,7 * sizeof(float),(void*)(6 * sizeof(float)));
+		glVertexAttribPointer(2,1,GL_FLOAT,GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, v));
 
 		glBindVertexArray(0);
 		um_assert(no_gl_error());
+	}
+
+	void push(Triangles& tri, CornerAttribute<float>& value) {
+		compute_range(value.ptr->data);
+
+		std::vector<Vertex> vertices(tri.ncorners());
+		npts = vertices.size();
+
+		for(auto h:tri.iter_halfedges())  {
+			auto &p = h.from().pos();
+			auto n = Triangle3(h.facet()).normal();
+
+			vertices[h] = {
+				.pos = {
+					static_cast<float>(p.x), 
+					static_cast<float>(p.y), 
+					static_cast<float>(p.z)
+				},
+				.n = {
+					static_cast<float>(n.x), 
+					static_cast<float>(n.y), 
+					static_cast<float>(n.z)
+				},
+				.v = value[h]
+			};
+		}
+
+		glBindVertexArray(vao);
+		glBindBuffer(GL_ARRAY_BUFFER,vbo);
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex),vertices.data(),GL_STATIC_DRAW);
 	}
 
 	void render(){

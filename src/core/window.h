@@ -126,6 +126,10 @@ struct WindowContext {
     bool window_is_active() const {
         return window!=nullptr && !glfwWindowShouldClose(window);
     }
+
+    void destroy() {
+        render_target.destroy();
+    }
 };
 
 // -------------------------------------------------------------------------------

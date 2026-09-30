@@ -10,14 +10,19 @@ struct RenderLayer {
     virtual void generate_gui(std::string name) {
         if (ImGui::TreeNode((name).c_str())) 
             ImGui::TreePop();
+        ImGui::Checkbox(("visible##visible"+name).c_str(),&visible);
     }
     
+    virtual void generate_gui(std::string name) {
+    }
     virtual bool handle(Event event) = 0;
     virtual bool require(ObjectId object) = 0;
 
     virtual void render_primitive_id()              { Log::add("To be implemented"); }
     virtual void render_constant_color(int layerid) { Log::add("To be implemented"); }
-    bool visible =true;
+    bool visible = true;
+    virtual void destroy() {}
+    // virtual bool is_cleanup_ready() { return false; }
 
     int id() const {
         return _id;
@@ -33,7 +38,8 @@ struct RenderLayer {
 struct LayerManager: public Registry<RenderLayer> {
     void render() {
         for (auto& [name,obj] : *this)
-            obj->render();
+            if (obj->visible)
+                obj->render();
     }
     void handle(Event event) { 
         if (event.who == ObjectId({ chunk_mouse })) return;
@@ -63,6 +69,11 @@ struct LayerManager: public Registry<RenderLayer> {
                 return *obj;
         }
         return std::nullopt;
+    }
+
+    void destroy() {
+        for (auto& [name,obj] : *this)
+            obj->destroy();
     }
 };
 

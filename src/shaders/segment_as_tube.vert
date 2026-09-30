@@ -15,7 +15,7 @@ out float value;
 
 uniform int layer_id;
 flat out int frag_layer_id;
-flat out int frag_vertex_id;
+flat out int frag_primitive_id;
 
 void main(){
     vec3 p0 =(view * vec4(aP0, 1.0)).xyz;
@@ -36,6 +36,6 @@ void main(){
     if (ValueA==-1)  value = -1;
     if (ValueB==-1)  value = -1;
 
-    frag_vertex_id = gl_VertexID;
+    frag_primitive_id = gl_VertexID / 2;
     frag_layer_id = layer_id;
 }

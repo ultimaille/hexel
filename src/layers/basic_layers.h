@@ -10,11 +10,10 @@ struct RenderLambertTriangles: public RenderLayer{
 	void generate_gui(std::string name){
 		if (ImGui::TreeNode((name).c_str())) {
 			primitive_renderer.generate_gui(name);
+  		RenderLayer::generate_gui(name);
 			ImGui::Checkbox(("visible##" + name).c_str(), &visible);
 			ImGui::TreePop();
 		}
-
-
 	}
 
 	bool handle(Event event) {return true;}
@@ -39,6 +38,8 @@ struct RenderLambertTriangles: public RenderLayer{
 		for(auto h:tri.iter_halfedges())  {
 			value[h] = h.from().pos()[0];
 		}
+		// here multiple overload of the same function for different types of attributes ?
+		// ou on mappe les attributs sur un corner attribute ?
 		primitive_renderer.init_from_mesh(tri,value);
 	}
 
@@ -48,7 +49,11 @@ struct RenderLambertTriangles: public RenderLayer{
 	}
 
 	virtual int primitive_id(int vertex_id) {
-		return vertex_id / 3; // triangle id from vertex id
+		return vertex_id; // triangle id from vertex id
+	}
+
+	void destroy() {
+		primitive_renderer.destroy();
 	}
 
 };
@@ -62,11 +67,10 @@ struct RenderSpheres: public RenderLayer{
 	void generate_gui(std::string name){
 		if (ImGui::TreeNode((name).c_str())) {
 			primitive_renderer.generate_gui(name);
+		RenderLayer::generate_gui(name);
 			ImGui::Checkbox(("visible##" + name).c_str(), &visible);
 			ImGui::TreePop();
 		}
-
-
 	}
 
 	bool handle(Event event) { 
@@ -99,6 +103,10 @@ struct RenderSpheres: public RenderLayer{
 	void render(){
 		if (visible)primitive_renderer.render();
 	}
+
+	void destroy() {
+		primitive_renderer.destroy();
+	}
 };
 
 
@@ -114,9 +122,11 @@ struct RenderTubes: public RenderLayer{
 	void generate_gui(std::string name) {
 		if (ImGui::TreeNode((name).c_str())) {
 			primitive_renderer.generate_gui(name);
+		RenderLayer::generate_gui(name);
 			ImGui::Checkbox(("visible##" + name).c_str(), &visible);
 			ImGui::TreePop();
 		}
+
 	}
 
 	bool handle(Event event) { return true; }
@@ -140,7 +150,11 @@ struct RenderTubes: public RenderLayer{
 	}
 
 	virtual int primitive_id(int vertex_id) {
-		return vertex_id / 2; // edge id from vertex id
+		return vertex_id; // edge id from vertex id
+	}
+
+	void destroy() {
+		primitive_renderer.destroy();
 	}
 };
 
