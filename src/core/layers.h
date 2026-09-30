@@ -13,8 +13,6 @@ struct RenderLayer {
         ImGui::Checkbox(("visible##visible"+name).c_str(),&visible);
     }
     
-    virtual void generate_gui(std::string name) {
-    }
     virtual bool handle(Event event) = 0;
     virtual bool require(ObjectId object) = 0;
 

@@ -11,7 +11,7 @@ struct RenderLambertTriangles: public RenderLayer{
 		if (ImGui::TreeNode((name).c_str())) {
 			primitive_renderer.generate_gui(name);
   		RenderLayer::generate_gui(name);
-			ImGui::Checkbox(("visible##" + name).c_str(), &visible);
+////		ImGui::Checkbox(("visible##" + name).c_str(), &visible);
 			ImGui::TreePop();
 		}
 	}
