@@ -8,24 +8,28 @@ void framebuffer_size_callback(GLFWwindow* window,int width,int height){
     God::context.resize_framebuffer(width, height);
 }
 
-void mouse_button_callback(GLFWwindow* window,int button,int action,int mods){
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
     ImGui_ImplGlfw_MouseButtonCallback(window,button,action,mods);
-    if(button <0 || button>2) { Log::error("Do not manage mouses with more than 3 buttons"); return; }
-    God::mouse.button_pressed[button] = (action == GLFW_PRESS);
-    God::events.push_back({ ObjectId({chunk_mouse}) ,EventType::UPDATED });
+    um_assert(button >= 0 && button < MouseState::ButtonCount);
+
+    God::mouse.current.buttons[button] = (action == GLFW_PRESS);
+    God::events.push_back({ ObjectId({chunk_mouse}), EventType::UPDATED });
 }
 
-void cursor_position_callback(GLFWwindow* window, double mouseX, double mouseY){
-    ImGui_ImplGlfw_CursorPosCallback(window,mouseX,mouseY);
+void cursor_position_callback(GLFWwindow* window, double x, double y) {
+    ImGui_ImplGlfw_CursorPosCallback(window, x, y);
+//  if (God::mouse.current.x != x || God::mouse.current.y != y)
+    God::events.push_back({ ObjectId({chunk_mouse}), EventType::UPDATED });
+    God::mouse.current.x = x;
+    God::mouse.current.y = y;
 }
 
-void scroll_callback(GLFWwindow* window,double xOffset,double yOffset){
-    
-    ImGui_ImplGlfw_ScrollCallback(window,xOffset,yOffset);
+void scroll_callback(GLFWwindow* window, double xOffset, double yOffset) {
+    ImGui_ImplGlfw_ScrollCallback(window, xOffset, yOffset);
 
     if (yOffset != 0) {
-        God::mouse.current_state.wheel_speed = yOffset;
-        God::events.push_back({ ObjectId({chunk_mouse}),EventType::UPDATED });
+        God::mouse.wheel_speed = yOffset;
+        God::events.push_back({ ObjectId({chunk_mouse}), EventType::UPDATED });
     }
 }
 
@@ -42,6 +46,7 @@ void KeyboardState::update(){
     }
 }
 
+/*
 void MouseState::update() {
     double mx, my;
     glfwGetCursorPos(God::context.window, &mx, &my);
@@ -50,3 +55,5 @@ void MouseState::update() {
     current_state.x = mx;
     current_state.y = my;
 }
+*/
+

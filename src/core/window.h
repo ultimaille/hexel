@@ -136,22 +136,27 @@ struct WindowContext {
 //                                    Mouse + Keyboard States
 // -------------------------------------------------------------------------------
 
-struct MouseState{
-
+struct MouseState {
+    static constexpr int ButtonCount = GLFW_MOUSE_BUTTON_LAST + 1;
     struct State {
-        double x=0, y=0;
-        double wheel_speed=0;
-        bool button_pressed[3]={ false, false, false};
+        double x = 0, y = 0;
+        bool buttons[ButtonCount] = {};
     };
-	void update();
 
-    bool last_button_pressed[3] = { false };
-    bool button_pressed[3] = { false };
-    bool clicked(int button) { return button_pressed[button] && !last_button_pressed[button]; };
-    bool released(int button) { return !button_pressed[button] && last_button_pressed[button]; };
+    double wheel_speed = 0;
+    State current = {}, previous = {};
 
-    State current_state;
-    State last_state;
+    bool clicked(int button) const {
+        return current.buttons[button] && !previous.buttons[button];
+    }
+
+    bool released(int button) const {
+        return !current.buttons[button] && previous.buttons[button];
+    }
+
+    bool down(int button) const {
+        return current.buttons[button];
+    }
 };
 
 struct KeyboardState{

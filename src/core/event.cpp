@@ -68,13 +68,11 @@ void ObjectId::emit(EventType e) {
 
 
 void EventManager::dispatch() {
-	while (!events.empty()) {
-		auto event = events.front();
-		events.pop();
-		God::camera.handle(event);
-		God::layers.handle(event);
-	}
-    // clear input diff
-    God::mouse.current_state.wheel_speed = 0;
-    God::mouse.last_state = God::mouse.current_state;
+    while (!events.empty()) {
+        auto event = events.front();
+        events.pop();
+        God::camera.handle(event);
+        God::layers.handle(event);
+    }
 }
+

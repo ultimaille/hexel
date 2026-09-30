@@ -131,20 +131,17 @@ void TrackBallCamera::handle(Event event) {
 
     resize(viewport.x, viewport.y);
 
-    if (event.who==ObjectId({chunk_mouse})) {
-        const double wheel = God::mouse.current_state.wheel_speed;
-        if (wheel != 0)
+    if (event.who == ObjectId({chunk_mouse}) && !ImGui::GetIO().WantCaptureMouse) {
+        const double wheel = God::mouse.wheel_speed;
+        if (wheel)
             zoom(wheel);
-        if (!God::keys.pressed(GLFW_KEY_LEFT_CONTROL))
-            return;
 
-        vec2 a = { God::mouse.last_state.x, God::mouse.last_state.y };
-        vec2 b = { God::mouse.current_state.x,     God::mouse.current_state.y     };
+        vec2 a = { God::mouse.previous.x, God::mouse.previous.y };
+        vec2 b = { God::mouse.current.x,  God::mouse.current.y  };
         if ((a - b).norm2() > 0) {
-
-            if (God::mouse.button_pressed[0])
+            if (God::mouse.down(GLFW_MOUSE_BUTTON_LEFT))
                 pan(b - a, viewport);
-            else if (God::mouse.button_pressed[1])
+            else if (God::mouse.down(GLFW_MOUSE_BUTTON_RIGHT))
                 rotate(a, b, viewport);
         }
     }

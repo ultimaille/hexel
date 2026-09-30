@@ -89,26 +89,25 @@ namespace InteractionMode{
 
 
 
-int main(){
-	God::context.init();
-	InteractionMode::HexEdit look;
-
-	God::panels.emplace_back<XCFExplorer>("xcf_window");
-	God::panels.emplace_back<LayerExplorer>("layer_window");
-	while(God::context.window_is_active()){
-		glfwPollEvents();
-		God::context.begin_frame();
-		God::layers.render();
-		God::panels.show_gui();
-		God::root_mode->define_gui();
-		if (!ImGui::GetIO().WantCaptureMouse)
-			God::mouse.update();
-		if(!ImGui::GetIO().WantCaptureKeyboard || !ImGui::GetIO().WantCaptureMouse)
-			God::keys.update();
-		God::context.end_frame();
-		God::events.dispatch();
-	}
-	God::layers.destroy();
-	God::context.destroy();
-	return EXIT_SUCCESS;
+int main() {
+    God::context.init();
+    InteractionMode::HexEdit look;
+    God::panels.emplace_back<XCFExplorer>("xcf_window");
+    God::panels.emplace_back<LayerExplorer>("layer_window");
+    while(God::context.window_is_active()){
+        God::mouse.wheel_speed = 0;
+        God::mouse.previous = God::mouse.current;
+        glfwPollEvents();
+        God::context.begin_frame();
+        God::layers.render();
+        God::panels.show_gui();
+        God::root_mode->define_gui();
+        if(!ImGui::GetIO().WantCaptureKeyboard || !ImGui::GetIO().WantCaptureMouse)
+            God::keys.update();
+        God::context.end_frame();
+        God::events.dispatch();
+    }
+    God::layers.destroy();
+    God::context.destroy();
+    return EXIT_SUCCESS;
 }
