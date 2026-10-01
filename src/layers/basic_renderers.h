@@ -359,6 +359,11 @@ struct TriangleRenderer: public SimplexRenderer{
 		push(tri, value);
 	}
 
+	void init_from_mesh(Quads& quads, CornerAttribute<float>& value){
+		init();
+		push(quads, value);
+	}
+
 	void init(){
 		color_map_prop=0;
 		if(!God::shaders.contains("triangle"))
@@ -394,32 +399,14 @@ struct TriangleRenderer: public SimplexRenderer{
 		std::vector<Vertex> vertices(tri.ncorners());
 		npts = vertices.size();
 
-		// for(auto h:tri.iter_halfedges())  {
-		// 	auto &p = h.from().pos();
-		// 	auto n = Triangle3(h.facet()).normal();
-
-		// 	vertices[h] = {
-		// 		.pos = {
-		// 			static_cast<float>(p.x), 
-		// 			static_cast<float>(p.y), 
-		// 			static_cast<float>(p.z)
-		// 		},
-		// 		.n = {
-		// 			static_cast<float>(n.x), 
-		// 			static_cast<float>(n.y), 
-		// 			static_cast<float>(n.z)
-		// 		},
-		// 		.v = value[h]
-		// 	};
-		// }
 		for(auto f : tri.iter_facets())  {
+			auto t = Triangle3(f);
+			auto n = t.normal();
+			auto b = t.bary_verts();
+
 			for (int lv = 0; lv < 3; ++lv) {
 				auto h = f * 3 + lv;
 				vec3 p = f.vertex(lv);
-				auto t = Triangle3(f);
-				auto n = t.normal();
-				auto b = t.bary_verts();
-
 				vertices[h] = {
 					.pos = to_float3(p),
 					.n = to_float3(n),
@@ -432,6 +419,42 @@ struct TriangleRenderer: public SimplexRenderer{
 		glBindVertexArray(vao);
 		glBindBuffer(GL_ARRAY_BUFFER,vbo);
 		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex),vertices.data(),GL_STATIC_DRAW);
+	}
+
+	void push(Quads& quads, CornerAttribute<float>& value) {
+		compute_range(value.ptr->data);
+
+		std::vector<Vertex> vertices(quads.ncorners() * 3);
+		npts = vertices.size();
+
+		for(auto f : quads.iter_facets())  {
+			auto t = Quad3(f);
+			auto n = t.normal();
+			auto b = t.bary_verts();
+
+			float bary_val = 0;
+			for (int lv = 0; lv < 4; ++lv) bary_val += value[f * 4 + lv];
+			bary_val /= 4;
+
+			for (int lv = 0; lv < 4; ++lv) {
+				auto h = f * 4 + lv;
+				float v[3] = {bary_val, value[f * 4 + lv], value[f * 4 + (lv + 1) % 4]};
+				vec3 points[3] = {b, f.vertex(lv), f.vertex((lv + 1) % 4)};
+
+				for (int i = 0; i < 3; ++i) {
+					vertices[f * 12 + (lv * 3 + i)] = {
+						.pos = to_float3(points[i]),
+						.n = to_float3(n),
+						.v = v[i],
+						.b = to_float3(b)
+					};
+				}
+			}
+		}
+
+		glBindVertexArray(vao);
+		glBindBuffer(GL_ARRAY_BUFFER,vbo);
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
 	}
 
 	void render(){

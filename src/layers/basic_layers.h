@@ -59,6 +59,63 @@ struct RenderLambertTriangles : public RenderLayer{
 
 };
 
+struct RenderLambertQuads : public RenderLayer {
+    ObjectId mesh;
+    TriangleRenderer primitive_renderer;
+
+    RenderLambertQuads() : primitive_renderer{ _id } {}
+
+    void generate_gui(std::string name){
+        //if (ImGui::TreeNode((name).c_str())) {
+        primitive_renderer.generate_gui(name);
+        RenderLayer::generate_gui(name);
+        //	ImGui::TreePop();
+        //}
+    }
+
+    bool handle(Event event) { return true; }
+    bool require(ObjectId object) {
+        return object == mesh;
+    }
+    void reset() {
+        // TODO free vba/vbo/texture
+        init(mesh);
+    }
+
+
+    void init(ObjectId obj){
+        mesh = obj;
+        um_assert(obj.ptr() != NULL);
+        Quads& quads = obj;
+        SurfaceAttributes& attr = obj;
+
+        if (!God::shaders.contains("triangle"))
+            God::shaders.add(std::string(SHADERS_DIR), "triangle");
+
+        CornerAttribute<float> value(quads);
+        for (auto h : quads.iter_halfedges())  {
+            value[h] = h.from().pos()[0];
+        }
+        // here multiple overload of the same function for different types of attributes ?
+        // ou on mappe les attributs sur un corner attribute ?
+        primitive_renderer.init_from_mesh(quads, value);
+    }
+
+    void render(){
+        if (visible)
+            primitive_renderer.render();
+    }
+
+    virtual int primitive_id(int vertex_id) {
+        return vertex_id; // triangle id from vertex id
+    }
+
+    void destroy() {
+        primitive_renderer.destroy();
+    }
+
+};
+
 struct RenderSpheres : public RenderLayer{
     ObjectId mesh;
     PointRenderer primitive_renderer;

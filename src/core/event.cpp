@@ -93,6 +93,23 @@ ObjectId::operator Triangles&() {
 #endif
 }
 
+ObjectId::operator Quads&() {
+#if 1
+    auto *p = static_cast<MultiMesh::MeshAttr<Quads, SurfaceAttributes>*>(ptr());
+    um_assert(p != nullptr);
+    return p->mesh;
+#else
+    um_assert(chunks.size() == 4);
+    um_assert(chunks[0] == chunk_xcf);
+    std::string mm = chunks[1];
+    um_assert(God::xcf.contains(mm));
+    um_assert(chunks[2] == chunk_quads);
+    std::string mesh = chunks[3];
+    um_assert(God::xcf[mm].quads.contains(mesh));
+    return God::xcf[mm].quads[mesh].mesh;
+#endif
+}
+
 ObjectId::operator SurfaceAttributes&() {
     auto *p = static_cast<MultiMesh::MeshAttr<Triangles, SurfaceAttributes>*>(ptr());
     um_assert(p != nullptr);

@@ -38,6 +38,7 @@ struct ObjectId {
     operator PolyLine&();
     operator PolyLineAttributes&();
     operator Triangles&();
+    operator Quads&();
     operator SurfaceAttributes&();
 
     void emit(EventType e);

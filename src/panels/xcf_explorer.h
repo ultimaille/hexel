@@ -89,6 +89,16 @@ struct XCFExplorer : public Panel {
 			pr.color_map_prop = 0.0;
 			pr.ambient_prop = .5;
 		}
+		for (auto& elt : God::xcf[mesh_name].quads) {
+			RenderLambertQuads& layer = God::layers.add<RenderLambertQuads>(mesh_name + "Quad");
+			layer.init(ObjectId({ chunk_xcf, mesh_name,chunk_quads, elt.first }));
+			auto& pr = layer.primitive_renderer;
+			pr.color[0] = .8;
+			pr.color[1] = .8;
+			pr.color[2] = .8;
+			pr.color_map_prop = 0.0;
+			pr.ambient_prop = .5;
+		}
 	}
 
 
