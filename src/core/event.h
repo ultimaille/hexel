@@ -32,22 +32,11 @@ enum EventType {
 struct ObjectId {
     std::vector<std::string> chunks;
     void* ptr();
-    operator PointSet&() {
-        return *static_cast<PointSet*>(ptr());
-    }
 
-    operator PointSetAttributes&() {
-        return *static_cast<PointSetAttributes*>(ptr());
-    }
-
-    operator PolyLine&() {
-        return *static_cast<PolyLine*>(ptr());
-    }
-
-    operator PolyLineAttributes&() {
-        return *static_cast<PolyLineAttributes*>(ptr());
-    }
-
+    operator PointSet&();
+    operator PointSetAttributes&();
+    operator PolyLine&();
+    operator PolyLineAttributes&();
     operator Triangles&();
     operator SurfaceAttributes&();
 

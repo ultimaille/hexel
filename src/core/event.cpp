@@ -37,32 +37,33 @@ void* ObjectId::ptr() {
         // returns a multimesh
         um_assert(chunks.size() > 1);
         std::string mm = chunks[1];
-        if (!God::xcf.contains(mm)) return NULL;
+        if (!God::xcf.contains(mm)) return nullptr;
         if (chunks.size() == 2)
             return &God::xcf[mm];
 
         // return a pointset
         um_assert(chunks.size() > 2);
         if (chunks[2] == chunk_pointset) return &God::xcf[mm].pointset;
+        // TODO pointset_attributes
 
         // return a mesh+attributes
         um_assert(chunks.size() > 3);
         std::string mesh = chunks[3];
         if (chunks[2] == chunk_polylines) {
-            if (!God::xcf[mm].polylines.contains(mesh)) return NULL;
+            if (!God::xcf[mm].polylines.contains(mesh)) return nullptr;
             return &God::xcf[mm].polylines[mesh];
         }
         if (chunks[2] == chunk_triangles) {
-            if (!God::xcf[mm].triangles.contains(mesh)) return NULL;
+            if (!God::xcf[mm].triangles.contains(mesh)) return nullptr;
             return &God::xcf[mm].triangles[mesh];
         }
         if (chunks[2] == chunk_quads) {
-            if (!God::xcf[mm].quads.contains(mesh)) return NULL;
+            if (!God::xcf[mm].quads.contains(mesh)) return nullptr;
             return &God::xcf[mm].quads[mesh];
         }
     }
     um_assert(!"should not reach this point");
-    return NULL;
+    return nullptr;
 }
 
 
@@ -76,6 +77,11 @@ void EventManager::dispatch() {
 }
 
 ObjectId::operator Triangles&() {
+#if 1
+    auto *p = static_cast<MultiMesh::MeshAttr<Triangles, SurfaceAttributes>*>(ptr());
+    um_assert(p != nullptr);
+    return p->mesh;
+#else
     um_assert(chunks.size() == 4);
     um_assert(chunks[0] == chunk_xcf);
     std::string mm = chunks[1];
@@ -84,17 +90,37 @@ ObjectId::operator Triangles&() {
     std::string mesh = chunks[3];
     um_assert(God::xcf[mm].triangles.contains(mesh));
     return God::xcf[mm].triangles[mesh].mesh;
+#endif
 }
 
 ObjectId::operator SurfaceAttributes&() {
-    um_assert(chunks.size() == 4);
-    um_assert(chunks[0] == chunk_xcf);
-    std::string mm = chunks[1];
-    um_assert(God::xcf.contains(mm));
-    um_assert(chunks[2] == chunk_triangles);
-    std::string mesh = chunks[3];
-    um_assert(God::xcf[mm].triangles.contains(mesh));
-    return God::xcf[mm].triangles[mesh].attributes;
+    auto *p = static_cast<MultiMesh::MeshAttr<Triangles, SurfaceAttributes>*>(ptr());
+    um_assert(p != nullptr);
+    return p->attributes;
+}
+
+ObjectId::operator PointSet&() {
+    auto *p = static_cast<PointSet *>(ptr());
+    um_assert(p != nullptr);
+    return *p;
+}
+
+ObjectId::operator PointSetAttributes&() {
+    auto *p = static_cast<PointSetAttributes *>(ptr());
+    um_assert(p != nullptr);
+    return *p;
+}
+
+ObjectId::operator PolyLine&() {
+    auto *p = static_cast<MultiMesh::MeshAttr<PolyLine, PolyLineAttributes>*>(ptr());
+    um_assert(p != nullptr);
+    return p->mesh;
+}
+
+ObjectId::operator PolyLineAttributes&() {
+    auto *p = static_cast<MultiMesh::MeshAttr<PolyLine, PolyLineAttributes>*>(ptr());
+    um_assert(p != nullptr);
+    return p->attributes;
 }
 
 

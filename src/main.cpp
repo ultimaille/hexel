@@ -51,11 +51,11 @@ namespace InteractionMode{
             ImGui::Text("Window used to launch debug tests");
             if (ImGui::Button("CurrentTest")) {
                 Log::add("Starting new test");
-                ObjectId id({chunk_xcf, "B0.step", chunk_triangles, "triangles"});
-                Triangles &m = id;
-                SurfaceAttributes &a = id;
-                plop(a.facets.size());
-                plop(a.facets.front().name);
+//              ObjectId id({chunk_xcf, "B0.step", chunk_triangles, "triangles"});
+//              Triangles &m = id;
+//              SurfaceAttributes &a = id;
+//              plop(a.facets.size());
+//              plop(a.facets.front().name);
             }
 
 
