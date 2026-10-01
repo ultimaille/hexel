@@ -2,6 +2,13 @@
 #include "xcf.h"
 #include "core.h"
 
+std::string MultiMesh::collection_names[8] = {
+"polylines",
+"triangles","quads","polygons",
+"tetrahedra","hexahedra","wedges","pyramids"
+};
+
+
 
 void XCF::kill_mesh(ObjectId obj) {
     um_assert(obj.chunks[0] == chunk_xcf);

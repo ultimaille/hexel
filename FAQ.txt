@@ -1,0 +1,5 @@
+Convention et choix d'implementation peu intuitifs:
+
+* xcf et layermanager héritent en private pour forcer l'emission d'event create/killed
+
+* label() permet la construction des labels imgui

@@ -46,13 +46,27 @@ struct WindowContext {
         glfwSetScrollCallback(window, scroll_callback);
     }
 
-    void init_glfw(int w,int h) {
+    void init_glfw(int& w,int& h) {
         um_assert(glfwInit());
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_DEPTH_BITS, 24);
-        window = glfwCreateWindow(1000,700, "Hexel", nullptr, nullptr);
+
+        int count;
+        GLFWmonitor** monitors = glfwGetMonitors(&count);
+        GLFWmonitor* monitor = (count>0)? monitors[1] : monitors[0] ;
+        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+
+        int monitorX, monitorY;
+        glfwGetMonitorPos(monitor, &monitorX, &monitorY);
+
+        w = mode->width;
+        h = mode->height-30;
+        window = glfwCreateWindow(w,h, "Hexel", nullptr, nullptr);
+        // Positionnement au centre de l'écran choisi
+        glfwSetWindowPos(window,monitorX ,monitorY +30);
+
         um_assert(window != nullptr);
         glfwMakeContextCurrent(window);
         glfwSwapInterval(1);

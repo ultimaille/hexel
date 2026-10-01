@@ -14,14 +14,6 @@ struct LayerExplorer : public Panel {
 
 
             bool tree_open = ImGui::TreeNodeEx(layer_name.c_str(), ImGuiTreeNodeFlags_DrawLinesFull);
-            ImGui::SameLine(); ImGui::Checkbox(("on##visible" + layer_name).c_str(), &layer.visible);
-            ImGui::SameLine(); if (ImGui::Button(("kill##" + layer_name).c_str())){
-                to_kill.push_back(layer_name);
-            }
-            if (tree_open){
-                layer.generate_gui(layer_name);
-                ImGui::TreePop();
-            }
             // The widget is the drag source
             if (ImGui::BeginDragDropSource()){
                 ImGui::SetDragDropPayload("WIDGET", &i, sizeof(i));
@@ -36,6 +28,19 @@ struct LayerExplorer : public Panel {
                     drop_to = i;
                 }
                 ImGui::EndDragDropTarget();
+            }
+            ImGui::SameLine();
+            float largeur = ImGui::GetContentRegionAvail().x;
+            float largeurWidget = 100.0f;
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + largeur - largeurWidget);
+
+             ImGui::Checkbox(label("##visible" , layer_name), &layer.visible);
+            ImGui::SameLine(); if (ImGui::Button(label("X##", layer_name))){
+                to_kill.push_back(layer_name);
+            }
+            if (tree_open){
+                layer.generate_gui(layer_name);
+                ImGui::TreePop();
             }
         }
         if (drag_from != -1 || drop_to != -1) {
