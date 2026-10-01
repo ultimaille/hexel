@@ -103,10 +103,11 @@ struct XCFExplorer : public Panel {
 
 
 	void generate_gui() {
-		ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Always);
-		ImGui::SetNextWindowSize(ImVec2(250, 400), ImGuiCond_Always);
+		// ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Always);
+		// ImGui::SetNextWindowSize(ImVec2(250, 400), ImGuiCond_Always);
 
-		ImGui::Begin("XCFViewer", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+		// ImGui::Begin("XCFViewer", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+		ImGui::Begin("XCFViewer", nullptr);
 
 
 		static std::string path;

@@ -1,8 +1,9 @@
 struct LayerExplorer : public Panel {
     void generate_gui(){
-        ImGui::SetNextWindowPos(ImVec2(10, 410), ImGuiCond_Always);
-        ImGui::SetNextWindowSize(ImVec2(250, 300), ImGuiCond_Always);
-        ImGui::Begin("LayersConfig", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+        // ImGui::SetNextWindowPos(ImVec2(10, 410), ImGuiCond_Always);
+        // ImGui::SetNextWindowSize(ImVec2(250, 700), ImGuiCond_Always);
+        // ImGui::Begin("LayersConfig", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::Begin("LayersConfig", nullptr);
 
 
 
