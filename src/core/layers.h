@@ -8,10 +8,7 @@ struct RenderLayer {
     virtual void render() = 0;
     virtual void reset() { Log::error("reset called for a layer that does not implement it"); };
     virtual void generate_gui(std::string name) {
-        if (ImGui::TreeNode((name).c_str())) {
-            ImGui::Checkbox(("visible##visible"+name).c_str(),&visible);
-            ImGui::TreePop();
-        }
+           ImGui::Checkbox(("visible##visible"+name).c_str(),&visible);
     }
     
     virtual bool handle(Event event) = 0;
@@ -34,7 +31,15 @@ struct RenderLayer {
     int _id;
 };
 
-struct LayerManager: public Registry<RenderLayer> {
+struct LayerManager: private Registry<RenderLayer> {
+    int size(){ return Registry<RenderLayer>::size(); }
+    RenderLayer& operator[](int i){ return Registry<RenderLayer>::operator[](i); }
+    RenderLayer& operator[](std::string s){ return Registry<RenderLayer>::operator[](s); }
+    std::string ith_name(int i){ return items[i].name; }
+    void swap(int i, int j){ std::swap(items[i], items[j]); }
+    template<class T> T& add(std::string str){ return emplace_back<T>(str); }
+
+
     void render() {
         for (auto& [name,obj] : *this)
             if (obj->visible)
@@ -68,6 +73,14 @@ struct LayerManager: public Registry<RenderLayer> {
                 return *obj;
         }
         return std::nullopt;
+    }
+
+    void kill(std::string layer_name){
+        (*this)[layer_name].destroy();
+        int id = find(layer_name);
+        std::swap(items[id],items.back());
+        items.pop_back();
+        ObjectId({ chunk_layer, layer_name }).emit(KILLED);
     }
 
     void destroy() {

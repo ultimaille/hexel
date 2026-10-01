@@ -37,8 +37,6 @@ bool FilePopup(const char* id, std::string& out, std::vector<const char*> extens
 		if (!d && ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) out = p.string(), done = true;
 	}
 	ImGui::EndChild();
-
-
 	if (done)ImGui::CloseCurrentPopup();
 	ImGui::EndPopup();
 	return done;
@@ -61,7 +59,7 @@ struct XCFExplorer : public Panel {
 		look_at_pointset(ObjectId({ chunk_xcf,mesh_name }));
 
 		{// point set
-			RenderSpheres& layer = God::layers.emplace_back<RenderSpheres>(mesh_name + "Pts");
+			RenderSpheres& layer = God::layers.add<RenderSpheres>(mesh_name + "Pts");
 			layer.init(ObjectId({ chunk_xcf, mesh_name,chunk_pointset }));
 			auto& pr = layer.primitive_renderer;
 			pr.color[0] = .5;
@@ -72,7 +70,7 @@ struct XCFExplorer : public Panel {
 			pr.radius_in_pixel = 4;
 		}
 		for (auto& elt : God::xcf[mesh_name].polylines) {
-			RenderTubes& layer = God::layers.emplace_back<RenderTubes>(mesh_name + "Edges");
+			RenderTubes& layer = God::layers.add<RenderTubes>(mesh_name + "Edges");
 			layer.init(ObjectId({ chunk_xcf, mesh_name,chunk_polylines , elt.first }));
 			auto& pr = layer.primitive_renderer;
 			pr.color[0] = .5;
@@ -82,7 +80,7 @@ struct XCFExplorer : public Panel {
 			pr.ambient_prop = .5;
 		}
 		for (auto& elt : God::xcf[mesh_name].triangles) {
-			RenderLambertTriangles& layer = God::layers.emplace_back<RenderLambertTriangles>(mesh_name + "Tri");
+			RenderLambertTriangles& layer = God::layers.add<RenderLambertTriangles>(mesh_name + "Tri");
 			layer.init(ObjectId({ chunk_xcf, mesh_name,chunk_triangles, elt.first }));
 			auto& pr = layer.primitive_renderer;
 			pr.color[0] = .8;
@@ -145,9 +143,9 @@ struct XCFExplorer : public Panel {
 						ObjectId id({ chunk_xcf,mm_name,"triangles",tri_name });
 						if (ImGui::CollapsingHeader(imgui_str(tri_name, "tri"), &closable_mesh_group)) {
 							// render layers
-							for (auto& [layer_name, layer] : God::layers) {
-								if (layer->require(id)) {
-									layer->generate_gui(layer_name);
+							for(int i=0;i< God::layers.size();i++){
+								if (God::layers[i].require(id)) {
+									God::layers[i].generate_gui(God::layers.ith_name(i));
 								}
 							}
 						}
@@ -192,10 +190,6 @@ struct XCFExplorer : public Panel {
 					//... show shaders
 					ImGui::TreePop();
 				}
-
-
-				if (ImGui::Button(imgui_str("Delete MultiMesh")))
-					mm_to_kill.push_back(mm_name);
 
 			}
 			if (!closable_mm_group) {

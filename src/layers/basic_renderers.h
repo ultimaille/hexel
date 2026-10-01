@@ -106,15 +106,14 @@ struct SimplexRenderer{
 	}
 
 	virtual void destroy() {
+		um_assert(no_gl_error());
 		if (vao != 0) {
 			glDeleteVertexArrays(1, &vao);
 		}
 		if (vbo != 0) {
 			glDeleteBuffers(1, &vbo);
 		}
-		if (shaderProgram != 0) {
-			glDeleteShader(shaderProgram);
-		}
+		um_assert(no_gl_error());
 	}
 
 	protected:

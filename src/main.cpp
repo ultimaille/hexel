@@ -40,7 +40,7 @@ namespace InteractionMode{
 
                 //load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "mmB0");
 
-                God::layers.emplace_back<SSAO>("SSAO").init();
+                God::layers.add<SSAO>("SSAO").init();
 
             }
         }
