@@ -181,34 +181,41 @@ struct PointRenderer: public SimplexRenderer{
 		SimplexRenderer::generate_gui(name);
 	}
 
-	void init_from_mesh(PointSet &ps,PointAttribute<float>& value){
-		compute_range(value.ptr->data);
-
-		std::vector<float> vertices(4*ps.size(),0);
-		FOR(v,ps.size()){
-			FOR(d,3) vertices[4*v+d] = ps[v][d];
-			vertices[4*v+3] = value[v];
-		}
-		init(vertices.data(),ps.size());
+	void init_from_mesh(PointSet &ps, PointAttribute<float>& value){
+		init();
+		push(ps, value);
 	}
 
-	void init(float* pts,int pts_size){
+	void init(){
 		if (!God::shaders.contains("point_as_sphere"))
 			God::shaders.add(std::string(SHADERS_DIR),"point_as_sphere");
 		shaderProgram=God::shaders["point_as_sphere"];
 		load_colormap(texture_id, colormap);
-		npts = pts_size;
 		glGenVertexArrays(1,&vao);
 		glGenBuffers(1,&vbo);
 		glBindVertexArray(vao);
 		glBindBuffer(GL_ARRAY_BUFFER,vbo);
-		glBufferData(GL_ARRAY_BUFFER,4*pts_size * sizeof(float),pts,GL_STATIC_DRAW);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,4*sizeof(float),(void*)0);
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1,1,GL_FLOAT,GL_FALSE,4*sizeof(float),(void*)(3 * sizeof(float)));
 		glBindVertexArray(0);
 		um_assert(no_gl_error());
+	}
+
+	void push(PointSet& ps, PointAttribute<float>& value) {
+		compute_range(value.ptr->data);
+
+		npts = ps.size();
+		std::vector<float> vertices(4*ps.size(),0);
+		FOR(v,ps.size()){
+			FOR(d,3) vertices[4*v+d] = ps[v][d];
+			vertices[4*v+3] = value[v];
+		}
+
+		glBindVertexArray(vao);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
 	}
 
 
@@ -240,6 +247,13 @@ struct SegmentRenderer: public SimplexRenderer{
 
 	using SimplexRenderer::SimplexRenderer;
 
+	struct Vertex {
+		float p0[3];
+		float v0;
+		float p1[3];
+		float v1;
+	};
+
 	int line_width=10;
 	float origin_scale = 1.;
 	void generate_gui(std::string name){
@@ -253,20 +267,11 @@ struct SegmentRenderer: public SimplexRenderer{
 
 
 	void init_from_mesh(PolyLine& pl,PointAttribute<float>& value){
-		compute_range(value.ptr->data);
-
-		std::vector<float> vertices(16*pl.nedges(),0);
-		for(auto e:pl.iter_edges()){
-			FOR(d,3) vertices[16*e+d] = e.from().pos()[d];
-			vertices[16*e+3] = value[e.from()];
-			FOR(d,3) vertices[16*e+4+d] = e.to().pos()[d];
-			vertices[16*e+7] = value[e.to()];
-			FOR(i,8) vertices[16*e+8+i]=vertices[16*e+i];
-		}
-		init(vertices.data(),pl.nedges());
+		init();
+		push(pl, value);
 	}
 
-	void init(float* pts,int nedges){
+	void init(){
 		glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE,range);
 		if(!God::shaders.contains("segment_as_tube"))
 			God::shaders.add(std::string(SHADERS_DIR),"segment_as_tube");
@@ -274,24 +279,54 @@ struct SegmentRenderer: public SimplexRenderer{
 
 		load_colormap(texture_id, colormap);
 		um_assert(no_gl_error());
-		npts = 2*nedges;
 		glGenVertexArrays(1,&vao);
 		glGenBuffers(1,&vbo);
 		glBindVertexArray(vao);
 		glBindBuffer(GL_ARRAY_BUFFER,vbo);
-
-		glBufferData(GL_ARRAY_BUFFER,8*npts* sizeof(float),pts,GL_STATIC_DRAW);
+		
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,8*sizeof(float),(void*)0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, p0));
 		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1,1,GL_FLOAT,GL_FALSE,8*sizeof(float),(void*)(3 * sizeof(float)));
+		glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, v0));
 		glEnableVertexAttribArray(2);
-		glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,8*sizeof(float),(void*)(4 * sizeof(float)));
+		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, p1));
 		glEnableVertexAttribArray(3);
-		glVertexAttribPointer(3,1,GL_FLOAT,GL_FALSE,8*sizeof(float),(void*)(7 * sizeof(float)));
+		glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, v1));
+
 		glBindVertexArray(0);
 	}
 
+	void push(PolyLine& pl, PointAttribute<float>& value) {
+		compute_range(value.ptr->data);
+
+		npts = 2*pl.nedges();
+		std::vector<Vertex> vertices(npts);
+		for(auto e : pl.iter_edges()){
+			auto p0 = e.from().pos();
+			auto p1 = e.to().pos();
+
+			Vertex v{
+				.p0 = {
+					static_cast<float>(p0.x),
+					static_cast<float>(p0.y),
+					static_cast<float>(p0.z)
+				},
+				.v0 = value[e.from()],
+				.p1 = {
+					static_cast<float>(p1.x),
+					static_cast<float>(p1.y),
+					static_cast<float>(p1.z)
+				},
+				.v1 = value[e.to()]
+			};
+			vertices[e * 2] = v;
+			vertices[e * 2 + 1] = v;
+		}
+
+		glBindVertexArray(vao);
+		glBindBuffer(GL_ARRAY_BUFFER,vbo);
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(),GL_STATIC_DRAW);
+	}
 
 
 
