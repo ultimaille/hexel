@@ -244,9 +244,9 @@ struct SegmentRenderer: public SimplexRenderer{
 	using SimplexRenderer::SimplexRenderer;
 
 	struct Vertex {
-		float p0[3];
+		std::array<float, 3> p0;
 		float v0;
-		float p1[3];
+		std::array<float, 3> p1;
 		float v1;
 	};
 
@@ -302,17 +302,9 @@ struct SegmentRenderer: public SimplexRenderer{
 			auto p1 = e.to().pos();
 
 			Vertex v{
-				.p0 = {
-					static_cast<float>(p0.x),
-					static_cast<float>(p0.y),
-					static_cast<float>(p0.z)
-				},
+				.p0 = to_float3(p0),
 				.v0 = value[e.from()],
-				.p1 = {
-					static_cast<float>(p1.x),
-					static_cast<float>(p1.y),
-					static_cast<float>(p1.z)
-				},
+				.p1 = to_float3(p1),
 				.v1 = value[e.to()]
 			};
 			vertices[e * 2] = v;
@@ -356,11 +348,10 @@ struct TriangleRenderer: public SimplexRenderer{
 	using SimplexRenderer::SimplexRenderer;
 
 	struct Vertex {
-		// float pos[3];
-		float pos[3];
-		float n[3]; // normal
+		std::array<float, 3> pos;
+		std::array<float, 3> n; // normal
 		float v; // value
-		float b[3]; // bary
+		std::array<float, 3> b; // bary
 	};
 
 	void init_from_mesh(Triangles& tri, CornerAttribute<float>& value){
@@ -430,22 +421,10 @@ struct TriangleRenderer: public SimplexRenderer{
 				auto b = t.bary_verts();
 
 				vertices[h] = {
-					.pos = {
-						static_cast<float>(p.x),
-						static_cast<float>(p.y),
-						static_cast<float>(p.z)
-					},
-					.n = {
-						static_cast<float>(n.x),
-						static_cast<float>(n.y),
-						static_cast<float>(n.z)
-					},
+					.pos = to_float3(p),
+					.n = to_float3(n),
 					.v = value[h],
-					.b = {
-						static_cast<float>(b.x),
-						static_cast<float>(b.y),
-						static_cast<float>(b.z)
-					}
+					.b = to_float3(b)
 				};
 			}
 		}
