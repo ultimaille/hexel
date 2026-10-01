@@ -5,7 +5,6 @@
 #include <iostream>
 
 #include <ultimaille/all.h>
-
 using namespace UM;
 
 extern const std::string chunk_xcf;
@@ -22,18 +21,22 @@ extern const std::string chunk_layer;
 extern const std::string chunk_camera;
 extern const std::string chunk_mouse;
 extern const std::string chunk_key;
-
+extern const std::string chunk_panel;
 
 
 enum EventType {
     CREATED, KILLED, UPDATED
 };
 
+struct RenderLayer;
+struct Panel;
 struct ObjectId {
     std::vector<std::string> chunks;
     void* ptr();
 
-    operator PointSet&();
+    operator Panel& ();
+    operator RenderLayer& ();
+    operator PointSet& ();
     operator PointSetAttributes&();
     operator PolyLine&();
     operator PolyLineAttributes&();

@@ -13,6 +13,7 @@
 #include <ultimaille/all.h>
 #include "core/core.h"
 
+#include "panels/property_explorer.h"
 #include "panels/xcf_explorer.h"
 #include "panels/layer_explorer.h"
 
@@ -77,8 +78,10 @@ namespace InteractionMode{
 int main(int argc, const char* argv[]) {
     God::context.init();
     InteractionMode::HexEdit look;
-    God::panels.emplace_back<XCFExplorer>("xcf_window");
-    God::panels.emplace_back<LayerExplorer>("layer_window");
+    God::panels.add<XCFExplorer>("xcf_window");
+    God::panels.add<LayerExplorer>("layer_window");
+    God::panels.add<PropertyExplorer>("property_window");
+
 
     if (argc > 1) {
         std::string path = argv[1];
