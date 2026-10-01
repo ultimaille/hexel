@@ -44,12 +44,12 @@ struct SimplexRenderer{
 
 	void generate_gui(std::string name){
 		ImGui::PushItemWidth(120);
-		ImGui::SliderFloat(("ambient_M##slider"+name).c_str(),&ambient_prop,0.0f,1.0f,"%.3f",0);
-		ImGui::SliderFloat(("color/texture##slider"+name).c_str(),&color_map_prop,0.0f,1.0f,"%.3f",0);
+		ImGui::SliderFloat(label("ambient_M##slider",name),&ambient_prop,0.0f,1.0f,"%.3f",0);
+		ImGui::SliderFloat(label("color/texture##slider",name), &color_map_prop, 0.0f, 1.0f, "%.3f", 0);
 
 		// need the constant color
 		if(color_map_prop<1)
-			ImGui::ColorEdit3(("ConstColor##"+name).c_str(),(float*)&color,ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+			ImGui::ColorEdit3(label("ConstColor##",name),(float*)&color,ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
 
 		// need a colormap
 		if(color_map_prop>0){
@@ -59,8 +59,8 @@ struct SimplexRenderer{
 				glDeleteTextures(1, &colormap);
 				load_colormap(texture_id, colormap);
 			}
-			ImGui::InputFloat2(("range##range"+name).c_str(), data_range);
-			if (ImGui::InputInt(("texture repeat##texture_repeat"+name).c_str(),&texture_repeat)) {
+			ImGui::InputFloat2(label("range##range",name), data_range);
+			if (ImGui::InputInt(label("texture repeat##texture_repeat",name),&texture_repeat)) {
 				if (texture_repeat > 1) {
 					glBindTexture(GL_TEXTURE_1D, colormap);
 					glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -74,12 +74,12 @@ struct SimplexRenderer{
 				}
 					texture_repeat = std::clamp(texture_repeat,1,1000000);
 			}
-			if (ImGui::SmallButton(("autorange##autorange"+name).c_str())) {
+			if (ImGui::SmallButton(label("autorange##autorange",name))) {
 				std::copy(data_autorange, data_autorange + 2, data_range);
 			}
 
 		}
-		ImGui::Checkbox("clip", &clipping.enabled);
+		ImGui::Checkbox(label("clip",name), &clipping.enabled);
 
 		ImGui::PopItemWidth();
 	}

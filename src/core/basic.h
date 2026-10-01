@@ -10,6 +10,14 @@ struct Log{
     inline static void abort(std::string msg0,std::string msg1=""){ std::cerr<<"FATAL ERROR"<<msg0<<" "<<msg1<<std::endl; }
 };
 
+inline const char* label(std::string str, std::string suffix = "") {
+    static thread_local std::string s;
+    s = (str + "##" + suffix);
+    return s.c_str();
+};
+
+
+
 // Registry<T> is a lightweight named container for polymorphic objects (=> all stored types must inherit from T).
 //
 // The registry owns instances through std::unique_ptr<T>, so callers can

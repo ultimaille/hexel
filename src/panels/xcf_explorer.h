@@ -116,19 +116,12 @@ struct XCFExplorer : public Panel {
 			static bool closable_mm_group = true;
 			if (ImGui::CollapsingHeader(mm_name.c_str(),&closable_mm_group)) {
 
-				auto imgui_str = [&](std::string str, std::string suffix = "") {
 
-					static thread_local std::string s;
-					s = (str + "##" + mm_name + suffix);
-					return s.c_str();
-
-					};
-
-				if (ImGui::TreeNode(imgui_str("pointset"))) {
+				if (ImGui::TreeNode(label("pointset",mm_name))) {
 					//... show shaders
 					ImGui::TreePop();
 				}
-				if (!mm.polylines.empty()) if (ImGui::TreeNode(imgui_str("polylines"))) {
+				if (!mm.polylines.empty()) if (ImGui::TreeNode(label("polylines", mm_name))) {
 					//... show shaders
 					ImGui::TreePop();
 				}
@@ -141,7 +134,7 @@ struct XCFExplorer : public Panel {
 					for (auto& [tri_name, obj] : mm.triangles) {
 						static bool closable_mesh_group = true;
 						ObjectId id({ chunk_xcf,mm_name,"triangles",tri_name });
-						if (ImGui::CollapsingHeader(imgui_str(tri_name, "tri"), &closable_mesh_group)) {
+						if (ImGui::CollapsingHeader(label(tri_name, mm_name+"tri"), &closable_mesh_group)) {
 							// render layers
 							for(int i=0;i< God::layers.size();i++){
 								if (God::layers[i].require(id)) {
@@ -150,7 +143,7 @@ struct XCFExplorer : public Panel {
 							}
 						}
 
-						if (ImGui::Button(imgui_str("kill odd triangles", tri_name))) {
+						if (ImGui::Button(label("kill odd triangles", mm_name+tri_name))) {
 							Triangles& tri = obj.mesh;
 							std::vector<bool> to_kill(tri.nfacets(), false);
 							for (auto f : tri.iter_facets()) to_kill[f] = (f % 2) == 0;
@@ -175,18 +168,18 @@ struct XCFExplorer : public Panel {
 
 					{// create new triangles
 						static char new_tri_name[64] = "newtri";
-						if (ImGui::Button(imgui_str("Add new"))) {
+						if (ImGui::Button(label("Add new", mm_name))) {
 							std::string s = new_tri_name;
 							God::xcf.add_triangles(mm_name, s);
-							ImGui::TreePop();
+							//ImGui::TreePop();
 							break;
 						}
-						ImGui::SameLine(); ImGui::InputText(imgui_str("##edit"), new_tri_name, 64);
+						ImGui::SameLine(); ImGui::InputText(label("##edit", mm_name), new_tri_name, 64);
 					}
 
 					//ImGui::TreePop();
 				}
-				if (!mm.quads.empty()) if (ImGui::TreeNode(imgui_str("quads"))) {
+				if (!mm.quads.empty()) if (ImGui::TreeNode(label("quads", mm_name))) {
 					//... show shaders
 					ImGui::TreePop();
 				}

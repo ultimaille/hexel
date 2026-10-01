@@ -28,6 +28,7 @@ namespace UM {
         std::map<std::string,MeshAttr<Wedges,VolumeAttributes>> wedges;
         std::map<std::string,MeshAttr<Pyramids,VolumeAttributes>> pyramids;
 
+        static std::string collection_names[8] ;
 
 
         template<class T>
@@ -48,11 +49,7 @@ namespace UM {
             std::cerr<<"Load pointset\n";
             pointset_attributes = read_by_extension((path / "pointset.geogram").string(),pointset);
 
-            std::string collection_names[8] ={
-                "polylines",
-                "triangles","quads","polygons",
-                "tetrahedra","hexahedra","wedges","pyramids"
-            };
+
             for(int c = 0; c<8; c++){
                 std::filesystem::path mesh_path = path / collection_names[c];
                 if(!std::filesystem::exists(mesh_path)) continue;
@@ -78,11 +75,7 @@ namespace UM {
         void load_geogram(std::string filename,bool connect = true){
             if(!std::filesystem::exists(filename)) return;
             pointset_attributes = read_by_extension(filename,pointset);
-            std::string collection_names[8] ={
-                "polylines",
-                "triangles","quads","polygons",
-                "tetrahedra","hexahedra","wedges","pyramids"
-            };
+
             for(int c = 0; c<8; c++){
                 //std::cerr<<"Load "<< collection_names[c] <<"\n";
                 switch(c){
@@ -157,7 +150,11 @@ namespace UM {
         }
     };
 
-    struct XCF: public std::map<std::string,MultiMesh> {
+    struct XCF: private std::map<std::string,MultiMesh> {
+
+        using std::map<std::string, MultiMesh>::begin;
+        using std::map<std::string, MultiMesh>::end;
+        bool contains(const std::string& name){ return std::map<std::string, MultiMesh>::contains(name); }
 
         MultiMesh& operator[](std::string str) {
             if (!contains(str)) abort();
