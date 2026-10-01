@@ -16,7 +16,7 @@ const std::string chunk_layer = "layer";
 const std::string chunk_camera = "camera";
 const std::string chunk_mouse = "mouse";
 const std::string chunk_key = "key";
-
+const std::string chunk_panel = "panel";
 
 void ObjectId::emit(EventType e) {
     God::events.queue.emplace(Event(*this, e));
@@ -25,10 +25,26 @@ void ObjectId::emit(EventType e) {
 
 void* ObjectId::ptr() {
     um_assert(!chunks.empty());
-    if (chunks[0]==chunk_mouse)
+    if (chunks[0] == chunk_mouse)
         return &God::mouse;
     if (chunks[0]==chunk_camera)
         return &God::camera;
+    if (chunks[0] == chunk_panel){
+        if (chunks.size() == 1)
+            return &God::panels;
+        if (chunks.size() == 2){
+            if (!God::panels.contains(chunks[1])) return nullptr;
+            return &God::panels[chunks[1]];
+        }
+    }
+    if (chunks[0] == chunk_layer){
+        if (chunks.size() == 1)
+            return &God::layers;
+        if (chunks.size() == 2){
+            if (!God::layers.contains(chunks[1])) return nullptr;
+            return &God::layers[chunks[1]];
+        }
+    }
 
     if (chunks[0]==chunk_xcf) {
         // return the xcf
@@ -92,6 +108,19 @@ ObjectId::operator Triangles&() {
     return God::xcf[mm].triangles[mesh].mesh;
 #endif
 }
+
+ObjectId::operator Panel& () {
+    auto* p = static_cast<Panel*>(ptr());
+    um_assert(p != nullptr);
+    return *p;
+}
+
+ObjectId::operator RenderLayer& () {
+    auto* p = static_cast<RenderLayer*>(ptr());
+    um_assert(p != nullptr);
+    return *p;
+}
+
 
 ObjectId::operator SurfaceAttributes&() {
     auto *p = static_cast<MultiMesh::MeshAttr<Triangles, SurfaceAttributes>*>(ptr());
