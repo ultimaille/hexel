@@ -63,13 +63,9 @@ struct SimplexRenderer{
 			if (ImGui::InputInt(label("texture repeat##texture_repeat",name),&texture_repeat)) {
 				if (texture_repeat > 1) {
 					glBindTexture(GL_TEXTURE_1D, colormap);
-					glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-					glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 					glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 				} else {
 					glBindTexture(GL_TEXTURE_1D, colormap);
-					glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-					glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 					glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 				}
 					texture_repeat = std::clamp(texture_repeat,1,1000000);
