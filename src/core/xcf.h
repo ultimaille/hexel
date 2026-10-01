@@ -160,21 +160,19 @@ namespace UM {
     struct XCF: public std::map<std::string,MultiMesh> {
 
         MultiMesh& operator[](std::string str) {
-            if (!contains(str)) {
-                abort();
-            }
+            if (!contains(str)) abort();
             return  std::map<std::string, MultiMesh>::operator[](str);
         }
         MultiMesh& add(std::string str);
-        void load_multimesh(std::string filename,bool connect = true){
+        std::string load_multimesh(std::string filename,bool connect = true){
             std::string triname = std::filesystem::path(filename).stem().string();
-            if(contains(triname))
-                um_assert(false && "duplicate multimesh name");
+            while (contains(triname)) triname += "_";
             MultiMesh& multimesh = add(triname);
             if (std::filesystem::is_directory(filename))
                 multimesh.load_from_path(filename, connect);
             else
             multimesh.load_geogram(filename,connect);
+            return triname;
         }
         void kill_multimesh(const std::string& name);
         void kill_mesh(ObjectId obj);
