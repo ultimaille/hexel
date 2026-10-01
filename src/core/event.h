@@ -48,13 +48,8 @@ struct ObjectId {
         return *static_cast<PolyLineAttributes*>(ptr());
     }
 
-    operator Triangles&() {
-        return *static_cast<Triangles*>(ptr());
-    }
-
-    operator SurfaceAttributes&() {
-        return *static_cast<SurfaceAttributes*>(ptr());
-    }
+    operator Triangles&();
+    operator SurfaceAttributes&();
 
     void emit(EventType e);
     inline void show() {

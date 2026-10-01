@@ -75,3 +75,26 @@ void EventManager::dispatch() {
     }
 }
 
+ObjectId::operator Triangles&() {
+    um_assert(chunks.size() == 4);
+    um_assert(chunks[0] == chunk_xcf);
+    std::string mm = chunks[1];
+    um_assert(God::xcf.contains(mm));
+    um_assert(chunks[2] == chunk_triangles);
+    std::string mesh = chunks[3];
+    um_assert(God::xcf[mm].triangles.contains(mesh));
+    return God::xcf[mm].triangles[mesh].mesh;
+}
+
+ObjectId::operator SurfaceAttributes&() {
+    um_assert(chunks.size() == 4);
+    um_assert(chunks[0] == chunk_xcf);
+    std::string mm = chunks[1];
+    um_assert(God::xcf.contains(mm));
+    um_assert(chunks[2] == chunk_triangles);
+    std::string mesh = chunks[3];
+    um_assert(God::xcf[mm].triangles.contains(mesh));
+    return God::xcf[mm].triangles[mesh].attributes;
+}
+
+
