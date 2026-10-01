@@ -17,7 +17,7 @@ struct LayerExplorer : public Panel {
             // The widget is the drag source
             if (ImGui::BeginDragDropSource()){
                 ImGui::SetDragDropPayload("WIDGET", &i, sizeof(i));
-                ImGui::Text("Moving %s", God::layers.ith_name(i));
+                ImGui::Text("Moving %s", (God::layers.ith_name(i)).c_str());
                 ImGui::EndDragDropSource();
             }
 

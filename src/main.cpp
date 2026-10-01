@@ -74,11 +74,16 @@ namespace InteractionMode{
 
 
 
-int main() {
+int main(int argc, const char* argv[]) {
     God::context.init();
     InteractionMode::HexEdit look;
     God::panels.emplace_back<XCFExplorer>("xcf_window");
     God::panels.emplace_back<LayerExplorer>("layer_window");
+
+    if (argc > 1) {
+        std::string path = argv[1];
+    }
+
     while(God::context.window_is_active()){
         God::mouse.wheel_speed = 0;
         God::mouse.previous = God::mouse.current;
