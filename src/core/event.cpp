@@ -2,22 +2,6 @@
 #include "core.h"
 
 
-const std::string chunk_xcf = "xcf";
-const std::string chunk_pointset = "pointset";
-const std::string chunk_polylines = "polylines";
-const std::string chunk_triangles = "triangles";
-const std::string chunk_quads = "quads";
-const std::string chunk_polygons = "polygons";
-const std::string chunk_tetrahedra = "tetrahedra";
-const std::string chunk_hexahedra = "hexahedra";
-const std::string chunk_wedges = "wedges";
-const std::string chunk_pyramids = "pyramids";
-const std::string chunk_layer = "layer";
-const std::string chunk_camera = "camera";
-const std::string chunk_mouse = "mouse";
-const std::string chunk_key = "key";
-
-
 void ObjectId::emit(EventType e) {
     God::events.queue.emplace(Event(*this, e));
 }

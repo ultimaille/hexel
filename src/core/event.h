@@ -10,27 +10,6 @@
 
 using namespace UM;
 
-/*
-extern const std::string chunk_xcf;
-extern const std::string chunk_pointset;
-extern const std::string chunk_polylines;
-extern const std::string chunk_triangles;
-extern const std::string chunk_quads;
-extern const std::string chunk_polygons;
-extern const std::string chunk_tetrahedra;
-extern const std::string chunk_hexahedra;
-extern const std::string chunk_wedges;
-extern const std::string chunk_pyramids;
-extern const std::string chunk_layer;
-extern const std::string chunk_camera;
-extern const std::string chunk_mouse;
-extern const std::string chunk_key;
-*/
-
-enum EventType {
-    CREATED, KILLED, UPDATED
-};
-
 struct KeyboardState;
 struct MouseState;
 struct Camera;
@@ -94,6 +73,10 @@ inline bool operator==(const ObjectId& a, const  ObjectId& b) {
 }
 
 struct Event {
+    enum EventType {
+        CREATED, KILLED, UPDATED
+    };
+
     ObjectId who;
     EventType what_happened;
 };
