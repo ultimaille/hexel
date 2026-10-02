@@ -27,7 +27,7 @@ void* ObjectId::ptr() {
     um_assert(!chunks.empty());
     if (chunks[0] == chunk_mouse)
         return &God::mouse;
-    if (chunks[0]==chunk_camera)
+    if (chunks[0] == chunk_camera)
         return &God::camera;
     if (chunks[0] == chunk_panel){
         if (chunks.size() == 1)
@@ -46,9 +46,9 @@ void* ObjectId::ptr() {
         }
     }
 
-    if (chunks[0]==chunk_xcf) {
+    if (chunks[0] == chunk_xcf) {
         // return the xcf
-        if (chunks.size()==1) return &God::xcf;
+        if (chunks.size() == 1) return &God::xcf;
 
         // returns a multimesh
         um_assert(chunks.size() > 1);
@@ -92,9 +92,9 @@ void EventManager::dispatch() {
     }
 }
 
-ObjectId::operator Triangles&() {
+ObjectId::operator Triangles& () {
 #if 1
-    auto *p = static_cast<MultiMesh::MeshAttr<Triangles, SurfaceAttributes>*>(ptr());
+    auto* p = static_cast<MultiMesh::MeshAttr<Triangles, SurfaceAttributes>*>(ptr());
     um_assert(p != nullptr);
     return p->mesh;
 #else
@@ -121,9 +121,9 @@ ObjectId::operator RenderLayer& () {
     return *p;
 }
 
-ObjectId::operator Quads&() {
+ObjectId::operator Quads& () {
 #if 1
-    auto *p = static_cast<MultiMesh::MeshAttr<Quads, SurfaceAttributes>*>(ptr());
+    auto* p = static_cast<MultiMesh::MeshAttr<Quads, SurfaceAttributes>*>(ptr());
     um_assert(p != nullptr);
     return p->mesh;
 #else
@@ -138,32 +138,32 @@ ObjectId::operator Quads&() {
 #endif
 }
 
-ObjectId::operator SurfaceAttributes&() {
-    auto *p = static_cast<MultiMesh::MeshAttr<Triangles, SurfaceAttributes>*>(ptr());
+ObjectId::operator SurfaceAttributes& () {
+    auto* p = static_cast<MultiMesh::MeshAttr<Triangles, SurfaceAttributes>*>(ptr());
     um_assert(p != nullptr);
     return p->attributes;
 }
 
-ObjectId::operator PointSet&() {
-    auto *p = static_cast<PointSet *>(ptr());
+ObjectId::operator PointSet& () {
+    auto* p = static_cast<PointSet*>(ptr());
     um_assert(p != nullptr);
     return *p;
 }
 
-ObjectId::operator PointSetAttributes&() {
-    auto *p = static_cast<PointSetAttributes *>(ptr());
+ObjectId::operator PointSetAttributes& () {
+    auto* p = static_cast<PointSetAttributes*>(ptr());
     um_assert(p != nullptr);
     return *p;
 }
 
-ObjectId::operator PolyLine&() {
-    auto *p = static_cast<MultiMesh::MeshAttr<PolyLine, PolyLineAttributes>*>(ptr());
+ObjectId::operator PolyLine& () {
+    auto* p = static_cast<MultiMesh::MeshAttr<PolyLine, PolyLineAttributes>*>(ptr());
     um_assert(p != nullptr);
     return p->mesh;
 }
 
-ObjectId::operator PolyLineAttributes&() {
-    auto *p = static_cast<MultiMesh::MeshAttr<PolyLine, PolyLineAttributes>*>(ptr());
+ObjectId::operator PolyLineAttributes& () {
+    auto* p = static_cast<MultiMesh::MeshAttr<PolyLine, PolyLineAttributes>*>(ptr());
     um_assert(p != nullptr);
     return p->attributes;
 }

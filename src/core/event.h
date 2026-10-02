@@ -37,12 +37,12 @@ struct ObjectId {
     operator Panel& ();
     operator RenderLayer& ();
     operator PointSet& ();
-    operator PointSetAttributes&();
-    operator PolyLine&();
-    operator PolyLineAttributes&();
-    operator Triangles&();
-    operator Quads&();
-    operator SurfaceAttributes&();
+    operator PointSetAttributes& ();
+    operator PolyLine& ();
+    operator PolyLineAttributes& ();
+    operator Triangles& ();
+    operator Quads& ();
+    operator SurfaceAttributes& ();
 
     void emit(EventType e);
     inline void show() {
@@ -53,6 +53,9 @@ struct ObjectId {
 
 inline bool operator==(const ObjectId& a, const  ObjectId& b) {
     return a.chunks == b.chunks;
+}
+inline bool operator<(const ObjectId& a, const  ObjectId& b) {
+    return a.chunks < b.chunks;
 }
 
 struct Event {

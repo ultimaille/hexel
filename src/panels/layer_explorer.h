@@ -9,7 +9,7 @@ struct LayerExplorer : public Panel {
             if (id.ptr() != nullptr) {
                 PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(id));
                 for (auto id : pan.layers)
-                    pressed[God::layers.find(id.chunks.back())]=true;
+                    pressed[God::layers.find(id.chunks.back())] = true;
             }
             else Log::add("Property_window not found");
         }
@@ -30,7 +30,7 @@ struct LayerExplorer : public Panel {
                 ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.8f, 0.3f, 1.0f));
                 ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.15f, 0.6f, 0.15f, 1.0f));
             }
-            if (ImGui::Button(label(layer_name,"proppanel")))
+            if (ImGui::Button(label(layer_name, "proppanel")))
                 pressed[i] = !pressed[i];
             if (was_pressed) ImGui::PopStyleColor(3);
 
@@ -62,9 +62,9 @@ struct LayerExplorer : public Panel {
         if (drag_from != -1 || drop_to != -1) {
             while (drag_from < drop_to) {
                 God::layers.swap(drag_from, drag_from + 1);
-                bool tmp= pressed[drag_from];
-                pressed[drag_from]= pressed[drag_from+1];
-                pressed[drag_from+1]= tmp;
+                bool tmp = pressed[drag_from];
+                pressed[drag_from] = pressed[drag_from + 1];
+                pressed[drag_from + 1] = tmp;
 
                 //std::swap(pressed[drag_from], pressed[drag_from +1]);
                 drag_from++;
@@ -73,7 +73,7 @@ struct LayerExplorer : public Panel {
                 God::layers.swap(drag_from, drag_from - 1);
                 bool tmp = pressed[drag_from];
                 pressed[drag_from] = pressed[drag_from - 1];
-                pressed[drag_from -1] = tmp;
+                pressed[drag_from - 1] = tmp;
                 drag_from--;
             }
         }
@@ -82,17 +82,14 @@ struct LayerExplorer : public Panel {
         }
 
         {// update the set of current layers in the property windows
-            ObjectId id({ chunk_panel,"property_window"});
-            if (id.ptr() != nullptr){
-                PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>( id));
+            ObjectId id({ chunk_panel,"property_window" });
+            PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(id));
 
-                pan.layers.clear();
-                for (int i = 0; i < God::layers.size(); ++i){
-                    if (pressed[i])
-                        pan.layers.push_back(ObjectId({ chunk_layer, God::layers.ith_name(i)}));
-                }
+            pan.layers.clear();
+            for (int i = 0; i < God::layers.size(); ++i){
+                if (pressed[i])
+                    pan.layers.push_back(ObjectId({ chunk_layer, God::layers.ith_name(i) }));
             }
-            else Log::add("Property_window not found");
         }
         ImGui::End();
     }

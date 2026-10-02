@@ -4,10 +4,10 @@
 
 struct Panel{
     virtual ~Panel() = default;
-    virtual void generate_gui()=0;
+    virtual void generate_gui() = 0;
 };
 
-struct PanelManager: private Registry<Panel> {
+struct PanelManager : private Registry<Panel> {
     int size()                                { return Registry<Panel>::size(); }
     Panel& operator[](int i)                  { return Registry<Panel>::operator[](i); }
     Panel& operator[](std::string s)          { return Registry<Panel>::operator[](s); }
@@ -19,7 +19,7 @@ struct PanelManager: private Registry<Panel> {
     void show_gui(){
         setup_dock_panels();
 
-        for(auto& [name,obj] : *this)
+        for (auto& [name, obj] : *this)
             obj->generate_gui();
 
     }
