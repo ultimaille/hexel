@@ -364,6 +364,11 @@ struct TriangleRenderer: public SimplexRenderer{
 		push(quads, value);
 	}
 
+	void init_from_mesh(Tetrahedra& tet, CellCornerAttribute<float>& value){
+		init();
+		push(tet, value);
+	}
+
 	void init(){
 		color_map_prop=0;
 		if(!God::shaders.contains("triangle"))
@@ -390,6 +395,7 @@ struct TriangleRenderer: public SimplexRenderer{
 		glVertexAttribPointer(3,3,GL_FLOAT,GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, b));
 
 		glBindVertexArray(0);
+
 		um_assert(no_gl_error());
 	}
 
@@ -455,6 +461,38 @@ struct TriangleRenderer: public SimplexRenderer{
 		glBindVertexArray(vao);
 		glBindBuffer(GL_ARRAY_BUFFER,vbo);
 		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+	}
+
+	void push(Tetrahedra& tet, CellCornerAttribute<float>& value) {
+		compute_range(value.ptr->data);
+
+		std::vector<Vertex> vertices(tet.nfacets() * 3);
+		npts = vertices.size();
+
+		for (auto c : tet.iter_cells()) {
+			auto t = Tetrahedron(c);
+			auto b = t.bary_verts();
+
+			for(auto f : c.iter_facets())  {
+				auto tri = Triangle3(f);
+				auto n = tri.normal();
+
+				for (int lv = 0; lv < 3; ++lv) {
+					auto h = f * 3 + lv;
+					vec3 p = f.vertex(lv);
+					vertices[h] = {
+						.pos = to_float3(p),
+						.n = to_float3(n),
+						.v = value[f.corner(lv)],
+						.b = to_float3(b)
+					};
+				}
+			}
+		}
+
+		glBindVertexArray(vao);
+		glBindBuffer(GL_ARRAY_BUFFER,vbo);
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex),vertices.data(),GL_STATIC_DRAW);
 	}
 
 	void render(){
