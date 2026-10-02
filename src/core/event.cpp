@@ -18,6 +18,11 @@ std::optional<ObjectId::ObjectRef> ObjectId::ref() {
         case CAMERA:
             return std::ref(God::camera);
 
+        case PANEL:
+            if (names.size() != 1) return std::nullopt;
+            if (!God::panels.contains(names[0])) return std::nullopt;
+            return std::ref(God::panels[names[0]]);
+
         case LAYER:
             if (names.size() != 1) return std::nullopt;
             if (!God::layers.contains(names[0])) return std::nullopt;
@@ -81,6 +86,15 @@ std::optional<ObjectId::ObjectRef> ObjectId::ref() {
     }
 }
 
+
+ObjectId::operator Panel& () {
+    return as<Panel>();
+}
+
+ObjectId::operator RenderLayer& () {
+    return as<RenderLayer>();
+}
+
 ObjectId::operator MultiMesh&() {
     return as<MultiMesh>();
 }
@@ -108,6 +122,18 @@ ObjectId::operator Triangles&() {
     return ma.mesh;
 }
 
+
+ObjectId::operator Quads&() {
+    auto &ma = as<MultiMesh::MeshAttr<Quads, SurfaceAttributes>>();
+    return ma.mesh;
+}
+
+
+ObjectId::operator Polygons&() {
+    auto &ma = as<MultiMesh::MeshAttr<Polygons, SurfaceAttributes>>();
+    return ma.mesh;
+}
+
 ObjectId::operator SurfaceAttributes&() {
     switch (path) {
         case TRIANGLES: return as<MultiMesh::MeshAttr<Triangles, SurfaceAttributes>>().attributes;
@@ -127,5 +153,4 @@ void EventManager::dispatch() {
         God::layers.handle(event);
     }
 }
-
 

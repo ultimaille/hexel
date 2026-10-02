@@ -13,10 +13,11 @@ using namespace UM;
 struct KeyboardState;
 struct MouseState;
 struct Camera;
+struct Panel;
 struct RenderLayer;
 
 namespace events {
-    enum ObjectType { NA, KEYBOARD, MOUSE, CAMERA, LAYER, MULTIMESH, POINTSET, POLYLINES, TRIANGLES, QUADS, POLYGONS, TETRAHEDRA, HEXAHEDRA, WEDGES, PYRAMIDS };
+    enum ObjectType { NA, KEYBOARD, MOUSE, CAMERA, PANEL, LAYER, MULTIMESH, POINTSET, POLYLINES, TRIANGLES, QUADS, POLYGONS, TETRAHEDRA, HEXAHEDRA, WEDGES, PYRAMIDS };
     enum EventType {
         CREATED, KILLED, UPDATED
     };
@@ -31,6 +32,7 @@ struct ObjectId {
         std::reference_wrapper<KeyboardState>,
         std::reference_wrapper<MouseState>,
         std::reference_wrapper<Camera>,
+        std::reference_wrapper<Panel>,
         std::reference_wrapper<RenderLayer>,
         std::reference_wrapper<MultiMesh>,
         std::reference_wrapper<MultiMesh::MeshAttr<PolyLine,   PolyLineAttributes>>,
@@ -48,6 +50,7 @@ struct ObjectId {
     operator KeyboardState&();
     operator MouseState&();
     operator Camera&();
+    operator Panel& ();
     operator RenderLayer&();
 
     operator MultiMesh&();

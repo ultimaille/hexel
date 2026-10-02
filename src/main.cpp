@@ -13,6 +13,7 @@
 #include <ultimaille/all.h>
 #include "core/core.h"
 
+#include "panels/property_explorer.h"
 #include "panels/xcf_explorer.h"
 #include "panels/layer_explorer.h"
 
@@ -29,44 +30,28 @@ namespace InteractionMode{
         virtual void define_gui() = 0;
     };
 
-
     struct HexEdit : public AbstractMode{
-
-
         HexEdit(){
             God::root_mode = this;
-
-            {
-
-                //load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "mmB0");
-
-                God::layers.add<SSAO>("SSAO").init();
-
-            }
+            God::layers.add<SSAO>("SSAO").init();
         }
 
 
         void define_gui() {
             ImGui::Begin("ModeWindow", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
             ImGui::Text("Window used to launch debug tests");
-            if (ImGui::Button("CurrentTest")) {
-                Log::add("Starting new test");
-//              ObjectId id({chunk_xcf, "B0.step", chunk_triangles, "triangles"});
-//              Triangles &m = id;
-//              SurfaceAttributes &a = id;
-//              plop(a.facets.size());
-//              plop(a.facets.front().name);
+            if (ImGui::Button("LoadSomething")) {
+                // Horrible way to acces a function: but it's good to check that it works
+                XCFExplorer& pan = dynamic_cast<XCFExplorer&> (static_cast<Panel&>(ObjectId(PANEL, "xcf_window")));
+                pan.load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "mmB0");
             }
 
-
-
+            if (ImGui::Button("CurrentTest")) {
+                Log::add("Starting new test");
+            }
             ImGui::End();
         }
     };
-
-
-
-
 };
 
 
@@ -74,11 +59,18 @@ namespace InteractionMode{
 
 
 
-int main() {
+int main(int argc, const char* argv[]) {
     God::context.init();
     InteractionMode::HexEdit look;
-    God::panels.emplace_back<XCFExplorer>("xcf_window");
-    God::panels.emplace_back<LayerExplorer>("layer_window");
+    God::panels.add<XCFExplorer>("xcf_window");
+    God::panels.add<LayerExplorer>("layer_window");
+    God::panels.add<PropertyExplorer>("property_window");
+
+
+    if (argc > 1) {
+        std::string path = argv[1];
+    }
+
     while(God::context.window_is_active()){
         God::mouse.wheel_speed = 0;
         God::mouse.previous = God::mouse.current;

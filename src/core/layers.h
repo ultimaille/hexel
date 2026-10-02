@@ -32,14 +32,14 @@ struct RenderLayer {
 };
 
 struct LayerManager: private Registry<RenderLayer> {
-    int size(){ return Registry<RenderLayer>::size(); }
-    RenderLayer& operator[](int i){ return Registry<RenderLayer>::operator[](i); }
-    RenderLayer& operator[](std::string s){ return Registry<RenderLayer>::operator[](s); }
-    std::string ith_name(int i){ return items[i].name; }
-    void swap(int i, int j){ std::swap(items[i], items[j]); }
-    template<class T> T& add(std::string str){ return emplace_back<T>(str); }
-    bool contains(std::string s) const { return Registry<RenderLayer>::contains(s); }
-
+    int size()                                 { return Registry<RenderLayer>::size(); }
+    RenderLayer& operator[](int i)             { return Registry<RenderLayer>::operator[](i); }
+    RenderLayer& operator[](std::string s)     { return Registry<RenderLayer>::operator[](s); }
+    bool contains(std::string s)               { return Registry<RenderLayer>::contains(s); }
+    int find(std::string str)                  { return Registry<RenderLayer>::find(str); }
+    std::string ith_name(int i)                { return items[i].name; }
+    void swap(int i, int j)                    { std::swap(items[i], items[j]); }
+    template<class T> T& add(std::string str)  { return emplace_back<T>(str); }
 
     void render() {
         for (auto& [name,obj] : *this)
