@@ -1,18 +1,18 @@
 struct LayerExplorer : public Panel {
     void generate_gui(){
-        ImGui::SetNextWindowPos(ImVec2(10, 410), ImGuiCond_Always);
-        ImGui::SetNextWindowSize(ImVec2(250, 300), ImGuiCond_Always);
-        ImGui::Begin("LayersConfig", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::Begin("LayersConfig", nullptr);
 
+        std::vector<bool> pressed(God::layers.size(), false);
 
-
-
-
-
-
-
-        static std::vector<bool> pressed;
-        pressed.resize(God::layers.size(), false);
+        {// sync pressed with the property windows
+            ObjectId id({ chunk_panel,"property_window" });
+            if (id.ptr() != nullptr) {
+                PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(id));
+                for (auto id : pan.layers)
+                    pressed[God::layers.find(id.chunks.back())]=true;
+            }
+            else Log::add("Property_window not found");
+        }
 
         std::vector<std::string> to_kill;
 
@@ -33,6 +33,7 @@ struct LayerExplorer : public Panel {
             if (ImGui::Button(label(layer_name,"proppanel")))
                 pressed[i] = !pressed[i];
             if (was_pressed) ImGui::PopStyleColor(3);
+
             // The widget is the drag source
             if (ImGui::BeginDragDropSource()){
                 ImGui::SetDragDropPayload("WIDGET", &i, sizeof(i));

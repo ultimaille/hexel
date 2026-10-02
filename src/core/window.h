@@ -55,7 +55,7 @@ struct WindowContext {
 
         int count;
         GLFWmonitor** monitors = glfwGetMonitors(&count);
-        GLFWmonitor* monitor = (count>0)? monitors[1] : monitors[0] ;
+        GLFWmonitor* monitor = (count>1)? monitors[1] : monitors[0] ;
         const GLFWvidmode* mode = glfwGetVideoMode(monitor);
 
         int monitorX, monitorY;
@@ -64,7 +64,6 @@ struct WindowContext {
         w = mode->width;
         h = mode->height-30;
         window = glfwCreateWindow(w,h, "Hexel", nullptr, nullptr);
-        // Positionnement au centre de l'écran choisi
         glfwSetWindowPos(window,monitorX ,monitorY +30);
 
         um_assert(window != nullptr);
