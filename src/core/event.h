@@ -4,7 +4,6 @@
 #include <queue>
 #include <variant>
 #include <optional>
-#include <iostream>
 
 #include <ultimaille/all.h>
 #include "xcf.h"
@@ -17,7 +16,7 @@ struct Camera;
 struct RenderLayer;
 
 namespace events {
-    enum ObjectType { NA, KEYBOARD, MOUSE, CAMERA, LAYER, XCF, POINTSET, POLYLINES, TRIANGLES, QUADS, POLYGONS, TETRAHEDRA, HEXAHEDRA, WEDGES, PYRAMIDS };
+    enum ObjectType { NA, KEYBOARD, MOUSE, CAMERA, LAYER, MULTIMESH, POINTSET, POLYLINES, TRIANGLES, QUADS, POLYGONS, TETRAHEDRA, HEXAHEDRA, WEDGES, PYRAMIDS };
     enum EventType {
         CREATED, KILLED, UPDATED
     };
@@ -33,8 +32,7 @@ struct ObjectId {
         std::reference_wrapper<MouseState>,
         std::reference_wrapper<Camera>,
         std::reference_wrapper<RenderLayer>,
-        std::reference_wrapper<PointSet>,
-        std::reference_wrapper<PointSetAttributes>,
+        std::reference_wrapper<MultiMesh>,
         std::reference_wrapper<MultiMesh::MeshAttr<PolyLine,   PolyLineAttributes>>,
         std::reference_wrapper<MultiMesh::MeshAttr<Triangles,  SurfaceAttributes>>,
         std::reference_wrapper<MultiMesh::MeshAttr<Quads,      SurfaceAttributes>>,
@@ -52,6 +50,7 @@ struct ObjectId {
     operator Camera&();
     operator RenderLayer&();
 
+    operator MultiMesh&();
     operator PointSet&();
     operator PointSetAttributes&();
     operator PolyLine&();

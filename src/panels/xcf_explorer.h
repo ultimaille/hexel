@@ -58,7 +58,7 @@ struct XCFExplorer : public Panel {
 
 	void load_mm_with_default_layers(std::string path) {
 		auto mesh_name = God::xcf.load_multimesh(path, true);
-		look_at_pointset(ObjectId(events::XCF, mesh_name));
+		look_at_pointset(ObjectId(POINTSET, mesh_name));
 
 		{// point set
 			RenderSpheres& layer = God::layers.add<RenderSpheres>(mesh_name + "Pts");

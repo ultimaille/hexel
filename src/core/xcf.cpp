@@ -42,11 +42,11 @@ void XCF::kill_multimesh(const std::string & mm_name) {
 
 
 	std::map<std::string, MultiMesh>::erase(mm_name);
-	ObjectId(events::XCF, mm_name).broadcast(KILLED);
+	ObjectId(MULTIMESH, mm_name).broadcast(KILLED);
     ObjectId(POINTSET, mm_name).broadcast(KILLED);
 }
 MultiMesh& XCF::add(std::string str) {
-    ObjectId(events::XCF, str).broadcast(CREATED);
+    ObjectId(MULTIMESH, str).broadcast(CREATED);
     return std::map<std::string, MultiMesh>::operator[](str);
 }
 
@@ -60,3 +60,4 @@ MultiMesh::MeshAttr<Triangles, SurfaceAttributes>& XCF::add_triangles(std::strin
     obj.broadcast(CREATED);
     return collection[tri_name];
 }
+
