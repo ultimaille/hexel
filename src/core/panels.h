@@ -30,7 +30,6 @@ struct PanelManager: private Registry<Panel> {
             ImGuiID dockspace_id = ImGui::GetID("MyDockspace");
             ImGuiViewport* viewport = ImGui::GetMainViewport();
             ImGui::DockSpaceOverViewport(dockspace_id, viewport, ImGuiDockNodeFlags_PassthruCentralNode);
-
             static auto first_time = true;
             if (first_time) {
                 first_time = false;
@@ -49,8 +48,9 @@ struct PanelManager: private Registry<Panel> {
                 ImGuiID left_bar0 = ImGui::DockBuilderSplitNode(dockspace_main_id, ImGuiDir_Left, 1.f, nullptr, &dockspace_main_id);
                 // ImGuiID toolBar = ImGui::DockBuilderSplitNode(dockspace_main_id, ImGuiDir_Right, 1.f, nullptr, &dockspace_main_id);
                 // ImGuiID botBar = ImGui::DockBuilderSplitNode(dockspace_main_id, ImGuiDir_Down, 0.2f, nullptr, &dockspace_main_id);
-                ImGuiID left_bar1 = ImGui::DockBuilderSplitNode(left_bar0, ImGuiDir_Down, 0.25f, nullptr, &left_bar0);
-                ImGuiID left_bar2 = ImGui::DockBuilderSplitNode(left_bar1, ImGuiDir_Down, 0.25f, nullptr, &left_bar1);
+                ImGuiID left_bar1 = ImGui::DockBuilderSplitNode(left_bar0, ImGuiDir_Down, 0.6f, nullptr, &left_bar0);
+                ImGuiID left_bar2 = ImGui::DockBuilderSplitNode(left_bar1, ImGuiDir_Down, 0.6f, nullptr, &left_bar1);
+                //ImGuiID right_bar = ImGui::DockBuilderSplitNode(dockspace_main_id, ImGuiDir_Right, 2.f, nullptr, &dockspace_main_id);
 
                 ImGui::DockBuilderDockWindow("XCFViewer", left_bar0);
                 ImGui::DockBuilderDockWindow("LayersConfig", left_bar1);

@@ -39,7 +39,7 @@ struct LayerManager: private Registry<RenderLayer> {
     void swap(int i, int j)                    { std::swap(items[i], items[j]); }
     template<class T> T& add(std::string str)  { return emplace_back<T>(str); }
     bool contains(std::string s)               { return Registry<RenderLayer>::contains(s); }
-                                                         
+    int find(std::string str)                  { return Registry<RenderLayer>::find(str); }
 
     void render() {
         for (auto& [name,obj] : *this)
