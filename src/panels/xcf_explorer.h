@@ -104,6 +104,16 @@ struct XCFExplorer : public Panel {
             pr.color_map_prop = 0.0;
             pr.ambient_prop = .5;
         }
+        for (auto& elt : God::xcf[mesh_name].tetrahedra) {
+            RenderLambertTet& layer = God::layers.add<RenderLambertTet>(mesh_name + "Tet");
+            layer.init(ObjectId(TETRAHEDRA, {mesh_name, elt.first}));
+            auto& pr = layer.primitive_renderer;
+            pr.color[0] = .8;
+            pr.color[1] = .8;
+            pr.color[2] = .8;
+            pr.color_map_prop = 0.0;
+            pr.ambient_prop = .5;
+        }
     }
 
 
