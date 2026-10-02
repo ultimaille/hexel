@@ -8,40 +8,45 @@ std::string MultiMesh::collection_names[8] = {
 "tetrahedra","hexahedra","wedges","pyramids"
 };
 
-
+using namespace events;
 
 void XCF::kill_mesh(ObjectId obj) {
-    um_assert(obj.chunks[0] == chunk_xcf);
-    um_assert(obj.chunks.size()==4);
-    MultiMesh& mm = (*this)[obj.chunks[1]];
-    std::string mesh_type = obj.chunks[2];
-    std::string mesh = obj.chunks[3];
-    if (mesh_type == chunk_polylines)   mm.polylines.erase(mesh);
-    if (mesh_type == chunk_triangles)   mm.triangles.erase(mesh);
-    if (mesh_type == chunk_quads)       mm.quads.erase(mesh);
-    if (mesh_type == chunk_polygons)    mm.polygons.erase(mesh);
-    
-    if (mesh_type == chunk_tetrahedra)  mm.tetrahedra.erase(mesh);
-    if (mesh_type == chunk_hexahedra)   mm.hexahedra.erase(mesh);
-    obj.emit(KILLED);
+    um_assert(obj.path == POLYLINES || obj.path == TRIANGLES || obj.path == QUADS || obj.path == POLYGONS || obj.path == TETRAHEDRA || obj.path == HEXAHEDRA || obj.path == WEDGES || obj.path == PYRAMIDS);
+    um_assert(obj.names.size()==2);
+    MultiMesh& mm = (*this)[obj.names[0]];
+    std::string mesh = obj.names[1];
+
+    switch (obj.path) {
+        case POLYLINES:  mm.polylines.erase(mesh);  break;
+        case TRIANGLES:  mm.triangles.erase(mesh);  break;
+        case QUADS:      mm.quads.erase(mesh);      break;
+        case POLYGONS:   mm.polygons.erase(mesh);   break;
+        case TETRAHEDRA: mm.tetrahedra.erase(mesh); break;
+        case HEXAHEDRA:  mm.hexahedra.erase(mesh);  break;
+        case WEDGES:     mm.wedges.erase(mesh);     break;
+        case PYRAMIDS:   mm.pyramids.erase(mesh);   break;
+        default: um_assert(!"Something is missing");
+    }
+
+    obj.broadcast(KILLED);
 }
 
 void XCF::kill_multimesh(const std::string & mm_name) {
     MultiMesh& mm = (*this)[mm_name];
     std::vector<std::string> to_kill;
     for (auto& [name, obj] : mm.polylines)  to_kill.push_back(name);
-    for (auto name : to_kill) kill_mesh(ObjectId({ chunk_xcf,mm_name,chunk_polylines, name }));
+    for (auto name : to_kill) kill_mesh(ObjectId(POLYLINES, {mm_name, name}));
 
     for (auto& [name, obj] : mm.triangles)  to_kill.push_back(name);
-    for (auto name : to_kill) kill_mesh(ObjectId({ chunk_xcf,mm_name,chunk_triangles, name }));
+    for (auto name : to_kill) kill_mesh(ObjectId(TRIANGLES, {mm_name, name}));
 
 
 	std::map<std::string, MultiMesh>::erase(mm_name);
-	ObjectId({ chunk_xcf ,  mm_name }).emit(KILLED);
-    ObjectId({ chunk_xcf, mm_name ,chunk_pointset }).emit(KILLED);
+	ObjectId(MULTIMESH, mm_name).broadcast(KILLED);
+    ObjectId(POINTSET, mm_name).broadcast(KILLED);
 }
 MultiMesh& XCF::add(std::string str) {
-    ObjectId({ chunk_xcf,str }).emit(CREATED);
+    ObjectId(MULTIMESH, str).broadcast(CREATED);
     return std::map<std::string, MultiMesh>::operator[](str);
 }
 
@@ -50,8 +55,9 @@ MultiMesh::MeshAttr<Triangles, SurfaceAttributes>& XCF::add_triangles(std::strin
     collection.try_emplace(tri_name);
     plop(collection.contains(tri_name));
     plop(tri_name);
-    ObjectId obj({ chunk_xcf,mm_name,chunk_triangles,tri_name });
-    obj.show();
-    obj.emit(CREATED);
+    ObjectId obj(TRIANGLES, {mm_name, tri_name});
+//    obj.show();
+    obj.broadcast(CREATED);
     return collection[tri_name];
 }
+

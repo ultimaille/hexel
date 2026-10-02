@@ -42,7 +42,7 @@ namespace InteractionMode{
             ImGui::Text("Window used to launch debug tests");
             if (ImGui::Button("LoadSomething")) {
                 // Horrible way to acces a function: but it's good to check that it works
-                XCFExplorer& pan = dynamic_cast<XCFExplorer&> (static_cast<Panel&>(ObjectId({ chunk_panel,"xcf_window" })));
+                XCFExplorer& pan = dynamic_cast<XCFExplorer&> (static_cast<Panel&>(ObjectId(PANEL, "xcf_window")));
                 pan.load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "mmB0");
             }
 

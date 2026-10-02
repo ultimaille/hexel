@@ -4,6 +4,8 @@
 #include <string>
 #include <set>
 
+using namespace events;
+
 bool FilePopup(const char* id, std::string& out, std::vector<const char*> extensions) {
     static std::filesystem::path path, sel;
     static bool init = false;
@@ -59,11 +61,11 @@ struct XCFExplorer : public Panel {
 
     void load_mm_with_default_layers(std::string path) {
         auto mesh_name = God::xcf.load_multimesh(path, true);
-        look_at_pointset(ObjectId({ chunk_xcf,mesh_name }));
+        look_at_pointset(ObjectId(POINTSET, mesh_name));
 
         {// point set
             RenderSpheres& layer = God::layers.add<RenderSpheres>(mesh_name + "Pts");
-            layer.init(ObjectId({ chunk_xcf, mesh_name,chunk_pointset }));
+            layer.init(ObjectId(POINTSET, mesh_name));
             auto& pr = layer.primitive_renderer;
             pr.color[0] = .5;
             pr.color[1] = 1.;
@@ -74,7 +76,7 @@ struct XCFExplorer : public Panel {
         }
         for (auto& elt : God::xcf[mesh_name].polylines) {
             RenderTubes& layer = God::layers.add<RenderTubes>(mesh_name + "Edges");
-            layer.init(ObjectId({ chunk_xcf, mesh_name,chunk_polylines , elt.first }));
+            layer.init(ObjectId(POLYLINES, {mesh_name, elt.first}));
             auto& pr = layer.primitive_renderer;
             pr.color[0] = .5;
             pr.color[1] = .5;
@@ -84,7 +86,7 @@ struct XCFExplorer : public Panel {
         }
         for (auto& elt : God::xcf[mesh_name].triangles) {
             RenderLambertTriangles& layer = God::layers.add<RenderLambertTriangles>(mesh_name + "Tri");
-            layer.init(ObjectId({ chunk_xcf, mesh_name,chunk_triangles, elt.first }));
+            layer.init(ObjectId(TRIANGLES, {mesh_name, elt.first}));
             auto& pr = layer.primitive_renderer;
             pr.color[0] = .8;
             pr.color[1] = .8;
@@ -94,7 +96,7 @@ struct XCFExplorer : public Panel {
         }
         for (auto& elt : God::xcf[mesh_name].quads) {
             RenderLambertQuads& layer = God::layers.add<RenderLambertQuads>(mesh_name + "Quad");
-            layer.init(ObjectId({ chunk_xcf, mesh_name,chunk_quads, elt.first }));
+            layer.init(ObjectId(QUADS, {mesh_name, elt.first}));
             auto& pr = layer.primitive_renderer;
             pr.color[0] = .8;
             pr.color[1] = .8;
@@ -106,12 +108,14 @@ struct XCFExplorer : public Panel {
 
 
     void generate_gui() {
-        static std::set<ObjectId> selected;
+//      static std::set<ObjectId> selected;
+        static std::set<ObjectId, std::function<bool(ObjectId, ObjectId)>> selected ([&](const ObjectId& a, const ObjectId& b) { return a.names > b.names; });
+
 
         {// sync with property panel
-            PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(ObjectId({ chunk_panel,"property_window" })));
+            PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(ObjectId(PANEL, "property_window")));
             std::vector<ObjectId> to_kill;
-            for (auto sel : selected) if (sel.chunks.size() == 2 && sel.chunks.front() == chunk_layer) to_kill.push_back(sel);
+            for (auto sel : selected) if (sel.names.size() == 1 && sel.path == LAYER) to_kill.push_back(sel);
             for (auto id : to_kill)selected.erase(id);
             for (auto id : pan.layers)
                 if (!selected.contains(id))
@@ -156,7 +160,7 @@ struct XCFExplorer : public Panel {
                 ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.8f, 0.3f, 1.0f));
                 ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.15f, 0.6f, 0.15f, 1.0f));
             }
-            if (ImGui::Button(label(id.chunks[1], "xcf_window")))
+            if (ImGui::Button(label(id.names[0], "xcf_window")))
                 switch_selection(id);
             if (was_pressed) ImGui::PopStyleColor(3);
             };
@@ -165,39 +169,39 @@ struct XCFExplorer : public Panel {
         // ==> MultiMesh
         for (auto& [mm_name, mm] : God::xcf) {
 
-            auto add_mesh = [&](std::string mesh_name,std::string mesh_type){
+            auto add_mesh = [&](std::string mesh_name, ObjectType  mesh_type, std::string gna){
                 ImGui::Separator;
-                ObjectId mesh_id({ chunk_xcf,mm_name,mesh_type,mesh_name });
-                bool open_mesh = ImGui::TreeNodeEx(label(mesh_type + "." + mesh_name, mm_name), flag(mesh_id, false));
+                ObjectId mesh_id(mesh_type, {mm_name,mesh_name});
+                bool open_mesh = ImGui::TreeNodeEx(label(gna + "." + mesh_name, mm_name), flag(mesh_id, false));
                 if (ImGui::IsItemClicked()) switch_selection(mesh_id);
                 if (!open_mesh) return;
                 for (int i = 0; i < God::layers.size(); i++)
                     if (God::layers[i].require(mesh_id))
-                        add_switch_button(ObjectId({ chunk_layer,God::layers.ith_name(i) }));
+                        add_switch_button(ObjectId(LAYER, God::layers.ith_name(i)));
                 ImGui::TreePop();
             };
 
             static bool closable_mm_group = true;
-            ObjectId mm_id({ chunk_xcf,mm_name });   
+            ObjectId mm_id(MULTIMESH, mm_name);   
             bool open_mm = (ImGui::TreeNodeEx(label(mm_name, "mm"), flag(mm_id)));
             if (ImGui::IsItemClicked()) switch_selection(mm_id);
             if (open_mm){
                 // ==> pointset
                 ImGui::Separator;
-                ObjectId mesh_id({ chunk_xcf,mm_name,chunk_pointset});
+                ObjectId mesh_id(POINTSET, mm_name);
                 bool open_mesh = ImGui::TreeNodeEx(label("pointset", mm_name), flag(mesh_id, true));
                 if (ImGui::IsItemClicked()) switch_selection(mesh_id);
                 ImGui::TreePop();
                 for (int i = 0; i < God::layers.size(); i++)
                     if (God::layers[i].require(mesh_id))
-                        add_switch_button(ObjectId({ chunk_layer,God::layers.ith_name(i) }));
+                        add_switch_button(ObjectId(LAYER, God::layers.ith_name(i)));
 
 
                 // ==> polylines
-                for (auto& [mesh_name, obj] : mm.polylines) add_mesh(mesh_name, "polylines");
+                for (auto& [mesh_name, obj] : mm.polylines) add_mesh(mesh_name, POLYLINES, "polylines");
 
                 // ==> triangles
-                for (auto& [mesh_name, obj] : mm.triangles) add_mesh(mesh_name, "triangles");
+                for (auto& [mesh_name, obj] : mm.triangles) add_mesh(mesh_name, TRIANGLES, "triangles");
                 
                 ImGui::TreePop();
 
@@ -205,9 +209,9 @@ struct XCFExplorer : public Panel {
         }
 
         {// sync with property panel
-            PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(ObjectId({ chunk_panel,"property_window" })));
+            PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(ObjectId(PANEL, "property_window")));
             pan.layers.clear();
-            for (auto sel : selected)if (!sel.chunks.empty() && sel.chunks[0] == chunk_layer) pan.layers.push_back(sel);
+            for (auto sel : selected)if (sel.path == LAYER) pan.layers.push_back(sel);
         }
 
         //std::vector<std::string> mm_to_kill;
@@ -260,7 +264,6 @@ struct XCFExplorer : public Panel {
         //				id.show();
         //				God::xcf.kill_mesh(id);
         //			}
-
 
 
         //			{// create new triangles

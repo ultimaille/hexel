@@ -5,11 +5,12 @@ struct LayerExplorer : public Panel {
         std::vector<bool> pressed(God::layers.size(), false);
 
         {// sync pressed with the property windows
-            ObjectId id({ chunk_panel,"property_window" });
-            if (id.ptr() != nullptr) {
+            ObjectId id(PANEL, "property_window");
+            if (id.ref() != std::nullopt) {
+
                 PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(id));
                 for (auto id : pan.layers)
-                    pressed[God::layers.find(id.chunks.back())] = true;
+                    pressed[God::layers.find(id.names.back())] = true;
             }
             else Log::add("Property_window not found");
         }
@@ -82,13 +83,13 @@ struct LayerExplorer : public Panel {
         }
 
         {// update the set of current layers in the property windows
-            ObjectId id({ chunk_panel,"property_window" });
+            ObjectId id(PANEL, "property_window");
             PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(id));
 
             pan.layers.clear();
             for (int i = 0; i < God::layers.size(); ++i){
                 if (pressed[i])
-                    pan.layers.push_back(ObjectId({ chunk_layer, God::layers.ith_name(i) }));
+                    pan.layers.push_back(ObjectId(LAYER, God::layers.ith_name(i)));
             }
         }
         ImGui::End();
