@@ -64,7 +64,7 @@ struct ObjectId {
         std::cerr << std::endl;
     }
 
-    std::vector<Type> path;
+    Type path;
     std::vector<std::string> names; // multimesh name, mesh name, etc.
 };
 
