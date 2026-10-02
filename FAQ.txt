@@ -1,5 +1,34 @@
+==================================================================
+FAQ
+==================================================================
 Convention et choix d'implementation peu intuitifs:
 
 * xcf et layermanager héritent en private pour forcer l'emission d'event create/killed
 
 * label() permet la construction des labels imgui
+==================================================================
+TODO
+==================================================================
+
+==================================================================
+GITERIES
+==================================================================
+
+// create new branch
+git branch -d nicobranch
+git push origin --delete nicobranch
+git switch -c nicobranch
+
+//loop to sync computers / backup my work
+  git add .
+  git commit -m "blah"
+  git push -u origin nicobranch
+
+// move modifs to master
+git switch master
+git pull
+git merge nicobranch
+-> resolve conflict in IDE
+git commit -m "merged"
+git push
+

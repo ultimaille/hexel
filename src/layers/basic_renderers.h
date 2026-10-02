@@ -20,6 +20,10 @@ bool no_gl_error() {
 struct SimplexRenderer{
 	GLuint vao,vbo;
 	int npts;
+	GLuint shaderProgram;
+	float light_direction[3] = { 1,1,1 };
+	int layer_id = -1;
+
 	GLuint colormap;
 	int texture_repeat=1;
 	int texture_id=0;
@@ -28,9 +32,6 @@ struct SimplexRenderer{
 	float color[3] = {.5,.8,.5};
 	float color_map_prop=1;
 	float ambient_prop=.5;
-	GLuint shaderProgram;
-	float light_direction[3] = { 1,1,1 };
-	int layer_id = -1;
 
 	struct Clipping {
 		int mode = 1; // {0 = cell, 1 = std, 2 = slice}
@@ -346,6 +347,13 @@ struct SegmentRenderer: public SimplexRenderer{
 struct TriangleRenderer: public SimplexRenderer{
 
 	using SimplexRenderer::SimplexRenderer;
+	int cull_mode = 0;
+	int edge_width = 1;
+	bool show_edge = true;
+	float edge_color[3] = { 0,0,1 };
+
+
+
 
 	struct Vertex {
 		std::array<float, 3> pos;
@@ -353,6 +361,26 @@ struct TriangleRenderer: public SimplexRenderer{
 		float v; // value
 		std::array<float, 3> b; // bary
 	};
+
+	void generate_gui(std::string name){
+		SimplexRenderer::generate_gui(name);
+		static const char* cull_modes[] = { "NONE","BACK","FRONT" };
+		const char* combo_preview_value = cull_modes[cull_mode];
+		if (ImGui::BeginCombo(label("CULL " + std::string(cull_modes[cull_mode])), combo_preview_value, ImGuiComboFlags_NoPreview)){
+			for (int n = 0; n < 3; n++){
+				const bool is_selected = (cull_mode == n);
+				if (ImGui::Selectable(cull_modes[n], is_selected)) cull_mode = n;
+				if (is_selected)ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
+		}
+		const ImU32 u32_1 = 1, u32_10 = 10;
+		ImGui::Checkbox(label("show edges", name), &show_edge);
+		if (show_edge){
+			ImGui::DragScalar("width", ImGuiDataType_S32, &edge_width, 1, &u32_1, &u32_10, "%u pixels");
+			ImGui::ColorEdit3(label("EColor", name), (float*)&edge_color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+		}
+	}
 
 	void init_from_mesh(Triangles& tri, CornerAttribute<float>& value){
 		init();
@@ -459,9 +487,40 @@ struct TriangleRenderer: public SimplexRenderer{
 
 	void render(){
 		um_assert(no_gl_error());
+		if (cull_mode>0){
+			glEnable(GL_CULL_FACE);
+			if (cull_mode == 1) 
+				glCullFace(GL_BACK);
+			else  
+				glCullFace(GL_FRONT);
+		}
+
 		shared_setup_before_rendering();
+		
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glDrawArrays(GL_TRIANGLES,0,GLsizei(npts));
+		if (show_edge){
+			float save_color_map_prop = 0.;
+			std::swap(color_map_prop, save_color_map_prop);
+			FOR(d, 3) std::swap(color[d], edge_color[d]);
+
+			shared_setup_before_rendering();
+			glLineWidth(edge_width);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			glDrawArrays(GL_TRIANGLES, 0, GLsizei(npts));
+
+			std::swap(color_map_prop, save_color_map_prop);
+			FOR(d, 3) std::swap(color[d], edge_color[d]);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		}
+
+
 		glBindVertexArray(0);
+
+
+
+
+		glDisable(GL_CULL_FACE);
 		um_assert(no_gl_error());
 	}
 };
