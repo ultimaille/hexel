@@ -21,7 +21,7 @@ struct SSAO : RenderLayer {
     }
 
     void generate_gui(std::string name) override {
-		RenderLayer::generate_gui(name);
+        RenderLayer::generate_gui(name);
     }
 
     bool handle(Event) override { return true; }
@@ -84,8 +84,10 @@ struct SSAO : RenderLayer {
 
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, ao.color);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, ao.depth);
             glUniform1i(glGetUniformLocation(blur_program, "source_ao"), 0);
-
+            glUniform1i(glGetUniformLocation(blur_program, "source_depth"), 1);
             glUniform2f(glGetUniformLocation(blur_program, "blur_direction"), 1.0f, 0.0f);
             glUniform1f(glGetUniformLocation(blur_program, "texel_size"), 1.0f / float(target.width));
             glUniform1i(glGetUniformLocation(blur_program, "blur_radius"), 10);
@@ -101,10 +103,12 @@ struct SSAO : RenderLayer {
 
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, ao.color);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, ao.depth);
             glUniform1i(glGetUniformLocation(blur_program, "source_ao"), 0);
-
+            glUniform1i(glGetUniformLocation(blur_program, "source_depth"), 1);
             glUniform2f(glGetUniformLocation(blur_program, "blur_direction"), 0.0f, 1.0f);
-            glUniform1f(glGetUniformLocation(blur_program, "texel_size"), 1.0f / float(target.height));
+            glUniform1f(glGetUniformLocation(blur_program, "texel_size"), 1.0f / float(target.width));
             glUniform1i(glGetUniformLocation(blur_program, "blur_radius"), 10);
 
             draw_quad();
