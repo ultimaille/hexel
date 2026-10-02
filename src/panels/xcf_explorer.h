@@ -107,6 +107,18 @@ struct XCFExplorer : public Panel {
 
     void generate_gui() {
         static std::set<ObjectId> selected;
+
+        {// sync with property panel
+            PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(ObjectId({ chunk_panel,"property_window" })));
+            std::vector<ObjectId> to_kill;
+            for (auto sel : selected) if (sel.chunks.size() == 2 && sel.chunks.front() == chunk_layer) to_kill.push_back(sel);
+            for (auto id : to_kill)selected.erase(id);
+            for (auto id : pan.layers)
+                if (!selected.contains(id))
+                    selected.insert(id);
+        }
+
+
         ImGui::Begin("XCFViewer", nullptr);
 
         {// load new mm
@@ -126,7 +138,6 @@ struct XCFExplorer : public Panel {
             return ImGuiTreeNodeFlags_OpenOnArrow |
                 ImGuiTreeNodeFlags_SpanAvailWidth |
                 ImGuiTreeNodeFlags_OpenOnDoubleClick |
-                //ImGuiTreeNodeFlags_Framed |
                 ImGuiTreeNodeFlags_DrawLinesFull |
                 (is_selected ? ImGuiTreeNodeFlags_Selected : 0) |
                 (leaf ? ImGuiTreeNodeFlags_Leaf : 0);
@@ -138,53 +149,65 @@ struct XCFExplorer : public Panel {
             if (selected.contains(object_id)) selected.erase(object_id);
             else selected.insert(object_id);
             };
+        auto add_switch_button = [&](ObjectId id){
+            bool was_pressed = selected.contains(id);
+            if (was_pressed){
+                ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.7f, 0.2f, 1.0f));
+                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.8f, 0.3f, 1.0f));
+                ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.15f, 0.6f, 0.15f, 1.0f));
+            }
+            if (ImGui::Button(label(id.chunks[1], "xcf_window")))
+                switch_selection(id);
+            if (was_pressed) ImGui::PopStyleColor(3);
+            };
+
+
         // ==> MultiMesh
         for (auto& [mm_name, mm] : God::xcf) {
+
+            auto add_mesh = [&](std::string mesh_name,std::string mesh_type){
+                ImGui::Separator;
+                ObjectId mesh_id({ chunk_xcf,mm_name,mesh_type,mesh_name });
+                bool open_mesh = ImGui::TreeNodeEx(label(mesh_type + "." + mesh_name, mm_name), flag(mesh_id, false));
+                if (ImGui::IsItemClicked()) switch_selection(mesh_id);
+                if (!open_mesh) return;
+                for (int i = 0; i < God::layers.size(); i++)
+                    if (God::layers[i].require(mesh_id))
+                        add_switch_button(ObjectId({ chunk_layer,God::layers.ith_name(i) }));
+                ImGui::TreePop();
+            };
+
             static bool closable_mm_group = true;
-            ObjectId mm_id({ chunk_xcf,mm_name });
+            ObjectId mm_id({ chunk_xcf,mm_name });   
             bool open_mm = (ImGui::TreeNodeEx(label(mm_name, "mm"), flag(mm_id)));
             if (ImGui::IsItemClicked()) switch_selection(mm_id);
             if (open_mm){
                 // ==> pointset
-                if (ImGui::TreeNode(label("pointset", mm_name))) {
-                    ImGui::TreePop();
-                }
+                ImGui::Separator;
+                ObjectId mesh_id({ chunk_xcf,mm_name,chunk_pointset});
+                bool open_mesh = ImGui::TreeNodeEx(label("pointset", mm_name), flag(mesh_id, true));
+                if (ImGui::IsItemClicked()) switch_selection(mesh_id);
+                ImGui::TreePop();
+                for (int i = 0; i < God::layers.size(); i++)
+                    if (God::layers[i].require(mesh_id))
+                        add_switch_button(ObjectId({ chunk_layer,God::layers.ith_name(i) }));
+
+
                 // ==> polylines
-                if (!mm.polylines.empty()) if (ImGui::TreeNode(label("polylines", mm_name))) {
-                    ImGui::TreePop();
-                }
+                for (auto& [mesh_name, obj] : mm.polylines) add_mesh(mesh_name, "polylines");
+
                 // ==> triangles
-                for (auto& [tri_name, obj] : mm.triangles) {
-                    ImGui::Separator;
-                    ObjectId tri_id({ chunk_xcf,mm_name,"triangles",tri_name });
-                    bool open_tri = ImGui::TreeNodeEx(label("triangles." + tri_name, mm_name + "tri"), flag(tri_id, false));
-                    if (ImGui::IsItemClicked()) switch_selection(tri_id);
-                    if (open_tri) {
-                        for (int i = 0; i < God::layers.size(); i++) {
-                            if (God::layers[i].require(tri_id)) {
-                                ObjectId layer_id({ chunk_layer,God::layers.ith_name(i) });
-                                if (ImGui::Button(label(God::layers.ith_name(i), mm_name + "tri")))
-                                    switch_selection(layer_id);
-                            }
-                        }
-                        ImGui::TreePop();
-                    }
-                }
+                for (auto& [mesh_name, obj] : mm.triangles) add_mesh(mesh_name, "triangles");
+                
                 ImGui::TreePop();
 
             }
         }
-        //selected.show();
-        {
-            //sel.show();
-            ObjectId id({ chunk_panel,"property_window" });
-            PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(id));
-            bool modified = false;
-            for (auto sel : selected)if (!sel.chunks.empty() && sel.chunks[0] == chunk_layer){// update the set of current layers in the property windows
-                if (!modified) { modified = true; pan.layers.clear(); }
-                sel.show();
-                pan.layers.push_back(sel);
-            }
+
+        {// sync with property panel
+            PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(ObjectId({ chunk_panel,"property_window" })));
+            pan.layers.clear();
+            for (auto sel : selected)if (!sel.chunks.empty() && sel.chunks[0] == chunk_layer) pan.layers.push_back(sel);
         }
 
         //std::vector<std::string> mm_to_kill;
