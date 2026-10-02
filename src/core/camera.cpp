@@ -131,7 +131,7 @@ void TrackBallCamera::handle(Event event) {
 
     resize(viewport.x, viewport.y);
 
-    if (event.who == ObjectId({chunk_mouse}) && !ImGui::GetIO().WantCaptureMouse) {
+    if (event.who == events::MOUSE && !ImGui::GetIO().WantCaptureMouse) {
         const double wheel = God::mouse.wheel_speed;
         if (wheel)
             zoom(wheel);

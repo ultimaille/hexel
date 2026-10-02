@@ -3,6 +3,8 @@
 #include <filesystem>
 #include <string>
 
+using namespace events;
+
 bool FilePopup(const char* id, std::string& out, std::vector<const char*> extensions) {
 	static std::filesystem::path path, sel;
 	static bool init = false;
@@ -56,11 +58,11 @@ struct XCFExplorer : public Panel {
 
 	void load_mm_with_default_layers(std::string path) {
 		auto mesh_name = God::xcf.load_multimesh(path, true);
-		look_at_pointset(ObjectId({ chunk_xcf,mesh_name }));
+		look_at_pointset(ObjectId(events::XCF, mesh_name));
 
 		{// point set
 			RenderSpheres& layer = God::layers.add<RenderSpheres>(mesh_name + "Pts");
-			layer.init(ObjectId({ chunk_xcf, mesh_name,chunk_pointset }));
+			layer.init(ObjectId(POINTSET, mesh_name));
 			auto& pr = layer.primitive_renderer;
 			pr.color[0] = .5;
 			pr.color[1] = 1.;
@@ -71,7 +73,7 @@ struct XCFExplorer : public Panel {
 		}
 		for (auto& elt : God::xcf[mesh_name].polylines) {
 			RenderTubes& layer = God::layers.add<RenderTubes>(mesh_name + "Edges");
-			layer.init(ObjectId({ chunk_xcf, mesh_name,chunk_polylines , elt.first }));
+			layer.init(ObjectId(POLYLINES, {mesh_name, elt.first}));
 			auto& pr = layer.primitive_renderer;
 			pr.color[0] = .5;
 			pr.color[1] = .5;
@@ -81,7 +83,7 @@ struct XCFExplorer : public Panel {
 		}
 		for (auto& elt : God::xcf[mesh_name].triangles) {
 			RenderLambertTriangles& layer = God::layers.add<RenderLambertTriangles>(mesh_name + "Tri");
-			layer.init(ObjectId({ chunk_xcf, mesh_name,chunk_triangles, elt.first }));
+			layer.init(ObjectId(TRIANGLES, {mesh_name, elt.first}));
 			auto& pr = layer.primitive_renderer;
 			pr.color[0] = .8;
 			pr.color[1] = .8;
@@ -133,7 +135,7 @@ struct XCFExplorer : public Panel {
 					std::vector<ObjectId> to_kill;
 					for (auto& [tri_name, obj] : mm.triangles) {
 						static bool closable_mesh_group = true;
-						ObjectId id({ chunk_xcf,mm_name,"triangles",tri_name });
+						ObjectId id(TRIANGLES, {mm_name, tri_name});
 						if (ImGui::CollapsingHeader(label(tri_name, mm_name+"tri"), &closable_mesh_group)) {
 							// render layers
 							for(int i=0;i< God::layers.size();i++){
@@ -150,7 +152,7 @@ struct XCFExplorer : public Panel {
 							tri.disconnect();
 							tri.delete_facets(to_kill);
 							tri.connect();
-							id.emit(UPDATED);
+							id.broadcast(UPDATED);
 						}
 
 						// delete if the cross is pressed
@@ -160,7 +162,6 @@ struct XCFExplorer : public Panel {
 						}
 					}
 					for (auto id : to_kill) {
-						id.show();
 						God::xcf.kill_mesh(id);
 					}
 

@@ -38,6 +38,7 @@ struct LayerManager: private Registry<RenderLayer> {
     std::string ith_name(int i){ return items[i].name; }
     void swap(int i, int j){ std::swap(items[i], items[j]); }
     template<class T> T& add(std::string str){ return emplace_back<T>(str); }
+    bool contains(std::string s) const { return Registry<RenderLayer>::contains(s); }
 
 
     void render() {
@@ -45,8 +46,8 @@ struct LayerManager: private Registry<RenderLayer> {
             if (obj->visible)
                 obj->render();
     }
-    void handle(Event event) { 
-        if (event.who == ObjectId({ chunk_mouse })) return;
+    void handle(Event event) {
+        if (event.who == events::MOUSE) return;
 
         // dispatch events
         for (auto& [name,obj] : *this) obj->handle(event);
@@ -54,12 +55,12 @@ struct LayerManager: private Registry<RenderLayer> {
 
         // manage lifecycle events (KILLED MESH)
         std::vector<std::string> to_kill;
-        if (event.what_happened == KILLED) for (int i = 0; i < this->size(); i) {
+        if (event.what_happened == events::KILLED) for (int i = 0; i < this->size(); i) {
             if ((*this)[i].require(event.who))
                 erase(i);
             else i++;
         }
-        if (event.what_happened == UPDATED) 
+        if (event.what_happened == events::UPDATED) 
             for(auto& shad:items)
                 if (shad.object->require(event.who)) 
                     shad.object->reset();
@@ -80,7 +81,7 @@ struct LayerManager: private Registry<RenderLayer> {
         int id = find(layer_name);
         std::swap(items[id],items.back());
         items.pop_back();
-        ObjectId({ chunk_layer, layer_name }).emit(KILLED);
+        ObjectId(events::LAYER, layer_name).broadcast(events::KILLED);
     }
 
     void destroy() {

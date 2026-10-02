@@ -1,23 +1,28 @@
 #include "event.h"
 #include "core.h"
 
+using namespace events;
 
-void ObjectId::emit(EventType e) {
+void ObjectId::broadcast(EventType e) {
     God::events.queue.emplace(Event(*this, e));
 }
 
-std::optional<ObjectId::ObjectPtr> ObjectId::ptr() {
+std::optional<ObjectId::ObjectRef> ObjectId::ref() {
     switch (path) {
-        case Type::KEYBOARD:
+        case KEYBOARD:
             return std::ref(God::keys);
 
-        case Type::MOUSE:
+        case MOUSE:
             return std::ref(God::mouse);
 
-        case Type::CAMERA:
+        case CAMERA:
             return std::ref(God::camera);
 
-        case Type::LAYER:
+        case LAYER:
+            if (names.size() != 1) return std::nullopt;
+            if (!God::layers.contains(names[0])) return std::nullopt;
+            return std::ref(God::layers[names[0]]);
+
         /* TODO
             if (path.size() != 2) return std::nullopt;
             // Assuming LayerManager has a way to access layers by name
@@ -27,77 +32,63 @@ std::optional<ObjectId::ObjectPtr> ObjectId::ptr() {
             */
             return std::nullopt;
 
-        case Type::XCF: {
+        case POINTSET: {
+            if (names.size() != 1) return std::nullopt;
+            std::string mm = names[0];
+            if (!God::xcf.contains(mm)) return std::nullopt;
+            return std::ref(God::xcf[mm].pointset);
+        }
+
+        case POLYLINES:
+        case TRIANGLES:
+        case QUADS:
+        case POLYGONS:
+        case TETRAHEDRA:
+        case HEXAHEDRA:
+        case WEDGES:
+        case PYRAMIDS: {
             if (names.size() != 2) return std::nullopt;
             std::string mm = names[0];
             std::string m  = names[1];
-            if (!God::xcf.contains(mm) ) return std::nullopt;
+            if (!God::xcf.contains(mm)) return std::nullopt;
 
-/*
-            auto& multimesh = God::xcf[mm_name];
+            auto& multimesh = God::xcf[mm];
 
-            // Return the multimesh itself (if depth == 2)
-            if (path.size() == 2) {
-                // TODO: How to return the multimesh container?
-                return std::nullopt;
-            }
-
-            // Navigate deeper into mesh
-            if (path.size() < 4) return std::nullopt;
-
-            Type mesh_type = path[1];
-            std::string mesh_name = names[1];
-
-            switch (mesh_type) {
-                case Type::POINTSET:
-                    if (path.size() == 3) return std::ref(multimesh.pointset);
-                    if (path.size() == 4 && path[3] == Type::POINTSET) {
-                        // Accessing pointset attributes
-                        return std::ref(multimesh.pointset); // TODO: return attributes
-                    }
-                    return std::nullopt;
-
-                case Type::POLYLINES:
-                    if (!multimesh.polylines.contains(mesh_name)) return std::nullopt;
-                    return std::ref(multimesh.polylines[mesh_name].mesh);
-
-                case Type::TRIANGLES:
-                    if (!multimesh.triangles.contains(mesh_name)) return std::nullopt;
-                    return std::ref(multimesh.triangles[mesh_name].mesh);
-
-                case Type::QUADS:
-                    if (!multimesh.quads.contains(mesh_name)) return std::nullopt;
-                    return std::ref(multimesh.quads[mesh_name].mesh);
-
-                case Type::POLYGONS:
-                    if (!multimesh.polygons.contains(mesh_name)) return std::nullopt;
-                    return std::ref(multimesh.polygons[mesh_name].mesh);
-
-                case Type::TETRAHEDRA:
-                    if (!multimesh.tetrahedra.contains(mesh_name)) return std::nullopt;
-                    return std::ref(multimesh.tetrahedra[mesh_name].mesh);
-
-                case Type::HEXAHEDRA:
-                    if (!multimesh.hexahedra.contains(mesh_name)) return std::nullopt;
-                    return std::ref(multimesh.hexahedra[mesh_name].mesh);
-
-                case Type::WEDGES:
-                    if (!multimesh.wedges.contains(mesh_name)) return std::nullopt;
-                    return std::ref(multimesh.wedges[mesh_name].mesh);
-
-                case Type::PYRAMIDS:
-                    if (!multimesh.pyramids.contains(mesh_name)) return std::nullopt;
-                    return std::ref(multimesh.pyramids[mesh_name].mesh);
+            switch (path) {
+                case POLYLINES:
+                    if (!multimesh.polylines.contains(m)) return std::nullopt;
+                    return std::ref(multimesh.polylines[m]);
+                case TRIANGLES:
+                    if (!multimesh.triangles.contains(m)) return std::nullopt;
+                    return std::ref(multimesh.triangles[m]);
+                case QUADS:
+                    if (!multimesh.quads.contains(m)) return std::nullopt;
+                    return std::ref(multimesh.quads[m]);
+                case POLYGONS:
+                    if (!multimesh.polygons.contains(m)) return std::nullopt;
+                    return std::ref(multimesh.polygons[m]);
+                case TETRAHEDRA:
+                    if (!multimesh.tetrahedra.contains(m)) return std::nullopt;
+                    return std::ref(multimesh.tetrahedra[m]);
+                case HEXAHEDRA:
+                    if (!multimesh.hexahedra.contains(m)) return std::nullopt;
+                    return std::ref(multimesh.hexahedra[m]);
+                case WEDGES:
+                    if (!multimesh.wedges.contains(m)) return std::nullopt;
+                    return std::ref(multimesh.wedges[m]);
+                case PYRAMIDS:
+                    if (!multimesh.pyramids.contains(m)) return std::nullopt;
+                    return std::ref(multimesh.pyramids[m]);
                 default:
-                    return std::nullopt;
+                    um_assert(!"Something is missing here");
             }
-*/
         }
 
         default:
             return std::nullopt;
     }
 }
+/*
 
 
 void* ObjectId::ptr() {
@@ -142,7 +133,7 @@ void* ObjectId::ptr() {
     um_assert(!"should not reach this point");
     return nullptr;
 }
-
+*/
 
 void EventManager::dispatch() {
     while (!queue.empty()) {
@@ -153,29 +144,33 @@ void EventManager::dispatch() {
     }
 }
 
+ObjectId::operator PointSet&() {
+    return as<PointSet>();
+}
+
+ObjectId::operator PointSetAttributes&() {
+    return as<PointSetAttributes>();
+}
+
 ObjectId::operator Triangles&() {
-#if 1
-    auto *p = static_cast<MultiMesh::MeshAttr<Triangles, SurfaceAttributes>*>(ptr());
-    um_assert(p != nullptr);
-    return p->mesh;
-#else
-    um_assert(chunks.size() == 4);
-    um_assert(chunks[0] == chunk_xcf);
-    std::string mm = chunks[1];
-    um_assert(God::xcf.contains(mm));
-    um_assert(chunks[2] == chunk_triangles);
-    std::string mesh = chunks[3];
-    um_assert(God::xcf[mm].triangles.contains(mesh));
-    return God::xcf[mm].triangles[mesh].mesh;
-#endif
+    auto &ma = as<MultiMesh::MeshAttr<Triangles, SurfaceAttributes>>();
+    return ma.mesh;
 }
 
 ObjectId::operator SurfaceAttributes&() {
-    auto *p = static_cast<MultiMesh::MeshAttr<Triangles, SurfaceAttributes>*>(ptr());
-    um_assert(p != nullptr);
-    return p->attributes;
+    switch (path) {
+        case TRIANGLES: return as<MultiMesh::MeshAttr<Triangles, SurfaceAttributes>>().attributes;
+        case QUADS:     return as<MultiMesh::MeshAttr<Quads,     SurfaceAttributes>>().attributes;
+        case POLYGONS:  return as<MultiMesh::MeshAttr<Polygons,  SurfaceAttributes>>().attributes;
+        default: um_assert(!"invalid cast");
+    }
 }
 
+
+/*
+
+
+/*
 ObjectId::operator PointSet&() {
     auto *p = static_cast<PointSet *>(ptr());
     um_assert(p != nullptr);
@@ -200,4 +195,4 @@ ObjectId::operator PolyLineAttributes&() {
     return p->attributes;
 }
 
-
+*/

@@ -1,14 +1,15 @@
 #pragma once
 
 #include "basic.h"
-#include "event.h"
 #include <map>
 #include <ultimaille/all.h>
 
+struct ObjectId;
+
 namespace UM {
-    struct MultiMesh{
+    struct MultiMesh {
         template<class Mesh,class Attributes>
-        struct MeshAttr{
+        struct MeshAttr {
             Mesh mesh;
             Attributes attributes;
         };

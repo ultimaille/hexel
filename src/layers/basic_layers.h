@@ -28,7 +28,7 @@ struct RenderLambertTriangles : public RenderLayer{
 
     void init(ObjectId obj){
         mesh = obj;
-        um_assert(obj.ptr() != NULL);
+        um_assert(obj.ref() != std::nullopt);
         Triangles& tri = obj;
         SurfaceAttributes& attr = obj;
 
@@ -71,7 +71,7 @@ struct RenderSpheres : public RenderLayer{
     }
 
     bool handle(Event event) {
-        if (event.who == ObjectId({ chunk_mouse }) && God::mouse.clicked(GLFW_MOUSE_BUTTON_LEFT)) {
+        if (event.who == ObjectId(events::MOUSE) && God::mouse.clicked(GLFW_MOUSE_BUTTON_LEFT)) {
             Picker picker;
             auto [layer_id, primitive_id] = picker.at({ God::mouse.current.x, God::mouse.current.y });
             Log::add("layer id: " + std::to_string(layer_id));
