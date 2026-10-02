@@ -108,8 +108,7 @@ struct XCFExplorer : public Panel {
 
 
     void generate_gui() {
-//      static std::set<ObjectId> selected;
-        static std::set<ObjectId, std::function<bool(ObjectId, ObjectId)>> selected ([&](const ObjectId& a, const ObjectId& b) { return a.names > b.names; });
+        static std::set<ObjectId, std::function<bool(ObjectId, ObjectId)>> selected ([&](const ObjectId& a, const ObjectId& b) { if (a.path != b.path) return a.path < b.path; return a.names < b.names; });
 
 
         {// sync with property panel
