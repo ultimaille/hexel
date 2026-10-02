@@ -87,6 +87,18 @@ std::optional<ObjectId::ObjectRef> ObjectId::ref() {
 }
 
 
+ObjectId::operator KeyboardState& () {
+    return as<KeyboardState>();
+}
+
+ObjectId::operator MouseState& () {
+    return as<MouseState>();
+}
+
+ObjectId::operator Camera& () {
+    return as<Camera>();
+}
+
 ObjectId::operator Panel& () {
     return as<Panel>();
 }
@@ -122,12 +134,10 @@ ObjectId::operator Triangles&() {
     return ma.mesh;
 }
 
-
 ObjectId::operator Quads&() {
     auto &ma = as<MultiMesh::MeshAttr<Quads, SurfaceAttributes>>();
     return ma.mesh;
 }
-
 
 ObjectId::operator Polygons&() {
     auto &ma = as<MultiMesh::MeshAttr<Polygons, SurfaceAttributes>>();
@@ -141,7 +151,39 @@ ObjectId::operator SurfaceAttributes&() {
         case POLYGONS:  return as<MultiMesh::MeshAttr<Polygons,  SurfaceAttributes>>().attributes;
         default: um_assert(!"invalid cast");
     }
-    static SurfaceAttributes dummy;
+    static SurfaceAttributes dummy = {};
+    return dummy;
+}
+
+ObjectId::operator Tetrahedra&() {
+    auto &ma = as<MultiMesh::MeshAttr<Tetrahedra, VolumeAttributes>>();
+    return ma.mesh;
+}
+
+ObjectId::operator Hexahedra&() {
+    auto &ma = as<MultiMesh::MeshAttr<Hexahedra, VolumeAttributes>>();
+    return ma.mesh;
+}
+
+ObjectId::operator Wedges&() {
+    auto &ma = as<MultiMesh::MeshAttr<Wedges, VolumeAttributes>>();
+    return ma.mesh;
+}
+
+ObjectId::operator Pyramids&() {
+    auto &ma = as<MultiMesh::MeshAttr<Pyramids, VolumeAttributes>>();
+    return ma.mesh;
+}
+
+ObjectId::operator VolumeAttributes&() {
+    switch (path) {
+        case TETRAHEDRA: return as<MultiMesh::MeshAttr<Tetrahedra, VolumeAttributes>>().attributes;
+        case HEXAHEDRA:  return as<MultiMesh::MeshAttr<Hexahedra,  VolumeAttributes>>().attributes;
+        case WEDGES:     return as<MultiMesh::MeshAttr<Wedges,     VolumeAttributes>>().attributes;
+        case PYRAMIDS:   return as<MultiMesh::MeshAttr<Pyramids,   VolumeAttributes>>().attributes;
+        default: um_assert(!"invalid cast");
+    }
+    static VolumeAttributes dummy = {};
     return dummy;
 }
 
