@@ -13,6 +13,7 @@ struct RenderLayer {
     
     virtual bool handle(Event event) = 0;
     virtual bool require(ObjectId object) = 0;
+    ObjectId& mesh() { return _mesh; }
 
     virtual void render_primitive_id()              { Log::add("To be implemented"); }
     virtual void render_constant_color(int layerid) { Log::add("To be implemented"); }
@@ -27,6 +28,7 @@ struct RenderLayer {
     virtual int primitive_id(int vertex_id) { return vertex_id; } // TODO to pure virtual
 
     protected:
+    ObjectId _mesh;
     static inline int max_id = 0;
     int _id;
 };
@@ -47,7 +49,7 @@ struct LayerManager: private Registry<RenderLayer> {
                 obj->render();
     }
     void handle(Event event) {
-        if (event.who == events::MOUSE) return;
+        // if (event.who == events::MOUSE) return;
 
         // dispatch events
         for (auto& [name,obj] : *this) obj->handle(event);
@@ -70,7 +72,7 @@ struct LayerManager: private Registry<RenderLayer> {
 
     std::optional<std::reference_wrapper<RenderLayer>> find_by_id(int id) {
         for (auto &[name, obj] : *this) {
-            if (obj->id())
+            if (obj->id() == id)
                 return *obj;
         }
         return std::nullopt;

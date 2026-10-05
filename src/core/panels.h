@@ -27,17 +27,19 @@ struct PanelManager : private Registry<Panel> {
     void setup_dock_panels() {
         ImGuiIO& io = ImGui::GetIO();
         if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable) {
+
             ImGuiID dockspace_id = ImGui::GetID("MyDockspace");
             ImGuiViewport* viewport = ImGui::GetMainViewport();
             ImGui::DockSpaceOverViewport(dockspace_id, viewport, ImGuiDockNodeFlags_PassthruCentralNode);
             static auto first_time = true;
+            
             if (first_time) {
                 first_time = false;
                 // Clear out existing layout
                 ImGui::DockBuilderRemoveNode(dockspace_id);
 
-                ImGuiID top_bar_node = ImGui::DockBuilderAddNode(dockspace_id, ImGuiDockNodeFlags_NoTabBar);
-                ImGui::DockBuilderSetNodeSize(top_bar_node, ImVec2(viewport->WorkSize.x, 30.0f)); // Thin top 
+                // ImGuiID top_bar_node = ImGui::DockBuilderAddNode(dockspace_id, ImGuiDockNodeFlags_NoTabBar);
+                // ImGui::DockBuilderSetNodeSize(top_bar_node, ImVec2(viewport->WorkSize.x, 30.0f)); // Thin top 
 
                 ImGui::DockBuilderAddNode(dockspace_id, ImGuiDockNodeFlags_DockSpace);
                 ImGui::DockBuilderSetNodeSize(dockspace_id, ImGui::GetWindowSize());
