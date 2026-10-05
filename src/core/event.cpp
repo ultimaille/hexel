@@ -193,6 +193,7 @@ void EventManager::dispatch() {
         queue.pop();
         God::camera.handle(event);
         God::layers.handle(event);
+        God::mode.handle(event);
     }
 }
 

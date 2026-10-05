@@ -131,23 +131,23 @@ void TrackBallCamera::handle(Event event) {
 
     resize(viewport.x, viewport.y);
 
-    if (event.who == events::MOUSE && !ImGui::GetIO().WantCaptureMouse) {
-        const double wheel = God::mouse.wheel_speed;
-        if (wheel)
-            zoom(wheel);
-
-//      if (!God::keys.pressed(GLFW_KEY_LEFT_CONTROL))
-//          return;
-
-        vec2 a = { God::mouse.previous.x, God::mouse.previous.y };
-        vec2 b = { God::mouse.current.x,  God::mouse.current.y  };
-        if ((a - b).norm2() > 0) {
-            if (God::mouse.down(GLFW_MOUSE_BUTTON_LEFT))
-                pan(b - a, viewport);
-            else if (God::mouse.down(GLFW_MOUSE_BUTTON_RIGHT))
-                rotate(a, b, viewport);
-        }
-    }
+//    if (event.who == events::MOUSE && !ImGui::GetIO().WantCaptureMouse) {
+//        const double wheel = God::mouse.wheel_speed;
+//        if (wheel)
+//            zoom(wheel);
+//
+////      if (!God::keys.pressed(GLFW_KEY_LEFT_CONTROL))
+////          return;
+//
+//        vec2 a = { God::mouse.previous.x, God::mouse.previous.y };
+//        vec2 b = { God::mouse.current.x,  God::mouse.current.y  };
+//        if ((a - b).norm2() > 0) {
+//            if (God::mouse.down(GLFW_MOUSE_BUTTON_LEFT))
+//                pan(b - a, viewport);
+//            else if (God::mouse.down(GLFW_MOUSE_BUTTON_RIGHT))
+//                rotate(a, b, viewport);
+//        }
+//    }
 }
 
 float *row_major(const mat4x4 &m) {
