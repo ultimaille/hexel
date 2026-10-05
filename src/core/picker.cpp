@@ -1,6 +1,9 @@
 #include "core.h"
 
 Picker::Picker(vec4 rect) : rect(rect) {
+    God::context.begin_picking_frame();
+    God::layers.render();
+    God::context.end_picking_frame();
     God::context.render_target.read_framebuffer(layer_ids, rect, 1);
     God::context.render_target.read_framebuffer(vertex_ids, rect, 2);
 }
