@@ -20,7 +20,7 @@ struct RenderLambertTriangles : public RenderLayer{
             // auto l = God::layers.find_by_id(3);
             // bool old_val = l.value().get().visible;
             // l.value().get().visible = false;
-            Picker picker;
+            Picker picker({God::mouse.current.x, God::mouse.current.y, 1, 1});
 
             auto [layer_id, primitive_id, object_id] = picker.at({ God::mouse.current.x, God::mouse.current.y });
             Log::add("layer id: " + std::to_string(layer_id));

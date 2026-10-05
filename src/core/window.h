@@ -108,6 +108,15 @@ struct WindowContext {
         ImGui::NewFrame();
     }
 
+    void begin_scissor(vec4 rect) {
+        glEnable(GL_SCISSOR_TEST);
+        glScissor(rect[0], rect[1], rect[2], rect[3]);
+    }
+
+    void end_scissor() {
+        glDisable(GL_SCISSOR_TEST);
+    }
+
     void present_render_target() {
         if (!render_target.valid()) {
             Log::error("RenderTarget is invalid");

@@ -2,7 +2,9 @@
 
 Picker::Picker(vec4 rect) : rect(rect) {
     God::context.begin_frame();
+    God::context.begin_scissor(rect);
     God::layers.render();
+    God::context.end_scissor();
     God::context.end_frame(false);
     God::context.render_target.read_framebuffer(layer_ids, rect, 1);
     God::context.render_target.read_framebuffer(vertex_ids, rect, 2);
@@ -14,25 +16,22 @@ Picker::Picker() : Picker(vec4{0, 0,
 }
 
 std::tuple<int,int, ObjectId> Picker::at(vec2 uv) {
-    const int x = static_cast<int>(uv.x);
-    const int y = static_cast<int>(uv.y);
+    const int x = static_cast<int>(uv.x - rect[0]);
+    const int y = static_cast<int>(uv.y - rect[1]);
     const int w = static_cast<int>(rect[2]);
     const int h = static_cast<int>(rect[3]);
-    // Vérification des bornes pour éviter tout crash hors image
+    // Check limits to avoid out of image bound crash
     if (x < 0 || x >= w || y < 0 || y >= h) {
         return {-1, -1, ObjectId()};
     }
 
-    // Inversion de l'axe Y : l'origine OpenGL est en bas à gauche
+    // Invert Y axis : OpenGL origin is on bottom-left
     int flipped_y = h - 1 - y;
 
     int off = (flipped_y * w + x) * 4;
     int layer_id = decode(layer_ids, off);
     int vertex_id = decode(vertex_ids, off);
     auto layer_opt = God::layers.find_by_id(layer_id);
-    
-    
-
 
     // Retrieve primitive id from vertex id
     int primitive_id = -1;
