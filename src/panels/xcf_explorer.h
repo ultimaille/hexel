@@ -48,6 +48,14 @@ bool FilePopup(const char* id, std::string& out, std::vector<const char*> extens
 
 
 
+//void object_id_drag_source(ObjectId id, std::string name) {
+//    if (ImGui::BeginDragDropSource()) {
+//        ObjectId* ptr = new ObjectId(id);
+//        ImGui::SetDragDropPayload("OBJECTID", &ptr, sizeof(ObjectId*));
+//        ImGui::Text("Moving %s", name.c_str());
+//        ImGui::EndDragDropSource();
+//    }
+//}
 
 struct XCFExplorer : public Panel {
 
@@ -120,6 +128,19 @@ struct XCFExplorer : public Panel {
     void generate_gui() {
         static std::set<ObjectId, std::function<bool(ObjectId, ObjectId)>> selected ([&](const ObjectId& a, const ObjectId& b) { if (a.path != b.path) return a.path < b.path; return a.names < b.names; });
 
+        static ObjectId dnd_obj;
+        auto object_id_drag_source = [](ObjectId id, std::string name) {
+            if (ImGui::BeginDragDropSource()) {
+                //ObjectId* ptr = new ObjectId(id);
+                dnd_obj = id;
+                ObjectId* ptr = &dnd_obj;
+                ImGui::SetDragDropPayload("OBJECTID", & ptr, sizeof(ObjectId*));
+                //ImGui::SetDragDropPayload("OBJECTID", &ptr, sizeof(ObjectId*));
+                ImGui::Text("Moving %s", name.c_str());
+                ImGui::EndDragDropSource();
+            }
+       };
+
 
         {// sync with property panel
             PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(ObjectId(PANEL, "property_window")));
@@ -183,6 +204,8 @@ struct XCFExplorer : public Panel {
                 ObjectId mesh_id(mesh_type, {mm_name,mesh_name});
                 bool open_mesh = ImGui::TreeNodeEx(label(gna + "." + mesh_name, mm_name), flag(mesh_id, false));
                 if (ImGui::IsItemClicked()) switch_selection(mesh_id);
+                object_id_drag_source(mesh_id, mm_name+"."+mesh_name);
+
                 if (!open_mesh) return;
                 for (int i = 0; i < God::layers.size(); i++)
                     if (God::layers[i].require(mesh_id))
@@ -193,12 +216,17 @@ struct XCFExplorer : public Panel {
             static bool closable_mm_group = true;
             ObjectId mm_id(MULTIMESH, mm_name);   
             bool open_mm = (ImGui::TreeNodeEx(label(mm_name, "mm"), flag(mm_id)));
+            object_id_drag_source(mm_id, mm_name);
+
+
             if (ImGui::IsItemClicked()) switch_selection(mm_id);
             if (open_mm){
                 // ==> pointset
                 ImGui::Separator;
                 ObjectId mesh_id(POINTSET, mm_name);
                 bool open_mesh = ImGui::TreeNodeEx(label("pointset", mm_name), flag(mesh_id, true));
+                object_id_drag_source(mesh_id, mm_name+".pointset");
+
                 if (ImGui::IsItemClicked()) switch_selection(mesh_id);
                 ImGui::TreePop();
                 for (int i = 0; i < God::layers.size(); i++)

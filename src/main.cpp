@@ -36,6 +36,52 @@ namespace InteractionMode{
             God::layers.add<SSAO>("SSAO").init();
         }
 
+        std::string to_string(events::ObjectType path) {
+			switch (path) {
+			case events::ObjectType::MULTIMESH:     return "multimesh";
+			case events::ObjectType::POINTSET:      return "pointset";
+			case events::ObjectType::TRIANGLES:     return "triangles";
+			case events::ObjectType::POLYLINES:     return "polylines";
+			};
+
+            return "???";
+        }
+        std::string to_string(ObjectId obj) {
+            std::string res = to_string(obj.path)+": ";
+            for (auto& s : obj.names) res += "->"+s;
+            return  res;
+        }
+        
+        void command_gui() {
+            static ObjectId arg0;
+            bool press = ImGui::Button(label(to_string(arg0), "command_gui"));
+            if (ImGui::BeginDragDropTarget()) {
+                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("OBJECTID")) {
+                    arg0 = **(const ObjectId**)payload->Data;
+                    //delete static_cast<ObjectId*>(*(ObjectId**)payload->Data);
+                    Log::add(std::to_string(arg0.path));
+                    for(auto s: arg0.names) Log::add(s);
+                    Log::add(to_string(arg0));
+                } 
+                ImGui::EndDragDropTarget();
+            }
+            
+            if (press) {
+                Log::add("need to switch to select arg0");
+            }
+
+
+            if (ImGui::BeginMenu("Run...")) {
+                ImGui::MenuItem("create");
+                if (ImGui::MenuItem("New")) {}
+
+                if (ImGui::BeginMenu("sous menu")) {
+                    ImGui::MenuItem("fish_hat.h");
+                    ImGui::EndMenu();
+                }
+                ImGui::EndMenu();
+            }
+        }
 
         void define_gui() {
             ImGui::Begin("ModeWindow", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
@@ -49,6 +95,9 @@ namespace InteractionMode{
             if (ImGui::Button("CurrentTest")) {
                 Log::add("Starting new test");
             }
+            ImGui::Separator();
+            command_gui();
+
             ImGui::End();
         }
     };
