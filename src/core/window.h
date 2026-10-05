@@ -96,21 +96,6 @@ struct WindowContext {
         RenderTarget::bind_default(render_target.width, render_target.height);
     }
 
-    void begin_picking_frame() {
-        if (!render_target.valid()) {
-            Log::error("RenderTarget is invalid");
-            return;
-        }
-        render_target.clear(0.05f, 0.05f, 0.08f, 1.0f);
-
-        ImGui_ImplOpenGL3_NewFrame();
-    }
-
-    void end_picking_frame() {
-        bind_default_framebuffer();
-        glfwSwapBuffers(window);
-    }
-
     void begin_frame() {
         if (!render_target.valid()) {
             Log::error("RenderTarget is invalid");
@@ -140,8 +125,8 @@ struct WindowContext {
         glViewport(0, 0, width, height);
     }
 
-    void end_frame() {
-        present_render_target();
+    void end_frame(bool present = true) {
+        if (present) present_render_target();
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

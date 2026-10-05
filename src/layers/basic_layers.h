@@ -16,7 +16,7 @@ struct RenderLambertTriangles : public RenderLayer{
     }
 
     bool handle(Event event) { 
-        if (event.who == ObjectId(events::MOUSE) && God::mouse.clicked(GLFW_MOUSE_BUTTON_LEFT)) {
+        if (event.who == ObjectId(events::MOUSE) && !ImGui::GetIO().WantCaptureMouse && God::mouse.clicked(GLFW_MOUSE_BUTTON_LEFT)) {
             // auto l = God::layers.find_by_id(3);
             // bool old_val = l.value().get().visible;
             // l.value().get().visible = false;
