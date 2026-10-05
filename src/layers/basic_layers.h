@@ -17,9 +17,9 @@ struct RenderLambertTriangles : public RenderLayer{
 
     bool handle(Event event) { 
         if (event.who == ObjectId(events::MOUSE) && God::mouse.clicked(GLFW_MOUSE_BUTTON_LEFT)) {
-            auto l = God::layers.find_by_id(3);
-            bool old_val = l.value().get().visible;
-            l.value().get().visible = false;
+            // auto l = God::layers.find_by_id(3);
+            // bool old_val = l.value().get().visible;
+            // l.value().get().visible = false;
             Picker picker;
 
             auto [layer_id, primitive_id, object_id] = picker.at({ God::mouse.current.x, God::mouse.current.y });
@@ -27,7 +27,7 @@ struct RenderLambertTriangles : public RenderLayer{
             Log::add("primitive id: " + std::to_string(primitive_id));
             // Triangles &t = object_id;
             // SurfaceAttributes &s = object_id;
-            l.value().get().visible = old_val;
+            // l.value().get().visible = old_val;
 
         }
         return true;
