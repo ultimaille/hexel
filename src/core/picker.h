@@ -20,7 +20,7 @@ struct Picker{
                     b * 256 * 256;
     }
 
-    std::tuple<int,int> at(vec2 uv);
+    std::tuple<int, int, ObjectId> at(vec2 uv);
 
     private:
     vec4 rect;

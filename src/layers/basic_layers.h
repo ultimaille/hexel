@@ -3,7 +3,6 @@
 
 
 struct RenderLambertTriangles : public RenderLayer{
-    ObjectId mesh;
     TriangleRenderer primitive_renderer;
 
     RenderLambertTriangles() : primitive_renderer{ _id } {}
@@ -16,18 +15,33 @@ struct RenderLambertTriangles : public RenderLayer{
         //}
     }
 
-    bool handle(Event event) { return true; }
+    bool handle(Event event) { 
+        if (event.who == ObjectId(events::MOUSE) && God::mouse.clicked(GLFW_MOUSE_BUTTON_LEFT)) {
+            // auto l = God::layers.find_by_id(3);
+            // bool old_val = l.value().get().visible;
+            // l.value().get().visible = false;
+            Picker picker;
+
+            auto [layer_id, primitive_id, object_id] = picker.at({ God::mouse.current.x, God::mouse.current.y });
+            Log::add("layer id: " + std::to_string(layer_id));
+            Log::add("primitive id: " + std::to_string(primitive_id));
+            // Triangles &t = object_id;
+            // SurfaceAttributes &s = object_id;
+            // l.value().get().visible = old_val;
+
+        }
+        return true;
+    }
     bool require(ObjectId object) {
-        return object == mesh;
+        return object == _mesh;
     }
     void reset() {
-        // TODO free vba/vbo/texture
-        init(mesh);
+        init(_mesh);
     }
 
 
     void init(ObjectId obj){
-        mesh = obj;
+        _mesh = obj;
         um_assert(obj.ref() != std::nullopt);
         Triangles& tri = obj;
         SurfaceAttributes& attr = obj;
@@ -60,7 +74,6 @@ struct RenderLambertTriangles : public RenderLayer{
 };
 
 struct RenderLambertQuads : public RenderLayer {
-    ObjectId mesh;
     TriangleRenderer primitive_renderer;
 
     RenderLambertQuads() : primitive_renderer{ _id } {}
@@ -75,16 +88,16 @@ struct RenderLambertQuads : public RenderLayer {
 
     bool handle(Event event) { return true; }
     bool require(ObjectId object) {
-        return object == mesh;
+        return object == _mesh;
     }
     void reset() {
         // TODO free vba/vbo/texture
-        init(mesh);
+        init(_mesh);
     }
 
 
     void init(ObjectId obj){
-        mesh = obj;
+        _mesh = obj;
         um_assert(obj.ref() != std::nullopt);
         Quads& quads = obj;
         SurfaceAttributes& attr = obj;
@@ -117,7 +130,7 @@ struct RenderLambertQuads : public RenderLayer {
 };
 
 struct RenderLambertTet : public RenderLayer {
-    ObjectId mesh;
+
     TriangleRenderer primitive_renderer;
 
     RenderLambertTet() : primitive_renderer{ _id } {}
@@ -132,16 +145,16 @@ struct RenderLambertTet : public RenderLayer {
 
     bool handle(Event event) { return true; }
     bool require(ObjectId object) {
-        return object == mesh;
+        return object == _mesh;
     }
     void reset() {
         // TODO free vba/vbo/texture
-        init(mesh);
+        init(_mesh);
     }
 
 
     void init(ObjectId obj){
-        mesh = obj;
+        _mesh = obj;
         um_assert(obj.ref() != std::nullopt);
         Tetrahedra& tet = obj;
         VolumeAttributes& attr = obj;
@@ -177,7 +190,6 @@ struct RenderLambertTet : public RenderLayer {
 };
 
 struct RenderSpheres : public RenderLayer{
-    ObjectId mesh;
     PointRenderer primitive_renderer;
 
     RenderSpheres() : primitive_renderer{ _id } {}
@@ -188,21 +200,15 @@ struct RenderSpheres : public RenderLayer{
     }
 
     bool handle(Event event) {
-        if (event.who == ObjectId(events::MOUSE) && God::mouse.clicked(GLFW_MOUSE_BUTTON_LEFT)) {
-            Picker picker;
-            auto [layer_id, primitive_id] = picker.at({ God::mouse.current.x, God::mouse.current.y });
-            Log::add("layer id: " + std::to_string(layer_id));
-            Log::add("primitive id: " + std::to_string(primitive_id));
-        }
         return true;
     }
     bool require(ObjectId object) {
-        return object == mesh;
+        return object == _mesh;
     }
 
 
     void init(ObjectId obj){
-        mesh = obj;
+        _mesh = obj;
         PointSet& ps = obj;
         PointSetAttributes& attr = obj;
 
@@ -227,7 +233,6 @@ struct RenderSpheres : public RenderLayer{
 
 
 struct RenderTubes : public RenderLayer{
-    ObjectId mesh;
     SegmentRenderer primitive_renderer;
 
     RenderTubes() : primitive_renderer{ _id } {}
@@ -239,12 +244,12 @@ struct RenderTubes : public RenderLayer{
 
     bool handle(Event event) { return true; }
     bool require(ObjectId object) {
-        return object == mesh;
+        return object == _mesh;
     }
 
 
     void init(ObjectId obj){
-        mesh = obj;
+        _mesh = obj;
         PolyLine& pl = obj;
         PolyLineAttributes& attr = obj;
 
