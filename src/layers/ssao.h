@@ -25,7 +25,7 @@ struct SSAO : RenderLayer {
     }
 
     bool handle(Event) override { return true; }
-    bool require(ObjectId object) { return false; }
+    bool require(ObjectId object) override { return false; }
 
     void init() {
         God::shaders.add(std::string(SHADERS_DIR), ao_name);

@@ -32,9 +32,7 @@ struct RenderLambertTriangles : public RenderLayer{
         }
         return true;
     }
-    bool require(ObjectId object) {
-        return object == _mesh;
-    }
+
     void reset() {
         init(_mesh);
     }
@@ -90,9 +88,7 @@ struct RenderLambertQuads : public RenderLayer {
     }
 
     bool handle(Event event) { return true; }
-    bool require(ObjectId object) {
-        return object == _mesh;
-    }
+
     void reset() {
         // TODO free vba/vbo/texture
         init(_mesh);
@@ -150,9 +146,7 @@ struct RenderLambertTet : public RenderLayer {
     }
 
     bool handle(Event event) { return true; }
-    bool require(ObjectId object) {
-        return object == _mesh;
-    }
+
     void reset() {
         // TODO free vba/vbo/texture
         init(_mesh);
@@ -207,10 +201,6 @@ struct RenderSpheres : public RenderLayer{
     bool handle(Event event) {
         return true;
     }
-    bool require(ObjectId object) {
-        return object == _mesh;
-    }
-
 
     void init(ObjectId obj){
         _mesh = obj;
@@ -252,9 +242,6 @@ struct RenderTubes : public RenderLayer{
     }
 
     bool handle(Event event) { return true; }
-    bool require(ObjectId object) {
-        return object == _mesh;
-    }
 
 
     void init(ObjectId obj){

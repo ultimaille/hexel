@@ -12,7 +12,7 @@ struct RenderLayer {
     }
     
     virtual bool handle(Event event) = 0;
-    virtual bool require(ObjectId object) = 0;
+    virtual bool require(ObjectId object) { return object == _mesh; }
     ObjectId& mesh() { return _mesh; }
 
     virtual void render_primitive_id()              { Log::add("To be implemented"); }
