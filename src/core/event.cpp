@@ -95,8 +95,8 @@ ObjectId::operator MouseState& () {
     return as<MouseState>();
 }
 
-ObjectId::operator Camera& () {
-    return as<Camera>();
+ObjectId::operator TrackBallCamera& () {
+    return as<TrackBallCamera>();
 }
 
 ObjectId::operator Panel& () {
@@ -193,7 +193,7 @@ void EventManager::dispatch() {
         queue.pop();
         God::camera.handle(event);
         God::layers.handle(event);
-        God::mode.handle(event);
+        God::modes.handle(event);
     }
 }
 

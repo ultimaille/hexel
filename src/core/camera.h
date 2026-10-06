@@ -4,12 +4,6 @@
 
 using namespace UM;
 
-struct CameraInterface {
-    virtual ~CameraInterface() = default;
-    virtual mat4x4 projection_matrix() const = 0;
-    virtual mat4x4 view_matrix()       const = 0;
-    virtual void handle(Event event)         = 0;
-};
 
 struct CameraPose {
     vec3 pivot = {};
@@ -44,7 +38,7 @@ struct OrthographicProjection {
     mat4x4 matrix() const;
 };
 
-struct TrackBallCamera : CameraInterface {
+struct TrackBallCamera {
     CameraPose pose;
     OrthographicProjection projection;
     static constexpr double wheel_zoom_speed = 1e-1;
@@ -59,18 +53,13 @@ struct TrackBallCamera : CameraInterface {
     void zoom(double wheel);
     void pan(vec2 delta, vec2 viewport);
     void rotate(vec2 previous, vec2 current, vec2 viewport);
-    mat4x4 projection_matrix() const override;
-    mat4x4 view_matrix() const override;
+    mat4x4 projection_matrix() const ;
+    mat4x4 view_matrix() const ;
 
-    void handle(Event event) override;
-};
-
-struct Camera {
-    std::unique_ptr<CameraInterface> impl = std::make_unique<TrackBallCamera>();
-
-    float* projection() const;
-    float* view() const;
-    float* inverse_projection() const;
+    float* projection_ptr() const;
+    float* view_ptr() const;
+    float* inverse_projection_ptr() const;
     void handle(Event event);
 };
+
 

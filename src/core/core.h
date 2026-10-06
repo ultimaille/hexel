@@ -16,12 +16,12 @@ struct EventManager;
 namespace InteractionMode { struct AbstractMode; }
 
 namespace God {
-    extern Mode mode; 
+    extern ModeManager modes; 
     extern UM::XCF xcf;
     extern MouseState mouse;
     extern KeyboardState keys;
     extern EventManager events;
-    extern Camera camera;
+    extern TrackBallCamera camera;
     extern LayerManager layers;
     extern PanelManager panels;
     extern WindowContext context;

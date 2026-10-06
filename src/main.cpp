@@ -44,37 +44,36 @@ std::string to_string(ObjectId obj) {
 
 
 
-struct HexEdit : public ModeInterface{
-    enum Filter{
-        ctrl_pressed = 1,
-        shift_pressed = 2,
-    };
+struct MouseReactPickerTest : public MouseReact {
+    MouseReactPickerTest(int filter = 0) {
+        MouseReact::filter = filter;
+    }
+    void on_wheel(double v) { Log::add("Wheel "+std::to_string(v)); }
+    void on_click(int button, vec2 p) {
+        Log::add("click " + std::to_string(button));
+        
+        Picker picker;
+        auto [layer_id, primitive_id, object_id] = picker.at(p);
+        Log::add("layer id: " + std::to_string(layer_id));
+        Log::add("primitive id: " + std::to_string(primitive_id));
+        Log::add("object id: " + to_string(object_id));
+    }
+    void on_press(int button, vec2 p)           { Log::add("press " + std::to_string(button)); }
+    void on_release(int button, vec2 p)         { Log::add("release " + std::to_string(button)); }
+    void on_drag(int button, vec2 a, vec2 b)    { Log::add("drag " + std::to_string(button)); }
+};
+
+
+struct HexEdit : public Mode{
 
     HexEdit(){
         God::layers.add<SSAO>("SSAO").init();
-        mouse_reactions.emplace_back(std::make_unique<MouseReactionTrackBallCamera>(ctrl_pressed));
+        mouse_react.emplace_back<MouseReactTrackBallCamera>("camera").filter=ctrl_pressed;
+        mouse_react.emplace_back < MouseReactPickerTest>("picktest");
     }
 
+    void handle(Event event) { handle_mouse(event); }
 
-    void handle(Event event){
-        if (event.who == events::MOUSE && !ImGui::GetIO().WantCaptureMouse) {
-
-            int filter = 0;
-            if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL)) filter += Filter::ctrl_pressed;
-            if (God::keys.pressed(GLFW_KEY_LEFT_SHIFT)) filter += Filter::shift_pressed;
-
-            const double wheel = God::mouse.wheel_speed;
-            for (auto& mr : mouse_reactions) if (mr->filter == filter) mr->on_wheel(wheel);
-
-            vec2 a = { God::mouse.previous.x, God::mouse.previous.y };
-            vec2 b = { God::mouse.current.x,  God::mouse.current.y };
-            if ((a - b).norm2() > 0) {
-                for (auto& mr : mouse_reactions) if (mr->filter == filter) FOR(button, 3)
-                    if (God::mouse.down(button))
-                        mr->on_drag(button, a, b);
-            }
-        }
-    }
 
     void command_gui() {
         static ObjectId arg0;
@@ -121,13 +120,33 @@ struct HexEdit : public ModeInterface{
 };
 
 
-
+void main_menu_gui(){
+    ImGui::BeginMainMenuBar();
+        if (ImGui::BeginMenu("Files")){
+            ImGui::MenuItem("Load MultiMesh N/A", NULL);
+            ImGui::MenuItem("Load XCF N/A", NULL);
+            ImGui::MenuItem("Import .geogram N/A", NULL);
+            ImGui::MenuItem("Export .geogram N/A", NULL);
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Modes")){
+            ImGui::SeparatorText("Current mode");
+            for (int i = 0; i < God::modes.size();i++)
+                if (ImGui::MenuItem(God::modes.ith_name(i).c_str(), NULL, God::modes.current_mode == i))
+                    God::modes.current_mode = i;
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
+    
+}
 
 
 
 int main(int argc, const char* argv[]) {
     God::context.init();
-    God::mode.impl = std::make_unique<HexEdit>();
+    God::modes.add<DefaultMode>("default");
+    God::modes.add<HexEdit>("hexedit");
+    God::modes.current_mode = 1;
 
     God::panels.add<XCFExplorer>("xcf_window");
     God::panels.add<LayerExplorer>("layer_window");
@@ -148,8 +167,10 @@ int main(int argc, const char* argv[]) {
 
         God::context.begin_frame();
         God::layers.render();
+        
+        main_menu_gui();
         God::panels.show_gui();
-        God::mode.define_gui();
+        God::modes.define_gui();
         God::context.end_frame();
     }
     God::layers.destroy();

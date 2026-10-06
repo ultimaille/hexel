@@ -66,7 +66,7 @@ struct SSAO : RenderLayer {
             glBindTexture(GL_TEXTURE_2D, random_texture);
             glUniform1i(glGetUniformLocation(ao_program, "random_texture"), 2);
 
-            glUniformMatrix4fv(glGetUniformLocation(ao_program, "inverse_projection"), 1, GL_TRUE, God::camera.inverse_projection());
+            glUniformMatrix4fv(glGetUniformLocation(ao_program, "inverse_projection"), 1, GL_TRUE, God::camera.inverse_projection_ptr());
 
             glUniform1f(glGetUniformLocation(ao_program, "max_radius"), 0.5f);
             glUniform1f(glGetUniformLocation(ao_program, "step_mul"), 1.2f);

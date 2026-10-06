@@ -7,11 +7,11 @@ namespace God {
     UM::XCF xcf;
     LayerManager layers;
     ShaderManager shaders;
-    Mode mode;
+    ModeManager modes;
     MouseState mouse;
     KeyboardState keys;
     WindowContext context;
-    Camera camera;
+    TrackBallCamera camera;
     EventManager events;
     PanelManager panels;
 }
