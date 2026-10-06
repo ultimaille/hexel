@@ -131,6 +131,63 @@ struct RenderLambertQuads : public RenderLayer {
 
 };
 
+// struct RenderLambertHex : public RenderLayer {
+//     TriangleRenderer primitive_renderer;
+
+//     RenderLambertHex() : primitive_renderer{ _id } {}
+
+//     void generate_gui(std::string name){
+//         //if (ImGui::TreeNode((name).c_str())) {
+//         primitive_renderer.generate_gui(name);
+//         RenderLayer::generate_gui(name);
+//         //	ImGui::TreePop();
+//         //}
+//     }
+
+//     bool handle(Event event) { return true; }
+
+//     void reset() {
+//         // TODO free vba/vbo/texture
+//         init(_mesh);
+//     }
+
+
+//     void init(ObjectId obj){
+//         _mesh = obj;
+//         um_assert(obj.ref() != std::nullopt);
+//         Quads& quads = obj;
+//         SurfaceAttributes& attr = obj;
+
+//         if (!God::shaders.contains("triangle"))
+//             God::shaders.add(std::string(SHADERS_DIR), "triangle");
+
+//         CornerAttribute<float> value(quads);
+//         for (auto h : quads.iter_halfedges())  {
+//             value[h] = h.from().pos()[0];
+//         }
+
+//         FacetAttribute<bool> visible(true);
+//         visible.bind("visible", attr, quads);
+
+//         primitive_renderer.init();
+//         primitive_renderer.update(quads, visible, value);
+//     }
+
+//     void render(){
+//         if (visible)
+//             primitive_renderer.render();
+//     }
+
+//     virtual int primitive_id(int vertex_id) {
+//         return vertex_id; // triangle id from vertex id
+//     }
+
+//     void destroy() {
+//         primitive_renderer.destroy();
+//     }
+
+// };
+
 struct RenderLambertTet : public RenderLayer {
 
     TriangleRenderer primitive_renderer;
@@ -169,8 +226,69 @@ struct RenderLambertTet : public RenderLayer {
             value[h] = static_cast<float>(((vec3)h.vertex()).x);
         }
 
+        CellAttribute<bool> visible("visible", attr, tet, true);
+
         primitive_renderer.init();
-        primitive_renderer.update(tet, value);
+        primitive_renderer.update(tet, visible, value);
+    }
+
+    void render(){
+        if (visible)
+            primitive_renderer.render();
+    }
+
+    virtual int primitive_id(int vertex_id) {
+        return vertex_id; // triangle id from vertex id
+    }
+
+    void destroy() {
+        primitive_renderer.destroy();
+    }
+
+};
+
+struct RenderLambertHex : public RenderLayer {
+
+    TriangleRenderer primitive_renderer;
+
+    RenderLambertHex() : primitive_renderer{ _id } {}
+
+    void generate_gui(std::string name){
+        //if (ImGui::TreeNode((name).c_str())) {
+        primitive_renderer.generate_gui(name);
+        RenderLayer::generate_gui(name);
+        //	ImGui::TreePop();
+        //}
+    }
+
+    bool handle(Event event) { return true; }
+
+    void reset() {
+        // TODO free vba/vbo/texture
+        init(_mesh);
+    }
+
+
+    void init(ObjectId obj){
+        _mesh = obj;
+        um_assert(obj.ref() != std::nullopt);
+        Hexahedra& hex = obj;
+        VolumeAttributes& attr = obj;
+
+        if (!God::shaders.contains("triangle"))
+            God::shaders.add(std::string(SHADERS_DIR), "triangle");
+
+        CellCornerAttribute<float> value(hex);
+        int n = hex.nhalfedges();
+        int n2 = value.ptr->data.size();
+        for (auto h : hex.iter_corners())  {
+            value[h] = static_cast<float>(((vec3)h.vertex()).x);
+        }
+
+        CellAttribute<bool> visible("visible", attr, hex, true);
+
+        primitive_renderer.init();
+        primitive_renderer.update(hex, visible, value);
     }
 
     void render(){

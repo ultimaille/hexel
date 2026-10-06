@@ -488,7 +488,7 @@ struct TriangleRenderer: public SimplexRenderer{
 		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
 	}
 
-	void update(Tetrahedra& tet, CellCornerAttribute<float>& value) {
+	void update(Tetrahedra& tet, CellAttribute<bool> &visible, CellCornerAttribute<float>& value) {
 		compute_range(value.ptr->data);
 
 		std::vector<Vertex> vertices(tet.nfacets() * 3);
@@ -509,9 +509,56 @@ struct TriangleRenderer: public SimplexRenderer{
 						.pos = to_float3(p),
 						.n = to_float3(n),
 						.v = value[f.corner(lv)],
-						.b = to_float3(b)
+						.b = to_float3(b),
+						.visible = visible[c]
 					};
 				}
+			}
+		}
+
+		glBindVertexArray(vao);
+		glBindBuffer(GL_ARRAY_BUFFER,vbo);
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex),vertices.data(),GL_STATIC_DRAW);
+	}
+
+	void update(Hexahedra& hex, CellAttribute<bool> &visible, CellCornerAttribute<float>& value) {
+		compute_range(value.ptr->data);
+
+		std::vector<Vertex> vertices(hex.nfacets() * 12 /* 4 tri per quad, 3 verts per tri */);
+		npts = vertices.size();
+
+		for (auto c : hex.iter_cells()) {
+			auto t = Hexahedron(c);
+			auto b = t.bary_verts();
+
+			for(auto f : c.iter_facets())  {
+				auto tri = Quad3(f);
+				auto n = tri.normal();
+
+				float bary_val = 0;
+				for (int lv = 0; lv < 4; ++lv) bary_val += value[f.corner(lv)];
+				bary_val /= 4;
+
+				for (int lv = 0; lv < 4; ++lv) {
+					
+					auto c0 = f.corner(lv);
+					auto c1 = f.corner((lv + 1) % 4);
+					float v[3] = {bary_val, value[c0], value[c1]};
+					// float v[3] = {0,0,0};
+					vec3 points[3] = {b, f.vertex(lv), f.vertex((lv + 1) % 4)};
+
+					for (int i = 0; i < 3; ++i) {
+						vertices[f * 12 + (lv * 3 + i)] = {
+							.pos = to_float3(points[i]),
+							.n = to_float3(n),
+							.v = v[i],
+							.b = to_float3(b),
+							.visible = visible[c]
+						};
+					}
+				}
+
+
 			}
 		}
 

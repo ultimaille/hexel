@@ -30,6 +30,7 @@ void main(){
         Value = Value * texture_repeat;
     }
 
+    vec3 p = aPos - (aPos - bary) * 1.;
     vec4 viewPos = view * vec4(aPos, 1.0);
     FragPos = viewPos.xyz;
     FragWorldPos = aPos;

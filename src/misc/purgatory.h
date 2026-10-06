@@ -86,4 +86,8 @@ void load_mm_with_default_layers(std::string path) {
         RenderLambertTet& layer = God::layers.add<RenderLambertTet>(mesh_name + "Tet");
         layer.init(ObjectId(TETRAHEDRA, { mesh_name, elt.first }));
     }
+    for (auto& elt : God::xcf[mesh_name].hexahedra) {
+        RenderLambertHex& layer = God::layers.add<RenderLambertHex>(mesh_name + "Hex");
+        layer.init(ObjectId(HEXAHEDRA, { mesh_name, elt.first }));
+    }
 }
