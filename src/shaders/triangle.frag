@@ -11,6 +11,7 @@ layout(location = 2) out vec4 FragPrimitiveIdColor;
 
 flat in int frag_layer_id;
 flat in int frag_primitive_id;
+flat in int frag_visible;
 
 uniform vec3 light_direction;
 uniform vec3 color;
@@ -45,7 +46,7 @@ void clip() {
 }
 
 void main(){
-    if(Value==-1) discard;
+    if(Value==-1 || frag_visible == 0) discard;
     if (clipping.enabled) clip();
     vec4 blend_color = color_map_prop * vec4(texture(colormap, Value).rgb,1.) + (1.-color_map_prop)*vec4(color,1.);
     float coeff = ambient_prop+(1.-ambient_prop)*max(dot(Normal, light_direction), 0.0);

@@ -53,9 +53,12 @@ struct RenderLambertTriangles : public RenderLayer{
         for (auto h : tri.iter_halfedges())  {
             value[h] = h.from().pos()[0];
         }
-        // here multiple overload of the same function for different types of attributes ?
-        // ou on mappe les attributs sur un corner attribute ?
-        primitive_renderer.init_from_mesh(tri, value);
+
+        FacetAttribute<bool> visible(true);
+        visible.bind("visible", attr, tri);
+
+        primitive_renderer.init();
+        primitive_renderer.push(tri, visible, value);
     }
 
     void render(){
@@ -109,9 +112,12 @@ struct RenderLambertQuads : public RenderLayer {
         for (auto h : quads.iter_halfedges())  {
             value[h] = h.from().pos()[0];
         }
-        // here multiple overload of the same function for different types of attributes ?
-        // ou on mappe les attributs sur un corner attribute ?
-        primitive_renderer.init_from_mesh(quads, value);
+
+        FacetAttribute<bool> visible(true);
+        visible.bind("visible", attr, quads);
+
+        primitive_renderer.init();
+        primitive_renderer.push(quads, visible, value);
     }
 
     void render(){
@@ -168,8 +174,7 @@ struct RenderLambertTet : public RenderLayer {
         for (auto h : tet.iter_corners())  {
             value[h] = static_cast<float>(((vec3)h.vertex()).x);
         }
-        // here multiple overload of the same function for different types of attributes ?
-        // ou on mappe les attributs sur un corner attribute ?
+
         primitive_renderer.init();
         primitive_renderer.push(tet, value);
     }
@@ -216,7 +221,11 @@ struct RenderSpheres : public RenderLayer{
         FOR(v, ps.size()){
             value[v] = ps[v][0];
         }
-        primitive_renderer.init_from_mesh(ps, value);
+
+        PointAttribute<bool> visible("visible", attr, ps, true);
+
+        primitive_renderer.init();
+        primitive_renderer.push(ps, visible, value);
     }
 
     void render(){
@@ -256,7 +265,11 @@ struct RenderTubes : public RenderLayer{
         PointAttribute<float> value(pl, 0);
         for (auto v : pl.iter_vertices())
             value[v] = v.pos()[0];
-        primitive_renderer.init_from_mesh(pl, value);
+
+        EdgeAttribute<bool> visible("visible", attr, pl, true);
+
+        primitive_renderer.init();
+        primitive_renderer.push(pl, visible, value);
     }
 
     void render(){

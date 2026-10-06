@@ -11,6 +11,7 @@ layout(location = 2) out vec4 FragPrimitiveIdColor;
 
 flat in int frag_layer_id;
 flat in int frag_primitive_id;
+flat in int frag_visible;
 
 uniform mat4 projection;
 uniform mat4 inv_projection;
@@ -33,7 +34,7 @@ vec3 encode_id(int id) {
 }
 
 void main(){
-    if(value==-1) discard;
+    if(frag_visible == 0) discard;
 
     // normalized pixel position
     vec2 ndc;

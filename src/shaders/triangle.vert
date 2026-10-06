@@ -4,6 +4,7 @@ layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
 layout (location = 2) in float value;
 layout (location = 3) in vec3 bary;
+layout (location = 4) in int visible;
 
 uniform mat4 view;
 uniform mat4 projection;
@@ -19,7 +20,7 @@ out vec3 FragBary;
 uniform int layer_id;
 flat out int frag_layer_id;
 flat out int frag_primitive_id;
-
+flat out int frag_visible;
 
 
 void main(){
@@ -37,5 +38,6 @@ void main(){
     gl_Position = projection * viewPos;
     frag_primitive_id = gl_VertexID / 3;
     frag_layer_id = layer_id;
+    frag_visible = visible;
 }
  

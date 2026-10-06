@@ -9,6 +9,7 @@ layout(location = 2) out vec4 FragVertexIdColor;
 
 flat in int frag_layer_id;
 flat in int frag_vertex_id;
+flat in int frag_visible;
 
 uniform mat4 projection;
 uniform mat4 inv_projection;
@@ -28,9 +29,8 @@ vec3 encode_id(int id) {
     return vec3(r / 255.f, g / 255.f, b / 255.f); 
 }
 
-void main()
-{
-    if(Value==-1) 
+void main() {
+    if(Value==-1 || frag_visible == 0) 
         discard;
 
     vec2 ndc;
