@@ -96,7 +96,7 @@ struct WindowContext {
         RenderTarget::bind_default(render_target.width, render_target.height);
     }
 
-    void begin_frame() {
+    void begin_frame(bool offscreen = false) {
         if (!render_target.valid()) {
             Log::error("RenderTarget is invalid");
             return;
@@ -105,7 +105,7 @@ struct WindowContext {
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
+        if (!offscreen) ImGui::NewFrame();
     }
 
     void begin_scissor(vec4 rect) {
@@ -134,10 +134,11 @@ struct WindowContext {
         glViewport(0, 0, width, height);
     }
 
-    void end_frame(bool present = true) {
-        if (present) present_render_target();
-
-        ImGui::Render();
+    void end_frame(bool offscreen = false) {
+        if (!offscreen) {
+            present_render_target();
+            ImGui::Render();
+        }
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);
     }

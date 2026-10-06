@@ -1,11 +1,11 @@
 #include "core.h"
 
 Picker::Picker(vec4 rect) : rect(rect) {
-    God::context.begin_frame();
+    God::context.begin_frame(true);
     God::context.begin_scissor(rect);
     God::layers.render();
     God::context.end_scissor();
-    God::context.end_frame(false);
+    God::context.end_frame(true);
     God::context.render_target.read_framebuffer(layer_ids, rect, 1);
     God::context.render_target.read_framebuffer(vertex_ids, rect, 2);
 }

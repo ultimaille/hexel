@@ -53,6 +53,7 @@ struct MouseReactPickerTest : public MouseReact {
         Log::add("click " + std::to_string(button));
         
         Picker picker;
+        return;
         auto [layer_id, primitive_id, object_id] = picker.at(p);
         Log::add("layer id: " + std::to_string(layer_id));
         Log::add("primitive id: " + std::to_string(primitive_id));
