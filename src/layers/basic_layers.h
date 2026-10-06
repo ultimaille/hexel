@@ -58,7 +58,7 @@ struct RenderLambertTriangles : public RenderLayer{
         visible.bind("visible", attr, tri);
 
         primitive_renderer.init();
-        primitive_renderer.push(tri, visible, value);
+        primitive_renderer.update(tri, visible, value);
     }
 
     void render(){
@@ -117,7 +117,7 @@ struct RenderLambertQuads : public RenderLayer {
         visible.bind("visible", attr, quads);
 
         primitive_renderer.init();
-        primitive_renderer.push(quads, visible, value);
+        primitive_renderer.update(quads, visible, value);
     }
 
     void render(){
@@ -176,7 +176,7 @@ struct RenderLambertTet : public RenderLayer {
         }
 
         primitive_renderer.init();
-        primitive_renderer.push(tet, value);
+        primitive_renderer.update(tet, value);
     }
 
     void render(){
@@ -225,7 +225,7 @@ struct RenderSpheres : public RenderLayer{
         PointAttribute<bool> visible("visible", attr, ps, true);
 
         primitive_renderer.init();
-        primitive_renderer.push(ps, visible, value);
+        primitive_renderer.update(ps, visible, value);
     }
 
     void render(){

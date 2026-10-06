@@ -205,7 +205,7 @@ struct PointRenderer: public SimplexRenderer{
 		um_assert(no_gl_error());
 	}
 
-	void push(PointSet& ps, PointAttribute<bool> &visible, PointAttribute<float>& value) {
+	void update(PointSet& ps, PointAttribute<bool> &visible, PointAttribute<float>& value) {
 		compute_range(value.ptr->data);
 
 		npts = ps.size();
@@ -422,7 +422,7 @@ struct TriangleRenderer: public SimplexRenderer{
 		um_assert(no_gl_error());
 	}
 
-	void push(Triangles& tri, FacetAttribute<bool>& visible, CornerAttribute<float>& value) {
+	void update(Triangles& tri, FacetAttribute<bool>& visible, CornerAttribute<float>& value) {
 		compute_range(value.ptr->data);
 
 		std::vector<Vertex> vertices(tri.ncorners());
@@ -451,7 +451,7 @@ struct TriangleRenderer: public SimplexRenderer{
 		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex),vertices.data(),GL_STATIC_DRAW);
 	}
 
-	void push(Quads& quads, FacetAttribute<bool> &visible, CornerAttribute<float>& value) {
+	void update(Quads& quads, FacetAttribute<bool> &visible, CornerAttribute<float>& value) {
 		compute_range(value.ptr->data);
 
 		std::vector<Vertex> vertices(quads.ncorners() * 3);
@@ -488,7 +488,7 @@ struct TriangleRenderer: public SimplexRenderer{
 		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
 	}
 
-	void push(Tetrahedra& tet, CellCornerAttribute<float>& value) {
+	void update(Tetrahedra& tet, CellCornerAttribute<float>& value) {
 		compute_range(value.ptr->data);
 
 		std::vector<Vertex> vertices(tet.nfacets() * 3);
