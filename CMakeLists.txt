@@ -153,6 +153,11 @@ file(GLOB_RECURSE HEXEL_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h"
 )
 
+source_group(
+    TREE "${CMAKE_CURRENT_SOURCE_DIR}/src"
+    FILES ${HEXEL_SOURCES}
+)
+
 add_executable(Hexel ${HEXEL_SOURCES})
 
 target_include_directories(Hexel PRIVATE ${CMAKE_SOURCE_DIR}/src)

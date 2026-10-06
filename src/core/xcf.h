@@ -3,7 +3,7 @@
 #include "basic.h"
 #include <map>
 #include <ultimaille/all.h>
-
+#include <fstream>
 struct ObjectId;
 
 namespace UM {
@@ -58,6 +58,7 @@ namespace UM {
                     if(!entry.is_regular_file()) continue;
                     std::string file = entry.path().string();
                     std::string name = entry.path().stem().string();
+                    if (name == entry.path().filename().string()) name = "";
                     switch(c){
                     case 0: load_mesh(file,name,polylines,connect); break;
                     case 1: load_mesh(file,name,triangles,connect); break;
@@ -80,36 +81,36 @@ namespace UM {
             for(int c = 0; c<8; c++){
                 //std::cerr<<"Load "<< collection_names[c] <<"\n";
                 switch(c){
-                case 0: load_mesh(filename,"polylines",polylines,connect); break;
-                case 1: load_mesh(filename,"triangles",triangles,connect); break;
-                case 2: load_mesh(filename,"quads",quads,connect); break;
-                case 3: load_mesh(filename,"polygons",polygons,connect); break;
-                case 4: load_mesh(filename,"tetrahedra",tetrahedra,connect); break;
-                case 5: load_mesh(filename,"hexahedra",hexahedra,connect); break;
-                case 6: load_mesh(filename,"wedges",wedges,connect); break;
-                case 7: load_mesh(filename,"pyramids",pyramids,connect); break;
+                case 0: load_mesh(filename,"",polylines,connect); break;
+                case 1: load_mesh(filename,"",triangles,connect); break;
+                case 2: load_mesh(filename,"",quads,connect); break;
+                case 3: load_mesh(filename,"",polygons,connect); break;
+                case 4: load_mesh(filename,"",tetrahedra,connect); break;
+                case 5: load_mesh(filename,"",hexahedra,connect); break;
+                case 6: load_mesh(filename,"",wedges,connect); break;
+                case 7: load_mesh(filename,"",pyramids,connect); break;
                 }
             }
             std::string primitives_loaded= "";
-            if(polylines["polylines"].mesh.nedges()==0)                                     polylines.erase("polylines");
+            if(polylines[""].mesh.nedges()==0)                                     polylines.erase("");
             else primitives_loaded+="polylines ";
 
-            if(triangles["triangles"].mesh.nfacets()==0)                                    triangles.erase("triangles");
+            if(triangles[""].mesh.nfacets()==0)                                    triangles.erase("");
             else primitives_loaded+="triangles ";
-            if(quads["quads"].mesh.nfacets()==0)                                            quads.erase("quads");
+            if(quads[""].mesh.nfacets()==0)                                            quads.erase("");
             else primitives_loaded+="quads ";
-            if(polygons["polygons"].mesh.nfacets()==triangles["triangles"].mesh.nfacets())  polygons.erase("polygons");
+            if(polygons[""].mesh.nfacets()==triangles[""].mesh.nfacets())  polygons.erase("");
             else 
-            if(polygons["polygons"].mesh.nfacets()==quads["quads"].mesh.nfacets())          polygons.erase("polygons");
+            if(polygons[""].mesh.nfacets()==quads[""].mesh.nfacets())          polygons.erase("");
             else primitives_loaded+="Polygons ";
 
-            if(tetrahedra["tetrahedra"].mesh.ncells()==0)                                   tetrahedra.erase("tetrahedra");
+            if(tetrahedra[""].mesh.ncells()==0)                                   tetrahedra.erase("");
             else primitives_loaded+="tetrahedra ";
-            if(hexahedra["hexahedra"].mesh.ncells()==0)                                     hexahedra.erase("hexahedra");
+            if(hexahedra[""].mesh.ncells()==0)                                     hexahedra.erase("");
             else primitives_loaded+="hexahedra ";
-            if (wedges["wedges"].mesh.ncells() == 0)                                       wedges.erase("wedges");
-            else primitives_loaded += "pyramid ";
-            if (pyramids["pyramids"].mesh.ncells() == 0)                                       pyramids.erase("pyramids");
+            if (wedges[""].mesh.ncells() == 0)                                       wedges.erase("");
+            else primitives_loaded += "wedges ";
+            if (pyramids[""].mesh.ncells() == 0)                                       pyramids.erase("");
             else primitives_loaded += "pyramid ";
             Log::add("primitives loaded in .geogram: " +primitives_loaded);
         }
@@ -124,7 +125,9 @@ namespace UM {
                 PointSet empty;
                 if (obj.attributes.points.empty() && !geogram_compatible)
                     obj.mesh.points = empty;
-                write_by_extension((mesh_path.string() + std::string("/") + name + std::string(".geogram")), obj.mesh, obj.attributes);
+
+                auto path = (mesh_path.string() + std::string("/") + name + std::string(".geogram"));
+                write_by_extension(path, obj.mesh, obj.attributes);
                 if (obj.attributes.points.empty() && !geogram_compatible)
                     obj.mesh.points = pointset;
             }
@@ -135,6 +138,7 @@ namespace UM {
                 std::cerr<<"Erase directory\n";
                 std::filesystem::remove_all(path);
             }
+            std::ofstream file(path.string() + ".mm");
             std::filesystem::create_directory(path);
             write_by_extension((path / "pointset.geogram").string(),pointset,pointset_attributes);
 

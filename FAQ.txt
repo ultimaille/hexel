@@ -10,7 +10,6 @@ Convention et choix d'implementation peu intuitifs:
 TODO
 ==================================================================
 * Set "" 	as default name for meshes
-* Fix the picker problem with the mainmenu
 
 ==================================================================
 GITERIES

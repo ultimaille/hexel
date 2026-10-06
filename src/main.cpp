@@ -18,6 +18,8 @@
 #include "panels/xcf_explorer.h"
 #include "panels/layer_explorer.h"
 
+#include "misc/purgatory.h"
+
 #include "layers/basic_layers.h"
 #include "layers/ssao.h"
 
@@ -48,10 +50,10 @@ struct MouseReactPickerTest : public MouseReact {
     MouseReactPickerTest(int filter = 0) {
         MouseReact::filter = filter;
     }
-    void on_wheel(double v) { Log::add("Wheel "+std::to_string(v)); }
+    void on_wheel(double v) { Log::add("Wheel " + std::to_string(v)); }
     void on_click(int button, vec2 p) {
         Log::add("click " + std::to_string(button));
-        
+
         Picker picker;
         return;
         auto [layer_id, primitive_id, object_id] = picker.at(p);
@@ -69,7 +71,7 @@ struct HexEdit : public Mode{
 
     HexEdit(){
         God::layers.add<SSAO>("SSAO").init();
-        mouse_react.emplace_back<MouseReactTrackBallCamera>("camera").filter=ctrl_pressed;
+        mouse_react.emplace_back<MouseReactTrackBallCamera>("camera").filter = ctrl_pressed;
         mouse_react.emplace_back < MouseReactPickerTest>("picktest");
     }
 
@@ -91,7 +93,7 @@ struct HexEdit : public Mode{
 
         if (press) Log::add("need to switch to select arg0");
         if (ImGui::BeginMenu("Run...")) {
-            ImGui::MenuItem("create");                                                    
+            ImGui::MenuItem("create");
             if (ImGui::MenuItem("New")) {}
             if (ImGui::BeginMenu("sous menu")) {
                 ImGui::MenuItem("glo");
@@ -102,12 +104,13 @@ struct HexEdit : public Mode{
     }
 
     void define_gui() {
-        ImGui::Begin("ModeWindow", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::Begin("Mode", nullptr);
         ImGui::Text("Window used to launch debug tests");
         if (ImGui::Button("LoadSomething")) {
-            // Horrible way to acces a function: but it's good to check that it works
-            XCFExplorer& pan = dynamic_cast<XCFExplorer&> (static_cast<Panel&>(ObjectId(PANEL, "xcf_window")));
-            pan.load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "mmB0");
+            //load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "mmB0");
+            load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "B1.geogram");
+            God::xcf["B1"].save_to_path(std::string(TEST_INPUT_DIR) + "B1", false);
+            load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "B1");
         }
 
         if (ImGui::Button("CurrentTest")) {
@@ -116,29 +119,61 @@ struct HexEdit : public Mode{
         ImGui::Separator();
         command_gui();
 
+
         ImGui::End();
     }
 };
 
 
 void main_menu_gui(){
-    ImGui::BeginMainMenuBar();
+    static std::string path; 
+
+    bool load_mm = false;
+    bool import_mesh = false;
+    if (ImGui::BeginMainMenuBar()){
         if (ImGui::BeginMenu("Files")){
-            ImGui::MenuItem("Load MultiMesh N/A", NULL);
-            ImGui::MenuItem("Load XCF N/A", NULL);
-            ImGui::MenuItem("Import .geogram N/A", NULL);
-            ImGui::MenuItem("Export .geogram N/A", NULL);
+
+            if (ImGui::MenuItem("Load MultiMesh N/A", NULL)) load_mm = true;
+            if (ImGui::MenuItem("Import .geogram N/A", NULL))import_mesh = true;
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Modes")){
             ImGui::SeparatorText("Current mode");
-            for (int i = 0; i < God::modes.size();i++)
+            for (int i = 0; i < God::modes.size(); i++)
                 if (ImGui::MenuItem(God::modes.ith_name(i).c_str(), NULL, God::modes.current_mode == i))
                     God::modes.current_mode = i;
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();
-    
+    }
+
+    if (load_mm){ ImGui::OpenPopup("MMFilePopup"); load_mm = false; }
+    if (FilePopup("MMFilePopup", std::string(TEST_INPUT_DIR), path, { ".mm" }))
+        if (!path.empty()) load_mm_with_default_layers(path.substr(0, path.size() - 3));
+
+    if (import_mesh){ ImGui::OpenPopup("ImportFilePopup"); import_mesh = false; }
+    if (FilePopup("ImportFilePopup", std::string(TEST_INPUT_DIR), path, { ".geogram",".mesh",".meshb" }))
+        if (!path.empty()) load_mm_with_default_layers(path.substr(0));
+
+
+
+
+
+    //if (ImGui::BeginPopup("MMLoadPopup")){
+    //    plop("begonpopup");
+    //    ImGui::Text("Settings");
+    //    static char name[128] = "";
+    //    ImGui::InputText("Name", name, sizeof(name));
+    //    if (ImGui::Button("OK"))
+    //        ImGui::CloseCurrentPopup();
+    //    ImGui::SameLine();
+    //    ImGui::EndPopup();
+    //}
+
+    //if (FilePopup("FilePopup", path, { ".mm" })) {
+    //    if (path.size() > 3)load_mm_with_default_layers(path.substr(0, path.size() - 3));
+    //}
+
 }
 
 
@@ -168,7 +203,7 @@ int main(int argc, const char* argv[]) {
 
         God::context.begin_frame();
         God::layers.render();
-        
+
         main_menu_gui();
         God::panels.show_gui();
         God::modes.define_gui();

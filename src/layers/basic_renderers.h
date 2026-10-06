@@ -29,8 +29,8 @@ struct SimplexRenderer{
 	int texture_id=0;
 	float data_autorange[2] = {0,0};
 	float data_range[2] = {0,0};
-	float color[3] = {.5,.8,.5};
-	float color_map_prop=1;
+	float color[3] = {.8,.8,.8};
+	float color_map_prop=0;
 	float ambient_prop=.5;
 
 	struct Clipping {
