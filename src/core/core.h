@@ -9,18 +9,19 @@
 #include "panels.h"
 #include "layers.h"
 #include "shaders.h"
+#include "mode.h"
 
 struct EventManager;
 
 namespace InteractionMode { struct AbstractMode; }
 
 namespace God {
-    extern InteractionMode::AbstractMode* root_mode; // TODO: we need to uniformize this with camera. Ptr or ref wrapper?
+    extern ModeManager modes; 
     extern UM::XCF xcf;
     extern MouseState mouse;
     extern KeyboardState keys;
     extern EventManager events;
-    extern Camera camera;
+    extern TrackBallCamera camera;
     extern LayerManager layers;
     extern PanelManager panels;
     extern WindowContext context;

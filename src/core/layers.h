@@ -68,7 +68,7 @@ struct LayerManager: private Registry<RenderLayer> {
                     shad.object->reset();
     }
 
-    void produce_picking_image(int* data,int w,int h) { Log::add("To be implemented"); }
+
 
     std::optional<std::reference_wrapper<RenderLayer>> find_by_id(int id) {
         for (auto &[name, obj] : *this) {

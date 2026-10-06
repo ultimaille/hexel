@@ -94,9 +94,9 @@ struct SimplexRenderer{
 		glUniform1f(glGetUniformLocation(shaderProgram,"ambient_prop"),ambient_prop);
 		glUniform1i(glGetUniformLocation(shaderProgram,"colormap"),0);
 		glUniform3fv(glGetUniformLocation(shaderProgram,"color"),1,color);
-		glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_TRUE, God::camera.view());
+		glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_TRUE, God::camera.view_ptr());
 		auto [w, h] = God::context.screen_size();
-		glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_TRUE, God::camera.projection());
+		glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_TRUE, God::camera.projection_ptr());
 		glUniform3fv(glGetUniformLocation(shaderProgram, "light_direction"), 1, light_direction);
 
 		glUniform1i(glGetUniformLocation(shaderProgram,"clipping.mode"), clipping.mode);
@@ -111,7 +111,7 @@ struct SimplexRenderer{
 	// declare uniforms for raytraced primitives (sphere and cylinder)
 	void declare_inv_projection_matrix() {
 		auto [w, h] = God::context.screen_size();
-		mat4x4 inv_proj = God::camera.impl->projection_matrix().invert();
+		mat4x4 inv_proj = God::camera.projection_matrix().invert();
 		static float inv_proj_float[16]; FOR(i, 16) inv_proj_float[i] = inv_proj[i / 4][i % 4];
 		glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "inv_projection"), 1, GL_TRUE, inv_proj_float);
 	}
@@ -225,7 +225,7 @@ struct PointRenderer: public SimplexRenderer{
 		declare_viewport();
 
 		auto [w,h] = God::context.screen_size();
-		float pointRadius = 2.*double(radius_in_pixel)/(God::camera.impl->projection_matrix()[1][1]*double(h));
+		float pointRadius = 2.*double(radius_in_pixel)/(God::camera.projection_matrix()[1][1]*double(h));
 
 		glUniform1f(glGetUniformLocation(shaderProgram,"R"),pointRadius);
 		glUniform3fv(glGetUniformLocation(shaderProgram,"color"),1,color);
@@ -326,7 +326,7 @@ struct SegmentRenderer: public SimplexRenderer{
 
 		auto [w,h] = God::context.screen_size();
 		line_width = std::min(line_width,int(range[1]));
-		double radius = float(line_width) /(2.0f * God::camera.impl->projection_matrix()[1][1]* float(h));
+		double radius = float(line_width) /(2.0f * God::camera.projection_matrix()[1][1]* float(h));
 		glLineWidth(line_width);
 
 		shared_setup_before_rendering();

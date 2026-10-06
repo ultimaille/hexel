@@ -48,23 +48,15 @@ bool FilePopup(const char* id, std::string& out, std::vector<const char*> extens
 
 
 
-//void object_id_drag_source(ObjectId id, std::string name) {
-//    if (ImGui::BeginDragDropSource()) {
-//        ObjectId* ptr = new ObjectId(id);
-//        ImGui::SetDragDropPayload("OBJECTID", &ptr, sizeof(ObjectId*));
-//        ImGui::Text("Moving %s", name.c_str());
-//        ImGui::EndDragDropSource();
-//    }
-//}
+
 
 struct XCFExplorer : public Panel {
 
     void look_at_pointset(PointSet& ps) {
         BBox3 box;
         FOR(v, ps.size()) box.add(ps[v]);
-        TrackBallCamera& cam = dynamic_cast<TrackBallCamera&>(*God::camera.impl);
-        cam.pose.pivot = box.center();
-        cam.projection.view_height = box.size()[1];
+        God::camera.pose.pivot = box.center();
+        God::camera.projection.view_height = box.size()[1];
     }
 
     void load_mm_with_default_layers(std::string path) {
@@ -131,11 +123,9 @@ struct XCFExplorer : public Panel {
         static ObjectId dnd_obj;
         auto object_id_drag_source = [](ObjectId id, std::string name) {
             if (ImGui::BeginDragDropSource()) {
-                //ObjectId* ptr = new ObjectId(id);
                 dnd_obj = id;
                 ObjectId* ptr = &dnd_obj;
                 ImGui::SetDragDropPayload("OBJECTID", & ptr, sizeof(ObjectId*));
-                //ImGui::SetDragDropPayload("OBJECTID", &ptr, sizeof(ObjectId*));
                 ImGui::Text("Moving %s", name.c_str());
                 ImGui::EndDragDropSource();
             }
@@ -200,7 +190,7 @@ struct XCFExplorer : public Panel {
         for (auto& [mm_name, mm] : God::xcf) {
 
             auto add_mesh = [&](std::string mesh_name, ObjectType  mesh_type, std::string gna){
-                ImGui::Separator;
+                ImGui::Separator();
                 ObjectId mesh_id(mesh_type, {mm_name,mesh_name});
                 bool open_mesh = ImGui::TreeNodeEx(label(gna + "." + mesh_name, mm_name), flag(mesh_id, false));
                 if (ImGui::IsItemClicked()) switch_selection(mesh_id);
@@ -222,7 +212,7 @@ struct XCFExplorer : public Panel {
             if (ImGui::IsItemClicked()) switch_selection(mm_id);
             if (open_mm){
                 // ==> pointset
-                ImGui::Separator;
+                ImGui::Separator();
                 ObjectId mesh_id(POINTSET, mm_name);
                 bool open_mesh = ImGui::TreeNodeEx(label("pointset", mm_name), flag(mesh_id, true));
                 object_id_drag_source(mesh_id, mm_name+".pointset");
@@ -250,85 +240,6 @@ struct XCFExplorer : public Panel {
             pan.layers.clear();
             for (auto sel : selected)if (sel.path == LAYER) pan.layers.push_back(sel);
         }
-
-        //std::vector<std::string> mm_to_kill;
-        //for (auto& [mm_name, mm] : God::xcf) {
-        //	static bool closable_mm_group = true;
-        //	if (ImGui::CollapsingHeader(mm_name.c_str(),&closable_mm_group)) {
-
-
-        //		if (ImGui::TreeNode(label("pointset",mm_name))) {
-        //			//... show shaders
-        //			ImGui::TreePop();
-        //		}
-        //		if (!mm.polylines.empty()) if (ImGui::TreeNode(label("polylines", mm_name))) {
-        //			//... show shaders
-        //			ImGui::TreePop();
-        //		}
-
-
-        //		{
-        //			std::vector<ObjectId> to_kill;
-        //			for (auto& [tri_name, obj] : mm.triangles) {
-        //				static bool closable_mesh_group = true;
-        //				ObjectId id({ chunk_xcf,mm_name,"triangles",tri_name });
-        //				if (ImGui::CollapsingHeader(label(tri_name, mm_name+"tri"), &closable_mesh_group)) {
-        //					// render layers
-        //					for(int i=0;i< God::layers.size();i++){
-        //						if (God::layers[i].require(id)) {
-        //							God::layers[i].generate_gui(God::layers.ith_name(i));
-        //						}
-        //					}
-        //				}
-
-        //				if (ImGui::Button(label("kill odd triangles", mm_name+tri_name))) {
-        //					Triangles& tri = obj.mesh;
-        //					std::vector<bool> to_kill(tri.nfacets(), false);
-        //					for (auto f : tri.iter_facets()) to_kill[f] = (f % 2) == 0;
-        //					tri.disconnect();
-        //					tri.delete_facets(to_kill);
-        //					tri.connect();
-        //					id.emit(UPDATED);
-        //				}
-
-        //				// delete if the cross is pressed
-        //				if (!closable_mesh_group) {
-        //					to_kill.push_back(id);
-        //					closable_mesh_group = true;
-        //				}
-        //			}
-        //			for (auto id : to_kill) {
-        //				id.show();
-        //				God::xcf.kill_mesh(id);
-        //			}
-
-
-        //			{// create new triangles
-        //				static char new_tri_name[64] = "newtri";
-        //				if (ImGui::Button(label("Add new", mm_name))) {
-        //					std::string s = new_tri_name;
-        //					God::xcf.add_triangles(mm_name, s);
-        //					//ImGui::TreePop();
-        //					break;
-        //				}
-        //				ImGui::SameLine(); ImGui::InputText(label("##edit", mm_name), new_tri_name, 64);
-        //			}
-
-        //			//ImGui::TreePop();
-        //		}
-        //		if (!mm.quads.empty()) if (ImGui::TreeNode(label("quads", mm_name))) {
-        //			//... show shaders
-        //			ImGui::TreePop();
-        //		}
-
-        //	}
-        //	if (!closable_mm_group) {
-        //		mm_to_kill.push_back(mm_name);
-        //		closable_mm_group = true;
-        //	}
-        //}
-        //for (auto name : mm_to_kill)
-        //	God::xcf.kill_multimesh(name);
 
 
 

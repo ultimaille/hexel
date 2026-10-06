@@ -12,7 +12,7 @@ using namespace UM;
 
 struct KeyboardState;
 struct MouseState;
-struct Camera;
+struct TrackBallCamera;
 struct Panel;
 struct RenderLayer;
 
@@ -31,7 +31,7 @@ struct ObjectId {
     using ObjectRef = std::variant<
         std::reference_wrapper<KeyboardState>,
         std::reference_wrapper<MouseState>,
-        std::reference_wrapper<Camera>,
+        std::reference_wrapper<TrackBallCamera>,
         std::reference_wrapper<Panel>,
         std::reference_wrapper<RenderLayer>,
         std::reference_wrapper<MultiMesh>,
@@ -49,7 +49,7 @@ struct ObjectId {
 
     operator KeyboardState&();
     operator MouseState&();
-    operator Camera&();
+    operator TrackBallCamera&();
     operator Panel& ();
     operator RenderLayer&();
 
