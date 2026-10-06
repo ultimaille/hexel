@@ -19,6 +19,7 @@ bool no_gl_error() {
 
 struct SimplexRenderer{
 	GLuint vao,vbo;
+	// GLuint visible_buf, visible_tex;
 	int npts;
 	GLuint shaderProgram;
 	float light_direction[3] = { 1,1,1 };
@@ -128,6 +129,12 @@ struct SimplexRenderer{
 		if (vbo != 0) {
 			glDeleteBuffers(1, &vbo);
 		}
+		// if (visible_buf != 0) {
+		// 	glDeleteBuffers(1, &visible_buf);
+		// }
+		// if (visible_tex != 0) {
+		// 	glDeleteTextures(1, &visible_tex);
+		// }
 		um_assert(no_gl_error());
 	}
 
@@ -367,6 +374,7 @@ struct TriangleRenderer: public SimplexRenderer{
 		float v; // value
 		std::array<float, 3> b; // bary
 		bool visible;
+		// int primitive_id;
 	};
 
 	void generate_gui(std::string name){
@@ -416,8 +424,18 @@ struct TriangleRenderer: public SimplexRenderer{
 		// visible
 		glEnableVertexAttribArray(4);
 		glVertexAttribIPointer(4, 1, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, visible));
+		// // primitive id
+		// glEnableVertexAttribArray(5);
+		// glVertexAttribIPointer(5, 1, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, primitive_id));
 
 		glBindVertexArray(0);
+
+		// visible
+		// glGenBuffers(1, &visible_buf);
+		// glGenTextures(1, &visible_tex);
+		// glBindBuffer(GL_TEXTURE_BUFFER, visible_buf);
+		// glBindTexture(GL_TEXTURE_BUFFER, visible_tex);
+		// glTexBuffer(GL_TEXTURE_BUFFER, GL_R32F, visible_buf);
 
 		um_assert(no_gl_error());
 	}
@@ -441,14 +459,19 @@ struct TriangleRenderer: public SimplexRenderer{
 					.n = to_float3(n),
 					.v = value[h],
 					.b = to_float3(b),
-					.visible = visible[f]
+					.visible = visible[f],
+					// .primitive_id = f
 				};
 			}
 		}
 
 		glBindVertexArray(vao);
 		glBindBuffer(GL_ARRAY_BUFFER,vbo);
-		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex),vertices.data(),GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+
+		// std::vector<int> ivisible(visible.ptr->data.begin(), visible.ptr->data.end());
+		// glBindBuffer(GL_ARRAY_BUFFER, visible_buf);
+		// glBufferData(GL_ARRAY_BUFFER, ivisible.size() * sizeof(int), ivisible.data(), GL_STATIC_DRAW);
 	}
 
 	void update(Quads& quads, FacetAttribute<bool> &visible, CornerAttribute<float>& value) {
