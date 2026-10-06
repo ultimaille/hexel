@@ -171,16 +171,17 @@ struct PointRenderer: public SimplexRenderer{
 
 	using SimplexRenderer::SimplexRenderer;
 
+	struct Vertex {
+		std::array<float, 3> pos;
+		float v;
+		bool visible;
+	};
+
 	void generate_gui(std::string name){
 		ImGui::PushItemWidth(80);
 		ImGui::InputInt(("point size##point_size"+name).c_str(),&radius_in_pixel);
 		ImGui::PopItemWidth();
 		SimplexRenderer::generate_gui(name);
-	}
-
-	void init_from_mesh(PointSet &ps, PointAttribute<float>& value){
-		init();
-		push(ps, value);
 	}
 
 	void init(){
@@ -192,27 +193,34 @@ struct PointRenderer: public SimplexRenderer{
 		glGenBuffers(1,&vbo);
 		glBindVertexArray(vao);
 		glBindBuffer(GL_ARRAY_BUFFER,vbo);
+
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,4*sizeof(float),(void*)0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, pos));
 		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1,1,GL_FLOAT,GL_FALSE,4*sizeof(float),(void*)(3 * sizeof(float)));
+		glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, v));
+		glEnableVertexAttribArray(2);
+		glVertexAttribIPointer(2, 1, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, visible));
+
 		glBindVertexArray(0);
 		um_assert(no_gl_error());
 	}
 
-	void push(PointSet& ps, PointAttribute<float>& value) {
+	void push(PointSet& ps, PointAttribute<bool> &visible, PointAttribute<float>& value) {
 		compute_range(value.ptr->data);
 
 		npts = ps.size();
-		std::vector<float> vertices(4*ps.size(),0);
+		std::vector<Vertex> vertices(ps.size());
 		FOR(v,ps.size()){
-			FOR(d,3) vertices[4*v+d] = ps[v][d];
-			vertices[4*v+3] = value[v];
+			vertices[v] = {
+				.pos = to_float3(ps[v]),
+				.v = value[v],
+				.visible = visible[v]
+			};
 		}
 
 		glBindVertexArray(vao);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
 	}
 
 
@@ -249,6 +257,7 @@ struct SegmentRenderer: public SimplexRenderer{
 		float v0;
 		std::array<float, 3> p1;
 		float v1;
+		bool visible;
 	};
 
 	int line_width=10;
@@ -260,12 +269,6 @@ struct SegmentRenderer: public SimplexRenderer{
 		ImGui::SliderFloat(("origin scale##slider"+name).c_str(),&origin_scale,0.4f,1.0f,"%.3f",0);
 		ImGui::PopItemWidth();
 		SimplexRenderer::generate_gui(name);
-	}
-
-
-	void init_from_mesh(PolyLine& pl,PointAttribute<float>& value){
-		init();
-		push(pl, value);
 	}
 
 	void init(){
@@ -289,11 +292,13 @@ struct SegmentRenderer: public SimplexRenderer{
 		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, p1));
 		glEnableVertexAttribArray(3);
 		glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, v1));
+		glEnableVertexAttribArray(4);
+		glVertexAttribIPointer(4, 1, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, visible));
 
 		glBindVertexArray(0);
 	}
 
-	void push(PolyLine& pl, PointAttribute<float>& value) {
+	void push(PolyLine& pl, EdgeAttribute<bool> &visible, PointAttribute<float>& value) {
 		compute_range(value.ptr->data);
 
 		npts = 2*pl.nedges();
@@ -306,7 +311,8 @@ struct SegmentRenderer: public SimplexRenderer{
 				.p0 = to_float3(p0),
 				.v0 = value[e.from()],
 				.p1 = to_float3(p1),
-				.v1 = value[e.to()]
+				.v1 = value[e.to()],
+				.visible = visible[e]
 			};
 			vertices[e * 2] = v;
 			vertices[e * 2 + 1] = v;
@@ -360,6 +366,7 @@ struct TriangleRenderer: public SimplexRenderer{
 		std::array<float, 3> n; // normal
 		float v; // value
 		std::array<float, 3> b; // bary
+		bool visible;
 	};
 
 	void generate_gui(std::string name){
@@ -382,21 +389,6 @@ struct TriangleRenderer: public SimplexRenderer{
 		}
 	}
 
-	void init_from_mesh(Triangles& tri, CornerAttribute<float>& value){
-		init();
-		push(tri, value);
-	}
-
-	void init_from_mesh(Quads& quads, CornerAttribute<float>& value){
-		init();
-		push(quads, value);
-	}
-
-	void init_from_mesh(Tetrahedra& tet, CellCornerAttribute<float>& value){
-		init();
-		push(tet, value);
-	}
-
 	void init(){
 		color_map_prop=0;
 		if(!God::shaders.contains("triangle"))
@@ -411,23 +403,26 @@ struct TriangleRenderer: public SimplexRenderer{
 
 		// position
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, pos));
+		glVertexAttribPointer(0, 3, GL_FLOAT,GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, pos));
 		// normal
 		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, n));
+		glVertexAttribPointer(1, 3, GL_FLOAT,GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, n));
 		// value
 		glEnableVertexAttribArray(2);
-		glVertexAttribPointer(2,1,GL_FLOAT,GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, v));
+		glVertexAttribPointer(2, 1, GL_FLOAT,GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, v));
 		// bary
 		glEnableVertexAttribArray(3);
-		glVertexAttribPointer(3,3,GL_FLOAT,GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, b));
+		glVertexAttribPointer(3, 3, GL_FLOAT,GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, b));
+		// visible
+		glEnableVertexAttribArray(4);
+		glVertexAttribIPointer(4, 1, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, visible));
 
 		glBindVertexArray(0);
 
 		um_assert(no_gl_error());
 	}
 
-	void push(Triangles& tri, CornerAttribute<float>& value) {
+	void push(Triangles& tri, FacetAttribute<bool>& visible, CornerAttribute<float>& value) {
 		compute_range(value.ptr->data);
 
 		std::vector<Vertex> vertices(tri.ncorners());
@@ -445,7 +440,8 @@ struct TriangleRenderer: public SimplexRenderer{
 					.pos = to_float3(p),
 					.n = to_float3(n),
 					.v = value[h],
-					.b = to_float3(b)
+					.b = to_float3(b),
+					.visible = visible[f]
 				};
 			}
 		}
@@ -455,7 +451,7 @@ struct TriangleRenderer: public SimplexRenderer{
 		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex),vertices.data(),GL_STATIC_DRAW);
 	}
 
-	void push(Quads& quads, CornerAttribute<float>& value) {
+	void push(Quads& quads, FacetAttribute<bool> &visible, CornerAttribute<float>& value) {
 		compute_range(value.ptr->data);
 
 		std::vector<Vertex> vertices(quads.ncorners() * 3);
@@ -480,7 +476,8 @@ struct TriangleRenderer: public SimplexRenderer{
 						.pos = to_float3(points[i]),
 						.n = to_float3(n),
 						.v = v[i],
-						.b = to_float3(b)
+						.b = to_float3(b),
+						.visible = visible[f]
 					};
 				}
 			}
