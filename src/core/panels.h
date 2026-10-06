@@ -31,7 +31,6 @@ struct PanelManager : private Registry<Panel> {
             ImGuiID dockspace_id = ImGui::GetID("MyDockspace");
             ImGuiDockNode* node = ImGui::DockBuilderGetNode(dockspace_id);
             ImGuiViewport* viewport = ImGui::GetMainViewport();
-            std::cerr << viewport->WorkSize.y<<std::endl;
             ImGui::DockSpaceOverViewport(dockspace_id, viewport, ImGuiDockNodeFlags_PassthruCentralNode);
             
             if (!node) {

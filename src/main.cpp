@@ -90,7 +90,7 @@ struct HexEdit : public Mode{
 
         if (press) Log::add("need to switch to select arg0");
         if (ImGui::BeginMenu("Run...")) {
-            ImGui::MenuItem("create");
+            ImGui::MenuItem("create");                                                    
             if (ImGui::MenuItem("New")) {}
             if (ImGui::BeginMenu("sous menu")) {
                 ImGui::MenuItem("glo");
