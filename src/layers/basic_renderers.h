@@ -11,6 +11,7 @@ bool no_gl_error();
 
 struct SimplexRenderer{
 	GLuint vao,vbo;
+	// GLuint visible_buf, visible_tex;
 	int npts;
 	GLuint shaderProgram;
 	float light_direction[3] = { 1,1,1 };
