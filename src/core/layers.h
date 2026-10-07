@@ -1,33 +1,28 @@
 #pragma once
 #include "core.h"
 #include <optional>
+#include <core/event.h>
 
 struct RenderLayer {
-    RenderLayer() : _id(max_id) { ++max_id; }
+    RenderLayer();
     virtual ~RenderLayer() = default;
     virtual void render() = 0;
-    virtual void reset() { Log::error("reset called for a layer that does not implement it"); };
-    virtual void generate_gui(std::string name) {
-           ImGui::Checkbox(("visible##visible"+name).c_str(),&visible);
-    }
-    
+    virtual void reset();
+    virtual void generate_gui(std::string name);
+
     virtual bool handle(Event event) = 0;
-    virtual bool require(ObjectId object) = 0;
-    ObjectId& mesh() { return _mesh; }
+    virtual bool require(ObjectId object);
+    ObjectId& mesh();
 
-    virtual void render_primitive_id()              { Log::add("To be implemented"); }
-    virtual void render_constant_color(int layerid) { Log::add("To be implemented"); }
+    virtual void render_primitive_id();
+    virtual void render_constant_color(int layerid);
+    virtual void destroy();
+
+    int id() const; //?!? pourquoi un accesseur ?
+
+    virtual int primitive_id(int vertex_id);
+
     bool visible = true;
-    virtual void destroy() {}
-    // virtual bool is_cleanup_ready() { return false; }
-
-    int id() const {
-        return _id;
-    }
-
-    virtual int primitive_id(int vertex_id) { return vertex_id; } // TODO to pure virtual
-
-    protected:
     ObjectId _mesh;
     static inline int max_id = 0;
     int _id;
@@ -43,53 +38,12 @@ struct LayerManager: private Registry<RenderLayer> {
     void swap(int i, int j)                    { std::swap(items[i], items[j]); }
     template<class T> T& add(std::string str)  { return emplace_back<T>(str); }
 
-    void render() {
-        for (auto& [name,obj] : *this)
-            if (obj->visible)
-                obj->render();
-    }
-    void handle(Event event) {
-        // if (event.who == events::MOUSE) return;
+    void render();
+    void handle(Event event);
+    std::optional<std::reference_wrapper<RenderLayer>> find_by_id(int id);
+    void kill(std::string layer_name);
 
-        // dispatch events
-        for (auto& [name,obj] : *this) obj->handle(event);
-
-
-        // manage lifecycle events (KILLED MESH)
-        std::vector<std::string> to_kill;
-        if (event.what_happened == events::KILLED) for (int i = 0; i < this->size(); i) {
-            if ((*this)[i].require(event.who))
-                erase(i);
-            else i++;
-        }
-        if (event.what_happened == events::UPDATED) 
-            for(auto& shad:items)
-                if (shad.object->require(event.who)) 
-                    shad.object->reset();
-    }
-
-
-
-    std::optional<std::reference_wrapper<RenderLayer>> find_by_id(int id) {
-        for (auto &[name, obj] : *this) {
-            if (obj->id() == id)
-                return *obj;
-        }
-        return std::nullopt;
-    }
-
-    void kill(std::string layer_name){
-        (*this)[layer_name].destroy();
-        int id = find(layer_name);
-        std::swap(items[id],items.back());
-        items.pop_back();
-        ObjectId(events::LAYER, layer_name).broadcast(events::KILLED);
-    }
-
-    void destroy() {
-        for (auto& [name,obj] : *this)
-            obj->destroy();
-    }
+    void destroy();
 };
 
 

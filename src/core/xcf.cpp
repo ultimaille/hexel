@@ -1,6 +1,14 @@
 #include <ultimaille/all.h>
 #include "xcf.h"
 #include "core.h"
+#include "camera.h"
+#include "picker.h"
+#include "render_target.h"
+#include "window.h"
+#include "panels.h"
+#include "layers.h"
+#include "shaders.h"
+#include "mode.h"
 
 std::string MultiMesh::collection_names[8] = {
 "polylines",

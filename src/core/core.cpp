@@ -1,7 +1,8 @@
+#include "core.h"
+
 #define _USE_MATH_DEFINES
 #include <cmath>
-#include "mode.h"
-#include "core.h"
+#include <core/all.h>
 
 namespace God {
     UM::XCF xcf;

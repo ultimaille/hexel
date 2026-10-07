@@ -17,143 +17,39 @@ struct WindowContext {
     GLFWwindow* window = nullptr;
     RenderTarget render_target = {};
 
-    void init(int w = 1000,int h = 1000) {
-        init_glfw(w, h);
-        init_glad();
+    void init(int w = 1000, int h = 1000);
 
-        // The requested GLFW window size and the actual OpenGL framebuffer size can differ (for example, on HiDPI displays)
-        int framebuffer_width  = 0;
-        int framebuffer_height = 0;
-        glfwGetFramebufferSize(window, &framebuffer_width, &framebuffer_height);
+    ~WindowContext();
 
-        if (framebuffer_width > 0 && framebuffer_height > 0) {
-            render_target.init(framebuffer_width, framebuffer_height);
-            glViewport(0, 0, framebuffer_width, framebuffer_height);
-        }
+    void init_mouse_call_backs();
 
-        init_imgui();
-        init_mouse_call_backs();
-    }
+    void init_glfw(int& w, int& h);
 
-    ~WindowContext() {
-//      TODO: add a correct shutdown();
-    }
+    void init_glad();
 
-    void init_mouse_call_backs() {
-        glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-        glfwSetMouseButtonCallback(window, mouse_button_callback);
-        glfwSetCursorPosCallback(window, cursor_position_callback);
-        glfwSetScrollCallback(window, scroll_callback);
-    }
+    void init_imgui();
 
-    void init_glfw(int& w,int& h) {
-        um_assert(glfwInit());
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        glfwWindowHint(GLFW_DEPTH_BITS, 24);
+    void bind_render_target();
 
-        int count;
-        GLFWmonitor** monitors = glfwGetMonitors(&count);
-        GLFWmonitor* monitor = (count>1)? monitors[1] : monitors[0] ;
-        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+    void bind_default_framebuffer();
 
-        int monitorX, monitorY;
-        glfwGetMonitorPos(monitor, &monitorX, &monitorY);
+    void begin_frame(bool offscreen = false);
 
-        w = mode->width;
-        h = mode->height-30;
-        window = glfwCreateWindow(w,h, "Hexel", nullptr, nullptr);
-        glfwSetWindowPos(window,monitorX ,monitorY +30);
+    void begin_scissor(vec4 rect);
 
-        um_assert(window != nullptr);
-        glfwMakeContextCurrent(window);
-        glfwSwapInterval(1);
-    }
+    void end_scissor();
 
-    void init_glad() {
-        int version = gladLoadGL(reinterpret_cast<GLADloadfunc>(glfwGetProcAddress));
-        um_assert(version != 0);
-        Log::add(std::string("OpenGL version: ") + std::string((char*)glGetString(GL_VERSION)));
-    }
+    void present_render_target();
 
-    void init_imgui() {
-        IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-        ImGuiIO& io = ImGui::GetIO();
-    	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-        ImGui::StyleColorsDark();
-        um_assert(ImGui_ImplGlfw_InitForOpenGL(window, true));
-        um_assert(ImGui_ImplOpenGL3_Init("#version 330"));
-    }
+    void resize_framebuffer(int width, int height);
 
-    void bind_render_target() {
-        render_target.bind();
-    }
+    void end_frame(bool offscreen = false);
 
-    void bind_default_framebuffer() {
-        RenderTarget::bind_default(render_target.width, render_target.height);
-    }
+    std::pair<int, int> screen_size();
 
-    void begin_frame(bool offscreen = false) {
-        if (!render_target.valid()) {
-            Log::error("RenderTarget is invalid");
-            return;
-        }
-        render_target.clear(0.05f, 0.05f, 0.08f, 1.0f);
+    bool window_is_active() const;
 
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        if (!offscreen) ImGui::NewFrame();
-    }
-
-    void begin_scissor(vec4 rect) {
-        glEnable(GL_SCISSOR_TEST);
-        glScissor(rect[0], rect[1], rect[2], rect[3]);
-    }
-
-    void end_scissor() {
-        glDisable(GL_SCISSOR_TEST);
-    }
-
-    void present_render_target() {
-        if (!render_target.valid()) {
-            Log::error("RenderTarget is invalid");
-            return;
-        }
-
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, render_target.framebuffer);
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-        glBlitFramebuffer(0, 0, render_target.width, render_target.height, 0, 0, render_target.width, render_target.height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-        bind_default_framebuffer();
-    }
-
-    void resize_framebuffer(int width, int height) {
-        render_target.resize(width, height);
-        glViewport(0, 0, width, height);
-    }
-
-    void end_frame(bool offscreen = false) {
-        if (!offscreen) {
-            present_render_target();
-            ImGui::Render();
-        }
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        glfwSwapBuffers(window);
-    }
-
-    std::pair<int,int> screen_size() {
-        return { render_target.width, render_target.height };
-    }
-
-    bool window_is_active() const {
-        return window!=nullptr && !glfwWindowShouldClose(window);
-    }
-
-    void destroy() {
-        render_target.destroy();
-    }
+    void destroy();
 };
 
 // -------------------------------------------------------------------------------

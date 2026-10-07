@@ -1,19 +1,23 @@
 #pragma once
 
 #include "basic.h"
-#include "camera.h"
-#include "picker.h"
-#include "xcf.h"
-#include "render_target.h"
-#include "window.h"
-#include "panels.h"
-#include "layers.h"
-#include "shaders.h"
-#include "mode.h"
+
 
 struct EventManager;
+struct ModeManager;
+namespace UM{
+    struct XCF;
+};
+struct MouseState;
+struct KeyboardState;
+struct EventManager;
+struct TrackBallCamera;
+struct LayerManager;
+struct PanelManager;
+struct WindowContext;
+struct ShaderManager;
 
-namespace InteractionMode { struct AbstractMode; }
+
 
 namespace God {
     extern ModeManager modes; 

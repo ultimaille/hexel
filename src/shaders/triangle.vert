@@ -6,6 +6,9 @@ layout (location = 2) in float value;
 layout (location = 3) in vec3 bary;
 layout (location = 4) in int visible;
 
+// layout (location = 5) in int primitive_id;
+// uniform usamplerBuffer ivisible;
+
 uniform mat4 view;
 uniform mat4 projection;
 uniform float texture_repeat;
@@ -30,6 +33,7 @@ void main(){
         Value = Value * texture_repeat;
     }
 
+    vec3 p = aPos - (aPos - bary) * 1.;
     vec4 viewPos = view * vec4(aPos, 1.0);
     FragPos = viewPos.xyz;
     FragWorldPos = aPos;
@@ -39,5 +43,6 @@ void main(){
     frag_primitive_id = gl_VertexID / 3;
     frag_layer_id = layer_id;
     frag_visible = visible;
+    // frag_visible = int(texelFetch(ivisible, primitive_id));
 }
  
