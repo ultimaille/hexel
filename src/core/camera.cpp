@@ -1,6 +1,5 @@
-#include <array>
-#include "core.h"
 #include <core/camera.h>
+#include "core.h"
 #include <core/window.h>
 
 vec3 CameraPose::position() const { return pivot + orientation.rotate({0, 0, distance}); }

@@ -129,7 +129,6 @@ struct HexEdit : public Mode{
         ImGui::Begin("Mode", nullptr);
         ImGui::Text("Window used to launch debug tests");
         if (ImGui::Button("LoadSomething")) {
-            //load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "mmB0");
             load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "B1.geogram");
             God::xcf["B1"].save_to_path(std::string(TEST_INPUT_DIR) + "B1", false);
             load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "B1");
@@ -155,8 +154,8 @@ void main_menu_gui(){
     if (ImGui::BeginMainMenuBar()){
         if (ImGui::BeginMenu("Files")){
 
-            if (ImGui::MenuItem("Load MultiMesh N/A", NULL)) load_mm = true;
-            if (ImGui::MenuItem("Import .geogram N/A", NULL))import_mesh = true;
+            if (ImGui::MenuItem("Load MultiMesh", NULL)) load_mm = true;
+            if (ImGui::MenuItem("Import .geogram", NULL))import_mesh = true;
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Modes")){
@@ -176,26 +175,6 @@ void main_menu_gui(){
     if (import_mesh){ ImGui::OpenPopup("ImportFilePopup"); import_mesh = false; }
     if (FilePopup("ImportFilePopup", std::string(TEST_INPUT_DIR), path, { ".geogram",".mesh",".meshb" }))
         if (!path.empty()) load_mm_with_default_layers(path.substr(0));
-
-
-
-
-
-    //if (ImGui::BeginPopup("MMLoadPopup")){
-    //    plop("begonpopup");
-    //    ImGui::Text("Settings");
-    //    static char name[128] = "";
-    //    ImGui::InputText("Name", name, sizeof(name));
-    //    if (ImGui::Button("OK"))
-    //        ImGui::CloseCurrentPopup();
-    //    ImGui::SameLine();
-    //    ImGui::EndPopup();
-    //}
-
-    //if (FilePopup("FilePopup", path, { ".mm" })) {
-    //    if (path.size() > 3)load_mm_with_default_layers(path.substr(0, path.size() - 3));
-    //}
-
 }
 
 

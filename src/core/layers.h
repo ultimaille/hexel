@@ -1,5 +1,4 @@
 #pragma once
-#include "core.h"
 #include <optional>
 #include <core/event.h>
 

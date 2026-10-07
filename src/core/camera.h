@@ -1,6 +1,5 @@
 #pragma once
-#include <ultimaille/all.h>
-#include "event.h"
+#include <core/event.h>
 
 using namespace UM;
 

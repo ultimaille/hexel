@@ -1,7 +1,5 @@
 #pragma once
-
 #include "basic.h"
-
 
 struct EventManager;
 struct ModeManager;

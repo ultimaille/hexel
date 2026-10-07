@@ -1,12 +1,11 @@
 #pragma once
-#include <vector>
-#include <string>
-#include <queue>
-#include <variant>
 #include <optional>
+#include <string>
+#include <variant>
+#include <vector>
 
+#include <core/xcf.h>
 #include <ultimaille/all.h>
-#include "xcf.h"
 
 using namespace UM;
 
