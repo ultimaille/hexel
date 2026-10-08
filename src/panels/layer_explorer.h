@@ -21,7 +21,7 @@ struct LayerExplorer : public Panel {
         int drop_to = -1;
 
         for (int i = 0; i < God::layers.size(); ++i){
-            RenderLayer& layer = God::layers[i];
+            Layer& layer = God::layers[i];
             std::string layer_name = God::layers.ith_name(i);
 
 

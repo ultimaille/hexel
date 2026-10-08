@@ -2,29 +2,21 @@
 #include "basic_renderers.h"
 #include <core/layers.h>
 
-struct RenderLambertTriangles : public RenderLayer{
+struct TrianglesLayer : public Layer{
     TriangleRenderer primitive_renderer;
-
-    RenderLambertTriangles();
-
+    TrianglesLayer();
     void generate_gui(std::string name);
-
     bool handle(Event event);
-
     void reset();
-
     void init(ObjectId obj);
-
     void render();
-
     virtual int primitive_id(int vertex_id);
-
     void destroy();
 };
 
-struct RenderLambertQuads : public RenderLayer {
+struct QuadsLayer : public Layer {
     TriangleRenderer primitive_renderer;
-    RenderLambertQuads();
+    QuadsLayer();
     void generate_gui(std::string name);
     bool handle(Event event);
     void reset();
@@ -35,9 +27,9 @@ struct RenderLambertQuads : public RenderLayer {
 };
 
 
-struct RenderLambertTet : public RenderLayer {
+struct TetrahedraLayer : public Layer {
     TriangleRenderer primitive_renderer;
-    RenderLambertTet();
+    TetrahedraLayer();
     void generate_gui(std::string name);
     bool handle(Event event);
     void reset();
@@ -47,9 +39,9 @@ struct RenderLambertTet : public RenderLayer {
     void destroy();
 };
 
-struct RenderLambertHex : public RenderLayer {
+struct HexahedraLayer : public Layer {
     TriangleRenderer primitive_renderer;
-    RenderLambertHex();
+    HexahedraLayer();
     void generate_gui(std::string name);
     bool handle(Event event);
     void reset();
@@ -59,9 +51,9 @@ struct RenderLambertHex : public RenderLayer {
     void destroy();
 };
 
-struct RenderSpheres : public RenderLayer{
+struct PointSetLayer : public Layer{
     PointRenderer primitive_renderer;
-    RenderSpheres();
+    PointSetLayer();
     void generate_gui(std::string name);
     bool handle(Event event);
     void init(ObjectId obj);
@@ -69,9 +61,9 @@ struct RenderSpheres : public RenderLayer{
     void destroy();
 };
 
-struct RenderTubes : public RenderLayer{
+struct PolyLineLayer : public Layer{
     SegmentRenderer primitive_renderer;
-    RenderTubes();
+    PolyLineLayer();
     void generate_gui(std::string name);
     bool handle(Event event);
     void init(ObjectId obj);

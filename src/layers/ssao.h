@@ -3,7 +3,7 @@
 #include <array>
 #include "../core/core.h"
 
-struct SSAO : RenderLayer {
+struct SSAO : Layer {
     const std::string ao_name = "ssao";
     const std::string blur_name = "ssao_blur";
     const std::string composite_name = "ssao_composite";
@@ -21,7 +21,7 @@ struct SSAO : RenderLayer {
     }
 
     void generate_gui(std::string name) override {
-        RenderLayer::generate_gui(name);
+        Layer::generate_gui(name);
     }
 
     bool handle(Event) override { return true; }

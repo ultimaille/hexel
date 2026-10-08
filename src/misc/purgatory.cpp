@@ -61,32 +61,32 @@ void load_mm_with_default_layers(std::string path) {
     look_at_pointset(ObjectId(POINTSET, mesh_name));
 
     {// point set
-        RenderSpheres& layer = God::layers.add<RenderSpheres>(mesh_name + "Pts");
+        PointSetLayer& layer = God::layers.add<PointSetLayer>(mesh_name + "Pts");
         layer.init(ObjectId(POINTSET, mesh_name));
         auto& pr = layer.primitive_renderer;
         pr.color[0] = .5; pr.color[1] = 1.; pr.color[2] = .5;
         pr.radius_in_pixel = 4;
     }
     for (auto& elt : God::xcf[mesh_name].polylines) {
-        RenderTubes& layer = God::layers.add<RenderTubes>(mesh_name + "Edges");
+        PolyLineLayer& layer = God::layers.add<PolyLineLayer>(mesh_name + "Edges");
         layer.init(ObjectId(POLYLINES, { mesh_name, elt.first }));
         auto& pr = layer.primitive_renderer;
         pr.color[0] = .5; pr.color[1] = .5; pr.color[2] = .7;
     }
     for (auto& elt : God::xcf[mesh_name].triangles) {
-        RenderLambertTriangles& layer = God::layers.add<RenderLambertTriangles>(mesh_name + "Tri");
+        TrianglesLayer& layer = God::layers.add<TrianglesLayer>(mesh_name + "Tri");
         layer.init(ObjectId(TRIANGLES, { mesh_name, elt.first }));
     }
     for (auto& elt : God::xcf[mesh_name].quads) {
-        RenderLambertQuads& layer = God::layers.add<RenderLambertQuads>(mesh_name + "Quad");
+        QuadsLayer& layer = God::layers.add<QuadsLayer>(mesh_name + "Quad");
         layer.init(ObjectId(QUADS, { mesh_name, elt.first }));
     }
     for (auto& elt : God::xcf[mesh_name].tetrahedra) {
-        RenderLambertTet& layer = God::layers.add<RenderLambertTet>(mesh_name + "Tet");
+        TetrahedraLayer& layer = God::layers.add<TetrahedraLayer>(mesh_name + "Tet");
         layer.init(ObjectId(TETRAHEDRA, { mesh_name, elt.first }));
     }
     for (auto& elt : God::xcf[mesh_name].hexahedra) {
-        RenderLambertHex& layer = God::layers.add<RenderLambertHex>(mesh_name + "Hex");
+        HexahedraLayer& layer = God::layers.add<HexahedraLayer>(mesh_name + "Hex");
         layer.init(ObjectId(HEXAHEDRA, { mesh_name, elt.first }));
     }
 }

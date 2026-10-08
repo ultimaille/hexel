@@ -5,7 +5,7 @@ void PropertyExplorer::generate_gui(){
         for (ObjectId& id : layers){
             ImGui::Separator();
             ImGui::Text(id.names.back().c_str());
-            RenderLayer& layer = id;
+            Layer& layer = id;
             layer.generate_gui(id.names.back());
         }
         ImGui::End();

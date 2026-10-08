@@ -13,7 +13,7 @@ struct KeyboardState;
 struct MouseState;
 struct TrackBallCamera;
 struct Panel;
-struct RenderLayer;
+struct Layer;
 
 namespace events {
     enum ObjectType { NA, KEYBOARD, MOUSE, CAMERA, PANEL, LAYER, MULTIMESH, 
@@ -35,7 +35,7 @@ struct ObjectId {
         std::reference_wrapper<MouseState>,
         std::reference_wrapper<TrackBallCamera>,
         std::reference_wrapper<Panel>,
-        std::reference_wrapper<RenderLayer>,
+        std::reference_wrapper<Layer>,
         std::reference_wrapper<MultiMesh>,
         std::reference_wrapper<MultiMesh::MeshAttr<PolyLine,   PolyLineAttributes>>,
         std::reference_wrapper<MultiMesh::MeshAttr<Triangles,  SurfaceAttributes>>,
@@ -53,7 +53,7 @@ struct ObjectId {
     operator MouseState&();
     operator TrackBallCamera&();
     operator Panel& ();
-    operator RenderLayer&();
+    operator Layer&();
 
     operator MultiMesh&();
     operator PointSet&();

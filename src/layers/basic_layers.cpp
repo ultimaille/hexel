@@ -11,14 +11,14 @@
 #include "core/mode.h"
 
 
-RenderLambertTriangles::RenderLambertTriangles() : primitive_renderer{ _id } {}
+TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = _id; }
 
-    void RenderLambertTriangles::generate_gui(std::string name){
+    void TrianglesLayer::generate_gui(std::string name){
         primitive_renderer.generate_gui(name);
-        RenderLayer::generate_gui(name);
+        Layer::generate_gui(name);
     }
 
-    bool RenderLambertTriangles::handle(Event event) {
+    bool TrianglesLayer::handle(Event event) {
         if (event.who == ObjectId(events::MOUSE) && !ImGui::GetIO().WantCaptureMouse && God::mouse.clicked(GLFW_MOUSE_BUTTON_LEFT)) {
             Picker picker({God::mouse.current.x, God::mouse.current.y, 1, 1});
             auto [layer_id, primitive_id, object_id] = picker.at({ God::mouse.current.x, God::mouse.current.y });
@@ -28,12 +28,12 @@ RenderLambertTriangles::RenderLambertTriangles() : primitive_renderer{ _id } {}
         return true;
     }
 
-    void RenderLambertTriangles::reset() {
+    void TrianglesLayer::reset() {
         init(_mesh);
     }
 
 
-    void RenderLambertTriangles::init(ObjectId obj){
+    void TrianglesLayer::init(ObjectId obj){
         _mesh = obj;
         um_assert(obj.ref() != std::nullopt);
         Triangles& tri = obj;
@@ -54,16 +54,16 @@ RenderLambertTriangles::RenderLambertTriangles() : primitive_renderer{ _id } {}
         primitive_renderer.update(tri, visible, value);
     }
 
-    void RenderLambertTriangles::render(){
+    void TrianglesLayer::render(){
         if (visible)
             primitive_renderer.render();
     }
 
-    int RenderLambertTriangles::primitive_id(int vertex_id) {
+    int TrianglesLayer::primitive_id(int vertex_id) {
         return vertex_id; // triangle id from vertex id
     }
 
-    void RenderLambertTriangles::destroy() {
+    void TrianglesLayer::destroy() {
         primitive_renderer.destroy();
     }
 
@@ -74,22 +74,22 @@ RenderLambertTriangles::RenderLambertTriangles() : primitive_renderer{ _id } {}
 
 
 
-    RenderLambertQuads::RenderLambertQuads() : primitive_renderer{ _id } {}
+    QuadsLayer::QuadsLayer()  { primitive_renderer.layer_id = _id; }
 
-    void RenderLambertQuads::generate_gui(std::string name){
+    void QuadsLayer::generate_gui(std::string name){
         primitive_renderer.generate_gui(name);
-        RenderLayer::generate_gui(name);
+        Layer::generate_gui(name);
     }
 
-    bool RenderLambertQuads::handle(Event event) { return true; }
+    bool QuadsLayer::handle(Event event) { return true; }
 
-    void RenderLambertQuads::reset() {
+    void QuadsLayer::reset() {
         // TODO free vba/vbo/texture
         init(_mesh);
     }
 
 
-    void RenderLambertQuads::init(ObjectId obj){
+    void QuadsLayer::init(ObjectId obj){
         _mesh = obj;
         um_assert(obj.ref() != std::nullopt);
         Quads& quads = obj;
@@ -110,16 +110,16 @@ RenderLambertTriangles::RenderLambertTriangles() : primitive_renderer{ _id } {}
         primitive_renderer.update(quads, visible, value);
     }
 
-    void RenderLambertQuads::render(){
+    void QuadsLayer::render(){
         if (visible)
             primitive_renderer.render();
     }
 
-    int RenderLambertQuads::primitive_id(int vertex_id) {
+    int QuadsLayer::primitive_id(int vertex_id) {
         return vertex_id; // triangle id from vertex id
     }
 
-    void RenderLambertQuads::destroy() {
+    void QuadsLayer::destroy() {
         primitive_renderer.destroy();
     }
 
@@ -127,22 +127,22 @@ RenderLambertTriangles::RenderLambertTriangles() : primitive_renderer{ _id } {}
 
 
     
-    RenderLambertTet::RenderLambertTet() : primitive_renderer{ _id } {}
+    TetrahedraLayer::TetrahedraLayer()  { primitive_renderer.layer_id = _id; }
 
-    void RenderLambertTet::generate_gui(std::string name){
+    void TetrahedraLayer::generate_gui(std::string name){
         primitive_renderer.generate_gui(name);
-        RenderLayer::generate_gui(name);
+        Layer::generate_gui(name);
     }
 
-    bool RenderLambertTet::handle(Event event) { return true; }
+    bool TetrahedraLayer::handle(Event event) { return true; }
 
-    void RenderLambertTet::reset() {
+    void TetrahedraLayer::reset() {
         // TODO free vba/vbo/texture
         init(_mesh);
     }
 
 
-    void RenderLambertTet::init(ObjectId obj){
+    void TetrahedraLayer::init(ObjectId obj){
         _mesh = obj;
         um_assert(obj.ref() != std::nullopt);
         Tetrahedra& tet = obj;
@@ -164,36 +164,36 @@ RenderLambertTriangles::RenderLambertTriangles() : primitive_renderer{ _id } {}
         primitive_renderer.update(tet, visible, value);
     }
 
-    void RenderLambertTet::render(){
+    void TetrahedraLayer::render(){
         if (visible)
             primitive_renderer.render();
     }
 
-    int RenderLambertTet::primitive_id(int vertex_id) {
+    int TetrahedraLayer::primitive_id(int vertex_id) {
         return vertex_id; // triangle id from vertex id
     }
 
-    void RenderLambertTet::destroy() {
+    void TetrahedraLayer::destroy() {
         primitive_renderer.destroy();
     }
 
 
 
 
-    RenderLambertHex::RenderLambertHex() : primitive_renderer{ _id } {}
+    HexahedraLayer::HexahedraLayer()  { primitive_renderer.layer_id = _id; }
 
-    void RenderLambertHex::generate_gui(std::string name){
+    void HexahedraLayer::generate_gui(std::string name){
         primitive_renderer.generate_gui(name);
-        RenderLayer::generate_gui(name);
+        Layer::generate_gui(name);
     }
 
-    bool RenderLambertHex::handle(Event event) { return true; }
+    bool HexahedraLayer::handle(Event event) { return true; }
 
-    void RenderLambertHex::reset() {
+    void HexahedraLayer::reset() {
         init(_mesh);
     }
 
-    void RenderLambertHex::init(ObjectId obj){
+    void HexahedraLayer::init(ObjectId obj){
         _mesh = obj;
         um_assert(obj.ref() != std::nullopt);
         Hexahedra& hex = obj;
@@ -230,16 +230,16 @@ RenderLambertTriangles::RenderLambertTriangles() : primitive_renderer{ _id } {}
         primitive_renderer.update(tri, visible_tri, value_tri);
     }
 
-    void RenderLambertHex::render(){
+    void HexahedraLayer::render(){
         if (visible)
             primitive_renderer.render();
     }
 
-    int RenderLambertHex::primitive_id(int vertex_id) {
+    int HexahedraLayer::primitive_id(int vertex_id) {
         return vertex_id; // triangle id from vertex id
     }
 
-    void RenderLambertHex::destroy() {
+    void HexahedraLayer::destroy() {
         primitive_renderer.destroy();
     }
 
@@ -250,18 +250,18 @@ RenderLambertTriangles::RenderLambertTriangles() : primitive_renderer{ _id } {}
 
 
 
-    RenderSpheres::RenderSpheres() : primitive_renderer{ _id } {}
+    PointSetLayer::PointSetLayer() { primitive_renderer.layer_id = _id; }
 
-    void RenderSpheres::generate_gui(std::string name){
+    void PointSetLayer::generate_gui(std::string name){
         primitive_renderer.generate_gui(name);
-        RenderLayer::generate_gui(name);
+        Layer::generate_gui(name);
     }
 
-    bool RenderSpheres::handle(Event event) {
+    bool PointSetLayer::handle(Event event) {
         return true;
     }
 
-    void RenderSpheres::init(ObjectId obj){
+    void PointSetLayer::init(ObjectId obj){
         _mesh = obj;
         PointSet& ps = obj;
         PointSetAttributes& attr = obj;
@@ -277,11 +277,11 @@ RenderLambertTriangles::RenderLambertTriangles() : primitive_renderer{ _id } {}
         primitive_renderer.update(ps, visible, value);
     }
 
-    void RenderSpheres::render(){
+    void PointSetLayer::render(){
         if (visible)primitive_renderer.render();
     }
 
-    void RenderSpheres::destroy() {
+    void PointSetLayer::destroy() {
         primitive_renderer.destroy();
     }
 
@@ -290,17 +290,17 @@ RenderLambertTriangles::RenderLambertTriangles() : primitive_renderer{ _id } {}
 
 
 
-    RenderTubes::RenderTubes() : primitive_renderer{ _id } {}
+    PolyLineLayer::PolyLineLayer()  { primitive_renderer.layer_id = _id; }
 
-    void RenderTubes::generate_gui(std::string name) {
+    void PolyLineLayer::generate_gui(std::string name) {
         primitive_renderer.generate_gui(name);
-        RenderLayer::generate_gui(name);
+        Layer::generate_gui(name);
     }
 
-    bool RenderTubes::handle(Event event) { return true; }
+    bool PolyLineLayer::handle(Event event) { return true; }
 
 
-    void RenderTubes::init(ObjectId obj){
+    void PolyLineLayer::init(ObjectId obj){
         _mesh = obj;
         PolyLine& pl = obj;
         PolyLineAttributes& attr = obj;
@@ -315,15 +315,15 @@ RenderLambertTriangles::RenderLambertTriangles() : primitive_renderer{ _id } {}
         primitive_renderer.push(pl, visible, value);
     }
 
-    void RenderTubes::render(){
+    void PolyLineLayer::render(){
         if (visible)primitive_renderer.render();
     }
 
-    int RenderTubes::primitive_id(int vertex_id) {
+    int PolyLineLayer::primitive_id(int vertex_id) {
         return vertex_id; // edge id from vertex id
     }
 
-    void RenderTubes::destroy() {
+    void PolyLineLayer::destroy() {
         primitive_renderer.destroy();
     }
 

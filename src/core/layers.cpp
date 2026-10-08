@@ -10,24 +10,24 @@
 #include "mode.h"
 
 
-    RenderLayer::RenderLayer() : _id(max_id) { ++max_id; }
-    void RenderLayer::reset() { Log::error("reset called for a layer that does not implement it"); };
-    void RenderLayer::generate_gui(std::string name) {
+    Layer::Layer() : _id(max_id) { ++max_id; }
+    void Layer::reset() { Log::error("reset called for a layer that does not implement it"); };
+    void Layer::generate_gui(std::string name) {
         ImGui::Checkbox(("visible##visible" + name).c_str(), &visible);
     }
 
-    bool RenderLayer::require(ObjectId object) { return object == _mesh; }
-    ObjectId& RenderLayer::mesh() { return _mesh; }
+    bool Layer::require(ObjectId object) { return object == _mesh; }
+    ObjectId& Layer::mesh() { return _mesh; }
 
-    void RenderLayer::render_primitive_id()              { Log::add("To be implemented"); }
-    void RenderLayer::render_constant_color(int layerid) { Log::add("To be implemented"); }
-    void RenderLayer::destroy() {}
+    void Layer::render_primitive_id()              { Log::add("To be implemented"); }
+    void Layer::render_constant_color(int layerid) { Log::add("To be implemented"); }
+    void Layer::destroy() {}
 
-    int RenderLayer::id() const {
+    int Layer::id() const {
         return _id;
     }
 
-    int RenderLayer::primitive_id(int vertex_id) { return vertex_id; } // TODO to pure virtual
+    int Layer::primitive_id(int vertex_id) { return vertex_id; } // TODO to pure virtual
 
 
 
@@ -61,7 +61,7 @@
 
 
 
-    std::optional<std::reference_wrapper<RenderLayer>> LayerManager::find_by_id(int id) {
+    std::optional<std::reference_wrapper<Layer>> LayerManager::find_by_id(int id) {
         for (auto& [name, obj] : *this) {
             if (obj->id() == id)
                 return *obj;

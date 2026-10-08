@@ -112,8 +112,8 @@ ObjectId::operator Panel& () {
     return as<Panel>();
 }
 
-ObjectId::operator RenderLayer& () {
-    return as<RenderLayer>();
+ObjectId::operator Layer& () {
+    return as<Layer>();
 }
 
 ObjectId::operator MultiMesh&() {

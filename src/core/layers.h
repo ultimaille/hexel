@@ -2,9 +2,9 @@
 #include <optional>
 #include <core/event.h>
 
-struct RenderLayer {
-    RenderLayer();
-    virtual ~RenderLayer() = default;
+struct Layer {
+    Layer();
+    virtual ~Layer() = default;
     virtual void render() = 0;
     virtual void reset();
     virtual void generate_gui(std::string name);
@@ -27,19 +27,19 @@ struct RenderLayer {
     int _id;
 };
 
-struct LayerManager: private Registry<RenderLayer> {
-    int size()                                 { return Registry<RenderLayer>::size(); }
-    RenderLayer& operator[](int i)             { return Registry<RenderLayer>::operator[](i); }
-    RenderLayer& operator[](std::string s)     { return Registry<RenderLayer>::operator[](s); }
-    bool contains(std::string s)               { return Registry<RenderLayer>::contains(s); }
-    int find(std::string str)                  { return Registry<RenderLayer>::find(str); }
+struct LayerManager: private Registry<Layer> {
+    int size()                                 { return Registry<Layer>::size(); }
+    Layer& operator[](int i)             { return Registry<Layer>::operator[](i); }
+    Layer& operator[](std::string s)     { return Registry<Layer>::operator[](s); }
+    bool contains(std::string s)               { return Registry<Layer>::contains(s); }
+    int find(std::string str)                  { return Registry<Layer>::find(str); }
     std::string ith_name(int i)                { return items[i].name; }
     void swap(int i, int j)                    { std::swap(items[i], items[j]); }
     template<class T> T& add(std::string str)  { return emplace_back<T>(str); }
 
     void render();
     void handle(Event event);
-    std::optional<std::reference_wrapper<RenderLayer>> find_by_id(int id);
+    std::optional<std::reference_wrapper<Layer>> find_by_id(int id);
     void kill(std::string layer_name);
 
     void destroy();
