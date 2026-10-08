@@ -49,7 +49,7 @@ void main(){
     if(Value==-1 || frag_visible == 0) discard;
     if (clipping.enabled) clip();
     vec4 blend_color = color_map_prop * vec4(texture(colormap, Value).rgb,1.) + (1.-color_map_prop)*vec4(color,1.);
-    float coeff = ambient_prop+(1.-ambient_prop)*max(dot(Normal, light_direction), 0.0);
+    float coeff = ambient_prop+(1.-ambient_prop)*(.5+.5*dot(Normal, light_direction));
     FragColor = coeff*blend_color;
     FragLayerIdColor = vec4(encode_id(frag_layer_id), 1.);
     FragPrimitiveIdColor = vec4(encode_id(frag_primitive_id), 1.);
