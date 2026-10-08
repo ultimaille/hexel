@@ -2,11 +2,26 @@
 
 struct Picker{
 
+    struct PickResult {
+        int x, y;
+        int layer_id;
+        int primitive_id;
+        ObjectId object_id;
+        float depth;
+
+        // get_point
+        // get_attr_value
+        vec3 point();
+    };
+
     std::vector<unsigned char> layer_ids;
     std::vector<unsigned char> vertex_ids;
+    std::vector<float> depths;
 
     Picker();
     Picker(vec4 rect);
+
+    void reset();
 
     int decode(std::vector<unsigned char> &data, int off) {
         unsigned char r = data[off];
@@ -20,7 +35,7 @@ struct Picker{
                     b * 256 * 256;
     }
 
-    std::tuple<int, int, ObjectId> at(vec2 uv);
+    PickResult at(vec2 uv);
 
     private:
     vec4 rect;

@@ -15,7 +15,6 @@ struct Layer {
     virtual void render_constant_color(int layerid);
     virtual void destroy();
 
-
     virtual int primitive_id(int vertex_id);
 
     bool visible = true;

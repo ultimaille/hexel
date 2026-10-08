@@ -10,6 +10,7 @@
 #include "core/shaders.h"
 #include "core/mode.h"
 
+#include <format>
 
 TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = _id; }
 
