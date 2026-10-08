@@ -23,9 +23,6 @@
     void Layer::render_constant_color(int layerid) { Log::add("To be implemented"); }
     void Layer::destroy() {}
 
-    int Layer::id() const {
-        return _id;
-    }
 
     int Layer::primitive_id(int vertex_id) { return vertex_id; } // TODO to pure virtual
 
@@ -41,9 +38,6 @@
     }
     void LayerManager::handle(Event event) {
         // if (event.who == events::MOUSE) return;
-
-        // dispatch events
-        for (auto& [name, obj] : *this) obj->handle(event);
 
 
         // manage lifecycle events (KILLED MESH)
@@ -63,7 +57,7 @@
 
     std::optional<std::reference_wrapper<Layer>> LayerManager::find_by_id(int id) {
         for (auto& [name, obj] : *this) {
-            if (obj->id() == id)
+            if (obj->_id == id)
                 return *obj;
         }
         return std::nullopt;

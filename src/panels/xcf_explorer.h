@@ -214,7 +214,6 @@ struct XCFExplorer : public Panel {
 
             if (open_mm){
                 // ==> pointset
-                //ImGui::Separator();
                 ObjectId mesh_id(POINTSET, mm_name);
                 bool open_pointset;
                 {
@@ -262,28 +261,59 @@ struct XCFExplorer : public Panel {
                 std::vector<std::string> tri2kill;
                 for (auto& [mesh_name, obj] : mm.triangles) {
                     bool open = open_mesh(selected, mm_name, mesh_name, TRIANGLES, "triangles");
-                    if (ImGui::BeginPopupContextItem(label("folde_context", mm_name + mesh_name))){
+                    if (ImGui::BeginPopupContextItem(label("killtripopup", mm_name + mesh_name))){
                         if (ImGui::Button("Delete")){
                             tri2kill.push_back(mesh_name);
-                        ImGui::CloseCurrentPopup();
-                    }
+                            ImGui::CloseCurrentPopup();
+                        }
                         ImGui::EndPopup();
                     }
-                    if (open){
-                        for (auto& it : obj.attributes.points) add_attribute(selected, mesh_id,
-                            ObjectId(ObjectType::TRIANGLES_ATTR, { mm_name, mesh_name ,it.name }),
-                            "points." + it.name);
-                        for (auto& it : obj.attributes.corners) add_attribute(selected, mesh_id,
-                            ObjectId(ObjectType::TRIANGLES_ATTR, { mm_name, mesh_name ,it.name }),
-                            "corners." + it.name);
-                        for (auto& it : obj.attributes.facets) add_attribute(selected, mesh_id,
-                            ObjectId(ObjectType::TRIANGLES_ATTR, { mm_name, mesh_name ,it.name }),
-                            "facets." + it.name);
-                        add_mesh_layers(selected, mm_name, mesh_name, TRIANGLES, "triangles");
-                        close_mesh();
-                    }
+                    if (!open) continue;
+                    for (auto& it : obj.attributes.points) add_attribute(selected, mesh_id,
+                        ObjectId(ObjectType::TRIANGLES_ATTR, { mm_name, mesh_name ,it.name }),
+                        "points." + it.name);
+                    for (auto& it : obj.attributes.corners) add_attribute(selected, mesh_id,
+                        ObjectId(ObjectType::TRIANGLES_ATTR, { mm_name, mesh_name ,it.name }),
+                        "corners." + it.name);
+                    for (auto& it : obj.attributes.facets) add_attribute(selected, mesh_id,
+                        ObjectId(ObjectType::TRIANGLES_ATTR, { mm_name, mesh_name ,it.name }),
+                        "facets." + it.name);
+                    add_mesh_layers(selected, mm_name, mesh_name, TRIANGLES, "triangles");
+                    close_mesh();
+
                 }
-                for (auto n : tri2kill) God::xcf.kill_mesh(ObjectId(ObjectType::TRIANGLES, {mm_name,n}));
+                // ==> hexahedra
+                std::vector<std::string> hex2kill;
+                for (auto& [mesh_name, obj] : mm.hexahedra) {
+                    bool open = open_mesh(selected, mm_name, mesh_name, HEXAHEDRA, "hexahedra");
+                    if (ImGui::BeginPopupContextItem(label("killhexpopup", mm_name + mesh_name))){
+                        if (ImGui::Button("Delete")){
+                            hex2kill.push_back(mesh_name);
+                            ImGui::CloseCurrentPopup();
+                        }
+                        ImGui::EndPopup();
+                    }
+                    if (!open) continue;
+                    for (auto& it : obj.attributes.points) add_attribute(selected, mesh_id,
+                        ObjectId(ObjectType::HEXAHEDRA_ATTR, { mm_name, mesh_name ,it.name }),
+                        "points." + it.name);
+                    for (auto& it : obj.attributes.cell_corners) add_attribute(selected, mesh_id,
+                        ObjectId(ObjectType::HEXAHEDRA_ATTR, { mm_name, mesh_name ,it.name }),
+                        "corners." + it.name);
+                    for (auto& it : obj.attributes.cell_facets) add_attribute(selected, mesh_id,
+                        ObjectId(ObjectType::HEXAHEDRA_ATTR, { mm_name, mesh_name ,it.name }),
+                        "facets." + it.name);
+                    for (auto& it : obj.attributes.cells) add_attribute(selected, mesh_id,
+                        ObjectId(ObjectType::HEXAHEDRA_ATTR, { mm_name, mesh_name ,it.name }),
+                        "cells." + it.name);
+                    add_mesh_layers(selected, mm_name, mesh_name, HEXAHEDRA, "hexahedra");
+                    close_mesh();
+
+                }
+
+
+                for (auto n : hex2kill) God::xcf.kill_mesh(ObjectId(ObjectType::HEXAHEDRA, { mm_name,n }));
+                for (auto n : tri2kill) God::xcf.kill_mesh(ObjectId(ObjectType::TRIANGLES, { mm_name,n }));
                 ImGui::TreePop();
 
             }

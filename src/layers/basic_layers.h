@@ -6,7 +6,6 @@ struct TrianglesLayer : public Layer{
     TriangleRenderer primitive_renderer;
     TrianglesLayer();
     void generate_gui(std::string name);
-    bool handle(Event event);
     void reset();
     void init(ObjectId obj);
     void render();
@@ -18,7 +17,6 @@ struct QuadsLayer : public Layer {
     TriangleRenderer primitive_renderer;
     QuadsLayer();
     void generate_gui(std::string name);
-    bool handle(Event event);
     void reset();
     void init(ObjectId obj);
     void render();
@@ -31,7 +29,6 @@ struct TetrahedraLayer : public Layer {
     TriangleRenderer primitive_renderer;
     TetrahedraLayer();
     void generate_gui(std::string name);
-    bool handle(Event event);
     void reset();
     void init(ObjectId obj);
     void render();
@@ -41,9 +38,9 @@ struct TetrahedraLayer : public Layer {
 
 struct HexahedraLayer : public Layer {
     TriangleRenderer primitive_renderer;
+    float shrink = 0;
     HexahedraLayer();
     void generate_gui(std::string name);
-    bool handle(Event event);
     void reset();
     void init(ObjectId obj);
     void render();
@@ -55,7 +52,6 @@ struct PointSetLayer : public Layer{
     PointRenderer primitive_renderer;
     PointSetLayer();
     void generate_gui(std::string name);
-    bool handle(Event event);
     void init(ObjectId obj);
     void render();
     void destroy();
@@ -65,7 +61,6 @@ struct PolyLineLayer : public Layer{
     SegmentRenderer primitive_renderer;
     PolyLineLayer();
     void generate_gui(std::string name);
-    bool handle(Event event);
     void init(ObjectId obj);
     void render();
     virtual int primitive_id(int vertex_id);

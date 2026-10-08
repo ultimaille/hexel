@@ -23,8 +23,6 @@ struct SSAO : Layer {
     void generate_gui(std::string name) override {
         Layer::generate_gui(name);
     }
-
-    bool handle(Event) override { return true; }
     bool require(ObjectId object) override { return false; }
 
     void init() {

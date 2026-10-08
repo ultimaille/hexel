@@ -18,16 +18,6 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = _id; }
         Layer::generate_gui(name);
     }
 
-    bool TrianglesLayer::handle(Event event) {
-        if (event.who == ObjectId(events::MOUSE) && !ImGui::GetIO().WantCaptureMouse && God::mouse.clicked(GLFW_MOUSE_BUTTON_LEFT)) {
-            Picker picker({God::mouse.current.x, God::mouse.current.y, 1, 1});
-            auto [layer_id, primitive_id, object_id] = picker.at({ God::mouse.current.x, God::mouse.current.y });
-            Log::add("layer id: " + std::to_string(layer_id));
-            Log::add("primitive id: " + std::to_string(primitive_id));
-        }
-        return true;
-    }
-
     void TrianglesLayer::reset() {
         init(_mesh);
     }
@@ -81,8 +71,6 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = _id; }
         Layer::generate_gui(name);
     }
 
-    bool QuadsLayer::handle(Event event) { return true; }
-
     void QuadsLayer::reset() {
         // TODO free vba/vbo/texture
         init(_mesh);
@@ -134,13 +122,10 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = _id; }
         Layer::generate_gui(name);
     }
 
-    bool TetrahedraLayer::handle(Event event) { return true; }
-
     void TetrahedraLayer::reset() {
         // TODO free vba/vbo/texture
         init(_mesh);
     }
-
 
     void TetrahedraLayer::init(ObjectId obj){
         _mesh = obj;
@@ -183,11 +168,12 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = _id; }
     HexahedraLayer::HexahedraLayer()  { primitive_renderer.layer_id = _id; }
 
     void HexahedraLayer::generate_gui(std::string name){
+        float tmp = shrink;
+        ImGui::SliderFloat(label("shrink", name), &shrink, 0.0f, .9f, "%.2f", 0);
+        if (tmp != shrink) reset();
         primitive_renderer.generate_gui(name);
         Layer::generate_gui(name);
     }
-
-    bool HexahedraLayer::handle(Event event) { return true; }
 
     void HexahedraLayer::reset() {
         init(_mesh);
@@ -208,24 +194,21 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = _id; }
         tri.points.create_points(hex.ncorners());
         tri.create_facets(2*hex.nfacets());
         for (auto c : hex.iter_corners()) tri.points[c] = c.vertex().pos();
-        int shrink=1;
-        double w = double(shrink) / 10.;
         for (auto c : hex.iter_cells()){
             vec3 G = Hexahedron(c).bary_verts();
-            //FOR(lv,8)
             for (auto v : c.iter_corners())
-                 tri.points[v] = (1. - w) * tri.points[v] + w * G;
+                tri.points[v] = (1. - shrink) * tri.points[v] + shrink * G;
         }
-            for (auto f : hex.iter_facets()) {
-                tri.vert(2 * f, 0) = f.corner(0);
-                tri.vert(2 * f, 1) = f.corner(1);
-                tri.vert(2 * f, 2) = f.corner(2);
-                tri.vert(2 * f + 1, 0) = f.corner(2);
-                tri.vert(2 * f + 1, 1) = f.corner(3);
-                tri.vert(2 * f + 1, 2) = f.corner(0);
-            }
+        for (auto f : hex.iter_facets()) {
+            tri.vert(2 * f, 0) = f.corner(0);
+            tri.vert(2 * f, 1) = f.corner(1);
+            tri.vert(2 * f, 2) = f.corner(2);
+            tri.vert(2 * f + 1, 0) = f.corner(2);
+            tri.vert(2 * f + 1, 1) = f.corner(3);
+            tri.vert(2 * f + 1, 2) = f.corner(0);
+        }
         FacetAttribute<bool> visible_tri(tri, true);
-        CornerAttribute<float> value_tri(tri,0);
+        CornerAttribute<float> value_tri(tri, 0);
         primitive_renderer.init();
         primitive_renderer.update(tri, visible_tri, value_tri);
     }
@@ -255,10 +238,6 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = _id; }
     void PointSetLayer::generate_gui(std::string name){
         primitive_renderer.generate_gui(name);
         Layer::generate_gui(name);
-    }
-
-    bool PointSetLayer::handle(Event event) {
-        return true;
     }
 
     void PointSetLayer::init(ObjectId obj){
@@ -296,8 +275,6 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = _id; }
         primitive_renderer.generate_gui(name);
         Layer::generate_gui(name);
     }
-
-    bool PolyLineLayer::handle(Event event) { return true; }
 
 
     void PolyLineLayer::init(ObjectId obj){
