@@ -162,7 +162,12 @@ RenderTarget::~RenderTarget() {
             Log::error("RenderTarget framebuffer is incomplete");
     }
 
-
+    vec2 RenderTarget::get_ndc(int x, int y) {
+        return {
+            (2.f*x) / width - 1.0f,
+            1.0f - (2.f*y) / height
+        };
+    }
 
     void RenderTarget::read_framebuffer(std::vector<unsigned char>& data, vec4 rect, int attachment) {
         int x = static_cast<int>(rect[0]);
@@ -176,7 +181,7 @@ RenderTarget::~RenderTarget() {
         data.resize(w * h * 4);
 
         // Flip Y coordinate from Window (Top-Left origin) to OpenGL (Bottom-Left origin)
-        int gl_y = height - y - h;
+        // int gl_y = height - y - h;
 
         // Standard alignment setup to avoid stride issues
         glPixelStorei(GL_PACK_ALIGNMENT, 1);
@@ -188,6 +193,28 @@ RenderTarget::~RenderTarget() {
             Log::error("Picking glReadPixels error: " + std::to_string(err));
 
         glReadBuffer(GL_COLOR_ATTACHMENT0);
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+    }
+
+    void RenderTarget::read_depth(std::vector<float>& data, vec4 rect) {
+        int x = static_cast<int>(rect[0]);
+        int y = static_cast<int>(rect[1]);
+        int w = static_cast<int>(rect[2]);
+        int h = static_cast<int>(rect[3]);
+
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer);
+
+        data.resize(w * h);
+
+        // Standard alignment setup to avoid stride issues
+        glPixelStorei(GL_PACK_ALIGNMENT, 1);
+
+        glReadPixels(x, y, w, h, GL_DEPTH_COMPONENT, GL_FLOAT, data.data());
+
+        GLenum err = glGetError();
+        if (err != GL_NO_ERROR)
+            Log::error("Picking glReadPixels error: " + std::to_string(err));
+
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
     }
 
