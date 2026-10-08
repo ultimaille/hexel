@@ -23,7 +23,6 @@ struct SSAO : Layer {
     void generate_gui(std::string name) override {
         Layer::generate_gui(name);
     }
-    bool require(ObjectId object) override { return false; }
 
     void init() {
         God::shaders.add(std::string(SHADERS_DIR), ao_name);

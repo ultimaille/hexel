@@ -7,10 +7,10 @@ struct LayerExplorer : public Panel {
         {// sync pressed with the property windows
             ObjectId id(PANEL, "property_window");
             if (id.ref() != std::nullopt) {
-
                 PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(id));
                 for (auto id : pan.layers)
-                    pressed[God::layers.find(id.names.back())] = true;
+                    if (God::layers.contains(id.names.back()))
+                        pressed[God::layers.find(id.names.back())] = true;
             }
             else Log::add("Property_window not found");
         }

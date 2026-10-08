@@ -8,8 +8,6 @@ struct Layer {
     virtual void render() = 0;
     virtual void reset();
     virtual void generate_gui(std::string name);
-    virtual bool require(ObjectId object);
-    ObjectId& mesh();
 
     virtual void render_primitive_id();
     virtual void render_constant_color(int layerid);
@@ -18,9 +16,9 @@ struct Layer {
     virtual int primitive_id(int vertex_id);
 
     bool visible = true;
-    ObjectId _mesh;
+    ObjectId mesh;
     static inline int max_id = 0;
-    int _id;
+    int id;
 };
 
 struct LayerManager: private Registry<Layer> {

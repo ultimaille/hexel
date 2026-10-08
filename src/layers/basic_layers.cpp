@@ -12,7 +12,7 @@
 
 #include <format>
 
-TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = _id; }
+TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = id; }
 
     void TrianglesLayer::generate_gui(std::string name){
         primitive_renderer.generate_gui(name);
@@ -20,12 +20,12 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = _id; }
     }
 
     void TrianglesLayer::reset() {
-        init(_mesh);
+        init(mesh);
     }
 
 
     void TrianglesLayer::init(ObjectId obj){
-        _mesh = obj;
+        mesh = obj;
         um_assert(obj.ref() != std::nullopt);
         Triangles& tri = obj;
         SurfaceAttributes& attr = obj;
@@ -65,7 +65,7 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = _id; }
 
 
 
-    QuadsLayer::QuadsLayer()  { primitive_renderer.layer_id = _id; }
+    QuadsLayer::QuadsLayer()  { primitive_renderer.layer_id = id; }
 
     void QuadsLayer::generate_gui(std::string name){
         primitive_renderer.generate_gui(name);
@@ -74,12 +74,12 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = _id; }
 
     void QuadsLayer::reset() {
         // TODO free vba/vbo/texture
-        init(_mesh);
+        init(mesh);
     }
 
 
     void QuadsLayer::init(ObjectId obj){
-        _mesh = obj;
+        mesh = obj;
         um_assert(obj.ref() != std::nullopt);
         Quads& quads = obj;
         SurfaceAttributes& attr = obj;
@@ -116,7 +116,7 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = _id; }
 
 
     
-    TetrahedraLayer::TetrahedraLayer()  { primitive_renderer.layer_id = _id; }
+    TetrahedraLayer::TetrahedraLayer()  { primitive_renderer.layer_id = id; }
 
     void TetrahedraLayer::generate_gui(std::string name){
         primitive_renderer.generate_gui(name);
@@ -125,11 +125,11 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = _id; }
 
     void TetrahedraLayer::reset() {
         // TODO free vba/vbo/texture
-        init(_mesh);
+        init(mesh);
     }
 
     void TetrahedraLayer::init(ObjectId obj){
-        _mesh = obj;
+        mesh = obj;
         um_assert(obj.ref() != std::nullopt);
         Tetrahedra& tet = obj;
         VolumeAttributes& attr = obj;
@@ -166,7 +166,7 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = _id; }
 
 
 
-    HexahedraLayer::HexahedraLayer()  { primitive_renderer.layer_id = _id; }
+    HexahedraLayer::HexahedraLayer()  { primitive_renderer.layer_id = id; }
 
     void HexahedraLayer::generate_gui(std::string name){
         float tmp = shrink;
@@ -177,11 +177,11 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = _id; }
     }
 
     void HexahedraLayer::reset() {
-        init(_mesh);
+        init(mesh);
     }
 
     void HexahedraLayer::init(ObjectId obj){
-        _mesh = obj;
+        mesh = obj;
         um_assert(obj.ref() != std::nullopt);
         Hexahedra& hex = obj;
         VolumeAttributes& attr = obj;
@@ -234,7 +234,7 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = _id; }
 
 
 
-    PointSetLayer::PointSetLayer() { primitive_renderer.layer_id = _id; }
+    PointSetLayer::PointSetLayer() { primitive_renderer.layer_id = id; }
 
     void PointSetLayer::generate_gui(std::string name){
         primitive_renderer.generate_gui(name);
@@ -242,7 +242,7 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = _id; }
     }
 
     void PointSetLayer::init(ObjectId obj){
-        _mesh = obj;
+        mesh = obj;
         PointSet& ps = obj;
         PointSetAttributes& attr = obj;
 
@@ -270,7 +270,7 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = _id; }
 
 
 
-    PolyLineLayer::PolyLineLayer()  { primitive_renderer.layer_id = _id; }
+    PolyLineLayer::PolyLineLayer()  { primitive_renderer.layer_id = id; }
 
     void PolyLineLayer::generate_gui(std::string name) {
         primitive_renderer.generate_gui(name);
@@ -279,7 +279,7 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = _id; }
 
 
     void PolyLineLayer::init(ObjectId obj){
-        _mesh = obj;
+        mesh = obj;
         PolyLine& pl = obj;
         PolyLineAttributes& attr = obj;
 

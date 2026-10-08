@@ -53,7 +53,7 @@ Picker::PickResult Picker::at(vec2 uv) {
     int primitive_id = -1;
     if (layer_opt.has_value()) {
         auto &layer = layer_opt.value().get();
-        return {x, y, layer_id, layer.primitive_id(vertex_id), layer.mesh(), depth};
+        return {x, y, layer_id, layer.primitive_id(vertex_id), layer.mesh, depth};
     }
 
     return {x, y, -1, -1, ObjectId(), depth};

@@ -83,7 +83,7 @@ struct XCFExplorer : public Panel {
     void add_mesh_layers(ObjectIdSet& selected, std::string mm_name, std::string mesh_name, ObjectType  mesh_type, std::string gna){
         ObjectId mesh_id(mesh_type, { mm_name,mesh_name });
         for (int i = 0; i < God::layers.size(); i++)
-            if (God::layers[i].require(mesh_id)){
+            if (God::layers[i].mesh==mesh_id){
                 ObjectId layer_id(LAYER, God::layers.ith_name(i));
 
                 bool open_layer;
@@ -93,6 +93,17 @@ struct XCFExplorer : public Panel {
                     NodeColor ncol(colorid);
                     open_layer = ImGui::TreeNodeEx(label(God::layers.ith_name(i), mm_name), flag(selected.contains(layer_id), true));
                 }
+                ObjectId attr_id;
+                if (ImGui::BeginDragDropTarget()) {
+                    if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("OBJECTID")) {
+                        attr_id = **(const ObjectId**)payload->Data;
+                        Log::add(std::to_string(attr_id.path));
+                        for (auto s : attr_id.names) Log::add(s);
+                        Log::add(to_string(attr_id));
+                    }
+                    ImGui::EndDragDropTarget();
+                }
+
                 if (open_layer){
                     if (ImGui::IsItemClicked()) switch_selection(selected, layer_id);
                     ImGui::TreePop();
@@ -224,7 +235,7 @@ struct XCFExplorer : public Panel {
                 if (ImGui::IsItemClicked()) switch_selection(selected, mesh_id);
                 if (open_pointset){
                     for (int i = 0; i < God::layers.size(); i++)
-                        if (God::layers[i].require(mesh_id)){
+                        if (God::layers[i].mesh==mesh_id){
                             ObjectId layer_id(LAYER, God::layers.ith_name(i));
                             bool open_layer;
                             {

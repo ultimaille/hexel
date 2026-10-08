@@ -48,6 +48,7 @@ struct HexahedraLayer : public Layer {
     void destroy();
 };
 
+
 struct PointSetLayer : public Layer{
     PointRenderer primitive_renderer;
     PointSetLayer();

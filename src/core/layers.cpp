@@ -10,14 +10,12 @@
 #include "mode.h"
 
 
-    Layer::Layer() : _id(max_id) { ++max_id; }
+    Layer::Layer() : id(max_id) { ++max_id; }
     void Layer::reset() { Log::error("reset called for a layer that does not implement it"); };
     void Layer::generate_gui(std::string name) {
         ImGui::Checkbox(("visible##visible" + name).c_str(), &visible);
     }
 
-    bool Layer::require(ObjectId object) { return object == _mesh; }
-    ObjectId& Layer::mesh() { return _mesh; }
 
     void Layer::render_primitive_id()              { Log::add("To be implemented"); }
     void Layer::render_constant_color(int layerid) { Log::add("To be implemented"); }
@@ -43,13 +41,13 @@
         // manage lifecycle events (KILLED MESH)
         std::vector<std::string> to_kill;
         if (event.what_happened == events::KILLED) for (int i = 0; i < this->size(); i) {
-            if ((*this)[i].require(event.who))
+            if ((*this)[i].mesh==event.who)
                 erase(i);
             else i++;
         }
         if (event.what_happened == events::UPDATED)
             for (auto& shad : items)
-                if (shad.object->require(event.who))
+                if (shad.object->mesh==event.who)
                     shad.object->reset();
     }
 
@@ -57,7 +55,7 @@
 
     std::optional<std::reference_wrapper<Layer>> LayerManager::find_by_id(int id) {
         for (auto& [name, obj] : *this) {
-            if (obj->_id == id)
+            if (obj->id == id)
                 return *obj;
         }
         return std::nullopt;
