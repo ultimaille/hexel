@@ -68,7 +68,6 @@ void MultiMesh::load_geogram(std::string filename, bool connect){
     pointset_attributes = read_by_extension(filename, pointset);
 
     for (int c = 0; c < 8; c++){
-        //std::cerr<<"Load "<< collection_names[c] <<"\n";
         switch (c){
         case 0: load_mesh(pointset, filename, "", polylines, connect); break;
         case 1: load_mesh(pointset, filename, "", triangles, connect); break;
@@ -81,26 +80,28 @@ void MultiMesh::load_geogram(std::string filename, bool connect){
         }
     }
     std::string primitives_loaded = "";
-    if (polylines[""].mesh.nedges() == 0)                                     polylines.erase("");
+    if (polylines[""].mesh.nedges() == 0)                             polylines.erase("");
     else primitives_loaded += "polylines ";
 
-    if (triangles[""].mesh.nfacets() == 0)                                    triangles.erase("");
+    if (triangles[""].mesh.nfacets() == 0)                            triangles.erase("");
     else primitives_loaded += "triangles ";
-    if (quads[""].mesh.nfacets() == 0)                                            quads.erase("");
+    if (quads[""].mesh.nfacets() == 0)                                quads.erase("");
     else primitives_loaded += "quads ";
-    if (polygons[""].mesh.nfacets() == triangles[""].mesh.nfacets())  polygons.erase("");
+    if (!triangles.empty() && !polygons.empty() && polygons[""].mesh.nfacets() == triangles[""].mesh.nfacets())  polygons.erase("");
     else
-        if (polygons[""].mesh.nfacets() == quads[""].mesh.nfacets())          polygons.erase("");
+        if (!quads.empty() && !polygons.empty() && polygons[""].mesh.nfacets() == quads[""].mesh.nfacets())  polygons.erase("");
         else primitives_loaded += "Polygons ";
 
-    if (tetrahedra[""].mesh.ncells() == 0)                                   tetrahedra.erase("");
+    if (tetrahedra[""].mesh.ncells() == 0)                            tetrahedra.erase("");
     else primitives_loaded += "tetrahedra ";
-    if (hexahedra[""].mesh.ncells() == 0)                                     hexahedra.erase("");
+    if (hexahedra[""].mesh.ncells() == 0)                             hexahedra.erase("");
     else primitives_loaded += "hexahedra ";
-    if (wedges[""].mesh.ncells() == 0)                                       wedges.erase("");
+    if (wedges[""].mesh.ncells() == 0)                                wedges.erase("");
     else primitives_loaded += "wedges ";
-    if (pyramids[""].mesh.ncells() == 0)                                       pyramids.erase("");
+    if (pyramids[""].mesh.ncells() == 0)                              pyramids.erase("");
     else primitives_loaded += "pyramid ";
+    plop(triangles.size());
+
     Log::add("primitives loaded in .geogram: " + primitives_loaded);
 }
 
@@ -199,14 +200,14 @@ MultiMesh::MeshAttr<Triangles, SurfaceAttributes>& XCF::add_triangles(std::strin
     return collection[tri_name];
 }
 std::string XCF::load_multimesh(std::string filename, bool connect ){
-    std::string triname = std::filesystem::path(filename).stem().string();
-    while (contains(triname)) triname += "_";
-    MultiMesh& multimesh = add(triname);
+    std::string mm_name = std::filesystem::path(filename).stem().string();
+    while (contains(mm_name)) mm_name += "_";
+    MultiMesh& multimesh = add(mm_name);
     if (std::filesystem::is_directory(filename))
         multimesh.load_from_path(filename, connect);
     else
         multimesh.load_geogram(filename, connect);
-    return triname;
+    return mm_name;
 }
 
 bool XCF::contains(const std::string& name){ 

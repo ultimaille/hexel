@@ -193,7 +193,6 @@ RenderLambertTriangles::RenderLambertTriangles() : primitive_renderer{ _id } {}
         init(_mesh);
     }
 
-
     void RenderLambertHex::init(ObjectId obj){
         _mesh = obj;
         um_assert(obj.ref() != std::nullopt);
@@ -202,18 +201,33 @@ RenderLambertTriangles::RenderLambertTriangles() : primitive_renderer{ _id } {}
 
         if (!God::shaders.contains("triangle"))
             God::shaders.add(std::string(SHADERS_DIR), "triangle");
+            
+        CellAttribute<bool> visible_hex("visible", attr, hex, true);
 
-        CellCornerAttribute<float> value(hex);
-        int n = hex.nhalfedges();
-        int n2 = value.ptr->data.size();
-        for (auto h : hex.iter_corners())  {
-            value[h] = static_cast<float>(((vec3)h.vertex()).x);
+        Triangles tri;
+        tri.points.create_points(hex.ncorners());
+        tri.create_facets(2*hex.nfacets());
+        for (auto c : hex.iter_corners()) tri.points[c] = c.vertex().pos();
+        int shrink=1;
+        double w = double(shrink) / 10.;
+        for (auto c : hex.iter_cells()){
+            vec3 G = Hexahedron(c).bary_verts();
+            //FOR(lv,8)
+            for (auto v : c.iter_corners())
+                 tri.points[v] = (1. - w) * tri.points[v] + w * G;
         }
-
-        CellAttribute<bool> visible("visible", attr, hex, true);
-
+            for (auto f : hex.iter_facets()) {
+                tri.vert(2 * f, 0) = f.corner(0);
+                tri.vert(2 * f, 1) = f.corner(1);
+                tri.vert(2 * f, 2) = f.corner(2);
+                tri.vert(2 * f + 1, 0) = f.corner(2);
+                tri.vert(2 * f + 1, 1) = f.corner(3);
+                tri.vert(2 * f + 1, 2) = f.corner(0);
+            }
+        FacetAttribute<bool> visible_tri(tri, true);
+        CornerAttribute<float> value_tri(tri,0);
         primitive_renderer.init();
-        primitive_renderer.update(hex, visible, value);
+        primitive_renderer.update(tri, visible_tri, value_tri);
     }
 
     void RenderLambertHex::render(){

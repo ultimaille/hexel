@@ -118,12 +118,7 @@ SimplexRenderer::SimplexRenderer(int layer_id) : layer_id(layer_id) {}
 		if (vbo != 0) {
 			glDeleteBuffers(1, &vbo);
 		}
-		// if (visible_buf != 0) {
-		// 	glDeleteBuffers(1, &visible_buf);
-		// }
-		// if (visible_tex != 0) {
-		// 	glDeleteTextures(1, &visible_tex);
-		// }
+
 		um_assert(no_gl_error());
 	}
 
@@ -342,13 +337,7 @@ SimplexRenderer::SimplexRenderer(int layer_id) : layer_id(layer_id) {}
 			}
 			ImGui::EndCombo();
 		}
-		const ImU32 u32_1 = 1, u32_10 = 10;
-		ImGui::Checkbox(label("show edges", name), &show_edge);
-		if (show_edge){
-			ImGui::DragScalar("width", ImGuiDataType_S32, &edge_width, 1, &u32_1, &u32_10, "%u pixels");
-			ImGui::ColorEdit3(label("EColor", name), (float*)&edge_color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
-		}
-	}
+	}																		   
 
 	void TriangleRenderer::init(){
 		color_map_prop=0;
@@ -557,20 +546,6 @@ SimplexRenderer::SimplexRenderer(int layer_id) : layer_id(layer_id) {}
 		
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glDrawArrays(GL_TRIANGLES,0,GLsizei(npts));
-		if (show_edge){
-			float save_color_map_prop = 0.;
-			std::swap(color_map_prop, save_color_map_prop);
-			FOR(d, 3) std::swap(color[d], edge_color[d]);
-
-			shared_setup_before_rendering();
-			glLineWidth(edge_width);
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			glDrawArrays(GL_TRIANGLES, 0, GLsizei(npts));
-
-			std::swap(color_map_prop, save_color_map_prop);
-			FOR(d, 3) std::swap(color[d], edge_color[d]);
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		}
 
 
 		glBindVertexArray(0);

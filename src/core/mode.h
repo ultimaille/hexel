@@ -1,25 +1,24 @@
 #pragma once
 #include "event.h"
 #include <iostream>
+#include <set>
 
 struct MouseReact{
+
     virtual void on_wheel(double v) {}
     virtual void on_click(int button, vec2 p){}
     virtual void on_press(int button, vec2 p) {}
     virtual void on_release(int button, vec2 p) {}
     virtual void on_drag(int button, vec2 a, vec2 b) {}
-    int filter = 0;
+    std::set<int> active_sub_modes;
 };
 
 struct Mode{
-    enum Filter {
-        ctrl_pressed = 1,
-        shift_pressed = 2,
-    };
     Registry<MouseReact> mouse_react;
     virtual void define_gui() = 0;
     virtual void handle(Event event) = 0;
     void handle_mouse(Event event);
+    int sub_mode=0;
 };
 
 
@@ -27,9 +26,6 @@ struct Mode{
 
 
 struct MouseReactTrackBallCamera : public MouseReact{
-    MouseReactTrackBallCamera(int filter = 0) {
-        MouseReact::filter = filter;
-    }
     void on_wheel(double v);
     void on_click(int button, vec2 p){}
     void on_press(int button, vec2 p){}
@@ -41,7 +37,7 @@ struct MouseReactTrackBallCamera : public MouseReact{
 
 struct DefaultMode : public  Mode{
     DefaultMode() {
-        mouse_react.emplace_back<MouseReactTrackBallCamera>("camera").filter = 0;
+        mouse_react.emplace_back<MouseReactTrackBallCamera>("camera").active_sub_modes = {0};
     }
     void define_gui()           { }
     void handle(Event event)    { handle_mouse(event); }

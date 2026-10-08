@@ -42,13 +42,11 @@ std::string to_string(ObjectId obj) {
 
 
 struct MouseReactPickerTest : public MouseReact {
-    MouseReactPickerTest(int filter = 0) {
-        MouseReact::filter = filter;
-    }
+    MouseReactPickerTest(int filter = 0) { MouseReact::active_sub_modes = {filter}; }
+
     void on_wheel(double v) { Log::add("Wheel " + std::to_string(v)); }
     void on_click(int button, vec2 p) {
         Log::add("click " + std::to_string(button));
-
         Picker picker;
         return;
         auto [layer_id, primitive_id, object_id] = picker.at(p);
@@ -66,15 +64,21 @@ struct HexEdit : public Mode{
 
     HexEdit(){
         God::layers.add<SSAO>("SSAO").init();
-        mouse_react.emplace_back<MouseReactTrackBallCamera>("camera").filter = ctrl_pressed;
+        mouse_react.emplace_back<MouseReactTrackBallCamera>("camera").active_sub_modes = { 1 };
         mouse_react.emplace_back < MouseReactPickerTest>("picktest");
     }
 
-    void handle(Event event) { handle_mouse(event); }
+    void handle(Event event) { 
+        sub_mode = 0;
+        if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL)) sub_mode += 1;
+        if (God::keys.pressed(GLFW_KEY_LEFT_SHIFT)) sub_mode += 2;
+        handle_mouse(event); 
+    }
 
 
     void command_gui() {
         static ObjectId arg0;
+        ImGui::TextColored(ImVec4(1, .8, .8, 1.), "Target"); ImGui::SameLine();
         bool press = ImGui::Button(label(to_string(arg0), "command_gui"));
         if (ImGui::BeginDragDropTarget()) {
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("OBJECTID")) {
@@ -98,18 +102,23 @@ struct HexEdit : public Mode{
         }
     }
 
+
+
+
     void define_gui() {
         ImGui::Begin("Mode", nullptr);
         ImGui::Text("Window used to launch debug tests");
         if (ImGui::Button("LoadSomething")) {
-            load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "B1.geogram");
-            God::xcf["B1"].save_to_path(std::string(TEST_INPUT_DIR) + "B1", false);
-            load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "B1");
+            load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "hexski.geogram");
+         
+
+            //load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "B1.geogram");
+            //God::xcf["B1"].save_to_path(std::string(TEST_INPUT_DIR) + "B1", false);
+            //load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "B1");
         }
 
-        if (ImGui::Button("CurrentTest")) {
-            Log::add("Starting new test");
-        }
+        ImGui::Separator();
+        ImGui::Separator();
         ImGui::Separator();
         command_gui();
 

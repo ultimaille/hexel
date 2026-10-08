@@ -163,6 +163,7 @@ struct XCFExplorer : public Panel {
 
         // ==> MultiMesh
         for (auto& [mm_name, mm] : God::xcf) {
+
             ImGui::Separator();
             static bool closable_mm_group = true;
             ObjectId mm_id(MULTIMESH, mm_name);
