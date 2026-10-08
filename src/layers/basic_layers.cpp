@@ -105,7 +105,10 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = id; }
     }
 
     int QuadsLayer::primitive_id(int vertex_id) {
-        return vertex_id; // triangle id from vertex id
+        // retrieve facet id from triangle num 
+        // triangle num is equal to the provoking vertex_id
+        // as there is 4 triangles per facet in quad =>
+        return vertex_id / 4;
     }
 
     void QuadsLayer::destroy() {
@@ -194,7 +197,7 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = id; }
         Triangles tri;
         tri.points.create_points(hex.ncorners());
         tri.create_facets(2*hex.nfacets());
-        for (auto c : hex.iter_corners()) tri.points[c] = c.vertex().pos();
+        for (auto c : hex.iter_corners()) tri.points[c] = c.vertex();
         for (auto c : hex.iter_cells()){
             vec3 G = Hexahedron(c).bary_verts();
             for (auto v : c.iter_corners())
@@ -220,7 +223,10 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = id; }
     }
 
     int HexahedraLayer::primitive_id(int vertex_id) {
-        return vertex_id; // triangle id from vertex id
+        // retrieve facet id from triangle num 
+        // triangle num is equal to the provoking vertex_id
+        // as there is 2 triangles per facet in hex =>
+        return vertex_id / 2;
     }
 
     void HexahedraLayer::destroy() {
