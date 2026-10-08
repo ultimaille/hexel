@@ -67,7 +67,7 @@ struct XCFExplorer : public Panel {
     };
 
     bool open_mesh(ObjectIdSet& selected, std::string mm_name, std::string mesh_name, ObjectType  mesh_type, std::string gna){
-        ImGui::Separator();
+        //ImGui::Separator();
         ObjectId mesh_id(mesh_type, { mm_name,mesh_name });
         bool open_mesh;
         {
@@ -163,7 +163,7 @@ struct XCFExplorer : public Panel {
 
         // ==> MultiMesh
         for (auto& [mm_name, mm] : God::xcf) {
-
+            ImGui::Separator();
             static bool closable_mm_group = true;
             ObjectId mm_id(MULTIMESH, mm_name);
             bool open_mm;
@@ -213,7 +213,7 @@ struct XCFExplorer : public Panel {
 
             if (open_mm){
                 // ==> pointset
-                ImGui::Separator();
+                //ImGui::Separator();
                 ObjectId mesh_id(POINTSET, mm_name);
                 bool open_pointset;
                 {
@@ -228,7 +228,9 @@ struct XCFExplorer : public Panel {
                             ObjectId layer_id(LAYER, God::layers.ith_name(i));
                             bool open_layer;
                             {
-                                NodeColor ncol(2);
+                                int colorid = 2;
+                                if (!selected.contains(layer_id)) colorid = 0;
+                                NodeColor ncol(colorid);
                                 open_layer = ImGui::TreeNodeEx(label(God::layers.ith_name(i), mm_name), flag(selected.contains(mesh_id), true));
                                 object_id_drag_source(layer_id, mm_name);
                             }
