@@ -146,8 +146,8 @@ void PointRenderer::generate_gui(std::string name){
 }
 
 void PointRenderer::init(){
-    if (!God::shaders.contains("point_as_sphere"))
-        God::shaders.add(std::string(SHADERS_DIR), "point_as_sphere");
+
+        God::shaders.create_if_needed(std::string(SHADERS_DIR), "point_as_sphere");
     shaderProgram = God::shaders["point_as_sphere"];
     load_colormap(texture_id, colormap);
     glGenVertexArrays(1, &vao);
@@ -217,8 +217,8 @@ void SegmentRenderer::generate_gui(std::string name){
 
 void SegmentRenderer::init(){
     glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE, width_range);
-    if (!God::shaders.contains("segment_as_tube"))
-        God::shaders.add(std::string(SHADERS_DIR), "segment_as_tube");
+   
+        God::shaders.create_if_needed(std::string(SHADERS_DIR), "segment_as_tube");
     shaderProgram = God::shaders["segment_as_tube"];
 
     load_colormap(texture_id, colormap);
@@ -313,8 +313,8 @@ void TriangleRenderer::generate_gui(std::string name){
 
 void TriangleRenderer::init(){
     color_map_prop = 0;
-    if (!God::shaders.contains("triangle"))
-        God::shaders.add(std::string(SHADERS_DIR), "triangle");
+   
+        God::shaders.create_if_needed(std::string(SHADERS_DIR), "triangle");
     shaderProgram = God::shaders["triangle"];
     load_colormap(0, colormap);
 

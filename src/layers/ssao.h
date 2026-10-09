@@ -25,9 +25,9 @@ struct SSAO : Layer {
     }
 
     void init() {
-        God::shaders.add(std::string(SHADERS_DIR), ao_name);
-        God::shaders.add(std::string(SHADERS_DIR), blur_name);
-        God::shaders.add(std::string(SHADERS_DIR), composite_name);
+        God::shaders.create_if_needed(std::string(SHADERS_DIR), ao_name);
+        God::shaders.create_if_needed(std::string(SHADERS_DIR), blur_name);
+        God::shaders.create_if_needed(std::string(SHADERS_DIR), composite_name);
         initialize_quad();
         initialize_random_texture();
     }

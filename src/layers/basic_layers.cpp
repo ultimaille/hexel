@@ -30,8 +30,7 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = id; }
         Triangles& tri = obj;
         SurfaceAttributes& attr = obj;
 
-        if (!God::shaders.contains("triangle"))
-            God::shaders.add(std::string(SHADERS_DIR), "triangle");
+        God::shaders.create_if_needed(std::string(SHADERS_DIR), "triangle");
 
         CornerAttribute<float> value(tri);
         for (auto h : tri.iter_halfedges())  {
@@ -84,8 +83,7 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = id; }
         Quads& quads = obj;
         SurfaceAttributes& attr = obj;
 
-        if (!God::shaders.contains("triangle"))
-            God::shaders.add(std::string(SHADERS_DIR), "triangle");
+            God::shaders.create_if_needed(std::string(SHADERS_DIR), "triangle");
 
         CornerAttribute<float> value(quads);
         for (auto h : quads.iter_halfedges())  {
@@ -137,8 +135,8 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = id; }
         Tetrahedra& tet = obj;
         VolumeAttributes& attr = obj;
 
-        if (!God::shaders.contains("triangle"))
-            God::shaders.add(std::string(SHADERS_DIR), "triangle");
+      
+            God::shaders.create_if_needed(std::string(SHADERS_DIR), "triangle");
 
         CellCornerAttribute<float> value(tet);
         int n = tet.nhalfedges();
@@ -165,75 +163,6 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = id; }
     void TetrahedraLayer::destroy() {
         primitive_renderer.destroy();
     }
-
-
-
-
-    HexahedraLayer::HexahedraLayer()  { primitive_renderer.layer_id = id; }
-
-    void HexahedraLayer::generate_gui(std::string name){
-        float tmp = shrink;
-        ImGui::SliderFloat(label("shrink", name), &shrink, 0.0f, .9f, "%.2f", 0);
-        if (tmp != shrink) reset();
-        primitive_renderer.generate_gui(name);
-        Layer::generate_gui(name);
-    }
-
-    void HexahedraLayer::reset() {
-        init(mesh);
-    }
-
-    void HexahedraLayer::init(ObjectId obj){
-        mesh = obj;
-        um_assert(obj.ref() != std::nullopt);
-        Hexahedra& hex = obj;
-        VolumeAttributes& attr = obj;
-
-        if (!God::shaders.contains("triangle"))
-            God::shaders.add(std::string(SHADERS_DIR), "triangle");
-            
-        CellAttribute<bool> visible_hex("visible", attr, hex, true);
-
-        Triangles tri;
-        tri.points.create_points(hex.ncorners());
-        tri.create_facets(2*hex.nfacets());
-        for (auto c : hex.iter_corners()) tri.points[c] = c.vertex();
-        for (auto c : hex.iter_cells()){
-            vec3 G = Hexahedron(c).bary_verts();
-            for (auto v : c.iter_corners())
-                tri.points[v] = (1. - shrink) * tri.points[v] + shrink * G;
-        }
-        for (auto f : hex.iter_facets()) {
-            tri.vert(2 * f, 0) = f.corner(0);
-            tri.vert(2 * f, 1) = f.corner(1);
-            tri.vert(2 * f, 2) = f.corner(2);
-            tri.vert(2 * f + 1, 0) = f.corner(2);
-            tri.vert(2 * f + 1, 1) = f.corner(3);
-            tri.vert(2 * f + 1, 2) = f.corner(0);
-        }
-        FacetAttribute<bool> visible_tri(tri, true);
-        CornerAttribute<float> value_tri(tri, 0);
-        primitive_renderer.init();
-        primitive_renderer.update(tri, visible_tri, value_tri);
-    }
-
-    void HexahedraLayer::render(){
-        if (visible)
-            primitive_renderer.render();
-    }
-
-    int HexahedraLayer::primitive_id(int vertex_id) {
-        // retrieve facet id from triangle num 
-        // triangle num is equal to the provoking vertex_id
-        // as there is 2 triangles per facet in hex =>
-        return vertex_id / 2;
-    }
-
-    void HexahedraLayer::destroy() {
-        primitive_renderer.destroy();
-    }
-
-
 
 
 

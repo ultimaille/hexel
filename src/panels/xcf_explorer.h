@@ -97,9 +97,8 @@ struct XCFExplorer : public Panel {
                 if (ImGui::BeginDragDropTarget()) {
                     if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("OBJECTID")) {
                         attr_id = **(const ObjectId**)payload->Data;
-                        Log::add(std::to_string(attr_id.path));
-                        for (auto s : attr_id.names) Log::add(s);
-                        Log::add(to_string(attr_id));
+                        Layer& layer = layer_id;
+                        layer.bind_attribute(attr_id);
                     }
                     ImGui::EndDragDropTarget();
                 }
@@ -126,6 +125,9 @@ struct XCFExplorer : public Panel {
             ImGui::TreePop();
         }
     };
+
+
+
 
 
 
@@ -306,17 +308,26 @@ struct XCFExplorer : public Panel {
                     }
                     if (!open) continue;
                     for (auto& it : obj.attributes.points) add_attribute(selected, mesh_id,
-                        ObjectId(ObjectType::HEXAHEDRA_ATTR, { mm_name, mesh_name ,it.name }),
+                        ObjectId(ObjectType::HEXAHEDRA_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"points",it.name }),
                         "points." + it.name);
                     for (auto& it : obj.attributes.cell_corners) add_attribute(selected, mesh_id,
-                        ObjectId(ObjectType::HEXAHEDRA_ATTR, { mm_name, mesh_name ,it.name }),
+                        ObjectId(ObjectType::HEXAHEDRA_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"corners",it.name }),
                         "corners." + it.name);
                     for (auto& it : obj.attributes.cell_facets) add_attribute(selected, mesh_id,
-                        ObjectId(ObjectType::HEXAHEDRA_ATTR, { mm_name, mesh_name ,it.name }),
+                        ObjectId(ObjectType::HEXAHEDRA_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"facets",it.name }),
                         "facets." + it.name);
                     for (auto& it : obj.attributes.cells) add_attribute(selected, mesh_id,
-                        ObjectId(ObjectType::HEXAHEDRA_ATTR, { mm_name, mesh_name ,it.name }),
+                        ObjectId(ObjectType::HEXAHEDRA_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"cells",it.name}),
                         "cells." + it.name);
+
+
+
+                    //static int pass = 0; if (pass++ > 0)
+                    //for (auto& it : obj.attributes.cells){
+                    //    plop(it.name);
+                    //    plop(attribute_type(&*it.ptr));
+                    //}
+
                     add_mesh_layers(selected, mm_name, mesh_name, HEXAHEDRA, "hexahedra");
                     close_mesh();
 

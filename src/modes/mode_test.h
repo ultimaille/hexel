@@ -1,43 +1,7 @@
 #include "misc/purgatory.h"
 #include "layers/ssao.h"
 
-std::string to_string(events::ObjectType path) {
-    switch (path) {
-    case events::ObjectType::KEYBOARD:          return "keyboard";
-    case events::ObjectType::MOUSE:             return "mouse";
-    case events::ObjectType::CAMERA:            return "camera";
-    case events::ObjectType::PANEL:             return "panel";
-    case events::ObjectType::LAYER:             return "layer";
-    case events::ObjectType::MULTIMESH:         return "multimesh";
-    case events::ObjectType::POINTSET:          return "pointset";
-    case events::ObjectType::POLYLINES:         return "polylines";
-    case events::ObjectType::TRIANGLES:         return "triangles";
-    case events::ObjectType::QUADS:             return "quads";
-    case events::ObjectType::POLYGONS:          return "polygons";
-    case events::ObjectType::TETRAHEDRA:        return "tetrahedra";
-    case events::ObjectType::HEXAHEDRA:         return "hexahedra";
-    case events::ObjectType::WEDGES:            return "wedges";
-    case events::ObjectType::PYRAMIDS:          return "pyramids";
 
-    case events::ObjectType::POINTSET_ATTR:     return "pointset";
-    case events::ObjectType::POLYLINES_ATTR:    return "polylines";
-    case events::ObjectType::TRIANGLES_ATTR:    return "triangles";
-    case events::ObjectType::QUADS_ATTR:        return "quads";
-    case events::ObjectType::POLYGONS_ATTR:     return "polygons";
-    case events::ObjectType::TETRAHEDRA_ATTR:   return "tetrahedra";
-    case events::ObjectType::HEXAHEDRA_ATTR:    return "hexahedra";
-    case events::ObjectType::WEDGES_ATTR:       return "wedges";
-    case events::ObjectType::PYRAMIDS_ATTR:     return "pyramids";
-    };
-    return "XXX";
-}
-std::string to_string(ObjectId obj) {
-    std::string res = to_string(obj.path);
-    for (int i = 0; i < obj.names.size(); i++)
-        if (!obj.names[i].empty())
-            res += (i == 0 ? ": " : "->") + obj.names[i];
-    return  res;
-}
 
 
 
@@ -110,7 +74,17 @@ struct HexEdit : public Mode{
         ImGui::Text("Window used to launch debug tests");
         if (ImGui::Button("LoadSomething")) {
             load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "hexski.geogram");
-         
+            
+            auto& attr = God::xcf["hexski"].hexahedra[""].attributes;
+            auto& hex = God::xcf["hexski"].hexahedra[""].mesh;
+
+            CellFacetAttribute<float> cfa("cfa", attr, hex);
+            for (auto f : hex.iter_facets()) cfa[f] = f;
+            CellCornerAttribute<float> cca("cca", attr, hex);
+            for (auto c : hex.iter_corners()) cca[c] = c;
+            CellAttribute<bool> visible("visible", attr, hex);
+            for (auto c : hex.iter_cells()) visible[c] = c%2;
+            God::layers["hexskiHex"].reset();
 
             //load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "B1.geogram");
             //God::xcf["B1"].save_to_path(std::string(TEST_INPUT_DIR) + "B1", false);

@@ -62,11 +62,9 @@ struct ShaderManager : public std::map<std::string,GLuint> {
         return buffer.str();
     }
 
-    void add(std::string path,std::string shader_name) {
-        if (contains(shader_name)) {
-            Log::error("duplicate shader name:", shader_name);
-            return;
-        }
+    void create_if_needed(std::string path,std::string shader_name) {
+        if (contains(shader_name)) return;
+        
         operator [](shader_name) = createShaderProgram(
                 loadShader(path+shader_name+std::string(".vert")).c_str(),
                 loadShader(path+shader_name+std::string(".frag")).c_str()
