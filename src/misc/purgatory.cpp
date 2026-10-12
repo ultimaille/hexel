@@ -77,14 +77,6 @@ void load_mm_with_default_layers(std::string path) {
         TrianglesLayer& layer = God::layers.add<TrianglesLayer>(mesh_name + "Tri");
         layer.init(ObjectId(TRIANGLES, { mesh_name, elt.first }));
     }
-    for (auto& elt : God::xcf[mesh_name].quads) {
-        QuadsLayer& layer = God::layers.add<QuadsLayer>(mesh_name + "Quad");
-        layer.init(ObjectId(QUADS, { mesh_name, elt.first }));
-    }
-    for (auto& elt : God::xcf[mesh_name].tetrahedra) {
-        TetrahedraLayer& layer = God::layers.add<TetrahedraLayer>(mesh_name + "Tet");
-        layer.init(ObjectId(TETRAHEDRA, { mesh_name, elt.first }));
-    }
     for (auto& elt : God::xcf[mesh_name].hexahedra) {
         HexahedraLayer& layer = God::layers.add<HexahedraLayer>(mesh_name + "Hex");
         layer.init(ObjectId(HEXAHEDRA, { mesh_name, elt.first }));

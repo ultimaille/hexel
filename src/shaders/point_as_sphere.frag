@@ -8,7 +8,7 @@ layout(location = 1) out vec4 FragLayerIdColor;
 layout(location = 2) out vec4 FragVertexIdColor;
 
 flat in int frag_layer_id;
-flat in int frag_vertex_id;
+flat in int frag_primitive_id;
 flat in int frag_visible;
 
 uniform mat4 projection;
@@ -54,8 +54,6 @@ void main() {
     vec4 clipPosition =projection *vec4(I, 1.0);
     gl_FragDepth = clipPosition.z / clipPosition.w * 0.5 + 0.5;
 
-
-
     // compute lighting
     float diffuse =max(dot(normalize( I - C ), light_direction),0.0);
     vec4 blend_color = color_map_prop * vec4(texture(colormap, Value).rgb,1.) + (1.-color_map_prop)*vec4(color,1.);
@@ -63,5 +61,5 @@ void main() {
     FragColor = coeff*blend_color;
 
     FragLayerIdColor = vec4(encode_id(frag_layer_id), 1.);
-    FragVertexIdColor = vec4(encode_id(frag_vertex_id), 1.);
+    FragVertexIdColor = vec4(encode_id(frag_primitive_id), 1.);
 }

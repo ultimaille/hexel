@@ -5,14 +5,22 @@
 
 struct HexahedraLayer : public Layer {
     ObjectId attr_id;
-    bool render_as_spheres=false;
+    enum RenderType {
+        PLAIN,
+        CELL,
+        FACET,
+        CORNER, CORNER_GLYPH,
+        POINT, POINT_SPHERE
+    } rt;
+
+    int primitive_type();
     float shrink = .1;
 
+    //attr_id.names = 0->mm_name, 1->hex_name, 2->attribute_type, 3->attribute_primitive, 4->attribute_name
     inline bool attr_active()           { return attr_id.names.size() == 5; }// deso pour le jeu de mot
     inline std::string attr_name()      { um_assert(attr_active()); return attr_id.names[4]; }
     inline std::string attr_primitive() { um_assert(attr_active()); return attr_id.names[3]; }
     inline std::string attr_type()      { um_assert(attr_active()); return attr_id.names[2]; }
-    inline bool use_point_renderer()    { return !attr_id.names.empty() && attr_primitive() == "points" && render_as_spheres; }
 
     TriangleRenderer tri_renderer;
     PointRenderer point_renderer;
@@ -22,34 +30,32 @@ struct HexahedraLayer : public Layer {
     void reset();
     void init(ObjectId obj);
     void render();
-    virtual int primitive_id(int vertex_id);
     void destroy();
     void bind_attribute(ObjectId attr_id);
 
+
+    template<class T>void update_typed();
+    void update();
+
     void prepare_data_without_attribute(
-        Hexahedra& hex, CellAttribute<bool>& visible_hex,
-        Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri
+        Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri, FacetAttribute<int>& primitive_id
     );
     template<class T> void prepare_data_for_scalar_cell_attribute(
-        Hexahedra& hex, CellAttribute<bool>& visible_hex, VolumeAttributes& attr, std::string attr_name,
-        Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri
+        Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri, FacetAttribute<int>& primitive_id
     );
     template<class T> void prepare_data_for_scalar_facet_attribute(
-        Hexahedra& hex, CellAttribute<bool>& visible_hex, VolumeAttributes& attr, std::string attr_name,
-        Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri
+        Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri, FacetAttribute<int>& primitive_id
     );
     template<class T> void prepare_data_for_scalar_corner_attribute(
-        Hexahedra& hex, CellAttribute<bool>& visible_hex, VolumeAttributes& attr, std::string attr_name,
-        Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri
+        Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri, FacetAttribute<int>& primitive_id
+    );
+    template<class T> void prepare_data_for_scalar_corner_glyph_attribute(
+        Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri, FacetAttribute<int>& primitive_id
     );
     template<class T> void prepare_data_for_scalar_point_attribute(
-        Hexahedra& hex, CellAttribute<bool>& visible_hex, VolumeAttributes& attr, std::string attr_name,
-        Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri
+        Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri, FacetAttribute<int>& primitive_id
     );
-
-    template<class T> void update_data_for_scalar_point_attribute_as_sphere(
-        Hexahedra& hex, CellAttribute<bool>& visible_hex, VolumeAttributes& attr, std::string attr_name
-        );
+    template<class T> void update_data_for_scalar_point_attribute_as_sphere();
 };
 
 

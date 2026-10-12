@@ -159,12 +159,14 @@ void PointRenderer::init(){
     glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, v));
     glEnableVertexAttribArray(2);
     glVertexAttribIPointer(2, 1, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, visible));
+    glEnableVertexAttribArray(3);
+    glVertexAttribIPointer(3, 1, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, primitive_id));
 
     glBindVertexArray(0);
     um_assert(no_gl_error());
 }
 
-void PointRenderer::update(PointSet& ps, PointAttribute<bool>& visible, PointAttribute<float>& value) {
+void PointRenderer::update(PointSet& ps, PointAttribute<bool>& visible, PointAttribute<float>& value, PointAttribute<int>& primitive_id) {
     compute_value_range(value.ptr->data);
 
     npts = ps.size();
@@ -174,6 +176,7 @@ void PointRenderer::update(PointSet& ps, PointAttribute<bool>& visible, PointAtt
             .pos = to_float3(ps[v]),
             .v = value[v],
             .visible = visible[v] ? 1 : 0,
+            .primitive_id = primitive_id[v]
         };
     }
 
@@ -181,7 +184,6 @@ void PointRenderer::update(PointSet& ps, PointAttribute<bool>& visible, PointAtt
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
 }
-
 
 void PointRenderer::render(){
     um_assert(no_gl_error());
@@ -236,11 +238,13 @@ void SegmentRenderer::init(){
     glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, v1));
     glEnableVertexAttribArray(4);
     glVertexAttribIPointer(4, 1, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, visible));
+    glEnableVertexAttribArray(5);
+    glVertexAttribIPointer(5, 1, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, primitive_id));
 
     glBindVertexArray(0);
 }
 
-void SegmentRenderer::push(PolyLine& pl, EdgeAttribute<bool>& visible, PointAttribute<float>& value) {
+void SegmentRenderer::push(PolyLine& pl, EdgeAttribute<bool>& visible, PointAttribute<float>& value, EdgeAttribute<int>& primitive_id) {
     compute_value_range(value.ptr->data);
 
     npts = 2 * pl.nedges();
@@ -255,6 +259,7 @@ void SegmentRenderer::push(PolyLine& pl, EdgeAttribute<bool>& visible, PointAttr
             .p1 = to_float3(p1),
             .v1 = value[e.to()],
             .visible = visible[e] ? 1 : 0,
+            .primitive_id = primitive_id[e]
         };
         vertices[e * 2] = v;
         vertices[e * 2 + 1] = v;
@@ -264,8 +269,6 @@ void SegmentRenderer::push(PolyLine& pl, EdgeAttribute<bool>& visible, PointAttr
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
 }
-
-
 
 void SegmentRenderer::render(){
     um_assert(no_gl_error());
@@ -312,7 +315,7 @@ void TriangleRenderer::generate_gui(std::string name){
 void TriangleRenderer::init(){
     color_map_prop = 0;
    
-        God::shaders.create_if_needed(std::string(SHADERS_DIR), "triangle");
+    God::shaders.create_if_needed(std::string(SHADERS_DIR), "triangle");
     shaderProgram = God::shaders["triangle"];
     load_colormap(0, colormap);
 
@@ -336,13 +339,16 @@ void TriangleRenderer::init(){
     // visible
     glEnableVertexAttribArray(4);
     glVertexAttribIPointer(4, 1, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, visible));
+    // visible
+    glEnableVertexAttribArray(5);
+    glVertexAttribIPointer(5, 1, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, primitive_id));
 
     glBindVertexArray(0);
 
     um_assert(no_gl_error());
 }
 
-void TriangleRenderer::update(Triangles& tri, FacetAttribute<bool>& visible, CornerAttribute<float>& value) {
+void TriangleRenderer::update(Triangles& tri, FacetAttribute<bool>& visible, CornerAttribute<float>& value, FacetAttribute<int>& primitive_id) {
     compute_value_range(value.ptr->data);
 
     std::vector<Vertex> vertices(tri.ncorners());
@@ -362,121 +368,8 @@ void TriangleRenderer::update(Triangles& tri, FacetAttribute<bool>& visible, Cor
                 .v = value[h],
                 .b = to_float3(b),
                 .visible = visible[f]?1:0,
+                .primitive_id = primitive_id[f]
             };
-        }
-    }
-
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
-}
-
-void TriangleRenderer::update(Quads& quads, FacetAttribute<bool>& visible, CornerAttribute<float>& value) {
-    compute_value_range(value.ptr->data);
-
-    std::vector<Vertex> vertices(quads.ncorners() * 3);
-    npts = vertices.size();
-
-    for (auto f : quads.iter_facets())  {
-        auto t = Quad3(f);
-        auto n = t.normal();
-        auto b = t.bary_verts();
-
-        float bary_val = 0;
-        for (int lv = 0; lv < 4; ++lv) bary_val += value[f * 4 + lv];
-        bary_val /= 4;
-
-        for (int lv = 0; lv < 4; ++lv) {
-            auto h = f * 4 + lv;
-            float v[3] = { bary_val, value[f * 4 + lv], value[f * 4 + (lv + 1) % 4] };
-            vec3 points[3] = { b, f.vertex(lv), f.vertex((lv + 1) % 4) };
-
-            for (int i = 0; i < 3; ++i) {
-                vertices[f * 12 + (lv * 3 + i)] = {
-                    .pos = to_float3(points[i]),
-                    .n = to_float3(n),
-                    .v = v[i],
-                    .b = to_float3(b),
-                    .visible = visible[f] ? 1 : 0,
-                };
-            }
-        }
-    }
-
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
-}
-
-void TriangleRenderer::update(Tetrahedra& tet, CellAttribute<bool>& visible, CellCornerAttribute<float>& value) {
-    compute_value_range(value.ptr->data);
-
-    std::vector<Vertex> vertices(tet.nfacets() * 3);
-    npts = vertices.size();
-
-    for (auto c : tet.iter_cells()) {
-        auto t = Tetrahedron(c);
-        auto b = t.bary_verts();
-
-        for (auto f : c.iter_facets())  {
-            auto tri = Triangle3(f);
-            auto n = tri.normal();
-
-            for (int lv = 0; lv < 3; ++lv) {
-                auto h = f * 3 + lv;
-                vec3 p = f.vertex(lv);
-                vertices[h] = {
-                    .pos = to_float3(p),
-                    .n = to_float3(n),
-                    .v = value[f.corner(lv)],
-                    .b = to_float3(b),
-                    .visible = visible[c] ? 1 : 0,
-                };
-            }
-        }
-    }
-
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
-}
-
-void TriangleRenderer::update(Hexahedra& hex, CellAttribute<bool>& visible, CellCornerAttribute<float>& value) {
-    compute_value_range(value.ptr->data);
-
-    std::vector<Vertex> vertices(hex.nfacets() * 12 /* 4 tri per quad, 3 verts per tri */);
-    npts = vertices.size();
-
-    for (auto c : hex.iter_cells()) {
-        auto t = Hexahedron(c);
-        auto b = t.bary_verts();
-
-        for (auto f : c.iter_facets())  {
-            auto tri = Quad3(f);
-            auto n = tri.normal();
-
-            float bary_val = 0;
-            for (int lv = 0; lv < 4; ++lv) bary_val += value[f.corner(lv)];
-            bary_val /= 4;
-
-            for (int lv = 0; lv < 4; ++lv) {
-
-                auto c0 = f.corner(lv);
-                auto c1 = f.corner((lv + 1) % 4);
-                float v[3] = { bary_val, value[c0], value[c1] };
-                // float v[3] = {0,0,0};
-                vec3 points[3] = { b, f.vertex(lv), f.vertex((lv + 1) % 4) };
-
-                for (int i = 0; i < 3; ++i) {
-                    vertices[f * 12 + (lv * 3 + i)] = {
-                        .pos = to_float3(points[i]),
-                        .n = to_float3(n),
-                        .v = v[i],
-                        .b = to_float3(b),
-                        .visible = visible[c] ? 1 : 0,
-                    };
-                }
-            }
         }
     }
 

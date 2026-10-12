@@ -15,7 +15,7 @@ struct Picker{
     };
 
     std::vector<unsigned char> layer_ids;
-    std::vector<unsigned char> vertex_ids;
+    std::vector<unsigned char> primitive_ids;
     std::vector<float> depths;
 
     Picker();

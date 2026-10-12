@@ -39,9 +39,10 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = id; }
 
         FacetAttribute<bool> visible(true);
         visible.bind("visible", attr, tri);
-
+        FacetAttribute<int> primitive_id(tri);
+        for (auto f : tri.iter_facets()) primitive_id[f] = f;
         primitive_renderer.init();
-        primitive_renderer.update(tri, visible, value);
+        primitive_renderer.update(tri, visible, value,primitive_id);
     }
 
     void TrianglesLayer::render(){
@@ -56,115 +57,6 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = id; }
     void TrianglesLayer::destroy() {
         primitive_renderer.destroy();
     }
-
-
-
-
-
-
-
-
-    QuadsLayer::QuadsLayer()  { primitive_renderer.layer_id = id; }
-
-    void QuadsLayer::generate_gui(std::string name){
-        primitive_renderer.generate_gui(name);
-        Layer::generate_gui(name);
-    }
-
-    void QuadsLayer::reset() {
-        // TODO free vba/vbo/texture
-        init(mesh);
-    }
-
-
-    void QuadsLayer::init(ObjectId obj){
-        mesh = obj;
-        um_assert(obj.ref() != std::nullopt);
-        Quads& quads = obj;
-        SurfaceAttributes& attr = obj;
-
-            God::shaders.create_if_needed(std::string(SHADERS_DIR), "triangle");
-
-        CornerAttribute<float> value(quads);
-        for (auto h : quads.iter_halfedges())  {
-            value[h] = h.from().pos()[0];
-        }
-
-        FacetAttribute<bool> visible(true);
-        visible.bind("visible", attr, quads);
-
-        primitive_renderer.init();
-        primitive_renderer.update(quads, visible, value);
-    }
-
-    void QuadsLayer::render(){
-        if (visible)
-            primitive_renderer.render();
-    }
-
-    int QuadsLayer::primitive_id(int vertex_id) {
-        // retrieve facet id from triangle num 
-        // triangle num is equal to the provoking vertex_id
-        // as there is 4 triangles per facet in quad =>
-        return vertex_id / 4;
-    }
-
-    void QuadsLayer::destroy() {
-        primitive_renderer.destroy();
-    }
-
-
-
-
-    
-    TetrahedraLayer::TetrahedraLayer()  { primitive_renderer.layer_id = id; }
-
-    void TetrahedraLayer::generate_gui(std::string name){
-        primitive_renderer.generate_gui(name);
-        Layer::generate_gui(name);
-    }
-
-    void TetrahedraLayer::reset() {
-        // TODO free vba/vbo/texture
-        init(mesh);
-    }
-
-    void TetrahedraLayer::init(ObjectId obj){
-        mesh = obj;
-        um_assert(obj.ref() != std::nullopt);
-        Tetrahedra& tet = obj;
-        VolumeAttributes& attr = obj;
-
-      
-            God::shaders.create_if_needed(std::string(SHADERS_DIR), "triangle");
-
-        CellCornerAttribute<float> value(tet);
-        int n = tet.nhalfedges();
-        int n2 = value.ptr->data.size();
-        for (auto h : tet.iter_corners())  {
-            value[h] = static_cast<float>(((vec3)h.vertex()).x);
-        }
-
-        CellAttribute<bool> visible("visible", attr, tet, true);
-
-        primitive_renderer.init();
-        primitive_renderer.update(tet, visible, value);
-    }
-
-    void TetrahedraLayer::render(){
-        if (visible)
-            primitive_renderer.render();
-    }
-
-    int TetrahedraLayer::primitive_id(int vertex_id) {
-        return vertex_id; // triangle id from vertex id
-    }
-
-    void TetrahedraLayer::destroy() {
-        primitive_renderer.destroy();
-    }
-
-
 
 
 
@@ -187,9 +79,12 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = id; }
         }
 
         PointAttribute<bool> visible("visible", attr, ps, true);
+        PointAttribute<int> primitive_id(ps);
+        FOR(v, ps.size())
+            primitive_id[v] = v;
 
         primitive_renderer.init();
-        primitive_renderer.update(ps, visible, value);
+        primitive_renderer.update(ps, visible, value, primitive_id);
     }
 
     void PointSetLayer::render(){
@@ -199,8 +94,6 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = id; }
     void PointSetLayer::destroy() {
         primitive_renderer.destroy();
     }
-
-
 
 
 
@@ -223,9 +116,11 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = id; }
             value[v] = v.pos()[0];
 
         EdgeAttribute<bool> visible("visible", attr, pl, true);
-
+        EdgeAttribute<int> primitive_id(pl);
+        for (auto e : pl.iter_edges())
+            primitive_id[e] = e;
         primitive_renderer.init();
-        primitive_renderer.push(pl, visible, value);
+        primitive_renderer.push(pl, visible, value, primitive_id);
     }
 
     void PolyLineLayer::render(){

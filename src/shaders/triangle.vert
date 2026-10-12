@@ -5,6 +5,7 @@ layout (location = 1) in vec3 aNormal;
 layout (location = 2) in float value;
 layout (location = 3) in vec3 bary;
 layout (location = 4) in int visible;
+layout (location = 5) in int primitive_id;
 
 // layout (location = 5) in int primitive_id;
 // uniform usamplerBuffer ivisible;
@@ -40,7 +41,7 @@ void main(){
     FragBary = bary;
     Normal = normalize(mat3(transpose(inverse(view))) * aNormal);
     gl_Position = projection * viewPos;
-    frag_primitive_id = gl_VertexID / 3;
+    frag_primitive_id = primitive_id;
     frag_layer_id = layer_id;
     frag_visible = visible;
 }

@@ -10,15 +10,12 @@ struct MouseReact{
     virtual void on_press(int button, vec2 p) {}
     virtual void on_release(int button, vec2 p) {}
     virtual void on_drag(int button, vec2 a, vec2 b) {}
-    std::set<int> active_sub_modes;
 };
 
 struct Mode{
-    Registry<MouseReact> mouse_react;
     virtual void define_gui() = 0;
     virtual void handle(Event event) = 0;
-    void handle_mouse(Event event);
-    int sub_mode=0;
+    void send_instruction_to_react(Event event, MouseReact &react);
 };
 
 
@@ -36,11 +33,10 @@ struct MouseReactTrackBallCamera : public MouseReact{
 
 
 struct DefaultMode : public  Mode{
-    DefaultMode() {
-        mouse_react.emplace_back<MouseReactTrackBallCamera>("camera").active_sub_modes = {0};
-    }
+    MouseReactTrackBallCamera camera_react;
+    DefaultMode() {}
     void define_gui()           { }
-    void handle(Event event)    { handle_mouse(event); }
+    void handle(Event event)    { send_instruction_to_react(event, camera_react); }
 };
 
 

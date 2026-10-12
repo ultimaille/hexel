@@ -5,10 +5,10 @@
 struct Layer {
     Layer();
     virtual ~Layer() = default;
-    virtual void render() = 0;
     virtual void reset();
     virtual void generate_gui(std::string name);
 
+    virtual void render() = 0;
     virtual void render_primitive_id();
     virtual void render_constant_color(int layerid);
     virtual void destroy();
@@ -18,6 +18,8 @@ struct Layer {
 
     bool visible = true;
     ObjectId mesh;
+    virtual int primitive_type() { Log::error("This layer has no identified primtives"); return -1; } // number in the collections PointAttributes, PolyLineAttributes, SurfaceAttributes and VolumeAttributes
+
     static inline int max_id = 0;
     int id;
 };

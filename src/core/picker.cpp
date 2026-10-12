@@ -26,7 +26,7 @@ void Picker::reset() {
     God::context.end_scissor();
     God::context.end_frame(true);
     God::context.render_target.read_framebuffer(layer_ids, rect, 1);
-    God::context.render_target.read_framebuffer(vertex_ids, rect, 2);
+    God::context.render_target.read_framebuffer(primitive_ids, rect, 2);
     God::context.render_target.read_depth(depths, rect);
 }
 
@@ -45,15 +45,15 @@ Picker::PickResult Picker::at(vec2 uv) {
 
     int off = (flipped_y * w + x) * 4;
     int layer_id = decode(layer_ids, off);
-    int vertex_id = decode(vertex_ids, off);
+    int primitive_id = decode(primitive_ids, off);
     float depth = depths[flipped_y * w + x];
     auto layer_opt = God::layers.find_by_id(layer_id);
 
     // Retrieve primitive id from vertex id
-    int primitive_id = -1;
+    //int primitive_id = -1;
     if (layer_opt.has_value()) {
         auto &layer = layer_opt.value().get();
-        return {x, y, layer_id, layer.primitive_id(vertex_id), layer.mesh, depth};
+        return {x, y, layer_id, primitive_id, layer.mesh, depth};
     }
 
     return {x, y, -1, -1, ObjectId(), depth};

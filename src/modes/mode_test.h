@@ -6,13 +6,12 @@
 
 
 struct MouseReactPickerTest : public MouseReact {
-    MouseReactPickerTest(int filter = 0) { MouseReact::active_sub_modes = {filter}; }
+    MouseReactPickerTest() {  }
 
     void on_wheel(double v) { Log::add("Wheel " + std::to_string(v)); }
     void on_click(int button, vec2 p) {
         Log::add("click " + std::to_string(button));
         Picker picker;
-        return;
         auto pr = picker.at(p);
         Log::add("layer id: " + std::to_string(pr.layer_id));
         Log::add("primitive id: " + std::to_string(pr.primitive_id));
@@ -26,17 +25,19 @@ struct MouseReactPickerTest : public MouseReact {
 
 struct HexEdit : public Mode{
 
+    MouseReactTrackBallCamera camera_react;
+    MouseReactPickerTest pick_react;
+
     HexEdit(){
-        God::layers.add<SSAO>("SSAO").init();
-        mouse_react.emplace_back<MouseReactTrackBallCamera>("camera").active_sub_modes = { 1 };
-        mouse_react.emplace_back < MouseReactPickerTest>("picktest");
     }
 
     void handle(Event event) { 
-        sub_mode = 0;
-        if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL)) sub_mode += 1;
-        if (God::keys.pressed(GLFW_KEY_LEFT_SHIFT)) sub_mode += 2;
-        handle_mouse(event); 
+        
+        if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL))
+            send_instruction_to_react(event,camera_react);
+        else {
+            send_instruction_to_react(event, pick_react);
+        }
     }
 
 
@@ -89,6 +90,7 @@ struct HexEdit : public Mode{
             //load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "B1.geogram");
             //God::xcf["B1"].save_to_path(std::string(TEST_INPUT_DIR) + "B1", false);
             //load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "B1");
+            God::layers.add<SSAO>("SSAO").init();
         }
 
         ImGui::Separator();

@@ -14,32 +14,6 @@ struct TrianglesLayer : public Layer{
     void destroy();
 };
 
-struct QuadsLayer : public Layer {
-    TriangleRenderer primitive_renderer;
-    QuadsLayer();
-    void generate_gui(std::string name);
-    void reset();
-    void init(ObjectId obj);
-    void render();
-    virtual int primitive_id(int vertex_id);
-    void destroy();
-};
-
-
-struct TetrahedraLayer : public Layer {
-    TriangleRenderer primitive_renderer;
-    TetrahedraLayer();
-    void generate_gui(std::string name);
-    void reset();
-    void init(ObjectId obj);
-    void render();
-    virtual int primitive_id(int vertex_id);
-    void destroy();
-};
-
-
-
-
 struct PointSetLayer : public Layer{
     PointRenderer primitive_renderer;
     PointSetLayer();

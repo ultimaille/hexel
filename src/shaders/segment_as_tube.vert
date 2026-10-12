@@ -5,6 +5,7 @@ layout(location = 1) in float ValueA;
 layout(location = 2) in vec3 aP1;
 layout(location = 3) in float ValueB;
 layout(location = 4) in int visible;
+layout (location = 5) in int primitive_id;
 
 uniform mat4 view;
 uniform mat4 projection;
@@ -38,7 +39,7 @@ void main(){
     if (ValueA==-1)  value = -1;
     if (ValueB==-1)  value = -1;
 
-    frag_primitive_id = gl_VertexID / 2;
+    frag_primitive_id = primitive_id;
     frag_layer_id = layer_id;
     frag_visible = visible;
 }
