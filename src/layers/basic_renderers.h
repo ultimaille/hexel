@@ -57,13 +57,14 @@ struct PointRenderer: public Renderer{
 	struct Vertex {
 		std::array<float, 3> pos;
 		float v;
-		bool visible;
+		int visible;
 	};
 	void generate_gui(std::string name);
 	void init();
 	void update(PointSet& ps, PointAttribute<bool>& visible, PointAttribute<float>& value);
 	void render();
 };
+
 struct SegmentRenderer: public Renderer{
 	GLfloat width_range[2];
 	struct Vertex {
@@ -71,7 +72,7 @@ struct SegmentRenderer: public Renderer{
 		float v0;
 		std::array<float, 3> p1;
 		float v1;
-		bool visible;
+		int visible;
 	};
 
 	int line_width=10;
@@ -95,7 +96,7 @@ struct TriangleRenderer: public Renderer{
 		std::array<float, 3> n; // normal
 		float v; // value
 		std::array<float, 3> b; // bary
-		bool visible;
+		int visible;
 	};
 
 	void generate_gui(std::string name);

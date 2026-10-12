@@ -106,7 +106,7 @@
         PointAttribute<float> value_float(hex);
         PointAttribute<bool> visible_pts(hex,false);
         FOR(v, hex.nverts()) value_float[v] = value[v];
-        for (auto c : hex.iter_cells()) if (visible_hex[c]) FOR(lv,8)visible_pts[c.vertex(lv)];
+        for (auto c : hex.iter_cells()) if (visible_hex[c]) FOR(lv,8)visible_pts[c.vertex(lv)]=true;
         point_renderer.update(hex.points, visible_pts, value_float);
     }
 
@@ -187,7 +187,6 @@
                 }
             }
         }
-        for (auto f : tri.iter_facets()) plop(visible_tri[f]);
         tri_renderer.update(tri, visible_tri, value_tri);
     }
 

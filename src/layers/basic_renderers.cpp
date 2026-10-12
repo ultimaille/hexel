@@ -2,7 +2,6 @@
 #include <core/basic.h>
 #include <array>
 #include <glad/gl.h>
-#include "basic_renderers.h"
 #include "core/layers.h"
 #include "core/camera.h"
 #include "core/picker.h"
@@ -10,7 +9,6 @@
 #include "core/render_target.h"
 #include "core/window.h"
 #include "core/panels.h"
-#include "core/layers.h"
 #include "core/shaders.h"
 #include "core/mode.h"
 
@@ -175,7 +173,7 @@ void PointRenderer::update(PointSet& ps, PointAttribute<bool>& visible, PointAtt
         vertices[v] = {
             .pos = to_float3(ps[v]),
             .v = value[v],
-            .visible = visible[v]
+            .visible = visible[v] ? 1 : 0,
         };
     }
 
@@ -256,7 +254,7 @@ void SegmentRenderer::push(PolyLine& pl, EdgeAttribute<bool>& visible, PointAttr
             .v0 = value[e.from()],
             .p1 = to_float3(p1),
             .v1 = value[e.to()],
-            .visible = visible[e]
+            .visible = visible[e] ? 1 : 0,
         };
         vertices[e * 2] = v;
         vertices[e * 2 + 1] = v;
@@ -363,8 +361,7 @@ void TriangleRenderer::update(Triangles& tri, FacetAttribute<bool>& visible, Cor
                 .n = to_float3(n),
                 .v = value[h],
                 .b = to_float3(b),
-                .visible = visible[f],
-                // .primitive_id = f
+                .visible = visible[f]?1:0,
             };
         }
     }
@@ -400,7 +397,7 @@ void TriangleRenderer::update(Quads& quads, FacetAttribute<bool>& visible, Corne
                     .n = to_float3(n),
                     .v = v[i],
                     .b = to_float3(b),
-                    .visible = visible[f]
+                    .visible = visible[f] ? 1 : 0,
                 };
             }
         }
@@ -433,7 +430,7 @@ void TriangleRenderer::update(Tetrahedra& tet, CellAttribute<bool>& visible, Cel
                     .n = to_float3(n),
                     .v = value[f.corner(lv)],
                     .b = to_float3(b),
-                    .visible = visible[c]
+                    .visible = visible[c] ? 1 : 0,
                 };
             }
         }
@@ -476,7 +473,7 @@ void TriangleRenderer::update(Hexahedra& hex, CellAttribute<bool>& visible, Cell
                         .n = to_float3(n),
                         .v = v[i],
                         .b = to_float3(b),
-                        .visible = visible[c]
+                        .visible = visible[c] ? 1 : 0,
                     };
                 }
             }

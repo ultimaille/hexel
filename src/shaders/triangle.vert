@@ -43,6 +43,5 @@ void main(){
     frag_primitive_id = gl_VertexID / 3;
     frag_layer_id = layer_id;
     frag_visible = visible;
-    // frag_visible = int(texelFetch(ivisible, primitive_id));
 }
  

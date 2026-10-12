@@ -46,6 +46,7 @@ void clip() {
 }
 
 void main(){
+
     if(Value==-1 || frag_visible == 0) discard;
     if (clipping.enabled) clip();
     vec4 blend_color = color_map_prop * vec4(texture(colormap, Value).rgb,1.) + (1.-color_map_prop)*vec4(color,1.);
