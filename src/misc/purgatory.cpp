@@ -50,6 +50,7 @@ bool FilePopup(const char* id, std::string in, std::string& out, std::vector<con
 
 using namespace events;
 void look_at_pointset(PointSet& ps) {
+    if (ps.size() == 0) return;
     BBox3 box;
     FOR(v, ps.size()) box.add(ps[v]);
     God::camera.pose.pivot = box.center();
@@ -58,6 +59,7 @@ void look_at_pointset(PointSet& ps) {
 
 void load_mm_with_default_layers(std::string path) {
     auto mesh_name = God::xcf.load_multimesh(path, true);
+
     look_at_pointset(ObjectId(POINTSET, mesh_name));
 
     {// point set

@@ -1,17 +1,8 @@
 #include "misc/purgatory.h"
 #include "layers/ssao.h"
 
+#include "algo.h"
 
-int compute_hex_layer_id(Hexahedra& hex,CellFacetAttribute<int>& layer_id){
-    if (!hex.connected()) hex.connect();
-    DisjointSet ds(hex.nfacets());
-    for (auto h : hex.iter_halfedges()){
-        auto opp = h.opposite_c();
-        if (!opp.active()) continue;
-        ds.merge(h.opposite_f().facet(), opp.opposite_f().facet());
-    }
-    return ds.get_sets_id(layer_id.ptr->data);
-}
 
 
 
@@ -50,8 +41,8 @@ struct MouseReactPickerTest : public MouseReact {
 };
 
 
-struct MouseReactLayerSelection : public MouseReact {
-    MouseReactLayerSelection() {}
+struct MouseReactLayerSelectionTest : public MouseReact {
+    MouseReactLayerSelectionTest() {}
 
     void init(ObjectId p_mesh) {
         mesh_id = p_mesh;
@@ -88,7 +79,7 @@ struct HexEdit : public Mode{
 
     MouseReactTrackBallCamera camera_react;
     MouseReactPickerTest pick_react;
-    MouseReactLayerSelection layer_selection_react;
+    MouseReactLayerSelectionTest layer_selection_react;
 
     HexEdit(){}
     void handle(Event event) { 

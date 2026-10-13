@@ -1,0 +1,168 @@
+#include "misc/purgatory.h"
+#include "layers/ssao.h"
+#include "algo.h"
+
+
+void generate_edge_graph(Hexahedra& hex, PolyLine& pl, EdgeAttribute<int>& hex_halfedge) {
+    if (!hex.connected()) hex.connect();
+    DisjointSet ds(hex.nhalfedges());
+    for (auto h : hex.iter_halfedges())
+        if (h.facet().opposite().active())
+            ds.merge(h, h.opposite_c().opposite_f());
+
+    std::vector<int> edges_;
+    int nedges = ds.get_sets_id(edges_);
+    pl.create_edges(nedges);
+    hex_halfedge.fill(- 1);
+    for (auto h : hex.iter_halfedges()) {
+        int e = edges_[h];
+        pl.vert(e, 0) = h.from();
+        pl.vert(e, 1) = h.to();
+        hex_halfedge[e] = h;
+    }
+    pl.connect();
+}
+
+
+
+
+
+
+struct MouseReactLayerSelection : public MouseReact {
+    MouseReactLayerSelection() {}
+    void init(ObjectId p_mesh) { mesh_id = p_mesh; }
+    ObjectId mesh_id;
+    void on_click(int button, vec2 p) {
+        if (button != 0) return;
+        Picker picker;
+        Picker::PickResult pr = picker.at(p);
+        int prim = pr.get_primitive_id(mesh_id, 2);
+        if (prim != -1){
+            VolumeAttributes& attr = mesh_id;
+            Hexahedra& hex = mesh_id;
+            CellAttribute<bool> visible("visible", attr, hex);
+            CellFacetAttribute<int> layer_id(hex);
+            compute_hex_layer_id(hex, layer_id);
+            visible.fill(false);
+            for (auto f : hex.iter_facets()) if (layer_id[f] == layer_id[prim])
+                visible[f.cell()] = true;
+            mesh_id.broadcast(EventType::UPDATED);
+        }
+    }
+};
+
+
+
+
+struct MouseReactSplitMergeLayers : public MouseReact {
+    MouseReactSplitMergeLayers() {}
+
+    void init(ObjectId p_mesh) { mesh_id = p_mesh; }
+    ObjectId mesh_id;
+
+    void on_click(int button, vec2 p) {
+        Log::add("click " + std::to_string(button));
+        Picker picker;
+        Picker::PickResult pr = picker.at(p);
+        int prim = pr.get_primitive_id(mesh_id, 2);
+        if (prim != -1){
+            if (button == 0) plop(prim);
+            if (button == 1) plop(prim);
+            mesh_id.broadcast(EventType::UPDATED);
+        }
+    }
+};
+
+#define WORKING_DIR std::string("C:\\NICOTMP\\tmp\\")
+
+struct LayerSplitMode : public Mode{
+
+    MouseReactTrackBallCamera camera_react;
+    MouseReactSplitMergeLayers split_merge_react;
+    MouseReactLayerSelection layer_selection_react;
+
+
+
+    LayerSplitMode(){
+        import_new_project_from_CAD(std::string(TEST_INPUT_DIR) + "B1.geogram");
+        load_mm_with_default_layers(std::string(WORKING_DIR) + "geom");
+        load_mm_with_default_layers(std::string(WORKING_DIR) + "mesh");
+
+        Hexahedra& hex = God::xcf["mesh"].hexahedra[""].mesh;
+        God::xcf["mesh"].polylines.clear();
+        God::xcf["mesh"].polylines.try_emplace("");
+        PolyLine& pl = God::xcf["mesh"].polylines[""].mesh;
+        pl.points = hex.points;
+        EdgeAttribute<int> hex_halfedge("hex_halfedge", God::xcf["mesh"].polylines[""].attributes, God::xcf["mesh"].polylines[""].mesh);
+        generate_edge_graph(hex, pl, hex_halfedge);
+
+        PolyLineLayer& layer = God::layers.add<PolyLineLayer>("mesh_edge");
+        layer.init(ObjectId(POLYLINES, std::vector<std::string>{ "mesh", ""}));
+        auto& pr = layer.primitive_renderer;
+        pr.color[0] = .5; pr.color[1] = .5; pr.color[2] = .7;
+
+    }
+
+
+    void handle(Event event) {
+        if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL)){
+            send_instruction_to_react(event, camera_react);
+            send_instruction_to_react(event, layer_selection_react);
+        }
+        else {
+            send_instruction_to_react(event, split_merge_react);
+        }
+    }
+
+
+    void import_new_project_from_CAD(std::string filename){
+        BBox3 bbox;
+        {
+            MultiMesh mm;
+            mm.load_geogram(filename, false);
+            FOR(v, mm.pointset.size()) bbox.add(mm.pointset[v]);
+
+            if (mm.polylines.empty()) mm.polylines.try_emplace("");
+            auto& pl = mm.polylines[""];
+            pl.attributes.points.clear();
+            pl.attributes.edges.clear();
+            EdgeAttribute<int> feature("feat_id", pl.attributes, pl.mesh);
+            for (auto e : pl.mesh.iter_edges()) feature[e] = e;
+
+            if (mm.triangles.empty()) mm.triangles.try_emplace("");
+            auto& tri = mm.triangles[""];
+            tri.attributes.points.clear();
+            tri.attributes.corners.clear();
+            tri.attributes.facets.clear();
+            FacetAttribute<int> region("region_id", tri.attributes, tri.mesh);
+            for (auto f : tri.mesh.iter_facets()) region[f] = f;
+
+            mm.quads.clear(); mm.polygons.clear(); mm.hexahedra.clear(); mm.pyramids.clear(); mm.wedges.clear();
+            mm.save_to_path(WORKING_DIR + "geom");
+
+        }
+
+        {
+            MultiMesh mm;
+            mm.hexahedra.try_emplace("");
+            CellAttribute<int> block_id("block_id", mm.hexahedra[""].attributes, mm.hexahedra[""].mesh);
+            //bbox
+            mm.pointset.create_points(8);
+            Hexahedra &hex = mm.hexahedra[""].mesh;
+            hex.create_cells(1);
+            FOR(k, 2)FOR(j, 2)FOR(i, 2) mm.pointset[i + 2 * j + 4 * k] = bbox.min + vec3(i * bbox.size()[0], j * bbox.size()[1], k * bbox.size()[2]);
+            FOR(v, 8) hex.vert(0, v) = v;
+            
+            mm.save_to_path(WORKING_DIR + "mesh");
+        }
+
+    }
+
+
+    void define_gui() {
+        ImGui::Begin("Mode", nullptr);
+        ImGui::Text("Window used to launch debug tests");
+
+        ImGui::End();
+    }
+};

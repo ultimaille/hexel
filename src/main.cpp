@@ -12,6 +12,7 @@
 
 #include <core/all.h>
 #include <modes/mode_test.h>
+#include <modes/mode_layer_split.h>
 
 #include "panels/property_explorer.h"
 #include "panels/xcf_explorer.h"
@@ -63,7 +64,8 @@ int main(int argc, const char* argv[]) {
     God::context.init();
     God::modes.add<DefaultMode>("default");
     God::modes.add<HexEdit>("hexedit");
-    God::modes.current_mode = 1;
+    God::modes.add<LayerSplitMode>("layer_split");
+    God::modes.current_mode = 2;
 
     God::panels.add<XCFExplorer>("xcf_window");
     God::panels.add<LayerExplorer>("layer_window");
