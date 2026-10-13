@@ -125,7 +125,6 @@ std::array<float, 2> range(std::vector<float>& data) {
 void Renderer::compute_value_range(std::vector<float>& data) {
     auto r = range(data);
     std::copy(r.begin(), r.end(), data_autorange);
-    std::copy(data_autorange, data_autorange + 2, data_range);
 }
 
 constexpr std::array<float, 3> to_float3(const vec3& v) {
