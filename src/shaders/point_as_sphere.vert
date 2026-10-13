@@ -23,12 +23,8 @@ flat out int frag_primitive_id;
 flat out int frag_visible;
 
 void main(){
-    if (value==-1)  Value = -1;
-    else  {
-        Value = (value - data_range.x) / (data_range.y - data_range.x);
-        Value = Value * texture_repeat;
-    }
-
+    Value = texture_repeat*(value - data_range.x) / (data_range.y - data_range.x);
+    
     vec4 centerView = view * vec4(aPosition, 1.0);
     C = centerView.xyz;
     gl_Position = projection * centerView;

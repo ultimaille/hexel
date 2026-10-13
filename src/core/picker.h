@@ -6,12 +6,11 @@ struct Picker{
         int x, y;
         int layer_id;
         int primitive_id;
-        ObjectId object_id;
+        ObjectId mesh_id;
         float depth;
-
-        // get_point
-        // get_attr_value
         vec3 point();
+        // in most cases, we're interested to know if the picked point is on a specific primitive/mesh pair
+        int get_primitive_id(ObjectId& requested_mesh, int requested_primitive_type);
     };
 
     std::vector<unsigned char> layer_ids;

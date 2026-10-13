@@ -30,7 +30,7 @@ vec3 encode_id(int id) {
 }
 
 void main() {
-    if(Value==-1 || frag_visible == 0) 
+    if(frag_visible == 0) 
         discard;
 
     vec2 ndc;

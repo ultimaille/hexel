@@ -2,14 +2,25 @@
 #include "layers/ssao.h"
 
 
+int compute_hex_layer_id(Hexahedra& hex,CellFacetAttribute<int>& layer_id){
+    if (!hex.connected()) hex.connect();
+    DisjointSet ds(hex.nfacets());
+    for (auto h : hex.iter_halfedges()){
+        auto opp = h.opposite_c();
+        if (!opp.active()) continue;
+        ds.merge(h.opposite_f().facet(), opp.opposite_f().facet());
+    }
+    return ds.get_sets_id(layer_id.ptr->data);
+}
 
 
 
 struct MouseReactPickerTest : public MouseReact {
     MouseReactPickerTest() {  }
 
-    void init(ObjectId p_attr_id) {
+    void init(ObjectId p_attr_id, ObjectId p_mesh) {
         attr_id = p_attr_id;
+        mesh_id = p_mesh;
         flag.bind(
             attr_id.names[4],
             God::xcf[attr_id.names[0]].hexahedra[attr_id.names[1]].attributes,
@@ -17,6 +28,7 @@ struct MouseReactPickerTest : public MouseReact {
         );
     }
     ObjectId attr_id;
+    ObjectId mesh_id;
     CellFacetAttribute<int> flag;
 
 
@@ -24,20 +36,47 @@ struct MouseReactPickerTest : public MouseReact {
     void on_click(int button, vec2 p) {
         Log::add("click " + std::to_string(button));
         Picker picker;
-        auto pr = picker.at(p);
-
-        ObjectId mesh(ObjectType::HEXAHEDRA, { attr_id.names[0],attr_id.names[1] });
-        FOR(l , God::layers.size()) {
-            if (God::layers[l].id != pr.layer_id)       continue;
-            if (God::layers[l].mesh != mesh)            continue;
-            if (God::layers[l].primitive_type() != 2)   continue;
+        Picker::PickResult pr = picker.at(p);
+        int prim = pr.get_primitive_id(mesh_id, 2);
+        if (prim != -1){
             if (button == 0) flag[pr.primitive_id]++;
             if (button == 1) flag[pr.primitive_id]--;
-            mesh.broadcast(EventType::UPDATED);
+            mesh_id.broadcast(EventType::UPDATED);
         }
-        Log::add("layer id: " + std::to_string(pr.layer_id));
-        Log::add("primitive id: " + std::to_string(pr.primitive_id));
-        Log::add("object id: " + to_string(pr.object_id));
+    }
+    void on_press(int button, vec2 p)           { Log::add("press " + std::to_string(button)); }
+    void on_release(int button, vec2 p)         { Log::add("release " + std::to_string(button)); }
+    void on_drag(int button, vec2 a, vec2 b)    { Log::add("drag " + std::to_string(button)); }
+};
+
+
+struct MouseReactLayerSelection : public MouseReact {
+    MouseReactLayerSelection() {}
+
+    void init(ObjectId p_mesh) {
+        mesh_id = p_mesh;
+    }
+    ObjectId mesh_id;
+
+    void on_wheel(double v) { Log::add("Wheel " + std::to_string(v)); }
+    void on_click(int button, vec2 p) {
+        Log::add("click " + std::to_string(button));
+        if (button != 0) return;
+        Picker picker;
+        Picker::PickResult pr = picker.at(p);
+        int prim = pr.get_primitive_id(mesh_id, 2);
+        if (prim != -1){
+            VolumeAttributes& attr = mesh_id;
+            Hexahedra& hex = mesh_id;
+            CellAttribute<bool> visible("visible", attr, hex);
+            CellFacetAttribute<int> layer_id(hex);
+            compute_hex_layer_id( hex, layer_id);
+            visible.fill(false);
+            for (auto f : hex.iter_facets()) if (layer_id[f] == layer_id[prim])
+                visible[f.cell()] = true;
+            //visible[prim]=true;
+            mesh_id.broadcast(EventType::UPDATED);
+        }
     }
     void on_press(int button, vec2 p)           { Log::add("press " + std::to_string(button)); }
     void on_release(int button, vec2 p)         { Log::add("release " + std::to_string(button)); }
@@ -49,12 +88,15 @@ struct HexEdit : public Mode{
 
     MouseReactTrackBallCamera camera_react;
     MouseReactPickerTest pick_react;
+    MouseReactLayerSelection layer_selection_react;
 
     HexEdit(){}
     void handle(Event event) { 
         
-        if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL))
-            send_instruction_to_react(event,camera_react);
+        if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL)){
+            send_instruction_to_react(event, camera_react);
+            send_instruction_to_react(event, layer_selection_react);
+        }
         else {
             send_instruction_to_react(event, pick_react);
         }
@@ -107,17 +149,19 @@ struct HexEdit : public Mode{
                 
                 //create and init attribute
                 CellFacetAttribute<int> flag("flag", attr, hex);
-                for (auto f : hex.iter_facets()) flag[f] = 0;
+                for (auto f : hex.iter_facets()) flag[f] = f%2;
+                ObjectId hex_id(ObjectType::HEXAHEDRA, std::vector<std::string>{ "hexski", ""});
                 ObjectId flag_id(ObjectType::HEXAHEDRA_ATTR, { "hexski", "","int","facets","flag" });
-                
+
                 // bind the attribute to the paint mouse action
-                pick_react.init(flag_id);
+                pick_react.init(flag_id,hex_id);
+                layer_selection_react.init(hex_id);
 
                 // set rendering
                 HexahedraLayer& hex_layer = dynamic_cast<HexahedraLayer&>(God::layers["hexskiHex"]);
                 hex_layer.attr_id = flag_id;
+                FOR(i, 2) hex_layer.tri_renderer.data_range[i] = -4+8*i;
                 hex_layer.reset();
-
             }
             
             //load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "B1.geogram");

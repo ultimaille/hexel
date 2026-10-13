@@ -1,4 +1,5 @@
 #include "core.h"
+#include "event.h"
 #include "camera.h"
 #include "picker.h"
 #include "xcf.h"
@@ -75,4 +76,20 @@ vec3 Picker::PickResult::point() {
     mat4x4 inv_view = God::camera.view_matrix().invert();
     vec4 world_space = inv_view * (view_space / view_space.data[3]);
     return world_space.xyz();
+}
+
+int Picker::PickResult::get_primitive_id(ObjectId& requested_mesh, int requested_primitive_type){
+    FOR(l, God::layers.size()) {
+        if (God::layers[l].id != layer_id)                    continue;
+        if (God::layers[l].mesh != requested_mesh)            continue;
+        // we directly have the right primitive
+        int picked_type = God::layers[l].primitive_type();
+        if (picked_type == requested_primitive_type)   return  primitive_id;
+        // the requested primitive can be deduced from the picked primitive
+        if (requested_mesh.path == events::ObjectType::HEXAHEDRA && picked_type == 2 && requested_primitive_type == 1)// convert face to cell
+            return  primitive_id / 6;
+        if (requested_mesh.path == events::ObjectType::HEXAHEDRA && picked_type == 3 && requested_primitive_type == 1)// convert corner to cell
+            return  primitive_id / 8;
+    }
+    return -1;
 }
