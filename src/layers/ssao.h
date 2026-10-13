@@ -130,8 +130,16 @@ struct SSAO : Layer {
             glUniform1i(glGetUniformLocation(composite_program, "source_color"), 0);
 
             glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, target.layer);
+            glUniform1i(glGetUniformLocation(composite_program, "source_layer"), 1);
+
+            glActiveTexture(GL_TEXTURE2);
+            glBindTexture(GL_TEXTURE_2D, target.primitive);
+            glUniform1i(glGetUniformLocation(composite_program, "source_primitive"), 2);
+
+            glActiveTexture(GL_TEXTURE3);
             glBindTexture(GL_TEXTURE_2D, ao.color);
-            glUniform1i(glGetUniformLocation(composite_program, "source_ao"), 1);
+            glUniform1i(glGetUniformLocation(composite_program, "source_ao"), 3);
 
             draw_quad();
         }
@@ -159,6 +167,88 @@ private:
         GLenum error = glGetError();
         um_assert(error == GL_NO_ERROR);
     }
+
+    // void copy_target_to_source(const RenderTarget& source, const RenderTarget& destination) {
+    //     um_assert(glCheckFramebufferStatus(GL_READ_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+    //     um_assert(glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+
+    //     glCopyImageSubData(
+    //         source.color, GL_TEXTURE_2D, 0,  // source
+    //         0, 0, 0,
+    //         destination.color, GL_TEXTURE_2D, 0,  // destination
+    //         0, 0, 0,
+    //         source.width, source.height, 1
+    //     );
+
+    //     glCopyImageSubData(
+    //         source.layer, GL_TEXTURE_2D, 0,  // source
+    //         0, 0, 0,
+    //         destination.layer, GL_TEXTURE_2D, 0,  // destination
+    //         0, 0, 0,
+    //         source.width, source.height, 1
+    //     );
+
+    //     glCopyImageSubData(
+    //         source.primitive, GL_TEXTURE_2D, 0,  // source
+    //         0, 0, 0,
+    //         destination.primitive, GL_TEXTURE_2D, 0,  // destination
+    //         0, 0, 0,
+    //         source.width, source.height, 1
+    //     );
+
+    //     glCopyImageSubData(
+    //         source.depth, GL_TEXTURE_2D, 0,
+    //         0, 0, 0,
+    //         destination.depth, GL_TEXTURE_2D, 0,
+    //         0, 0, 0,
+    //         source.width, source.height, 1
+    //     );
+
+    //     GLenum error = glGetError();
+    //     um_assert(error == GL_NO_ERROR);
+    // }
+
+    // void copy_target_to_source(const RenderTarget& source, const RenderTarget& destination) {
+    //     glBindFramebuffer(GL_READ_FRAMEBUFFER, source.framebuffer);
+    //     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destination.framebuffer);
+
+    //     // Blit each color attachment
+    //     for (int i = 0; i < 3; ++i) {
+    //         glReadBuffer(GL_COLOR_ATTACHMENT0 + i);
+    //         glDrawBuffer(GL_COLOR_ATTACHMENT0 + i);
+
+    //         glBlitFramebuffer(
+    //             0, 0, source.width, source.height,
+    //             0, 0, destination.width, destination.height,
+    //             GL_COLOR_BUFFER_BIT,
+    //             GL_NEAREST
+    //         );
+    //     }
+
+    //     // Blit depth
+    //     glBlitFramebuffer(
+    //         0, 0, source.width, source.height,
+    //         0, 0, destination.width, destination.height,
+    //         GL_DEPTH_BUFFER_BIT,
+    //         GL_NEAREST
+    //     );
+
+    //     // constexpr GLenum draw_buffers[] = {
+    //     //     GL_COLOR_ATTACHMENT0,
+    //     //     GL_COLOR_ATTACHMENT1,
+    //     //     GL_COLOR_ATTACHMENT2
+    //     // };
+    //     // glDrawBuffers(3, draw_buffers);
+    //     // glReadBuffer(GL_COLOR_ATTACHMENT0);
+
+    //     glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+    //     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    //     glReadBuffer(GL_BACK);
+    //     glDrawBuffer(GL_BACK);
+
+    //     GLenum error = glGetError();
+    //     um_assert(error == GL_NO_ERROR);
+    // }
 
     void initialize_quad() {
         constexpr float vertices[] = {

@@ -13,6 +13,7 @@ TODO
 * Light / Clipping as "global" parameters + light trackball for orientation
 * Make layer group, multipass rendering
 * Layer attribute management
+* UNDO / REDO
 
 ==================================================================
 GITERIES
