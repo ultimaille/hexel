@@ -10,6 +10,9 @@ Convention et choix d'implementation peu intuitifs:
 TODO
 ==================================================================
 * Set "" 	as default name for meshes
+* Light / Clipping as "global" parameters + light trackball for orientation
+* Make layer group, multipass rendering
+* Layer attribute management
 
 ==================================================================
 GITERIES

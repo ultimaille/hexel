@@ -169,11 +169,7 @@ RenderTarget::~RenderTarget() {
         };
     }
 
-    void RenderTarget::read_framebuffer(std::vector<unsigned char>& data, vec4 rect, int attachment) {
-        int x = static_cast<int>(rect[0]);
-        int y = static_cast<int>(rect[1]);
-        int w = static_cast<int>(rect[2]);
-        int h = static_cast<int>(rect[3]);
+    void RenderTarget::read_framebuffer(std::vector<unsigned char>& data, int x, int y, int w, int h, int attachment) {
 
         glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer);
         glReadBuffer(GL_COLOR_ATTACHMENT0 + attachment);
@@ -196,12 +192,7 @@ RenderTarget::~RenderTarget() {
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
     }
 
-    void RenderTarget::read_depth(std::vector<float>& data, vec4 rect) {
-        int x = static_cast<int>(rect[0]);
-        int y = static_cast<int>(rect[1]);
-        int w = static_cast<int>(rect[2]);
-        int h = static_cast<int>(rect[3]);
-
+    void RenderTarget::read_depth(std::vector<float>& data, int x, int y, int w, int h) {
         glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer);
 
         data.resize(w * h);

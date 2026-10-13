@@ -37,6 +37,6 @@ struct Picker{
     PickResult at(vec2 uv);
 
     private:
-    vec4 rect;
+    int w, h;
 };
 
