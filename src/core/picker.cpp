@@ -9,32 +9,24 @@
 #include "shaders.h"
 #include "mode.h"
 
-Picker::Picker(vec4 rect) : rect(rect) {
-    reset();
-}
-
-Picker::Picker() : Picker(vec4{0, 0, 
-                        static_cast<double>(God::context.render_target.width), 
-                        static_cast<double>(God::context.render_target.height)}) {
+Picker::Picker() : 
+    w(God::context.render_target.width), 
+    h(God::context.render_target.height) {
     reset();
 }
 
 void Picker::reset() {
     God::context.begin_frame(true);
-    God::context.begin_scissor(rect);
     God::layers.render();
-    God::context.end_scissor();
     God::context.end_frame(true);
-    God::context.render_target.read_framebuffer(layer_ids, rect, 1);
-    God::context.render_target.read_framebuffer(primitive_ids, rect, 2);
-    God::context.render_target.read_depth(depths, rect);
+    God::context.render_target.read_framebuffer(layer_ids, 0, 0, w, h, 1);
+    God::context.render_target.read_framebuffer(primitive_ids, 0, 0, w, h, 2);
+    God::context.render_target.read_depth(depths, 0, 0, w, h);
 }
 
 Picker::PickResult Picker::at(vec2 uv) {
-    const int x = static_cast<int>(uv.x - rect[0]);
-    const int y = static_cast<int>(uv.y - rect[1]);
-    const int w = static_cast<int>(rect[2]);
-    const int h = static_cast<int>(rect[3]);
+    int x = static_cast<int>(uv.x);
+    int y = static_cast<int>(uv.y);
     // Check limits to avoid out of image bound crash
     if (x < 0 || x >= w || y < 0 || y >= h) {
         return {x, y ,-1, -1, ObjectId(), -1};
