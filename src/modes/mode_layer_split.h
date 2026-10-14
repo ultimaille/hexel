@@ -64,8 +64,16 @@ struct MouseReactSplitMergeLayers : public MouseReact {
         Log::add("click " + std::to_string(button));
         Picker picker;
         Picker::PickResult pr = picker.at(p);
-        int prim = pr.get_primitive_id(mesh_id, 2);
+        PolyLine& pl = mesh_id;
+        int prim = pr.get_primitive_id(mesh_id, 1);
         if (prim != -1){
+            int v0 = pl.vert(prim, 0);
+            int v1 = pl.vert(prim, 1);
+            vec3 A = pl.points[v0];
+            vec3 B = pl.points[v1];
+            vec3 P = pr.point();
+            double c = (B - A) * (P - A) / (B - A).norm2();
+            plop(c);
             if (button == 0) plop(prim);
             if (button == 1) plop(prim);
             mesh_id.broadcast(EventType::UPDATED);
@@ -97,10 +105,14 @@ struct LayerSplitMode : public Mode{
         generate_edge_graph(hex, pl, hex_halfedge);
 
         PolyLineLayer& layer = God::layers.add<PolyLineLayer>("mesh_edge");
-        layer.init(ObjectId(POLYLINES, std::vector<std::string>{ "mesh", ""}));
+        ObjectId pl_id(POLYLINES, std::vector<std::string>{ "mesh", ""});
+        layer.init(pl_id);
         auto& pr = layer.primitive_renderer;
         pr.color[0] = .5; pr.color[1] = .5; pr.color[2] = .7;
 
+        ObjectId hex_id(ObjectType::HEXAHEDRA, std::vector<std::string>{ "mesh", ""});
+        layer_selection_react.init(hex_id);
+        split_merge_react.init(pl_id);
     }
 
 
