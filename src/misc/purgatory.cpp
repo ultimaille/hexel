@@ -60,25 +60,27 @@ void load_mm_with_default_layers(std::string path) {
     auto mesh_name = God::xcf.load_multimesh(path, true);
     look_at_pointset(ObjectId(POINTSET, mesh_name));
 
+    int group = God::layers.add_group();
+
     {// point set
-        PointSetLayer& layer = God::layers.add<PointSetLayer>(mesh_name + "Pts");
+        PointSetLayer& layer = God::layers.add<PointSetLayer>(mesh_name + "Pts", group);
         layer.init(ObjectId(POINTSET, mesh_name));
         auto& pr = layer.primitive_renderer;
         pr.color[0] = .5; pr.color[1] = 1.; pr.color[2] = .5;
         pr.radius_in_pixel = 4;
     }
     for (auto& elt : God::xcf[mesh_name].polylines) {
-        PolyLineLayer& layer = God::layers.add<PolyLineLayer>(mesh_name + "Edges");
+        PolyLineLayer& layer = God::layers.add<PolyLineLayer>(mesh_name + "Edges", group);
         layer.init(ObjectId(POLYLINES, { mesh_name, elt.first }));
         auto& pr = layer.primitive_renderer;
         pr.color[0] = .5; pr.color[1] = .5; pr.color[2] = .7;
     }
     for (auto& elt : God::xcf[mesh_name].triangles) {
-        TrianglesLayer& layer = God::layers.add<TrianglesLayer>(mesh_name + "Tri");
+        TrianglesLayer& layer = God::layers.add<TrianglesLayer>(mesh_name + "Tri", group);
         layer.init(ObjectId(TRIANGLES, { mesh_name, elt.first }));
     }
     for (auto& elt : God::xcf[mesh_name].hexahedra) {
-        HexahedraLayer& layer = God::layers.add<HexahedraLayer>(mesh_name + "Hex");
+        HexahedraLayer& layer = God::layers.add<HexahedraLayer>(mesh_name + "Hex", group);
         layer.init(ObjectId(HEXAHEDRA, { mesh_name, elt.first }));
     }
 }

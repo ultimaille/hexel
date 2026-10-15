@@ -22,6 +22,7 @@ struct Layer {
 
     static inline int max_id = 0;
     int id;
+    int group;
 };
 
 struct LayerManager: private Registry<Layer> {
@@ -32,7 +33,17 @@ struct LayerManager: private Registry<Layer> {
     int find(std::string str)                  { return Registry<Layer>::find(str); }
     std::string ith_name(int i)                { return items[i].name; }
     void swap(int i, int j)                    { std::swap(items[i], items[j]); }
-    template<class T> T& add(std::string str)  { return emplace_back<T>(str); }
+
+    template<class T> T& add(std::string str, int group)  { 
+        auto &layer = emplace_back<T>(str); 
+        layer.group = group;
+        return layer; 
+    }
+
+    int add_group() {
+        groups.push_back(max_group++);
+        return max_group - 1;
+    }
 
     void render();
     void handle(Event event);
@@ -40,6 +51,11 @@ struct LayerManager: private Registry<Layer> {
     void kill(std::string layer_name);
 
     void destroy();
+
+
+    std::vector<int> groups;
+    static inline int max_group = 0;
+
 };
 
 

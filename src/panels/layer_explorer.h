@@ -92,6 +92,46 @@ struct LayerExplorer : public Panel {
                     pan.layers.push_back(ObjectId(LAYER, God::layers.ith_name(i)));
             }
         }
+
+
+        for (int i = 0; i < God::layers.groups.size(); ++i) {
+            int group = God::layers.groups[i];
+
+            bool open = ImGui::TreeNodeEx(label("Group " + std::to_string(group), "group_" + std::to_string(group)));
+            
+            // Drag source
+            if (ImGui::BeginDragDropSource()) {
+                ImGui::SetDragDropPayload("NODE_INDEX", &i, sizeof(int));
+                ImGui::Text("%s", ("Group " + std::to_string(group)).c_str());
+                ImGui::EndDragDropSource();
+            }
+            
+            // Drop target (reorder within same level)
+            if (ImGui::BeginDragDropTarget()) {
+                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("NODE_INDEX")) {
+                    int source = *(int*)payload->Data;
+                    if (source != i && source >= 0 && source < (int)God::layers.groups.size()) {
+                        std::swap(God::layers.groups[source], God::layers.groups[i]);
+                    }
+                }
+                ImGui::EndDragDropTarget();
+            }
+
+            if (open) {
+                for (int l = 0; l < God::layers.size(); ++l) {
+                    Layer &layer = God::layers[l];
+                    if (layer.group == group) {
+                        std::string layer_name = God::layers.ith_name(l);
+                        if (ImGui::TreeNodeEx(label(layer_name, layer_name))) {
+                            ImGui::TreePop();
+                        }
+                    }
+                }
+                ImGui::TreePop();
+            }
+            
+        }
+
         ImGui::End();
     }
 };
