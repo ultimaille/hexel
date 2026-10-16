@@ -41,7 +41,7 @@ struct LayerManager: private Registry<Layer> {
     }
 
     int add_group() {
-        groups.push_back(max_group++);
+        groups.emplace_back(max_group++, Group::BlendOp::NONE);
         return max_group - 1;
     }
 
@@ -53,7 +53,21 @@ struct LayerManager: private Registry<Layer> {
     void destroy();
 
 
-    std::vector<int> groups;
+    struct Group {
+        enum BlendOp {
+            NONE,
+            MIN,
+            MAX,
+            DIFFERENCE,
+            MULTIPLY,
+            AVERAGE
+        };
+
+        int id;
+        BlendOp blend_op;
+    };
+
+    std::vector<Group> groups;
     static inline int max_group = 0;
 
 };

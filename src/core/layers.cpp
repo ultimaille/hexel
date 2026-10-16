@@ -34,6 +34,7 @@
             if (obj->visible)
                 obj->render();
     }
+
     void LayerManager::handle(Event event) {
         // if (event.who == events::MOUSE) return;
 

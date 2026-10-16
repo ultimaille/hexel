@@ -40,5 +40,7 @@ struct RenderTarget {
     void read_framebuffer(std::vector<unsigned char>& data, int x, int y, int w, int h, int attachment);
     void read_depth(std::vector<float>& data, int x, int y, int w, int h);
 
+    void copy_to(const RenderTarget& destination);
+
 };
 

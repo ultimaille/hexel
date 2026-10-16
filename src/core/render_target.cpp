@@ -209,4 +209,23 @@ RenderTarget::~RenderTarget() {
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
     }
 
+    void RenderTarget::copy_to(const RenderTarget& destination) {
+        // TODO assert dest same size as source
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer);
+        um_assert(glCheckFramebufferStatus(GL_READ_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destination.framebuffer);
+        um_assert(glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+
+        glBlitFramebuffer(
+            0, 0, width, height,
+            0, 0, destination.width, destination.height,
+            GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT,
+            GL_NEAREST
+        );
+
+        GLenum error = glGetError();
+        um_assert(error == GL_NO_ERROR);
+    }
+
 
