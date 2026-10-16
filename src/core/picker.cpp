@@ -25,7 +25,7 @@ void Picker::reset() {
     God::context.render_target.read_depth(depths, 0, 0, w, h);
 }
 
-Picker::PickResult Picker::at(vec2 uv) {
+Picker::Result Picker::at(vec2 uv) {
     int x = static_cast<int>(uv.x);
     int y = static_cast<int>(uv.y);
     // Check limits to avoid out of image bound crash
@@ -52,7 +52,7 @@ Picker::PickResult Picker::at(vec2 uv) {
     return {x, y, -1, -1, ObjectId(), depth};
 }
 
-vec3 Picker::PickResult::point() {
+vec3 Picker::Result::point() {
     float depth_ndc = depth * 2.f - 1.f; // Convert to NDC range [-1, 1]
 
     // Screen coordinates to NDC
@@ -70,18 +70,18 @@ vec3 Picker::PickResult::point() {
     return world_space.xyz();
 }
 
-int Picker::PickResult::get_primitive_id(ObjectId& requested_mesh, int requested_primitive_type){
+int Picker::Result::filtered_primitive_id(ObjectId& requested_mesh, int requested_primitive_type){
     FOR(l, God::layers.size()) {
         if (God::layers[l].id != layer_id)                    continue;
         if (God::layers[l].mesh != requested_mesh)            continue;
         // we directly have the right primitive
         int picked_type = God::layers[l].primitive_type();
-        if (picked_type == requested_primitive_type)   return  primitive_id;
+        if (picked_type == requested_primitive_type)   return  raw_primitive_id;
         // the requested primitive can be deduced from the picked primitive
         if (requested_mesh.path == events::ObjectType::HEXAHEDRA && picked_type == 2 && requested_primitive_type == 1)// convert face to cell
-            return  primitive_id / 6;
+            return  raw_primitive_id / 6;
         if (requested_mesh.path == events::ObjectType::HEXAHEDRA && picked_type == 3 && requested_primitive_type == 1)// convert corner to cell
-            return  primitive_id / 8;
+            return  raw_primitive_id / 8;
     }
     return -1;
 }

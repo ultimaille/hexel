@@ -23,11 +23,6 @@ void generate_edge_graph(Hexahedra& hex, PolyLine& pl, EdgeAttribute<int>& hex_h
     pl.connect();
 }
 
-
-
-
-
-
 struct MouseReactLayerSelection : public MouseReact {
     MouseReactLayerSelection() {}
     void init(ObjectId p_mesh) { mesh_id = p_mesh; }
@@ -35,8 +30,8 @@ struct MouseReactLayerSelection : public MouseReact {
     void on_click(int button, vec2 p) {
         if (button != 0) return;
         Picker picker;
-        Picker::PickResult pr = picker.at(p);
-        int prim = pr.get_primitive_id(mesh_id, 2);
+        Picker::Result pr = picker.at(p);
+        int prim = pr.filtered_primitive_id(mesh_id, 2);
         if (prim != -1){
             VolumeAttributes& attr = mesh_id;
             Hexahedra& hex = mesh_id;
@@ -51,6 +46,72 @@ struct MouseReactLayerSelection : public MouseReact {
     }
 };
 
+struct MouseReactMultiSelector : public MouseReact {
+    MouseReactMultiSelector() {}
+
+    void reset(){
+        path.clear();
+        picked.clear();
+        done =false;
+    }
+
+    // filter the primitives
+    std::vector<int> primitives(ObjectId mesh_id, int primitive_type){
+        std::vector <int> res;
+        for (auto pr : picked) {
+            int prim = pr.filtered_primitive_id(mesh_id, primitive_type);
+            if (prim != -1) res.push_back(prim);
+        }
+        return res;
+    }
+
+    void on_click(int button, vec2 p) {
+        if (button != 0) return;
+        Picker::Result pr = picker.at(p);
+        picked.push_back(pr);
+        done = true;
+    }
+
+    void on_press(int button, vec2 p){
+        if (button != 0) return;
+        picker.reset(); 
+        reset();
+        path.push_back(p);
+    }
+    void on_drag(int button, vec2 a, vec2 b){
+        if (button != 0) return;
+        path.push_back(b);
+    }
+
+    void on_release(int button, vec2 p){
+        if (button != 0) return;
+        path.push_back(p);
+        if (path.size() < 2) return;
+        FOR(s, path.size() - 1)for (vec2 P = path[s]; (P - path[s+1]).norm2()>2; P += (path[s+1] - path[s]).normalized()) {
+            Picker::Result pr = picker.at(P);
+            bool already_in = false;
+            for (auto pr_iter : picked)
+                already_in = already_in || (pr.layer_id == pr_iter.layer_id && pr.raw_primitive_id == pr_iter.raw_primitive_id);
+            if (!already_in) picked.push_back(pr);
+        }
+        done = true;
+    }
+
+    void feed_back_gui(){
+        std::vector<ImVec2> pts;
+        for (auto v : path)pts.push_back(ImVec2(v.x, v.y));
+        ImGui::GetBackgroundDrawList()->AddPolyline(pts.data(), pts.size(), IM_COL32(127, 255, 255, 255), ImDrawFlags_JoinMiter, 5.0f);
+        FOR(i, 10){
+            int decal = std::max(0, int(path.size()) - i);
+            ImGui::GetBackgroundDrawList()->AddPolyline(pts.data() + decal, int(pts.size()) - decal, IM_COL32(127, 255, 255, 255), ImDrawFlags_JoinMiter, 15.0f - float(i));
+        }
+    }
+
+    Picker picker;
+    std::vector<vec2> path;
+    std::vector<Picker::Result> picked;
+    bool done = false;
+};
 
 
 
@@ -63,9 +124,9 @@ struct MouseReactSplitMergeLayers : public MouseReact {
     void on_click(int button, vec2 p) {
         Log::add("click " + std::to_string(button));
         Picker picker;
-        Picker::PickResult pr = picker.at(p);
+        Picker::Result pr = picker.at(p);
         PolyLine& pl = mesh_id;
-        int prim = pr.get_primitive_id(mesh_id, 1);
+        int prim = pr.filtered_primitive_id(mesh_id, 1);
         if (prim != -1){
             int v0 = pl.vert(prim, 0);
             int v1 = pl.vert(prim, 1);
@@ -88,9 +149,8 @@ struct LayerSplitMode : public Mode{
     MouseReactTrackBallCamera camera_react;
     MouseReactSplitMergeLayers split_merge_react;
     MouseReactLayerSelection layer_selection_react;
-
-
-
+    MouseReactMultiSelector multi_selector_react;
+    
     LayerSplitMode(){
         import_new_project_from_CAD(std::string(TEST_INPUT_DIR) + "B1.geogram");
         load_mm_with_default_layers(std::string(WORKING_DIR) + "geom");
@@ -115,6 +175,9 @@ struct LayerSplitMode : public Mode{
         split_merge_react.init(pl_id);
     }
 
+    ObjectId hex_id(){ return ObjectId(ObjectType::HEXAHEDRA, std::vector<std::string>{ "mesh", ""}); }
+    ObjectId hex_pl_id(){ return ObjectId(POLYLINES, std::vector<std::string>{ "mesh", ""}); };
+
 
     void handle(Event event) {
         if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL)){
@@ -123,7 +186,18 @@ struct LayerSplitMode : public Mode{
         }
         else {
             send_instruction_to_react(event, split_merge_react);
+            send_instruction_to_react(event, multi_selector_react);
         }
+
+        if (multi_selector_react.done){
+            Log::add("CONSUME multi_selector_react");
+            
+            auto crossed_edges = multi_selector_react.primitives(hex_pl_id(), 1);
+            for (auto it : crossed_edges) plop(it);
+
+            multi_selector_react.reset();
+        }
+        
     }
 
 
@@ -174,7 +248,7 @@ struct LayerSplitMode : public Mode{
     void define_gui() {
         ImGui::Begin("Mode", nullptr);
         ImGui::Text("Window used to launch debug tests");
-
+        multi_selector_react.feed_back_gui();
         ImGui::End();
     }
 };

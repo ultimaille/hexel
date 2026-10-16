@@ -27,11 +27,11 @@ struct MouseReactPickerTest : public MouseReact {
     void on_click(int button, vec2 p) {
         Log::add("click " + std::to_string(button));
         Picker picker;
-        Picker::PickResult pr = picker.at(p);
-        int prim = pr.get_primitive_id(mesh_id, 2);
+        Picker::Result pr = picker.at(p);
+        int prim = pr.filtered_primitive_id(mesh_id, 2);
         if (prim != -1){
-            if (button == 0) flag[pr.primitive_id]++;
-            if (button == 1) flag[pr.primitive_id]--;
+            if (button == 0) flag[pr.raw_primitive_id]++;
+            if (button == 1) flag[pr.raw_primitive_id]--;
             mesh_id.broadcast(EventType::UPDATED);
         }
     }
@@ -54,8 +54,8 @@ struct MouseReactLayerSelectionTest : public MouseReact {
         Log::add("click " + std::to_string(button));
         if (button != 0) return;
         Picker picker;
-        Picker::PickResult pr = picker.at(p);
-        int prim = pr.get_primitive_id(mesh_id, 2);
+        Picker::Result pr = picker.at(p);
+        int prim = pr.filtered_primitive_id(mesh_id, 2);
         if (prim != -1){
             VolumeAttributes& attr = mesh_id;
             Hexahedra& hex = mesh_id;
@@ -65,7 +65,6 @@ struct MouseReactLayerSelectionTest : public MouseReact {
             visible.fill(false);
             for (auto f : hex.iter_facets()) if (layer_id[f] == layer_id[prim])
                 visible[f.cell()] = true;
-            //visible[prim]=true;
             mesh_id.broadcast(EventType::UPDATED);
         }
     }

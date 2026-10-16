@@ -39,7 +39,7 @@ void Mode::send_instruction_to_react(Event event,MouseReact& react) {
         if ((a - b).norm2() > 0) {
             FOR(button, 3)
                     if (God::mouse.down(button)) react.on_drag(button, a, b);
-            return;
+            //return;
         }
         // send pressed event
         FOR(button, 3) if (God::mouse.current.buttons[button] && !God::mouse.previous.buttons[button]) {

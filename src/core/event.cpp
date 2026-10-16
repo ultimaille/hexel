@@ -13,7 +13,7 @@
 using namespace events;
 
 void ObjectId::broadcast(EventType e) {
-    God::events.queue.emplace(Event(*this, e));
+    God::events.queue.push_back(Event(*this, e));
 }
 
 std::optional<ObjectId::ObjectRef> ObjectId::ref() {
@@ -199,7 +199,7 @@ ObjectId::operator VolumeAttributes&() {
 void EventManager::dispatch() {
     while (!queue.empty()) {
         auto event = queue.front();
-        queue.pop();
+        queue.pop_back();
         God::camera.handle(event);
         God::layers.handle(event);
         God::modes.handle(event);

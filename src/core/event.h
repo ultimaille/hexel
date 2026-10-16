@@ -104,6 +104,6 @@ struct Event {
 
 struct EventManager {
     void dispatch();
-    std::queue<Event> queue;
+    std::vector<Event> queue;
 };                                                           
 
