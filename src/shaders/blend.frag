@@ -23,6 +23,11 @@ void main()
     } else if (mix == 4) { // MULTIPLY
         FragColor = color_a * color_b;
     } else if (mix == 5) { // AVERAGE
-        FragColor = (color_a + color_b) * .5;
+        if (length(color_a.rgb) <= 0.01)
+            FragColor = color_b;
+        else if (length(color_b.rgb) <= 0.01)
+            FragColor = color_a;
+        else
+            FragColor = (color_a + color_b) * .5;
     }
 }
