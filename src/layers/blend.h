@@ -17,69 +17,11 @@ struct Blend {
 
     void init() {
         God::shaders.create_if_needed(std::string(SHADERS_DIR), "blend");
-        target.init(God::context.render_target.width, God::context.render_target.height);
+        composite.init(God::context.render_target.width, God::context.render_target.height);
         initialize_quad();
     }
 
-    void render() {
-
-        target.clear(0.05f, 0.05f, 0.08f, 0.0f);
-
-        for (auto group : God::layers.groups) {
-
-            // No blend, rendering in target directly
-            if (group.blend_op == 0) {
-                target.bind();
-                // Normal rendering of layers of current group
-                for (int l = 0; l < God::layers.size(); ++l) {
-                    Layer &layer = God::layers[l];
-                    if (layer.group == group.id)
-                        layer.render();
-                }
-
-            } else {
-
-                RenderTarget cur_target;
-                cur_target.init(target.width, target.height);
-
-                // Bind framebuffer for offscreen rendering
-                if (!cur_target.valid()) {
-                    Log::error("RenderTarget is invalid");
-                    break;
-                }
-
-                // clear & bind
-                cur_target.clear(0.05f, 0.05f, 0.08f, 0.0f);
-
-                // Normal rendering of layers of current group
-                for (int l = 0; l < God::layers.size(); ++l) {
-                    Layer &layer = God::layers[l];
-                    if (layer.group == group.id)
-                        layer.render();
-                }
-
-                glBindFramebuffer(GL_FRAMEBUFFER, 0);
-                blend(target, cur_target, group.blend_op);
-
-                // TODO necessary ?
-                // Unbind framebuffer to render to screen
-                glBindFramebuffer(GL_FRAMEBUFFER, 0);
-                glViewport(0, 0, cur_target.width, cur_target.height); // Reset viewport
-
-            }
-        }
-
-    }
-
-    void display() {
-        target.copy_to(God::context.render_target);
-    }
-
-    void blend(RenderTarget &target_a, RenderTarget &target_b, LayerManager::Group::BlendOp blend_op) {
-        
-        target_a.bind();
-        // target_a.clear(0.05f, 0.05f, 0.08f, 1.0f);
-
+    void blend(GLuint a, GLuint b, LayerManager::Group::BlendOp blend_op) {
         // Use blend shader
         GLuint blend_program = God::shaders["blend"];
         glUseProgram(blend_program);
@@ -88,85 +30,68 @@ struct Blend {
 
         // Bind textures
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, target_a.color);
+        glBindTexture(GL_TEXTURE_2D, a);
         glUniform1i(glGetUniformLocation(blend_program, "tex_a"), 0);
         
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, target_b.color);
+        glBindTexture(GL_TEXTURE_2D, b);
         glUniform1i(glGetUniformLocation(blend_program, "tex_b"), 1);
         
         draw_quad();
     }
 
-    // void render() {
-
-    //     target.clear(0.05f, 0.05f, 0.08f, 1.0f);
-
-    //     RenderTarget cur_target;
-    //     cur_target.init(target.width, target.height);
-
-    //     for (auto group : God::layers.groups) {
-
-
-    //         // Bind framebuffer for offscreen rendering
-    //         if (!cur_target.valid()) {
-    //             Log::error("RenderTarget is invalid");
-    //             break;
-    //         }
-
-    //         // TODO maybe only clear color to keep symbolic rendering
-    //         cur_target.clear(0.05f, 0.05f, 0.08f, 1.0f);
-
-    //         // Normal rendering of layers of current group
-    //         for (int l = 0; l < God::layers.size(); ++l) {
-    //             Layer &layer = God::layers[l];
-    //             if (layer.group == group.id)
-    //                 layer.render();
-    //         }
-
-    //         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    //         if (group.blend_op > 0)
-    //             blend(cur_target, target, group.blend_op);
-
-    //         // TODO necessary ?
-    //         // Unbind framebuffer to render to screen
-    //         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    //         glViewport(0, 0, cur_target.width, cur_target.height); // Reset viewport
-    //     }
-
-    // }
-
-    // void display() {
-    //     target.copy_to(God::context.render_target);
-    // }
-
-    // void blend(RenderTarget &target_a, RenderTarget &target_b, LayerManager::Group::BlendOp blend_op) {
+    void render() {
         
-    //     target_a.bind();
-    //     // target_a.clear(0.05f, 0.05f, 0.08f, 1.0f);
+        const int w = God::context.render_target.width;
+        const int h = God::context.render_target.height;
 
-    //     // Use blend shader
-    //     GLuint blend_program = God::shaders["blend"];
-    //     glUseProgram(blend_program);
-        
-    //     glUniform1i(glGetUniformLocation(blend_program, "mix"), static_cast<int>(blend_op));
+        std::vector<RenderTarget> targets(God::layers.groups.size());
+        for (int i = 0; i < God::layers.groups.size(); ++i) {
+            auto &group = God::layers.groups[i];
+            
+            targets[i].init(w, h);
+            targets[i].clear(); // clear & bind framebuffer
+            
+            // Normal rendering of layers of current group
+            for (int l = 0; l < God::layers.size(); ++l) {
+                Layer &layer = God::layers[l];
+                if (layer.group == group.id)
+                    layer.render();
+            }
+        }
 
-    //     // Bind textures
-    //     glActiveTexture(GL_TEXTURE0);
-    //     glBindTexture(GL_TEXTURE_2D, target_a.color);
-    //     glUniform1i(glGetUniformLocation(blend_program, "tex_a"), 0);
-        
-    //     glActiveTexture(GL_TEXTURE1);
-    //     glBindTexture(GL_TEXTURE_2D, target_b.color);
-    //     glUniform1i(glGetUniformLocation(blend_program, "tex_b"), 1);
-        
-    //     draw_quad();
-    // }
+        if (targets.size() == 0)
+            return;
+
+        composite.resize(w, h);
+        composite.clear();
+        // Merge all color attachments into main render target, keeping its depth
+        glBindFramebuffer(GL_FRAMEBUFFER, composite.framebuffer);
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_FALSE);  // Don't write to depth buffer
+        glDepthFunc(GL_ALWAYS); // Pass all depth tests (use existing depth)
+
+        blend(composite.color, targets[0].color, LayerManager::Group::BlendOp::NONE);
+        // Render all framebuffer colors as layers
+        if (targets.size() > 1) {
+            for (int i = 1; i < targets.size(); ++i) {
+                auto &group = God::layers.groups[i];
+                blend(composite.color, targets[i].color, group.blend_op);
+            }
+        }
+
+        glDepthMask(GL_TRUE);   // Re-enable depth writes
+        glDisable(GL_DEPTH_TEST);
+    }
+
+    void display() {
+        composite.copy_to(God::context.render_target);
+    }
 
 private:
 
-    RenderTarget target;
+    // RenderTarget target;
+    RenderTarget composite;
 
     void initialize_quad() {
         constexpr float vertices[] = {
