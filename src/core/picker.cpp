@@ -25,7 +25,7 @@ void Picker::reset() {
     God::context.render_target.read_depth(depths, 0, 0, w, h);
 }
 
-Picker::PickResult Picker::at(vec2 uv) {
+Picker::Result Picker::at(vec2 uv) {
     int x = static_cast<int>(uv.x);
     int y = static_cast<int>(uv.y);
     // Check limits to avoid out of image bound crash
@@ -52,7 +52,7 @@ Picker::PickResult Picker::at(vec2 uv) {
     return {x, y, -1, -1, ObjectId(), depth};
 }
 
-vec3 Picker::PickResult::point() {
+vec3 Picker::Result::point() {
     float depth_ndc = depth * 2.f - 1.f; // Convert to NDC range [-1, 1]
 
     // Screen coordinates to NDC
@@ -70,7 +70,7 @@ vec3 Picker::PickResult::point() {
     return world_space.xyz();
 }
 
-int Picker::PickResult::get_primitive_id(ObjectId& requested_mesh, int requested_primitive_type){
+int Picker::Result::get_primitive_id(ObjectId& requested_mesh, int requested_primitive_type){
     FOR(l, God::layers.size()) {
         if (God::layers[l].id != layer_id)                    continue;
         if (God::layers[l].mesh != requested_mesh)            continue;

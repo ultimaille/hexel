@@ -2,7 +2,7 @@
 
 struct Picker{
 
-    struct PickResult {
+    struct Result {
         int x, y;
         int layer_id;
         int primitive_id;
@@ -19,7 +19,6 @@ struct Picker{
     std::vector<float> depths;
 
     Picker();
-    Picker(vec4 rect);
 
     void reset();
 
@@ -35,7 +34,7 @@ struct Picker{
                     b * 256 * 256;
     }
 
-    PickResult at(vec2 uv);
+    Result at(vec2 uv);
 
     private:
     int w, h;
