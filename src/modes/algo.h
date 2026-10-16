@@ -11,3 +11,4 @@ inline int compute_hex_layer_id(Hexahedra& hex, CellFacetAttribute<int>& layer_i
     }
     return ds.get_sets_id(layer_id.ptr->data);
 }
+

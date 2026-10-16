@@ -45,6 +45,7 @@
                 erase(i);
             else i++;
         }
+        plop(event.who.path);
         if (event.what_happened == events::UPDATED)
             for (auto& shad : items)
                 if (shad.object->mesh==event.who)

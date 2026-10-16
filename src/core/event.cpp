@@ -198,7 +198,7 @@ ObjectId::operator VolumeAttributes&() {
 
 void EventManager::dispatch() {
     while (!queue.empty()) {
-        auto event = queue.front();
+        auto event = queue.back();
         queue.pop_back();
         God::camera.handle(event);
         God::layers.handle(event);

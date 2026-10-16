@@ -259,7 +259,6 @@
         else {
             tri_renderer.color_map_prop = 1;
             show_object_id(attr_id);
-            //rt = PLAIN;
             if (attr_primitive() == "cells") for (auto& it : attr.cells) if (it.name == attr_name())
                 rt =RenderType::CELL;
                 

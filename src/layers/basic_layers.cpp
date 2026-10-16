@@ -106,11 +106,11 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = id; }
     }
 
 
-    void PolyLineLayer::init(ObjectId obj){
-        mesh = obj;
-        PolyLine& pl = obj;
-        PolyLineAttributes& attr = obj;
+    void PolyLineLayer::reset(){
+        PolyLine& pl = mesh;
+        PolyLineAttributes& attr = mesh;
 
+        plop(pl.nedges());
         PointAttribute<float> value(pl, 0);
         for (auto v : pl.iter_vertices())
             value[v] = v.pos()[0];
@@ -121,6 +121,11 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = id; }
             primitive_id[e] = e;
         primitive_renderer.init();
         primitive_renderer.push(pl, visible, value, primitive_id);
+        
+    }
+     void PolyLineLayer::init(ObjectId obj){
+        mesh = obj;
+        reset();
     }
 
     void PolyLineLayer::render(){

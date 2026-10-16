@@ -1,9 +1,12 @@
 #include "misc/purgatory.h"
 #include "layers/ssao.h"
 #include "algo.h"
+#include "pillowing.h"
 
 
 void generate_edge_graph(Hexahedra& hex, PolyLine& pl, EdgeAttribute<int>& hex_halfedge) {
+    std::vector<bool> to_kill(pl.nedges(), true);
+    pl.delete_edges(to_kill);
     if (!hex.connected()) hex.connect();
     DisjointSet ds(hex.nhalfedges());
     for (auto h : hex.iter_halfedges())
@@ -42,7 +45,7 @@ struct MouseReactLayerSelection : public MouseReact {
             for (auto f : hex.iter_facets()) if (layer_id[f] == layer_id[prim])
                 visible[f.cell()] = true;
             mesh_id.broadcast(EventType::UPDATED);
-        }
+        }                                                                                          
     }
 };
 
@@ -56,11 +59,11 @@ struct MouseReactMultiSelector : public MouseReact {
     }
 
     // filter the primitives
-    std::vector<int> primitives(ObjectId mesh_id, int primitive_type){
-        std::vector <int> res;
+    std::vector<std::pair<int,vec3> > primitives(ObjectId mesh_id, int primitive_type){
+        std::vector <std::pair<int, vec3>> res;
         for (auto pr : picked) {
             int prim = pr.filtered_primitive_id(mesh_id, primitive_type);
-            if (prim != -1) res.push_back(prim);
+            if (prim != -1) res.push_back({ prim,pr.point() });
         }
         return res;
     }
@@ -151,6 +154,13 @@ struct LayerSplitMode : public Mode{
     MouseReactLayerSelection layer_selection_react;
     MouseReactMultiSelector multi_selector_react;
     
+
+    Volume::Halfedge hex_halfedge_from_edge(int e){
+        Hexahedra& hex = hex_id();
+        EdgeAttribute<int> hex_halfedge("hex_halfedge", God::xcf["mesh"].polylines[""].attributes, God::xcf["mesh"].polylines[""].mesh);
+        return hex.halfedge(hex_halfedge[e]);
+    }
+
     LayerSplitMode(){
         import_new_project_from_CAD(std::string(TEST_INPUT_DIR) + "B1.geogram");
         load_mm_with_default_layers(std::string(WORKING_DIR) + "geom");
@@ -175,11 +185,14 @@ struct LayerSplitMode : public Mode{
         split_merge_react.init(pl_id);
     }
 
-    ObjectId hex_id(){ return ObjectId(ObjectType::HEXAHEDRA, std::vector<std::string>{ "mesh", ""}); }
-    ObjectId hex_pl_id(){ return ObjectId(POLYLINES, std::vector<std::string>{ "mesh", ""}); };
+    inline ObjectId hex_id(){ return ObjectId(ObjectType::HEXAHEDRA, std::vector<std::string>{ "mesh", ""}); }
+    inline ObjectId hex_pl_id(){ return ObjectId(ObjectType::POLYLINES, std::vector<std::string>{ "mesh", ""}); };
+
+
 
 
     void handle(Event event) {
+        // forward mouse events to mouse reacts 
         if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL)){
             send_instruction_to_react(event, camera_react);
             send_instruction_to_react(event, layer_selection_react);
@@ -189,12 +202,36 @@ struct LayerSplitMode : public Mode{
             send_instruction_to_react(event, multi_selector_react);
         }
 
+        // consume mouse react "return values"
         if (multi_selector_react.done){
             Log::add("CONSUME multi_selector_react");
-            
             auto crossed_edges = multi_selector_react.primitives(hex_pl_id(), 1);
-            for (auto it : crossed_edges) plop(it);
+            for (auto it : crossed_edges) std::cerr << it.first <<"  "<<it.second<<std::endl;
+            if (!crossed_edges.empty()){
+                Hexahedra& hex = hex_id();
+                PolyLine& pl = hex_pl_id();
+                int prim = crossed_edges.front().first;
+                vec3 I = crossed_edges.front().second;
+                vec3 P[2];FOR(i,2) P[i] = pl.points[pl.vert(prim, i)];
+                double c = (P[1] - P[0]) * (I - P[0]) / (P[1] - P[0]).norm2();
+                plop(c);
+                CellFacetAttribute<int> layer_id(hex);
+                compute_hex_layer_id(hex, layer_id);
+                auto h = hex_halfedge_from_edge(prim);
+                int selected_layer = layer_id[h.prev().opposite_f().facet()];
+                CellFacetAttribute<int> pillow(hex,0);
+                for (auto f : hex.iter_facets()) 
+                    if (selected_layer == layer_id[f]) 
+                        pillow[f] = 1;
 
+                Pillow(hex, pillow).apply(1.-c);
+
+                EdgeAttribute<int> hex_halfedge("hex_halfedge", God::xcf["mesh"].polylines[""].attributes, God::xcf["mesh"].polylines[""].mesh);
+                generate_edge_graph(hex, pl, hex_halfedge);
+
+                hex_id().broadcast(EventType::UPDATED);
+                hex_pl_id().broadcast(EventType::UPDATED);
+            }
             multi_selector_react.reset();
         }
         
