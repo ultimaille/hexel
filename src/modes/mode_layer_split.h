@@ -193,7 +193,7 @@ struct LayerSplitMode : public Mode{
         edge2halfedge.bind("hex_halfedge", God::xcf["mesh"].polylines[""].attributes, God::xcf["mesh"].polylines[""].mesh);
         generate_edge_graph(hex, pl, edge2halfedge);
 
-        PolyLineLayer& layer = God::layers.add<PolyLineLayer>("mesh_edge");
+        PolyLineLayer& layer = God::layers.add<PolyLineLayer>("mesh_edge", 1);
         layer.init(pl_id());
         auto& pr = layer.primitive_renderer;        pr.color[0] = .5; pr.color[1] = .5; pr.color[2] = .7;
 

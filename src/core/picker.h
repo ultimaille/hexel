@@ -19,7 +19,6 @@ struct Picker{
     std::vector<float> depths;
 
     Picker();
-    Picker(vec4 rect);
 
     void reset();
 

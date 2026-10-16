@@ -148,15 +148,6 @@ void WindowContext::begin_frame(bool offscreen) {
     if (!offscreen) ImGui::NewFrame();
 }
 
-void WindowContext::begin_scissor(vec4 rect) {
-    glEnable(GL_SCISSOR_TEST);
-    glScissor(rect[0], rect[1], rect[2], rect[3]);
-}
-
-void WindowContext::end_scissor() {
-    glDisable(GL_SCISSOR_TEST);
-}
-
 void WindowContext::present_render_target() {
     if (!render_target.valid()) {
         Log::error("RenderTarget is invalid");
