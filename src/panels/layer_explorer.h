@@ -95,14 +95,47 @@ struct LayerExplorer : public Panel {
 
 
         for (int i = 0; i < God::layers.groups.size(); ++i) {
-            int group = God::layers.groups[i];
+            auto &group = God::layers.groups[i];
 
-            bool open = ImGui::TreeNodeEx(label("Group " + std::to_string(group), "group_" + std::to_string(group)));
+            ImGui::PushID(("widget_group_" + std::to_string(group.id)).c_str());
+
+            bool open = ImGui::TreeNodeEx(label("Group " + std::to_string(group.id), "group_" + std::to_string(group.id)));
             
+
+            // Button to open popup
+            static bool showPopup = false;
+            static int selectedItem = -1;
+            // ImGui::SameLine();
+            // if (ImGui::SmallButton(label("+", "btn_merge_" + std::to_string(group.id)))) {
+            //     ImGui::OpenPopup("SelectionListPopup");
+            //     showPopup = true;
+            // }
+            if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
+                ImGui::OpenPopup("MergeSelectionListPopup");
+            }
+
+            // Popup with selection list
+            if (ImGui::BeginPopup("MergeSelectionListPopup")) {
+                ImGui::Text("Select merge option:");
+                ImGui::Separator();
+                
+                static const char* items[] = {"None", "Min", "Max", "Diff", "Multiply", "Average"};
+                
+                for (int i = 0; i < IM_ARRAYSIZE(items); i++) {
+                    if (ImGui::Selectable(items[i], i == group.blend_op)) {
+                        group.blend_op = static_cast<LayerManager::Group::BlendOp>(i);
+                        // Do something with the selected item
+                        ImGui::CloseCurrentPopup();
+                    }
+                }
+                ImGui::EndPopup();
+            }
+
+
             // Drag source
             if (ImGui::BeginDragDropSource()) {
                 ImGui::SetDragDropPayload("NODE_INDEX", &i, sizeof(int));
-                ImGui::Text("%s", ("Group " + std::to_string(group)).c_str());
+                ImGui::Text("%s", ("Group " + std::to_string(group.id)).c_str());
                 ImGui::EndDragDropSource();
             }
             
@@ -120,7 +153,7 @@ struct LayerExplorer : public Panel {
             if (open) {
                 for (int l = 0; l < God::layers.size(); ++l) {
                     Layer &layer = God::layers[l];
-                    if (layer.group == group) {
+                    if (layer.group == group.id) {
                         std::string layer_name = God::layers.ith_name(l);
                         if (ImGui::TreeNodeEx(label(layer_name, layer_name))) {
                             ImGui::TreePop();
@@ -129,7 +162,8 @@ struct LayerExplorer : public Panel {
                 }
                 ImGui::TreePop();
             }
-            
+
+            ImGui::PopID();
         }
 
         ImGui::End();
