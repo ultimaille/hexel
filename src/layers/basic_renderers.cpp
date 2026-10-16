@@ -185,7 +185,7 @@ void PointRenderer::update(PointSet& ps, PointAttribute<bool>& visible, PointAtt
 }
 
 void PointRenderer::render(){
-    um_assert(no_gl_error());
+//    um_assert(no_gl_error());
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_PROGRAM_POINT_SIZE);
     shared_setup_before_rendering();

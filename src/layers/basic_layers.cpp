@@ -68,10 +68,10 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = id; }
         Layer::generate_gui(name);
     }
 
-    void PointSetLayer::init(ObjectId obj){
-        mesh = obj;
-        PointSet& ps = obj;
-        PointSetAttributes& attr = obj;
+
+    void PointSetLayer::reset(){
+        PointSet& ps = mesh;
+        PointSetAttributes& attr = mesh;
 
         PointAttribute<float> value(ps);
         FOR(v, ps.size()){
@@ -85,6 +85,10 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = id; }
 
         primitive_renderer.init();
         primitive_renderer.update(ps, visible, value, primitive_id);
+    }
+    void PointSetLayer::init(ObjectId obj){
+        mesh = obj;
+        reset();
     }
 
     void PointSetLayer::render(){
@@ -109,8 +113,6 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = id; }
     void PolyLineLayer::reset(){
         PolyLine& pl = mesh;
         PolyLineAttributes& attr = mesh;
-
-        plop(pl.nedges());
         PointAttribute<float> value(pl, 0);
         for (auto v : pl.iter_vertices())
             value[v] = v.pos()[0];

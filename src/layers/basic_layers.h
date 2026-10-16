@@ -21,6 +21,7 @@ struct PointSetLayer : public Layer{
     void init(ObjectId obj);
     void render();
     void destroy();
+    void reset();
 };
 
 struct PolyLineLayer : public Layer{

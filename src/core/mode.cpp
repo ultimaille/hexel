@@ -10,7 +10,7 @@
 #include "shaders.h"
 
 void MouseReactTrackBallCamera::on_wheel(double v){
-    God::camera.zoom(v);
+    God::camera.zoom(-v);
 }
 void MouseReactTrackBallCamera::on_drag(int button, vec2 a, vec2 b){
     auto [width, height] = God::context.screen_size();

@@ -223,16 +223,24 @@ void Pillow::pillow_without_boundary_faces(double thickness){
         EdgeGraph eg(hex);
         PointAttribute<bool> lock(hex);
         FOR(v, hex.nverts()) lock[v] = (v < niv);
-        FOR(iteration, 3){
+
+        double c_min = std::sqrt(thickness);
+        double c_max = std::sqrt(1.-thickness);
+        
+        EdgeAttribute<double> c(eg,c_min);
+        for (auto h : hex.iter_halfedges()){
+            if (h.cell() == nih) break;
+            c[eg.edge_from_halfedge(h)]=c_max;
+        }
+
+
+        FOR(iteration, 3)
+        {
             FOR(dim, 3){
                 LeastSquares ls(hex.nverts());
                 FOR(v, hex.nverts()) if (lock[v]) ls.fix(v, hex.points[v][dim]);
                 for (auto e : eg.iter_edges()) if (lock[e.from()]){
-                    double c = thickness;
-                    auto h = eg.halfedge_from_edge(e);
-                    for (auto cir : h.iter_CCW_around_edge())
-                        if (cir.cell() < nih) c = 1. - thickness;
-                    ls.add_to_energy(std::sqrt(c) * (X(e.from()) - X(e.to())));
+                    ls.add_to_energy(c[e] * X(e.from()) - c[e] * X(e.to()));
                 }
                 ls.solve();
                 FOR(v, hex.nverts()) hex.points[v][dim] = ls.value(v);
