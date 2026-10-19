@@ -123,7 +123,7 @@ struct LayerExplorer : public Panel {
                 
                 for (int i = 0; i < IM_ARRAYSIZE(items); i++) {
                     if (ImGui::Selectable(items[i], i == group.blend_op)) {
-                        group.blend_op = static_cast<LayerManager::Group::BlendOp>(i);
+                        group.blend_op = static_cast<Group::BlendOp>(i);
                         // Do something with the selected item
                         ImGui::CloseCurrentPopup();
                     }

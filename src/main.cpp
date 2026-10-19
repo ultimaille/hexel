@@ -12,6 +12,7 @@
 
 #include <core/all.h>
 #include <modes/mode_test.h>
+#include <modes/mode_test_2.h>
 #include <modes/mode_layer_split.h>
 
 #include "panels/property_explorer.h"
@@ -22,6 +23,7 @@
 
 #include "layers/basic_layers.h"
 #include "layers/ssao.h"
+#include "layers/blend.h"
 
 
 
@@ -68,6 +70,11 @@ int main(int argc, const char* argv[]) {
     God::modes.add<LayerSplitMode>("layer_split"); 
     God::modes.current_mode = 2;
     #endif
+    #ifdef BENJI_TEST
+    God::modes.add<BenjiMode>("benjimode");
+    God::modes.current_mode = 2;
+    #endif 
+    
     God::panels.add<XCFExplorer>("xcf_window");
     God::panels.add<LayerExplorer>("layer_window");
     God::panels.add<PropertyExplorer>("property_window");
@@ -77,6 +84,9 @@ int main(int argc, const char* argv[]) {
         std::string path = argv[1];
     }
 
+    RenderTargetComposition blend;
+    blend.init();
+
     while (God::context.window_is_active()){
         God::mouse.wheel_speed = 0;
         God::mouse.previous = God::mouse.current;
@@ -85,9 +95,10 @@ int main(int argc, const char* argv[]) {
             God::keys.update();
         God::events.dispatch();
 
-        God::context.begin_frame();
-        God::layers.render();
+        blend.render();
 
+        God::context.begin_frame();
+        blend.display();
         main_menu_gui();
         God::panels.show_gui();
         God::modes.define_gui();

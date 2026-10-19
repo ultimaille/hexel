@@ -25,6 +25,20 @@ struct Layer {
     int group;
 };
 
+struct Group {
+    enum BlendOp {
+        NONE,
+        MIN,
+        MAX,
+        DIFFERENCE,
+        MULTIPLY,
+        AVERAGE
+    };
+
+    int id;
+    BlendOp blend_op;
+};
+
 struct LayerManager: private Registry<Layer> {
     int size()                                 { return Registry<Layer>::size(); }
     Layer& operator[](int i)             { return Registry<Layer>::operator[](i); }
@@ -51,21 +65,6 @@ struct LayerManager: private Registry<Layer> {
     void kill(std::string layer_name);
 
     void destroy();
-
-
-    struct Group {
-        enum BlendOp {
-            NONE,
-            MIN,
-            MAX,
-            DIFFERENCE,
-            MULTIPLY,
-            AVERAGE
-        };
-
-        int id;
-        BlendOp blend_op;
-    };
 
     std::vector<Group> groups;
     static inline int max_group = 0;

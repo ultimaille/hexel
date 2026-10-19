@@ -16,6 +16,7 @@ struct RenderTarget {
     int height = 0;
 
     RenderTarget() = default;
+    RenderTarget(RenderTarget&&) = default;
     RenderTarget(const RenderTarget&) = delete;
     RenderTarget& operator=(const RenderTarget&) = delete;
 

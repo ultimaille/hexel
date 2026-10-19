@@ -3,15 +3,16 @@
 #include <array>
 #include <core/all.h>
 
-struct Blend {
+struct RenderTargetComposition {
     GLuint quad_vao = 0;
     GLuint quad_vbo = 0;
+    int w, h;
 
-    Blend() {
+    RenderTargetComposition() {
 
     }
 
-    ~Blend() {
+    ~RenderTargetComposition() {
         destroy();
     }
 
@@ -21,7 +22,7 @@ struct Blend {
         initialize_quad();
     }
 
-    void blend(GLuint a, GLuint b, LayerManager::Group::BlendOp blend_op) {
+    void blend(GLuint a, GLuint b, Group::BlendOp blend_op) {
         // Use blend shader
         GLuint blend_program = God::shaders["blend"];
         glUseProgram(blend_program);
@@ -45,13 +46,26 @@ struct Blend {
         const int w = God::context.render_target.width;
         const int h = God::context.render_target.height;
 
-        std::vector<RenderTarget> targets(God::layers.groups.size());
+        std::vector<int> group_to_target(God::layers.groups.size(), -1);
+        std::vector<RenderTarget> targets;
+        targets.reserve(God::layers.groups.size()); // pre-allocation
+        targets.emplace_back();
+        targets[0].init(w, h);
+        targets[0].clear();
+
         for (int i = 0; i < God::layers.groups.size(); ++i) {
             auto &group = God::layers.groups[i];
-            
-            targets[i].init(w, h);
-            targets[i].clear(); // clear & bind framebuffer
-            
+
+            // Only create a new render target if needed (when a merge option selected)
+            // only create if not first group
+            if (i > 0 && group.blend_op != Group::BlendOp::NONE) {
+                targets.emplace_back();
+                targets[targets.size() - 1].init(w, h);
+                targets[targets.size() - 1].clear(); // clear & bind
+            }
+
+            group_to_target[i] = targets.size() - 1;
+
             // Normal rendering of layers of current group
             for (int l = 0; l < God::layers.size(); ++l) {
                 Layer &layer = God::layers[l];
@@ -71,12 +85,13 @@ struct Blend {
         glDepthMask(GL_FALSE);  // Don't write to depth buffer
         glDepthFunc(GL_ALWAYS); // Pass all depth tests (use existing depth)
 
-        blend(composite.color, targets[0].color, LayerManager::Group::BlendOp::NONE);
+        blend(composite.color, targets[0].color, Group::BlendOp::NONE);
         // Render all framebuffer colors as layers
         if (targets.size() > 1) {
-            for (int i = 1; i < targets.size(); ++i) {
+            for (int i = 0; i < God::layers.groups.size(); ++i) {
                 auto &group = God::layers.groups[i];
-                blend(composite.color, targets[i].color, group.blend_op);
+                if (group.blend_op != Group::BlendOp::NONE)
+                    blend(composite.color, targets[group_to_target[i]].color, group.blend_op);
             }
         }
 
@@ -88,9 +103,16 @@ struct Blend {
         composite.copy_to(God::context.render_target);
     }
 
+    void read_framebuffer(std::vector<unsigned char>& data, int x, int y, int w, int h, int attachment, int group) {
+
+        if (group < 0 || group > God::layers.groups.size() - 1)
+            return;
+
+        
+    }
+
 private:
 
-    // RenderTarget target;
     RenderTarget composite;
 
     void initialize_quad() {
