@@ -10,41 +10,50 @@
 #include "shaders.h"
 #include "mode.h"
 
-// Picker::Picker() : 
-//     w(God::context.render_target.width), 
-//     h(God::context.render_target.height) {
-//     reset();
-// }
 Picker::Picker() : 
-    w(0), 
-    h(0) {
+    w(God::context.render_target.width), 
+    h(God::context.render_target.height) {
     reset();
 }
 
 void Picker::reset() {
-    // God::context.begin_frame(true);
-    // God::layers.render();
-    // God::context.end_frame(true);
-    // God::context.render_target.read_framebuffer(layer_ids, 0, 0, w, h, 1);
-    // God::context.render_target.read_framebuffer(primitive_ids, 0, 0, w, h, 2);
-    // God::context.render_target.read_depth(depths, 0, 0, w, h);
+    data.clear();
+    
+    for (auto group_id : God::context.render_target.buffer_groups()) {
+        BufferData r;
+        r.w = w;
+        r.h = h;
+        r.group_id = group_id;
+        God::context.render_target.read_framebuffer(r.layer_ids, 0, 0, w, h, 1, group_id);
+        God::context.render_target.read_framebuffer(r.primitive_ids, 0, 0, w, h, 2, group_id);
+        God::context.render_target.read_depth(r.depths, 0, 0, w, h, group_id);
+        data.emplace(group_id, r);
+    }
 }
 
-Picker::Result Picker::at(vec2 uv) {
+Picker::Result Picker::at(vec2 uv, int buffer_group_id) {
+    return data[buffer_group_id].at(uv);
+}
+
+
+Picker::Result Picker::BufferData::at(vec2 uv) {
     int x = static_cast<int>(uv.x);
     int y = static_cast<int>(uv.y);
     // Check limits to avoid out of image bound crash
     if (x < 0 || x >= w || y < 0 || y >= h) {
-        return {x, y ,-1, -1, ObjectId(), -1};
+        return {};
     }
 
     // Invert Y axis : OpenGL origin is on bottom-left
     int flipped_y = h - 1 - y;
 
     int off = (flipped_y * w + x) * 4;
+
+    Result results;
     int layer_id = decode(layer_ids, off);
     int primitive_id = decode(primitive_ids, off);
     float depth = depths[flipped_y * w + x];
+
     auto layer_opt = God::layers.find_by_id(layer_id);
 
     // Retrieve primitive id from vertex id
@@ -53,7 +62,7 @@ Picker::Result Picker::at(vec2 uv) {
         auto &layer = layer_opt.value().get();
         return {x, y, layer_id, primitive_id, layer.mesh, depth};
     }
-
+    
     return {x, y, -1, -1, ObjectId(), depth};
 }
 

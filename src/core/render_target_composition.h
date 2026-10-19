@@ -95,12 +95,22 @@ struct RenderTargetComposition {
         targets.clear();
     }
 
-    void read_framebuffer(std::vector<unsigned char>& data, int x, int y, int w, int h, int attachment, int group) {
+    void read_framebuffer(std::vector<unsigned char>& data, int x, int y, int w, int h, int attachment, int group_id) {
+        um_assert(targets.contains(group_id));
+        targets.at(group_id).read_framebuffer(data, x, y, w, h, attachment);
+    }
 
-        if (group < 0 || group > God::layers.groups.size() - 1)
-            return;
+    void read_depth(std::vector<float>& data, int x, int y, int w, int h, int group_id) {
+        um_assert(targets.contains(group_id));
+        targets.at(group_id).read_depth(data, x, y, w, h);
+    }
 
-        
+    std::vector<int> buffer_groups() {
+        std::vector<int> result;
+        for (auto &[group_id, _] : targets) {
+            result.push_back(group_id);
+        }
+        return result;
     }
 
     void destroy() {

@@ -89,7 +89,6 @@ int main(int argc, const char* argv[]) {
         glfwPollEvents();
         if (!ImGui::GetIO().WantCaptureKeyboard || !ImGui::GetIO().WantCaptureMouse)
             God::keys.update();
-        God::events.dispatch();
 
     
         God::context.begin_frame();
@@ -104,6 +103,7 @@ int main(int argc, const char* argv[]) {
                     layer.render();
             }
         }
+        God::events.dispatch();
 
         main_menu_gui();
         God::panels.show_gui();
