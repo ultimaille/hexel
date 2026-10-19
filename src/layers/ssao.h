@@ -34,7 +34,7 @@ struct SSAO : Layer {
 
     void render() override {
         GLuint ao_program = God::shaders[ao_name];
-        RenderTarget& target = God::context.render_target;
+        RenderTarget& target = God::context.render_target.composite;
         if (!target.valid())
             return;
 

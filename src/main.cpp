@@ -23,7 +23,6 @@
 
 #include "layers/basic_layers.h"
 #include "layers/ssao.h"
-#include "layers/blend.h"
 
 
 
@@ -84,9 +83,6 @@ int main(int argc, const char* argv[]) {
         std::string path = argv[1];
     }
 
-    RenderTargetComposition blend;
-    blend.init();
-
     while (God::context.window_is_active()){
         God::mouse.wheel_speed = 0;
         God::mouse.previous = God::mouse.current;
@@ -95,10 +91,20 @@ int main(int argc, const char* argv[]) {
             God::keys.update();
         God::events.dispatch();
 
-        blend.render();
-
+    
         God::context.begin_frame();
-        blend.display();
+        
+        for (auto &group : God::layers.groups) {
+            
+            God::context.render_target.bind(group.id);
+
+            for (int l = 0; l < God::layers.size(); ++l) {
+                Layer &layer = God::layers[l];
+                if (layer.group == group.id)
+                    layer.render();
+            }
+        }
+
         main_menu_gui();
         God::panels.show_gui();
         God::modes.define_gui();

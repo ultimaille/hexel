@@ -6,6 +6,7 @@
 #include "picker.h"
 #include "xcf.h"
 #include "render_target.h"
+#include "render_target_composition.h"
 #include "panels.h"
 #include "layers.h"
 #include "shaders.h"
@@ -128,20 +129,17 @@ void WindowContext::init_imgui() {
     um_assert(ImGui_ImplOpenGL3_Init("#version 330"));
 }
 
-void WindowContext::bind_render_target() {
-    render_target.bind();
-}
-
 void WindowContext::bind_default_framebuffer() {
     RenderTarget::bind_default(render_target.width, render_target.height);
 }
 
 void WindowContext::begin_frame(bool offscreen) {
-    if (!render_target.valid()) {
-        Log::error("RenderTarget is invalid");
-        return;
-    }
+    // if (!render_target.valid()) {
+    //     Log::error("RenderTarget is invalid");
+    //     return;
+    // }
     render_target.clear(0.05f, 0.05f, 0.08f, 1.0f);
+    render_target.begin();
 
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -149,12 +147,13 @@ void WindowContext::begin_frame(bool offscreen) {
 }
 
 void WindowContext::present_render_target() {
-    if (!render_target.valid()) {
-        Log::error("RenderTarget is invalid");
-        return;
-    }
+    // if (!render_target.valid()) {
+    //     Log::error("RenderTarget is invalid");
+    //     return;
+    // }
 
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, render_target.framebuffer);
+    render_target.end();
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, render_target.composite.framebuffer);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     glBlitFramebuffer(0, 0, render_target.width, render_target.height, 0, 0, render_target.width, render_target.height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
     bind_default_framebuffer();

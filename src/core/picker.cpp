@@ -10,19 +10,24 @@
 #include "shaders.h"
 #include "mode.h"
 
+// Picker::Picker() : 
+//     w(God::context.render_target.width), 
+//     h(God::context.render_target.height) {
+//     reset();
+// }
 Picker::Picker() : 
-    w(God::context.render_target.width), 
-    h(God::context.render_target.height) {
+    w(0), 
+    h(0) {
     reset();
 }
 
 void Picker::reset() {
-    God::context.begin_frame(true);
-    God::layers.render();
-    God::context.end_frame(true);
-    God::context.render_target.read_framebuffer(layer_ids, 0, 0, w, h, 1);
-    God::context.render_target.read_framebuffer(primitive_ids, 0, 0, w, h, 2);
-    God::context.render_target.read_depth(depths, 0, 0, w, h);
+    // God::context.begin_frame(true);
+    // God::layers.render();
+    // God::context.end_frame(true);
+    // God::context.render_target.read_framebuffer(layer_ids, 0, 0, w, h, 1);
+    // God::context.render_target.read_framebuffer(primitive_ids, 0, 0, w, h, 2);
+    // God::context.render_target.read_depth(depths, 0, 0, w, h);
 }
 
 Picker::Result Picker::at(vec2 uv) {
@@ -53,21 +58,22 @@ Picker::Result Picker::at(vec2 uv) {
 }
 
 vec3 Picker::Result::point() {
-    float depth_ndc = depth * 2.f - 1.f; // Convert to NDC range [-1, 1]
+    // float depth_ndc = depth * 2.f - 1.f; // Convert to NDC range [-1, 1]
 
-    // Screen coordinates to NDC
-    vec2 ndc = God::context.render_target.get_ndc(x, y);
+    // // Screen coordinates to NDC
+    // vec2 ndc = God::context.render_target.get_ndc(x, y);
 
-    // Clip space coordinates
-    vec4 clip_space{ndc.x, ndc.y, depth_ndc, 1.0f};
+    // // Clip space coordinates
+    // vec4 clip_space{ndc.x, ndc.y, depth_ndc, 1.0f};
 
-    // Unproject clip space to view space
-    vec4 view_space = God::camera.projection_matrix().invert() * clip_space;
+    // // Unproject clip space to view space
+    // vec4 view_space = God::camera.projection_matrix().invert() * clip_space;
 
-    // Unproject view space to world space
-    mat4x4 inv_view = God::camera.view_matrix().invert();
-    vec4 world_space = inv_view * (view_space / view_space.data[3]);
-    return world_space.xyz();
+    // // Unproject view space to world space
+    // mat4x4 inv_view = God::camera.view_matrix().invert();
+    // vec4 world_space = inv_view * (view_space / view_space.data[3]);
+    // return world_space.xyz();
+    return vec3{0,0,0};
 }
 
 int Picker::Result::filtered_primitive_id(ObjectId& requested_mesh, int requested_primitive_type){

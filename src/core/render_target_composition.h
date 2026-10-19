@@ -6,7 +6,7 @@
 struct RenderTargetComposition {
     GLuint quad_vao = 0;
     GLuint quad_vbo = 0;
-    int w, h;
+    int width, height;
 
     RenderTargetComposition() {
 
@@ -16,10 +16,16 @@ struct RenderTargetComposition {
         destroy();
     }
 
-    void init() {
+    void init(int w, int h) {
         God::shaders.create_if_needed(std::string(SHADERS_DIR), "blend");
-        composite.init(God::context.render_target.width, God::context.render_target.height);
+        composite.init(w, h);
         initialize_quad();
+        width = w;
+        height = h;
+    }
+
+    void resize(int w, int h) {
+        composite.resize(w, h);
     }
 
     void blend(GLuint a, GLuint b, Group::BlendOp blend_op) {
@@ -41,43 +47,32 @@ struct RenderTargetComposition {
         draw_quad();
     }
 
-    void render() {
-        
-        const int w = God::context.render_target.width;
-        const int h = God::context.render_target.height;
-
-        std::vector<int> group_to_target(God::layers.groups.size(), -1);
-        std::vector<RenderTarget> targets;
-        targets.reserve(God::layers.groups.size()); // pre-allocation
-        targets.emplace_back();
-        targets[0].init(w, h);
-        targets[0].clear();
-
+    void begin() {
         for (int i = 0; i < God::layers.groups.size(); ++i) {
             auto &group = God::layers.groups[i];
 
             // Only create a new render target if needed (when a merge option selected)
             // only create if not first group
-            if (i > 0 && group.blend_op != Group::BlendOp::NONE) {
-                targets.emplace_back();
-                targets[targets.size() - 1].init(w, h);
-                targets[targets.size() - 1].clear(); // clear & bind
-            }
-
-            group_to_target[i] = targets.size() - 1;
-
-            // Normal rendering of layers of current group
-            for (int l = 0; l < God::layers.size(); ++l) {
-                Layer &layer = God::layers[l];
-                if (layer.group == group.id)
-                    layer.render();
+            if (i == 0 || i > 0 && group.blend_op != Group::BlendOp::NONE) {
+                targets[group.id].init(width, height);
             }
         }
+    }
 
+    void bind(int group_id) {
+        if (targets.contains(group_id))
+            targets[group_id].clear(); // clear & bind framebuffer
+    }
+
+    void clear(float r, float g, float b, float a) {
+        composite.clear(r, g, b, a);
+    }
+
+    void end() {
         if (targets.size() == 0)
             return;
 
-        composite.resize(w, h);
+        composite.resize(width, height); // Need ?
         composite.clear();
         // Merge all color attachments into main render target, keeping its depth
         glBindFramebuffer(GL_FRAMEBUFFER, composite.framebuffer);
@@ -85,22 +80,19 @@ struct RenderTargetComposition {
         glDepthMask(GL_FALSE);  // Don't write to depth buffer
         glDepthFunc(GL_ALWAYS); // Pass all depth tests (use existing depth)
 
-        blend(composite.color, targets[0].color, Group::BlendOp::NONE);
-        // Render all framebuffer colors as layers
-        if (targets.size() > 1) {
-            for (int i = 0; i < God::layers.groups.size(); ++i) {
-                auto &group = God::layers.groups[i];
-                if (group.blend_op != Group::BlendOp::NONE)
-                    blend(composite.color, targets[group_to_target[i]].color, group.blend_op);
+        // Render all framebuffer colors as layers        
+        for (int i = 0; i < God::layers.groups.size(); ++i) {
+            auto &group = God::layers.groups[i];
+            if (i == 0 || group.blend_op != Group::BlendOp::NONE) {
+                if (targets.contains(group.id))
+                    blend(composite.color, targets[group.id].color, group.blend_op);
             }
         }
 
         glDepthMask(GL_TRUE);   // Re-enable depth writes
         glDisable(GL_DEPTH_TEST);
-    }
 
-    void display() {
-        composite.copy_to(God::context.render_target);
+        targets.clear();
     }
 
     void read_framebuffer(std::vector<unsigned char>& data, int x, int y, int w, int h, int attachment, int group) {
@@ -111,9 +103,24 @@ struct RenderTargetComposition {
         
     }
 
-private:
+    void destroy() {
+        if (quad_vbo != 0) {
+            glDeleteBuffers(1, &quad_vbo);
+            quad_vbo = 0;
+        }
+
+        if (quad_vao != 0) {
+            glDeleteVertexArrays(1, &quad_vao);
+            quad_vao = 0;
+        }
+    }
+
 
     RenderTarget composite;
+
+private:
+
+    std::map<int, RenderTarget> targets;
 
     void initialize_quad() {
         constexpr float vertices[] = {
@@ -142,16 +149,5 @@ private:
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     }
 
-    void destroy() {
-        if (quad_vbo != 0) {
-            glDeleteBuffers(1, &quad_vbo);
-            quad_vbo = 0;
-        }
-
-        if (quad_vao != 0) {
-            glDeleteVertexArrays(1, &quad_vao);
-            quad_vao = 0;
-        }
-    }
 };
 
