@@ -55,6 +55,22 @@ struct LayerManager: private Registry<Layer> {
         return max_group - 1;
     }
 
+    void remove_group(int group_id) {
+        auto it = std::find_if(groups.begin(), groups.end(), [&group_id](const auto &g) { return g.id == group_id; });
+        if (it != groups.end())
+            groups.erase(it);
+    }
+
+    bool is_group_empty(int group_id) {
+        for (int l = 0; l < size(); ++l) {
+            auto &layer = Registry<Layer>::operator[](l);
+            if (layer.group == group_id)
+                return false;
+        }
+
+        return true;
+    }
+
     void render();
     void handle(Event event);
     std::optional<std::reference_wrapper<Layer>> find_by_id(int id);

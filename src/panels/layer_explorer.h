@@ -111,11 +111,11 @@ struct LayerExplorer : public Panel {
             //     showPopup = true;
             // }
             if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
-                ImGui::OpenPopup("MergeSelectionListPopup");
+                ImGui::OpenPopup("BlendSelectionListPopup");
             }
 
             // Popup with selection list
-            if (ImGui::BeginPopup("MergeSelectionListPopup")) {
+            if (ImGui::BeginPopup("BlendSelectionListPopup")) {
                 ImGui::Text("Select merge option:");
                 ImGui::Separator();
                 
@@ -150,7 +150,12 @@ struct LayerExplorer : public Panel {
                 if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("LAYER_NODE_INDEX")) {
                     int source = *(int*)payload->Data;
                     if (source >= 0 && source < (int)God::layers.size()) {
-                        God::layers[source].group = i;
+                        auto &layer = God::layers[source];
+                        int old_group = layer.group;
+                        layer.group = God::layers.groups[i].id;
+                        // Eventually remove group
+                        if (God::layers.is_group_empty(old_group))
+                            God::layers.remove_group(old_group);
                     }
                 }
                 ImGui::EndDragDropTarget();

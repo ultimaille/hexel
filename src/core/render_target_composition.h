@@ -51,15 +51,18 @@ struct RenderTargetComposition {
         for (int i = 0; i < God::layers.groups.size(); ++i) {
             auto &group = God::layers.groups[i];
 
-            // Only create a new render target if needed (when a merge option selected)
-            // only create if not first group
-            if (i == 0 || i > 0 && group.blend_op != Group::BlendOp::NONE) {
+            // Only create a new render target if needed: 
+            // first group or when a merge option selected
+            if (i == 0 || group.blend_op != Group::BlendOp::NONE) {
                 targets[group.id].init(width, height);
             }
         }
     }
 
     void bind(int group_id) {
+        // Only bind framebuffer if the target exists for group
+        // This behavior implicitly don't bind if there is no blending,
+        // enabling drawing in the same render target
         if (targets.contains(group_id))
             targets[group_id].clear(); // clear & bind framebuffer
     }
@@ -83,10 +86,10 @@ struct RenderTargetComposition {
         // Render all framebuffer colors as layers        
         for (int i = 0; i < God::layers.groups.size(); ++i) {
             auto &group = God::layers.groups[i];
-            if (i == 0 || group.blend_op != Group::BlendOp::NONE) {
+            // if (i == 0 || group.blend_op != Group::BlendOp::NONE) {
                 if (targets.contains(group.id))
                     blend(composite.color, targets[group.id].color, group.blend_op);
-            }
+            // }
         }
 
         glDepthMask(GL_TRUE);   // Re-enable depth writes
