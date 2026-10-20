@@ -33,7 +33,7 @@ namespace OID {
         return path;
     }
 
-    struct BasicNode {
+    struct PathNode {
         std::vector<std::string> path = {};
 
         operator ObjectId() const {
@@ -41,44 +41,44 @@ namespace OID {
         }
     };
 
-    struct BasicCollection : BasicNode {
+    struct PathCollection : PathNode {
         ObjectId operator[](std::string s) const {
             return { append(path, s) };
         }
     };
 
-    struct Path : BasicNode {
-        BasicNode keys    = {{ "keys"    }};
-        BasicNode mouse   = {{ "mouse"   }};
-        BasicNode camera  = {{ "camera"  }};
-        BasicNode context = {{ "context" }};
+    struct Path : PathNode {
+        PathNode keys    = {{ "keys"    }};
+        PathNode mouse   = {{ "mouse"   }};
+        PathNode camera  = {{ "camera"  }};
+        PathNode context = {{ "context" }};
 
-        BasicCollection modes   = {{{ "modes"   }}};
-        BasicCollection layers  = {{{ "layers"  }}};
-        BasicCollection panels  = {{{ "panels"  }}};
-        BasicCollection shaders = {{{ "shaders" }}};
+        PathCollection modes   = {{{ "modes"   }}};
+        PathCollection layers  = {{{ "layers"  }}};
+        PathCollection panels  = {{{ "panels"  }}};
+        PathCollection shaders = {{{ "shaders" }}};
 
-        struct XCF : BasicNode {
-            struct MultiMesh : BasicNode {
-                struct PointSet : BasicNode {
-                    BasicCollection attr_points = { append(path, "attr_points") };
+        struct XCF : PathNode {
+            struct MultiMesh : PathNode {
+                struct PointSet : PathNode {
+                    PathCollection attr_points = { append(path, "attr_points") };
                 } pointset = { append(path, "pointset") };
 
-                struct PolyLines : BasicNode {
-                    struct Mesh : BasicNode {
-                        BasicCollection attr_points  = { append(path, "attr_points" ) };
-                        BasicCollection attr_edges   = { append(path, "attr_edges" ) };
+                struct PolyLines : PathNode {
+                    struct Mesh : PathNode {
+                        PathCollection attr_points  = { append(path, "attr_points" ) };
+                        PathCollection attr_edges   = { append(path, "attr_edges" ) };
                     };
                     Mesh operator[](std::string s) const {
                         return { append(path, s) };
                     }
                 };
 
-                struct Surfaces : BasicNode {
-                    struct Mesh : BasicNode {
-                        BasicCollection attr_points  = { append(path, "attr_points" ) };
-                        BasicCollection attr_facets  = { append(path, "attr_facets" ) };
-                        BasicCollection attr_corners = { append(path, "attr_corners") };
+                struct Surfaces : PathNode {
+                    struct Mesh : PathNode {
+                        PathCollection attr_points  = { append(path, "attr_points" ) };
+                        PathCollection attr_facets  = { append(path, "attr_facets" ) };
+                        PathCollection attr_corners = { append(path, "attr_corners") };
                     };
                     Mesh operator[](std::string s) const {
                         return { append(path, s) };
@@ -89,12 +89,12 @@ namespace OID {
                 Surfaces quads     = { append(path, "quads"    ) };
                 Surfaces polygons  = { append(path, "polygons" ) };
 
-                struct Volumes : BasicNode {
-                    struct Mesh : BasicNode {
-                        BasicCollection attr_points  = { append(path, "attr_points" ) };
-                        BasicCollection attr_cells   = { append(path, "attr_cells"  ) };
-                        BasicCollection attr_facets  = { append(path, "attr_facets" ) };
-                        BasicCollection attr_corners = { append(path, "attr_corners") };
+                struct Volumes : PathNode {
+                    struct Mesh : PathNode {
+                        PathCollection attr_points  = { append(path, "attr_points" ) };
+                        PathCollection attr_cells   = { append(path, "attr_cells"  ) };
+                        PathCollection attr_facets  = { append(path, "attr_facets" ) };
+                        PathCollection attr_corners = { append(path, "attr_corners") };
                     };
                     Mesh operator[](std::string s) const {
                         return { append(path, s) };
