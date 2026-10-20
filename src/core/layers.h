@@ -28,10 +28,6 @@ struct Layer {
 struct Group {
     enum BlendOp {
         NONE,
-        MIN,
-        MAX,
-        DIFFERENCE,
-        MULTIPLY,
         AVERAGE
     };
 

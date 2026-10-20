@@ -119,7 +119,7 @@ struct LayerExplorer : public Panel {
                 ImGui::Text("Select merge option:");
                 ImGui::Separator();
                 
-                static const char* items[] = {"None", "Min", "Max", "Diff", "Multiply", "Average"};
+                static const char* items[] = {"None", "Average"};
                 
                 for (int i = 0; i < IM_ARRAYSIZE(items); i++) {
                     if (ImGui::Selectable(items[i], i == group.blend_op)) {
