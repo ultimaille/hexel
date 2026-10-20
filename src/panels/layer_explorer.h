@@ -135,7 +135,7 @@ struct LayerExplorer : public Panel {
             // Drag source
             if (ImGui::BeginDragDropSource()) {
                 ImGui::SetDragDropPayload("NODE_INDEX", &i, sizeof(int));
-                ImGui::Text("%s", ("Group " + std::to_string(group.id)).c_str());
+                ImGui::Text("%s", ("Move group " + std::to_string(group.id)).c_str());
                 ImGui::EndDragDropSource();
             }
             
@@ -147,6 +147,12 @@ struct LayerExplorer : public Panel {
                         std::swap(God::layers.groups[source], God::layers.groups[i]);
                     }
                 }
+                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("LAYER_NODE_INDEX")) {
+                    int source = *(int*)payload->Data;
+                    if (source >= 0 && source < (int)God::layers.size()) {
+                        God::layers[source].group = i;
+                    }
+                }
                 ImGui::EndDragDropTarget();
             }
 
@@ -155,7 +161,17 @@ struct LayerExplorer : public Panel {
                     Layer &layer = God::layers[l];
                     if (layer.group == group.id) {
                         std::string layer_name = God::layers.ith_name(l);
-                        if (ImGui::TreeNodeEx(label(layer_name, layer_name))) {
+                        bool open_layer_node = ImGui::TreeNodeEx(label(layer_name, layer_name));
+
+                        // Drag source
+                        if (ImGui::BeginDragDropSource()) {
+                            ImGui::SetDragDropPayload("LAYER_NODE_INDEX", &l, sizeof(int));
+                            std::string layer_name = God::layers.ith_name(l);
+                            ImGui::Text("%s", ("Move layer " + layer_name).c_str());
+                            ImGui::EndDragDropSource();
+                        }
+
+                        if (open_layer_node) {
                             ImGui::TreePop();
                         }
                     }
@@ -165,6 +181,23 @@ struct LayerExplorer : public Panel {
 
             ImGui::PopID();
         }
+
+        bool new_group_open = ImGui::TreeNodeEx(label("+", "group_new"));
+        // Drop target
+        if (ImGui::BeginDragDropTarget()) {
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("LAYER_NODE_INDEX")) {
+                int source = *(int*)payload->Data;
+                if (source >= 0 && source < (int)God::layers.size()) {
+                    int new_group_id = God::layers.add_group();
+                    God::layers[source].group = new_group_id;
+                }
+            }
+            ImGui::EndDragDropTarget();
+        }
+        if (new_group_open) {
+            ImGui::TreePop();
+        }
+
 
         ImGui::End();
     }
