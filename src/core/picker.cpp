@@ -19,13 +19,11 @@ Picker::Picker() :
 void Picker::reset() {
     data.clear();
     
-    for (auto group_id : God::context.render_target.buffer_groups()) {
-        BufferData r;
-        r.w = w;
-        r.h = h;
-        God::context.render_target.read_framebuffer(r.layer_ids, 0, 0, w, h, 1, group_id);
-        God::context.render_target.read_framebuffer(r.primitive_ids, 0, 0, w, h, 2, group_id);
-        God::context.render_target.read_depth(r.depths, 0, 0, w, h, group_id);
+    for (auto buffer_idx : God::context.render_target.buffer_indexes()) {
+        BufferData r(w, h, buffer_idx);
+        God::context.render_target.targets[buffer_idx].read_framebuffer(r.layer_ids, 0, 0, w, h, 1);
+        God::context.render_target.targets[buffer_idx].read_framebuffer(r.primitive_ids, 0, 0, w, h, 2);
+        God::context.render_target.targets[buffer_idx].read_depth(r.depths, 0, 0, w, h);
         data.push_back(r);
     }
 }
@@ -40,7 +38,7 @@ Picker::Result Picker::BufferData::at(vec2 uv) {
     int y = static_cast<int>(uv.y);
     // Check limits to avoid out of image bound crash
     if (x < 0 || x >= w || y < 0 || y >= h) {
-        return {};
+        return {x, y, -1, -1, ObjectId(), 0., -1};
     }
 
     // Invert Y axis : OpenGL origin is on bottom-left
@@ -59,29 +57,28 @@ Picker::Result Picker::BufferData::at(vec2 uv) {
     //int primitive_id = -1;
     if (layer_opt.has_value()) {
         auto &layer = layer_opt.value().get();
-        return {x, y, layer_id, primitive_id, layer.mesh, depth};
+        return {x, y, layer_id, primitive_id, layer.mesh, depth, buffer_idx};
     }
     
-    return {x, y, -1, -1, ObjectId(), depth};
+    return {x, y, -1, -1, ObjectId(), depth, buffer_idx};
 }
 
 vec3 Picker::Result::point() {
-    // float depth_ndc = depth * 2.f - 1.f; // Convert to NDC range [-1, 1]
+    float depth_ndc = depth * 2.f - 1.f; // Convert to NDC range [-1, 1]
 
-    // // Screen coordinates to NDC
-    // vec2 ndc = God::context.render_target.get_ndc(x, y);
+    // Screen coordinates to NDC
+    vec2 ndc = God::context.render_target.targets[buffer_idx].get_ndc(x, y);
 
-    // // Clip space coordinates
-    // vec4 clip_space{ndc.x, ndc.y, depth_ndc, 1.0f};
+    // Clip space coordinates
+    vec4 clip_space{ndc.x, ndc.y, depth_ndc, 1.0f};
 
-    // // Unproject clip space to view space
-    // vec4 view_space = God::camera.projection_matrix().invert() * clip_space;
+    // Unproject clip space to view space
+    vec4 view_space = God::camera.projection_matrix().invert() * clip_space;
 
-    // // Unproject view space to world space
-    // mat4x4 inv_view = God::camera.view_matrix().invert();
-    // vec4 world_space = inv_view * (view_space / view_space.data[3]);
-    // return world_space.xyz();
-    return vec3{0,0,0};
+    // Unproject view space to world space
+    mat4x4 inv_view = God::camera.view_matrix().invert();
+    vec4 world_space = inv_view * (view_space / view_space.data[3]);
+    return world_space.xyz();
 }
 
 int Picker::Result::filtered_primitive_id(ObjectId& requested_mesh, int requested_primitive_type){

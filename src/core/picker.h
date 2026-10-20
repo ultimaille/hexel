@@ -8,6 +8,7 @@ struct Picker{
         int raw_primitive_id;
         ObjectId mesh_id;
         float depth;
+        int buffer_idx;
         // get_attr_value
         vec3 point();
         // in most cases, we're interested to know if the picked point is on a specific primitive/mesh pair
@@ -15,7 +16,11 @@ struct Picker{
     };
 
     struct BufferData {
+
+        BufferData(int width, int height, int buf) : w(width), h(height), buffer_idx(buf) {}
+
         int w, h;
+        int buffer_idx;
         std::vector<unsigned char> layer_ids;
         std::vector<unsigned char> primitive_ids;
         std::vector<float> depths;

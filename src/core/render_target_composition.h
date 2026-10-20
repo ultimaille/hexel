@@ -95,25 +95,21 @@ struct RenderTargetComposition {
         targets.clear();
     }
 
-    void read_framebuffer(std::vector<unsigned char>& data, int x, int y, int w, int h, int attachment, int group_id) {
-        um_assert(targets.contains(group_id));
-        targets.at(group_id).read_framebuffer(data, x, y, w, h, attachment);
-    }
-
-    void read_depth(std::vector<float>& data, int x, int y, int w, int h, int group_id) {
-        um_assert(targets.contains(group_id));
-        targets.at(group_id).read_depth(data, x, y, w, h);
-    }
-
-    std::vector<int> buffer_groups() {
+    std::vector<int> buffer_indexes() {
         std::vector<int> result;
-        for (auto &[group_id, _] : targets) {
-            result.push_back(group_id);
+        for (auto &[buffer_idx, _] : targets) {
+            result.push_back(buffer_idx);
         }
         return result;
     }
 
     void destroy() {
+
+        for (auto &[_, target] : targets)
+            target.destroy();
+
+        composite.destroy();
+
         if (quad_vbo != 0) {
             glDeleteBuffers(1, &quad_vbo);
             quad_vbo = 0;
@@ -127,10 +123,10 @@ struct RenderTargetComposition {
 
 
     RenderTarget composite;
+    std::map<int, RenderTarget> targets;
 
 private:
 
-    std::map<int, RenderTarget> targets;
 
     void initialize_quad() {
         constexpr float vertices[] = {

@@ -28,6 +28,7 @@ struct MouseReactPickerTest2 : public MouseReact {
             std::cout << "layer_id: " << result.layer_id << std::endl;
             std::cout << "primitive_id: " << result.raw_primitive_id << std::endl;
             std::cout << "depth: " << result.depth << std::endl;
+            std::cout << "point: " << result.point() << std::endl;
         }
     }
 };
