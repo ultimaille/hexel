@@ -103,7 +103,7 @@ namespace OID {
 
                 Volumes tetrahedra = { append(path, "tetrahedra") };
                 Volumes hexahedra  = { append(path, "hexahedra" ) };
-                Volumes wedges     = { append(path, "wedges "   ) };
+                Volumes wedges     = { append(path, "wedges"    ) };
                 Volumes pyramids   = { append(path, "pyramids"  ) };
             };
 
