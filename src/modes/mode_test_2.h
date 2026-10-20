@@ -22,9 +22,7 @@ struct MouseReactPickerTest2 : public MouseReact {
         Log::add("click " + std::to_string(button));
         Picker picker;
 
-        for (auto &[group_id, d] : picker.data) {
-            std::cout << "group_id: " << group_id << std::endl;
-            std::cout << "group_id: " << d.group_id << std::endl;
+        for (auto &d : picker.data) {
             auto result = d.at(p);
             std::cout << "coords: (" << result.x << ", " << result.y << ")" << std::endl;
             std::cout << "layer_id: " << result.layer_id << std::endl;

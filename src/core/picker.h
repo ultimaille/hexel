@@ -19,7 +19,6 @@ struct Picker{
         std::vector<unsigned char> layer_ids;
         std::vector<unsigned char> primitive_ids;
         std::vector<float> depths;
-        int group_id;
         Result at(vec2 uv);
 
         int decode(std::vector<unsigned char> &data, int off) {
@@ -35,10 +34,10 @@ struct Picker{
         }
     };
 
-    Result at(vec2 uv, int buffer_group_id = -1);
+    Result at(vec2 uv, int buffer = 0);
 
 
-    std::map<int, BufferData> data;
+    std::vector<BufferData> data;
 
     Picker();
 

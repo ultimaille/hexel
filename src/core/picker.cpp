@@ -23,16 +23,15 @@ void Picker::reset() {
         BufferData r;
         r.w = w;
         r.h = h;
-        r.group_id = group_id;
         God::context.render_target.read_framebuffer(r.layer_ids, 0, 0, w, h, 1, group_id);
         God::context.render_target.read_framebuffer(r.primitive_ids, 0, 0, w, h, 2, group_id);
         God::context.render_target.read_depth(r.depths, 0, 0, w, h, group_id);
-        data.emplace(group_id, r);
+        data.push_back(r);
     }
 }
 
-Picker::Result Picker::at(vec2 uv, int buffer_group_id) {
-    return data[buffer_group_id].at(uv);
+Picker::Result Picker::at(vec2 uv, int buffer) {
+    return data[buffer].at(uv);
 }
 
 
