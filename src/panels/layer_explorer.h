@@ -163,10 +163,12 @@ struct LayerExplorer : public Panel {
 
             if (open) {
                 for (int l = 0; l < God::layers.size(); ++l) {
+                    ImGui::PushID(("tree_node_layer_" + std::to_string(l)).c_str());
+
                     Layer &layer = God::layers[l];
                     if (layer.group == group.id) {
                         std::string layer_name = God::layers.ith_name(l);
-                        bool open_layer_node = ImGui::TreeNodeEx(label(layer_name, layer_name));
+                        bool open_layer_node = ImGui::TreeNodeEx(label(layer_name, layer_name), ImGuiTreeNodeFlags_Leaf);
 
                         // Drag source
                         if (ImGui::BeginDragDropSource()) {
@@ -176,10 +178,17 @@ struct LayerExplorer : public Panel {
                             ImGui::EndDragDropSource();
                         }
 
+                        ImGui::SameLine();
+                        // static bool b;
+                        // ImGui::Checkbox("", &b);
+                        ImGui::SameLine();
+                        ImGui::SmallButton("X");
+
                         if (open_layer_node) {
                             ImGui::TreePop();
                         }
                     }
+                    ImGui::PopID();
                 }
                 ImGui::TreePop();
             }
@@ -187,7 +196,7 @@ struct LayerExplorer : public Panel {
             ImGui::PopID();
         }
 
-        bool new_group_open = ImGui::TreeNodeEx(label("+", "group_new"));
+        bool new_group_open = ImGui::TreeNodeEx(label("+", "group_new"), ImGuiTreeNodeFlags_Leaf);
         // Drop target
         if (ImGui::BeginDragDropTarget()) {
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("LAYER_NODE_INDEX")) {

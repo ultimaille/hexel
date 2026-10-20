@@ -158,7 +158,7 @@ struct HexEdit : public Mode{
             //God::xcf["B1"].save_to_path(std::string(TEST_INPUT_DIR) + "B1", false);
             //load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "B1");
             
-            God::layers.add<SSAO>("SSAO", -1).init();
+            God::layers.add<SSAO>("SSAO", 0).init();
         }
 
         ImGui::Separator();
