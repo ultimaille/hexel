@@ -31,7 +31,7 @@ void Mode::handle_mouse(Event event) {
 
     static vec2 pos_on_press[3];
 
-    if (event.who == events::MOUSE && !ImGui::GetIO().WantCaptureMouse) {
+    if (event.who == path().mouse && !ImGui::GetIO().WantCaptureMouse) {
         const double wheel = God::mouse.wheel_speed;
         if (wheel != 0) for (auto& [name, mr] : mouse_react) if (mr->active_sub_modes.contains(sub_mode)) mr->on_wheel(wheel);
         vec2 a = { God::mouse.previous.x, God::mouse.previous.y };

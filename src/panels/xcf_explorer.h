@@ -343,7 +343,7 @@ struct XCFExplorer : public Panel {
         for (auto n : mm2kill) God::xcf.kill_multimesh(n);
 
         {// sync with property panel
-            PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(ObjectId(PANEL, "property_window")));
+            PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(path().xcf["property_window"]));
             pan.layers.clear();
             for (auto sel : selected)if (sel.path == LAYER) pan.layers.push_back(sel);
         }

@@ -60,18 +60,6 @@ void main_menu_gui(){
 
 
 int main(int argc, const char* argv[]) {
-   std::cerr << (std::string)(OID::ObjectId) OID::path().xcf << "\n";
-   std::cerr << (std::string)(OID::ObjectId) OID::path().xcf["mm1"] << "\n";
-   std::cerr << (std::string)(OID::ObjectId) OID::path().xcf["mm1"].pointset << "\n";
-   std::cerr << (std::string)(OID::ObjectId) OID::path().xcf["mm1"].pointset.attr_points["pid"] << "\n";
-   std::cerr << (std::string)(OID::ObjectId) OID::path().xcf["mm1"].triangles << "\n";
-   std::cerr << (std::string)(OID::ObjectId) OID::path().xcf["mm1"].triangles["tri1"] << "\n";
-   std::cerr << (std::string)(OID::ObjectId) OID::path().xcf["mm1"].triangles["tri1"].attr_facets["fid"] << "\n";
-   std::cerr << (std::string)(OID::ObjectId) OID::path().camera << "\n";
-   std::cerr << (std::string)(OID::ObjectId) OID::path().layers["layer1"] << "\n";
-   return 0;
-
-
     God::context.init();
     God::modes.add<DefaultMode>("default");
     God::modes.add<HexEdit>("hexedit");
