@@ -14,7 +14,8 @@ TODO
 * Make layer group, multipass rendering
 * Layer attribute management
 * UNDO / REDO
-* Different config ()
+* Different config by dev
+* Bug sur mode HexEdit, load mm, supprime, reload, attribut déjà bindé
 
 ==================================================================
 GITERIES
