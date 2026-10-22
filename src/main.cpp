@@ -9,6 +9,7 @@
 #include <iostream>
 #include <string>
 
+#include <config.h>
 #include <core/all.h>
 #include <modes/mode_test.h>
 #include <modes/mode_test_2.h>
@@ -57,17 +58,9 @@ void main_menu_gui(){
 
 int main(int argc, const char* argv[]) {
     God::context.init();
-    God::modes.add<DefaultMode>("default");
-    God::modes.add<HexEdit>("hexedit");
-    #ifdef NICO_TEST 
-    God::modes.add<LayerSplitMode>("layer_split"); 
-    God::modes.current_mode = 2;
-    #endif
-    #ifdef BENJI_TEST
-    God::modes.add<BenjiMode>("benjimode");
-    God::modes.current_mode = 2;
-    #endif 
-    
+
+    Config::init_modes();
+
     God::panels.add<XCFExplorer>("xcf_window");
     God::panels.add<LayerExplorer>("layer_window");
     God::panels.add<PropertyExplorer>("property_window");
