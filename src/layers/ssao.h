@@ -34,7 +34,8 @@ struct SSAO : Layer {
 
     void render() override {
         GLuint ao_program = God::shaders[ao_name];
-        RenderTarget& target = God::context.render_target.composite;
+        // RenderTarget& target = God::context.render_target.composite;
+        RenderTarget& target = God::context.render_target.get_binded_target();
         if (!target.valid())
             return;
 
@@ -91,7 +92,7 @@ struct SSAO : Layer {
 
             draw_quad();
         }
-        copy_target_to_source(blur, ao);
+        blur.copy_to(ao);
         {
             GLuint blur_program = God::shaders[blur_name];
             blur.bind();
@@ -110,7 +111,7 @@ struct SSAO : Layer {
 
             draw_quad();
         }
-        copy_target_to_source(blur, ao);
+        blur.copy_to(ao);
 
         target.bind();
 
@@ -120,7 +121,7 @@ struct SSAO : Layer {
             RenderTarget copy;
             copy.init(target.width, target.height);
             //      if (!copy.valid()) return;
-            copy_target_to_source(target, copy);
+            target.copy_to(copy);
 
             target.bind();
             glUseProgram(composite_program);
@@ -150,23 +151,6 @@ struct SSAO : Layer {
     }
 
 private:
-    void copy_target_to_source(const RenderTarget& source, const RenderTarget& destination) {
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, source.framebuffer);
-        um_assert(glCheckFramebufferStatus(GL_READ_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
-
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destination.framebuffer);
-        um_assert(glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
-
-        glBlitFramebuffer(
-            0, 0, source.width, source.height,
-            0, 0, destination.width, destination.height,
-            GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT,
-            GL_NEAREST
-        );
-
-        GLenum error = glGetError();
-        um_assert(error == GL_NO_ERROR);
-    }
 
     void initialize_quad() {
         constexpr float vertices[] = {

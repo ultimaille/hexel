@@ -224,8 +224,10 @@ RenderTarget::~RenderTarget() {
             GL_NEAREST
         );
 
+        #ifdef DEBUG
         GLenum error = glGetError();
         um_assert(error == GL_NO_ERROR);
+        #endif
     }
 
 

@@ -63,8 +63,10 @@ struct RenderTargetComposition {
         // Only bind framebuffer if the target exists for group
         // This behavior implicitly don't bind if there is no blending,
         // enabling drawing in the same render target
-        if (targets.contains(group_id))
+        if (targets.contains(group_id)) {
             targets[group_id].clear(); // clear & bind framebuffer
+            cur_target = group_id;
+        }
     }
 
     void clear(float r, float g, float b, float a) {
@@ -124,12 +126,16 @@ struct RenderTargetComposition {
         }
     }
 
+    RenderTarget& get_binded_target() {
+        return targets[cur_target];
+    }
 
     RenderTarget composite;
     std::map<int, RenderTarget> targets;
 
 private:
 
+    int cur_target = 0;
 
     void initialize_quad() {
         constexpr float vertices[] = {
