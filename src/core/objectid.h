@@ -67,12 +67,12 @@ namespace OID {
                 struct PolyLines : PathNode {
                     struct Mesh : PathNode {
                         PathCollection attr_points  = { append(path, "attr_points" ) };
-                        PathCollection attr_edges   = { append(path, "attr_edges" ) };
+                        PathCollection attr_edges   = { append(path, "attr_edges"  ) };
                     };
                     Mesh operator[](std::string s) const {
                         return { append(path, s) };
                     }
-                };
+                } polylines = { append(path, "polylines") };
 
                 struct Surfaces : PathNode {
                     struct Mesh : PathNode {
