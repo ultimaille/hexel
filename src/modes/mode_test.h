@@ -1,6 +1,6 @@
 #include "misc/purgatory.h"
 #include "layers/ssao.h"
-
+#include <layers/basic_layers.h>
 #include "algo.h"
 
 

@@ -1,5 +1,4 @@
 #pragma once
-#include "layers/basic_layers.h"
 #include "core/event.h"
 
 // Horrible global variables

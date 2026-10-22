@@ -7,7 +7,6 @@
 
 #include <cstdlib>
 #include <iostream>
-
 #include <string>
 
 #include <core/all.h>
@@ -18,11 +17,6 @@
 #include "panels/property_explorer.h"
 #include "panels/xcf_explorer.h"
 #include "panels/layer_explorer.h"
-
-#include "misc/purgatory.h"
-
-#include "layers/basic_layers.h"
-#include "layers/ssao.h"
 
 
 
