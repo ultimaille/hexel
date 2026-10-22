@@ -34,7 +34,7 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = id; }
 
         CornerAttribute<float> value(tri);
         for (auto h : tri.iter_halfedges())  {
-            value[h] = h.from().pos()[0];
+            value[h] = ((vec3)h.from())[0];
         }
 
         FacetAttribute<bool> visible(true);
@@ -115,7 +115,7 @@ TrianglesLayer::TrianglesLayer() { primitive_renderer.layer_id = id; }
         PolyLineAttributes& attr = mesh;
         PointAttribute<float> value(pl, 0);
         for (auto v : pl.iter_vertices())
-            value[v] = v.pos()[0];
+            value[v] = ((vec3)v)[0];
 
         EdgeAttribute<bool> visible("visible", attr, pl, true);
         EdgeAttribute<int> primitive_id(pl);

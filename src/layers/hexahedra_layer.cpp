@@ -148,9 +148,9 @@
         tri.create_facets(hex.nhalfedges());
         for (auto h : hex.iter_halfedges()) {
             vec3 G = Hexahedron(h.cell()).bary_verts();
-            vec3 A = h.from().pos();
-            vec3 B = h.to().pos();
-            vec3 C = h.prev().from().pos();
+            vec3 A = h.from();
+            vec3 B = h.to();
+            vec3 C = h.prev().from();
             double corner_size = .3;//[0..0.5]
             tri.points[3 * h] = (1. - shrink) * A + shrink * G;
             tri.points[3 * h+1] = (1. - shrink) * ((1.- corner_size)*A+ corner_size*B) + shrink * G;

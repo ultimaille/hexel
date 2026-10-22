@@ -283,7 +283,7 @@ void Pillow::pad()		{
         {
             PointAttribute<vec3> decal(hex, vec3(0, 0, 0));
             for (auto f : hex.iter_facets()) if (!f.opposite().active()) for (auto h : f.iter_halfedges()) decal[h.from()] -= .05 * Quad3(f).normal();
-            for (auto v : hex.iter_vertices()) if (out_vert[v] != -1) hex.points[out_vert[v]] = v.pos() + decal[v];
+            for (auto v : hex.iter_vertices()) if (out_vert[v] != -1) hex.points[out_vert[v]] = ((vec3)v) + decal[v];
         }
 
         int off_c = hex.create_cells(new_hexes.size() / 8);

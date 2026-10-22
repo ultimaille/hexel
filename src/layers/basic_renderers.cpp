@@ -249,8 +249,8 @@ void SegmentRenderer::push(PolyLine& pl, EdgeAttribute<bool>& visible, PointAttr
     npts = 2 * pl.nedges();
     std::vector<Vertex> vertices(npts);
     for (auto e : pl.iter_edges()){
-        auto p0 = e.from().pos();
-        auto p1 = e.to().pos();
+        vec3 p0 = e.from();
+        vec3 p1 = e.to();
 
         Vertex v{
             .p0 = to_float3(p0),
