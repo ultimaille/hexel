@@ -86,6 +86,7 @@ struct LayerManager: private Registry<Layer> {
     void handle(Event event);
     std::optional<std::reference_wrapper<Layer>> find_by_id(int id);
     void kill(std::string layer_name);
+    void kill(int idx);
 
     void destroy();
 

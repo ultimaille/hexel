@@ -43,7 +43,7 @@
         std::vector<std::string> to_kill;
         if (event.what_happened == events::KILLED) for (int i = 0; i < this->size(); i) {
             if ((*this)[i].mesh==event.who)
-                erase(i);
+                kill(i);
             else i++;
         }
         if (event.what_happened == events::UPDATED)
@@ -62,14 +62,15 @@
         return std::nullopt;
     }
 
-    void LayerManager::kill(std::string layer_name){
+    void LayerManager::kill(int idx){
+        std::string layer_name = ith_name(idx);
+
         // Clean GPU memory
-        (*this)[layer_name].destroy();
+        (*this)[idx].destroy();
 
         // Erase element
-        int id = find(layer_name);
-        int group_id = items[id].object->group;
-        items.erase(items.begin() + id);
+        int group_id = items[idx].object->group;
+        items.erase(items.begin() + idx);
 
         // Eventually remove group
         if (God::layers.is_group_empty(group_id))
@@ -77,6 +78,11 @@
 
         // Broadcast event
         ObjectId(events::LAYER, layer_name).broadcast(events::KILLED);
+    }
+
+    void LayerManager::kill(std::string layer_name){
+        int idx = find(layer_name);        
+        kill(idx);
     }
 
     void LayerManager::destroy() {

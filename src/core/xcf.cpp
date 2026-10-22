@@ -172,6 +172,7 @@ void XCF::kill_mesh(ObjectId obj) {
 
 void XCF::kill_multimesh(const std::string& mm_name) {
     MultiMesh& mm = (*this)[mm_name];
+
     std::vector<std::string> to_kill;
     for (auto& [name, obj] : mm.polylines)  to_kill.push_back(name);
     for (auto name : to_kill) kill_mesh(ObjectId(POLYLINES, { mm_name, name }));
@@ -179,11 +180,17 @@ void XCF::kill_multimesh(const std::string& mm_name) {
     for (auto& [name, obj] : mm.triangles)  to_kill.push_back(name);
     for (auto name : to_kill) kill_mesh(ObjectId(TRIANGLES, { mm_name, name }));
 
+    for (auto& [name, obj] : mm.hexahedra)  to_kill.push_back(name);
+    for (auto name : to_kill) kill_mesh(ObjectId(HEXAHEDRA, { mm_name, name }));
+
 
     std::map<std::string, MultiMesh>::erase(mm_name);
     ObjectId(MULTIMESH, mm_name).broadcast(KILLED);
     ObjectId(POINTSET, mm_name).broadcast(KILLED);
 }
+
+
+
 MultiMesh& XCF::add(std::string str) {
     ObjectId(MULTIMESH, str).broadcast(CREATED);
     return std::map<std::string, MultiMesh>::operator[](str);
