@@ -63,10 +63,19 @@
     }
 
     void LayerManager::kill(std::string layer_name){
+        // Clean GPU memory
         (*this)[layer_name].destroy();
+
+        // Erase element
         int id = find(layer_name);
-        std::swap(items[id], items.back());
-        items.pop_back();
+        int group_id = items[id].object->group;
+        items.erase(items.begin() + id);
+
+        // Eventually remove group
+        if (God::layers.is_group_empty(group_id))
+            God::layers.remove_group(group_id);
+
+        // Broadcast event
         ObjectId(events::LAYER, layer_name).broadcast(events::KILLED);
     }
 

@@ -71,6 +71,17 @@ struct LayerManager: private Registry<Layer> {
         return true;
     }
 
+    bool count_layers(int group_id) {
+        int n = 0;
+        for (int l = 0; l < size(); ++l) {
+            auto &layer = Registry<Layer>::operator[](l);
+            if (layer.group == group_id)
+                ++n;
+        }
+
+        return n;
+    }
+
     void render();
     void handle(Event event);
     std::optional<std::reference_wrapper<Layer>> find_by_id(int id);

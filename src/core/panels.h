@@ -44,11 +44,13 @@ struct PanelManager : private Registry<Panel> {
         // Create a dock node for the right docked window
         ImGuiID left_bar0 = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 1.f, nullptr, &dockspace_id);
         ImGuiID left_bar1 = ImGui::DockBuilderSplitNode(left_bar0, ImGuiDir_Down, 0.8f, nullptr, &left_bar0);
-        ImGuiID left_bar2 = ImGui::DockBuilderSplitNode(left_bar1, ImGuiDir_Down, 0.5f, nullptr, &left_bar1);
+        ImGuiID left_bar2 = ImGui::DockBuilderSplitNode(left_bar1, ImGuiDir_Down, 0.6f, nullptr, &left_bar1);
+        ImGuiID left_bar3 = ImGui::DockBuilderSplitNode(left_bar2, ImGuiDir_Down, 0.5f, nullptr, &left_bar2);
 
         ImGui::DockBuilderDockWindow("XCFViewer", left_bar0);
         ImGui::DockBuilderDockWindow("LayersConfig", left_bar1);
-        ImGui::DockBuilderDockWindow("Properties", left_bar2);
+        ImGui::DockBuilderDockWindow("GroupsConfig", left_bar2);
+        ImGui::DockBuilderDockWindow("Properties", left_bar3);
 
         ImGui::DockBuilderFinish(dockspace_id);
     }
