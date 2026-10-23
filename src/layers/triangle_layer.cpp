@@ -51,10 +51,6 @@ void TrianglesLayer::render(){
         primitive_renderer.render();
 }
 
-int TrianglesLayer::primitive_id(int vertex_id) {
-    return vertex_id; // triangle id from vertex id
-}
-
 void TrianglesLayer::destroy() {
     primitive_renderer.destroy();
 }

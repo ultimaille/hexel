@@ -21,14 +21,6 @@
     void Layer::render_constant_color(int layerid) { Log::add("To be implemented"); }
     void Layer::destroy() {}
 
-
-    int Layer::primitive_id(int vertex_id) { return vertex_id; } // TODO to pure virtual
-
-
-
-
-
-
     void LayerManager::render() {
         for (auto& [name, obj] : *this)
             if (obj->visible)

@@ -95,6 +95,7 @@ int main(int argc, const char* argv[]) {
                     layer.render();
             }
         }
+        
         God::events.dispatch();
 
         main_menu_gui();

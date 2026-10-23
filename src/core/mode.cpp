@@ -25,7 +25,11 @@ void MouseReactTrackBallCamera::on_drag(int button, vec2 a, vec2 b){
 
 
 
-
+// /!\ Note: Ici on a une fonction qui re-route un évenement custom général capturé par handle sur une callback...
+// il serait clairement plus judicieux dans ce cas de ne pas avoir que uniquement la callback handle... mais que le dispatcher d'évenement
+// fasse ce travail de re-router chaque évenement vers la bonne callback de mode... au lieu de devoir avoir et appeler cette fonction
+// De plus on peux créer une liste de MouseReact et appeler leur fonction automatiquement...
+// La c'est le mode qui gére les evenement c'est n'imp
 void Mode::send_instruction_to_react(Event event,MouseReact& react) {
 
     static vec2 pos_on_press[3];

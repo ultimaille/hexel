@@ -53,7 +53,7 @@ void RenderTargetComposition::end() {
     if (targets.size() == 0)
         return;
 
-    composite.resize(width, height); // Need ?
+    composite.resize(width, height);
     composite.clear();
     // Merge all color attachments into main render target, keeping its depth
     glBindFramebuffer(GL_FRAMEBUFFER, composite.framebuffer);
@@ -68,17 +68,17 @@ void RenderTargetComposition::end() {
                 blend(composite.color, targets[group.id].color, group.blend_op);
     }
 
-    glDepthMask(GL_TRUE);   // Re-enable depth writes
+    // Re-enable depth writes
+    glDepthMask(GL_TRUE);
     glDisable(GL_DEPTH_TEST);
 
+    // Clean up temporary targets
     targets.clear();
 }
 
 void RenderTargetComposition::destroy() {
 
-    for (auto &[_, target] : targets)
-        target.destroy();
-
+    targets.clear();
     composite.destroy();
 
     if (quad_vbo != 0) {

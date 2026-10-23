@@ -10,6 +10,8 @@
 struct MouseReactPickerTest : public MouseReact {
     MouseReactPickerTest() {  }
 
+    // /!\ Note: Pourquoi tu passes un object id ? tu sais très bien que tu attends un CellFacetAttribute<int>...
+    // ObjectId abus
     void init(ObjectId p_attr_id, ObjectId p_mesh) {
         attr_id = p_attr_id;
         mesh_id = p_mesh;

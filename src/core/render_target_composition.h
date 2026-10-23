@@ -32,6 +32,10 @@ struct RenderTargetComposition {
         composite.clear(r, g, b, a);
     }
 
+    bool valid() {
+        return composite.valid();
+    }
+
     std::vector<int> buffer_indexes() {
         std::vector<int> result;
         for (auto &[buffer_idx, _] : targets) {

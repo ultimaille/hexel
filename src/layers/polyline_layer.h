@@ -9,7 +9,6 @@ struct PolyLineLayer : public Layer{
     void init(ObjectId obj);
     void render();
     int primitive_type() { return 1; }// just for the version without attribute
-    virtual int primitive_id(int vertex_id);
     void destroy();
     void reset();
 };

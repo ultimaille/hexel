@@ -14,7 +14,6 @@ struct Layer {
     virtual void destroy();
 
     virtual void bind_attribute(ObjectId attr_id){ Log::error("This layer does not support attribute binding."); }
-    virtual int primitive_id(int vertex_id);
 
     bool visible = true;
     ObjectId mesh;

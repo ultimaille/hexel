@@ -134,10 +134,10 @@ void WindowContext::bind_default_framebuffer() {
 }
 
 void WindowContext::begin_frame(bool offscreen) {
-    // if (!render_target.valid()) {
-    //     Log::error("RenderTarget is invalid");
-    //     return;
-    // }
+    if (!render_target.valid()) {
+        Log::error("RenderTarget is invalid");
+        return;
+    }
     render_target.clear(0.05f, 0.05f, 0.08f, 1.0f);
     render_target.begin();
 

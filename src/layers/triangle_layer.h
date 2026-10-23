@@ -9,6 +9,5 @@ struct TrianglesLayer : public Layer{
     void reset();
     void init(ObjectId obj);
     void render();
-    virtual int primitive_id(int vertex_id);
     void destroy();
 };

@@ -12,7 +12,9 @@
 #include <misc/purgatory.h>
 #include <format>
 
-
+// /!\ Note: Grosse refacto possible... update par exemple...
+// pourquoi reset ? et pas update comme nom
+// Toujours adepte de: une layer par mesh / primitive / représentation => split + refactor le code + ré-utilisabilité...
     HexahedraLayer::HexahedraLayer()  { point_renderer.layer_id = id; tri_renderer.layer_id = id;}
 
 

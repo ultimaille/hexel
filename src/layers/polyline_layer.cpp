@@ -44,10 +44,6 @@ void PolyLineLayer::render(){
     if (visible)primitive_renderer.render();
 }
 
-int PolyLineLayer::primitive_id(int vertex_id) {
-    return vertex_id; // edge id from vertex id
-}
-
 void PolyLineLayer::destroy() {
     primitive_renderer.destroy();
 }

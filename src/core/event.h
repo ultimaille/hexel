@@ -15,6 +15,14 @@ struct TrackBallCamera;
 struct Panel;
 struct Layer;
 
+// /!\ Note: ObjectId est devenu un moyen d'outrepasser le système de type, impression de manipuler un void*
+// En effet intéressant d'avoir quelque chose qui permet de faire par exemple, xcf.get_by_id<Type>(objectid) 
+// pour retrouver (multimesh / mesh / attribute) avec Type = {Multimesh, Mesh, Attribute}...
+// on sais qu'on veux soit un mesh / multimesh / attributs, pas besoin d'avoir objectid qui wrap tout est n'importe quoi !
+// je pense qu'il vaudrait mieux abstraire les maillages sous un type Mesh, attributes sous Attribute... pour passer en paramètre des objets avec des caractéristiques qui se recoupent
+// J'ai beaucoup vu dans le code des wraps / unwraps d'object id... car objectid en paramètre alors même que pas nécessaire car on connait le type attendu par la fonction
+
+
 namespace events {
     enum ObjectType { NA, KEYBOARD, MOUSE, CAMERA, PANEL, LAYER, MULTIMESH, 
         POINTSET, POLYLINES, TRIANGLES, QUADS, POLYGONS, TETRAHEDRA, HEXAHEDRA, WEDGES, PYRAMIDS,

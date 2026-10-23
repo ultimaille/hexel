@@ -8,16 +8,13 @@ struct MouseReactPickerTest2 : public MouseReact {
     MouseReactPickerTest2() {  }
 
     void init(ObjectId p_attr_id, ObjectId p_mesh) {
-        // attr_id = p_attr_id;
-        // mesh_id = p_mesh;
-        // flag.bind(
-        //     attr_id.names[4],
-        //     God::xcf[attr_id.names[0]].hexahedra[attr_id.names[1]].attributes,
-        //     God::xcf[attr_id.names[0]].hexahedra[attr_id.names[1]].mesh
-        // );
+        attr_id = p_attr_id;
+        mesh_id = p_mesh;
     }
-    // ObjectId attr_id;
-    // ObjectId mesh_id;
+    ObjectId attr_id;
+    ObjectId mesh_id;
+    FacetAttribute<int> flag;
+
     
     void on_click(int button, vec2 p) {
         Log::add("click " + std::to_string(button));
@@ -30,6 +27,24 @@ struct MouseReactPickerTest2 : public MouseReact {
             std::cout << "primitive_id: " << result.raw_primitive_id << std::endl;
             std::cout << "depth: " << result.depth << std::endl;
             std::cout << "point: " << result.point() << std::endl;
+
+            auto layer_opt = God::layers.find_by_id(result.layer_id);
+            if (layer_opt.has_value()) {
+                auto &layer = layer_opt.value().get();
+                auto mesh_id = layer.mesh;
+                Triangles &mesh = mesh_id;
+                SurfaceAttributes &attr = mesh_id;
+                FacetAttribute<int> fa("flag", attr, mesh);
+                if (result.raw_primitive_id != -1) {
+                    fa[result.raw_primitive_id] = 1;
+                }
+
+                // Beuuuurk !!!!
+                // Je convertis en object id pour bind ???!!!
+                ObjectId flag_id(ObjectType::TRIANGLES_ATTR, { "hexski", "","int","facets","flag" });
+                layer.bind_attribute(ObjectId{});
+            }
+
         }
     }
 };

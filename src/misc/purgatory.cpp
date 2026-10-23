@@ -59,6 +59,7 @@ void look_at_pointset(PointSet& ps) {
 }
 
 void load_mm_with_default_layers(std::string path) {
+    // TODO rename to mm_name
     auto mesh_name = God::xcf.load_multimesh(path, true);
 
     look_at_pointset(ObjectId(POINTSET, mesh_name));
