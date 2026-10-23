@@ -42,7 +42,7 @@ struct MouseReactPickerTest2 : public MouseReact {
                 // Beuuuurk !!!!
                 // Je convertis en object id pour bind ???!!!
                 // ObjectId flag_id(ObjectType::TRIANGLES_ATTR, { "hexski", "","int","facets","flag" });
-                // layer.bind_attribute(ObjectId{});
+                layer.bind_attribute(ObjectId{});
 
                 auto attribute_opt = Attribute::getAttribute(attr, "facets.flag");
                 if (attribute_opt.has_value()) {

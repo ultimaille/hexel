@@ -18,10 +18,16 @@ struct Layer;
 // /!\ Note: ObjectId est devenu un moyen d'outrepasser le système de type, impression de manipuler un void*
 // En effet intéressant d'avoir quelque chose qui permet de faire par exemple, xcf.get_by_id<Type>(objectid) 
 // pour retrouver (multimesh / mesh / attribute) avec Type = {Multimesh, Mesh, Attribute}...
-// on sais qu'on veux soit un mesh / multimesh / attributs, pas besoin d'avoir objectid qui wrap tout est n'importe quoi !
-// je pense qu'il vaudrait mieux abstraire les maillages sous un type Mesh, attributes sous Attribute... pour passer en paramètre des objets avec des caractéristiques qui se recoupent
+// on sais qu'on veux soit un mesh / multimesh / attributs, pas besoin d'avoir objectid qui wrap tout et n'importe quoi !
+// je pense qu'il vaudrait mieux abstraire les maillages sous un type Mesh (ou std::variant de MeshAttr plutôt), attributes sous Attribute... pour passer en paramètre des objets avec des caractéristiques qui se recoupent
 // J'ai beaucoup vu dans le code des wraps / unwraps d'object id... car objectid en paramètre alors même que pas nécessaire car on connait le type attendu par la fonction
+// Qu'on veuille obtenir un objet lambda dans l'application ok, mais passer des objects id en parametre pas nécessaire, inutile, casse le système de type...
 
+// Serait suffisant comme interface sur le xcf: 
+// - xcf.find<Layer>("layer_name" | layer_id) -> Layer
+// - xcf.find<Panel>("panel_name") -> Panel
+// - xcf.find<Mesh>("mm_name", "mesh_name") -> MeshAttr variant
+// aucune raison de devoir trouver un attribut depuis le xcf plutôt à partir du mesh.
 
 namespace events {
     enum ObjectType { NA, KEYBOARD, MOUSE, CAMERA, PANEL, LAYER, MULTIMESH, 

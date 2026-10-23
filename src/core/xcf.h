@@ -18,6 +18,7 @@ namespace UM {
         PointSet pointset;
         PointSetAttributes pointset_attributes;
 
+        // /!\ Note: replace by a single map of MeshAttrVariant
         std::map<std::string,MeshAttr<PolyLine,PolyLineAttributes>> polylines;
 
         std::map<std::string,MeshAttr<Triangles,SurfaceAttributes>> triangles;
@@ -32,6 +33,11 @@ namespace UM {
         void load_from_path(std::string filename, bool connect = true);
         void load_geogram(std::string filename, bool connect = true);
         void save_to_path(std::string filename, bool geogram_compatible = false);
+
+        // /!\ Note: MeshAttrVariant& find(std::string mesh_name);
+        // /!\ Note: void add_mesh(std::string mesh_name, MeshAttrVariant &m);
+
+
     };
 
     struct XCF: private std::map<std::string,MultiMesh> {
@@ -43,14 +49,14 @@ namespace UM {
 
 
         MultiMesh& add(std::string str);
-        void add_mesh(ObjectId obj);
+        void add_mesh(ObjectId obj); // /!\ Note: devrait être dans MultiMesh
 
         void kill_mesh(ObjectId obj);
         void kill_multimesh(const std::string& name);
 
         std::string load_multimesh(std::string filename, bool connect = true);
 
-        MultiMesh::MeshAttr<Triangles, SurfaceAttributes>& add_triangles(std::string mm_name, std::string tri_name);
+        // /!\ Note: MultiMesh& find(std::string mm_name);
 
     };
 }

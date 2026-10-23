@@ -51,6 +51,10 @@ void TrianglesLayer::render(){
         primitive_renderer.render();
 }
 
+void TrianglesLayer::bind_attribute_qui_est_mieux(Attribute attr) {
+
+}
+
 void TrianglesLayer::destroy() {
     primitive_renderer.destroy();
 }

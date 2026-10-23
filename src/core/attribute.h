@@ -34,23 +34,20 @@ struct Attribute {
 
     std::string getFullName() const {
         return std::format("{}.{}", elementKindToString(kind), name);
-        // return std::format("{}.{}{}",
-        // 	elementKindToString(kind),
-        // 	name,
-        // 	// elementTypeToString(type),
-        // 	getNDims() > 1 && dim >= 0 ? std::format("[{}]", dim) : "");
     }
-	bool operator==(const Attribute& other) const {
-		return name == other.name &&
-				kind == other.kind &&
-				type == other.type; /*&&*/
-				// dim == other.dim;
-	}
 
-	bool operator!=(const Attribute& other) const {
-		return !(*this == other);
-	}
+    bool operator==(const Attribute& other) const {
+        return name == other.name &&
+                kind == other.kind &&
+                type == other.type;
+    }
 
+    bool operator!=(const Attribute& other) const {
+        return !(*this == other);
+    }
+
+    // Search & wrap attribute
+    
     static std::vector<Attribute> getAttributes(SurfaceAttributes &attr) {
         
         std::vector<Attribute> attributes;
@@ -98,15 +95,6 @@ struct Attribute {
             type = ElementType::INT_ELT;
         } else if (auto a = dynamic_cast<AttributeContainer<bool>*>(container.ptr.get())) {
             type = ElementType::BOOL_ELT;
-        // } else if (auto a = dynamic_cast<AttributeContainer<vec2>*>(container.ptr.get())) {
-        //     type = ElementType::VEC2_ELT;
-        //     attributes.emplace_back(container.name + "[0]", kind, ElementType::DOUBLE_ELT, container.ptr, true, 0);
-        //     attributes.emplace_back(container.name + "[1]", kind, ElementType::DOUBLE_ELT, container.ptr, true, 1);
-        // } else if (auto a = dynamic_cast<AttributeContainer<vec3>*>(container.ptr.get())) {
-        //     type = ElementType::VEC3_ELT;
-        //     attributes.emplace_back(container.name + "[0]", kind, ElementType::DOUBLE_ELT, container.ptr, true, 0);
-        //     attributes.emplace_back(container.name + "[1]", kind, ElementType::DOUBLE_ELT, container.ptr, true, 1);
-        //     attributes.emplace_back(container.name + "[2]", kind, ElementType::DOUBLE_ELT, container.ptr, true, 2);
         } else {
             throw std::runtime_error("Unknown attribute type for container: " + container.name);
         }
