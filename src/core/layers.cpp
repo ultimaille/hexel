@@ -77,6 +77,28 @@
         kill(idx);
     }
 
+    int LayerManager::add_group() {
+        groups.emplace_back(max_group++, Group::BlendOp::NONE);
+        return max_group - 1;
+    }
+
+    void LayerManager::remove_group(int group_id) {
+        auto it = std::find_if(groups.begin(), groups.end(), [&group_id](const auto &g) { return g.id == group_id; });
+        if (it != groups.end())
+            groups.erase(it);
+    }
+
+    bool LayerManager::is_group_empty(int group_id) {
+        for (int l = 0; l < size(); ++l) {
+            auto &layer = Registry<Layer>::operator[](l);
+            if (layer.group == group_id)
+                return false;
+        }
+
+        return true;
+    }
+
+
     void LayerManager::destroy() {
         for (auto& [name, obj] : *this)
             obj->destroy();

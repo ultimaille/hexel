@@ -34,8 +34,7 @@ namespace UM {
         void load_geogram(std::string filename, bool connect = true);
         void save_to_path(std::string filename, bool geogram_compatible = false);
 
-        // /!\ Note: MeshAttrVariant& find(std::string mesh_name);
-        // /!\ Note: void add_mesh(std::string mesh_name, MeshAttrVariant &m);
+        // /!\ Note: void add(std::string mesh_name, MeshAttrVariant &m); // add mesh
 
 
     };
@@ -56,7 +55,6 @@ namespace UM {
 
         std::string load_multimesh(std::string filename, bool connect = true);
 
-        // /!\ Note: MultiMesh& find(std::string mm_name);
 
     };
 }

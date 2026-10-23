@@ -44,6 +44,7 @@ struct LayerManager: private Registry<Layer> {
     int find(std::string str)                  { return Registry<Layer>::find(str); }
     std::string ith_name(int i)                { return items[i].name; }
     void swap(int i, int j)                    { std::swap(items[i], items[j]); }
+    std::optional<std::reference_wrapper<Layer>> find_by_id(int id);
 
     template<class T> T& add(std::string str, int group)  { 
         auto &layer = emplace_back<T>(str); 
@@ -51,41 +52,12 @@ struct LayerManager: private Registry<Layer> {
         return layer; 
     }
 
-    int add_group() {
-        groups.emplace_back(max_group++, Group::BlendOp::NONE);
-        return max_group - 1;
-    }
-
-    void remove_group(int group_id) {
-        auto it = std::find_if(groups.begin(), groups.end(), [&group_id](const auto &g) { return g.id == group_id; });
-        if (it != groups.end())
-            groups.erase(it);
-    }
-
-    bool is_group_empty(int group_id) {
-        for (int l = 0; l < size(); ++l) {
-            auto &layer = Registry<Layer>::operator[](l);
-            if (layer.group == group_id)
-                return false;
-        }
-
-        return true;
-    }
-
-    bool count_layers(int group_id) {
-        int n = 0;
-        for (int l = 0; l < size(); ++l) {
-            auto &layer = Registry<Layer>::operator[](l);
-            if (layer.group == group_id)
-                ++n;
-        }
-
-        return n;
-    }
+    int add_group();
+    void remove_group(int group_id);
+    bool is_group_empty(int group_id);
 
     void render();
     void handle(Event event);
-    std::optional<std::reference_wrapper<Layer>> find_by_id(int id);
     void kill(std::string layer_name);
     void kill(int idx);
 
