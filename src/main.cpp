@@ -62,24 +62,13 @@ int main(int argc, const char* argv[]) {
     God::context.init();
 
     God::modes.add<DefaultMode>("default");
-    God::modes.add<HexEdit>("hexedit");
-    #ifdef NICO_TEST 
-    God::modes.add<LayerSplitMode>("layer_split"); 
-    God::modes.current_mode = 2;
+    #ifdef HAS_CONFIG
+    Config::init_modes();
     #endif
-    #ifdef BENJI_TEST
-    God::modes.add<BenjiMode>("benjimode");
-    God::modes.current_mode = 2;
-    #endif 
 
     God::panels.add<XCFExplorer>("xcf_window");
     God::panels.add<LayerExplorer>("layer_window");
     God::panels.add<PropertyExplorer>("property_window");
-
-
-    #ifdef HAS_CONFIG
-    Config::init_modes();
-    #endif 
 
 
     if (argc > 1) {

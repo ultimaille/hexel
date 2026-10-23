@@ -1,6 +1,6 @@
 #pragma once
-#include "misc/purgatory.h"
-#include "layers/ssao.h"
+#include <misc/purgatory.h>
+#include <layers/ssao.h>
 
 #include "algo.h"
 

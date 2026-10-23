@@ -159,7 +159,7 @@ file(GLOB_RECURSE HEXEL_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h"
 )
 
-if(EXISTS "${CMAKE_SOURCE_DIR}/src/config.h")
+if(EXISTS "${CMAKE_SOURCE_DIR}/src/config.cpp")
     add_compile_definitions(HAS_CONFIG)
 endif()
 
