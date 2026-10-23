@@ -1,7 +1,7 @@
 #pragma once
 #include <misc/purgatory.h>
 #include <layers/ssao.h>
-
+#include <core/attribute.h>
 #include "algo.h"
 
 struct MouseReactPickerTest2 : public MouseReact {
@@ -41,8 +41,16 @@ struct MouseReactPickerTest2 : public MouseReact {
 
                 // Beuuuurk !!!!
                 // Je convertis en object id pour bind ???!!!
-                ObjectId flag_id(ObjectType::TRIANGLES_ATTR, { "hexski", "","int","facets","flag" });
-                layer.bind_attribute(ObjectId{});
+                // ObjectId flag_id(ObjectType::TRIANGLES_ATTR, { "hexski", "","int","facets","flag" });
+                // layer.bind_attribute(ObjectId{});
+
+                auto attribute_opt = Attribute::getAttribute(attr, "facets.flag");
+                if (attribute_opt.has_value()) {
+                    auto a = attribute_opt.value();
+                    std::cout << "attribute name: " << a.name << std::endl;
+                    std::cout << "attribute kind: " << Attribute::elementKindToString(a.kind) << std::endl;
+                    std::cout << "attribute type: " << Attribute::elementTypeToString(a.type) << std::endl;
+                }
             }
 
         }

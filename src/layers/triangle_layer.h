@@ -9,5 +9,6 @@ struct TrianglesLayer : public Layer{
     void reset();
     void init(ObjectId obj);
     void render();
+    // void bind_attribute(ObjectId attr_id);
     void destroy();
 };
