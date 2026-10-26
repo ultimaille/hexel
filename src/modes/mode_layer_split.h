@@ -2,7 +2,8 @@
 #include <layers/ssao.h>
 #include <layers/basic_layers.h>
 #include "algo.h"
-#include "pillowing.h"
+#include <algo/pillowing.h>
+#include <algo/raster_iterator.h>
 
 
 void generate_edge_graph(Hexahedra& hex, PolyLine& pl, EdgeAttribute<int>& hex_halfedge,bool remove_isolated_vertices = true) {
@@ -31,24 +32,48 @@ void generate_edge_graph(Hexahedra& hex, PolyLine& pl, EdgeAttribute<int>& hex_h
 
 struct MouseReactLayerSelection : public MouseReact {
     MouseReactLayerSelection() {}
-    void init(ObjectId p_mesh) { mesh_id = p_mesh; }
-    ObjectId mesh_id;
+    void init(ObjectId p_hex, ObjectId p_pl, ObjectId p_pts) { hex_id = p_hex; pl_id = p_pl; pts_id = p_pts; }
+    ObjectId hex_id;
+    ObjectId pl_id;
+    ObjectId pts_id;
+
     void on_click(int button, vec2 p) {
         if (button != 0) return;
         Picker picker;
         Picker::Result pr = picker.at(p);
-        int prim = pr.filtered_primitive_id(mesh_id, 2);
+        int prim = pr.filtered_primitive_id(hex_id, 2);
         if (prim != -1){
-            VolumeAttributes& attr = mesh_id;
-            Hexahedra& hex = mesh_id;
-            CellAttribute<bool> visible("visible", attr, hex);
+            Hexahedra& hex = hex_id;
             CellFacetAttribute<int> layer_id(hex);
             compute_hex_layer_id(hex, layer_id);
-            visible.fill(false);
+
+            VolumeAttributes& hex_attr = hex_id;
+            CellAttribute<bool> visible_cell("visible", hex_attr, hex);
+            visible_cell.fill(false);
             for (auto f : hex.iter_facets()) if (layer_id[f] == layer_id[prim])
-                visible[f.cell()] = true;
-            mesh_id.broadcast(EventType::UPDATED);
-        }                                                                                          
+                visible_cell[f.cell()] = true;
+            hex_id.broadcast(EventType::UPDATED);
+
+
+            PointSetAttributes& pts_attr = pts_id;
+            PointSet&  pts = pts_id;
+            PointAttribute<bool> visible_pts("visible", pts_attr, pts);
+            visible_pts.fill(false);
+            for (auto c : hex.iter_cells()) if (visible_cell[c])
+                FOR(lv,8)visible_pts[c.vertex(lv)] = true;
+
+
+            PolyLineAttributes& pl_attr = pl_id;
+            PolyLine& pl = pl_id;
+            EdgeAttribute<bool> visible_edge("visible", pl_attr, pl);
+            visible_edge.fill(false);
+            for (auto e : pl.iter_edges()) if (visible_pts[e.from()] && visible_pts[e.to()] )
+                visible_edge[e] = true;
+
+            hex_id.broadcast(EventType::UPDATED);
+            pl_id.broadcast(EventType::UPDATED);
+            pts_id.broadcast(EventType::UPDATED);
+        }
     }
 };
 
@@ -98,7 +123,7 @@ struct MouseReactMultiSelector : public MouseReact {
         if (button != active_button) return;
         path.push_back(p);
         if (path.size() < 2) return;
-        FOR(s, path.size() - 1)for (vec2 P = path[s]; (P - path[s+1]).norm2()>2; P += (path[s+1] - path[s]).normalized()) {
+        FOR(s, path.size() - 1) for (vec2 P:iter_raster_line(path[s], path[s+1])){
             Picker::Result pr = picker.at(P);
             bool already_in = false;
             for (auto pr_iter : picked)
@@ -198,7 +223,7 @@ struct LayerSplitMode : public Mode{
         layer.init(pl_id());
         auto& pr = layer.primitive_renderer;        pr.color[0] = .5; pr.color[1] = .5; pr.color[2] = .7;
 
-        layer_selection_react.init(hex_id());
+        layer_selection_react.init(hex_id(),pl_id(),pts_id());
         split_merge_react.init(pl_id());
         multi_selector_react_left.init(0);
         multi_selector_react_right.init(1);
@@ -206,7 +231,7 @@ struct LayerSplitMode : public Mode{
 
 
 
-    bool remove_hex_layer(Hexahedra& hex, CellFacetAttribute<bool>& kill_layer, int geom_fit){
+    bool remove_hex_layer(Hexahedra& hex, CellFacetAttribute<bool>& kill_layer){
         PointAttribute<int> map(hex);
         for (auto v : hex.iter_vertices()) map[v] = v;
         std::vector<bool> to_kill(hex.ncells(), false);
@@ -290,13 +315,14 @@ struct LayerSplitMode : public Mode{
                 CellFacetAttribute<int> layer_id(hex);
                 compute_hex_layer_id(hex, layer_id);
                 auto h = hex_halfedge_from_edge(prim);
+                if (c > .5) h = h.opposite_f();
                 int selected_layer = layer_id[h.prev().opposite_f().facet()];
                 CellFacetAttribute<bool> kill_layer(hex, false);
                 for (auto f : hex.iter_facets())
                     if (selected_layer == layer_id[f])
                         kill_layer[f] = true;
 
-                remove_hex_layer(hex, kill_layer, std::floor(3*(1. - c)));
+                remove_hex_layer(hex, kill_layer);
 
                 update_hex();
             }
