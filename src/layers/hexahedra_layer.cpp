@@ -192,93 +192,74 @@
 
     template<class T> void HexahedraLayer::prepare_and_update() {
 
-        Hexahedra& hex = mesh;
-        VolumeAttributes& attr = mesh;
-
-        // Data
         Triangles tri;
         FacetAttribute<bool> visible_tri(tri, true);
         FacetAttribute<int> primitive_id(tri, 0);
         CornerAttribute<float> value_tri(tri, 0);
 
-        PointAttribute<bool> visible_pts(hex,false);
-        PointAttribute<float> value_float(hex);
-        PointAttribute<int> primitive_id_pts(hex.points);
-
-        show_object_id(attr_id);
-
-        // Prepare geometric data
         switch (rt) {
-            case PLAIN:
-            case FACET:
-            case CORNER:
-            case CELL:
-            case POINT: {
+            case PLAIN: {
                 prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
+                tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
                 break;
             }
-            case CORNER_GLYPH: break;
-            case POINT_SPHERE: {
-                for (auto& it : attr.points) if (it.name == attr_name()) {
-                    prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
-                    return;
-                }
-                break;
-            }
-        };
-
-        // Prepare attribute data
-        // such an uggly switch case, shouldn't exist
-        switch (rt) {
             case FACET: {
+                prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
                 prepare_data_for_scalar_facet_attribute<T>(tri, value_tri);
+                tri_renderer.color_map_prop = 1;
+                show_object_id(attr_id);
+                tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
                 break;
             }
             case CORNER: {
+                prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
                 prepare_data_for_scalar_corner_attribute<T>(tri, value_tri);
+                tri_renderer.color_map_prop = 1;
+                show_object_id(attr_id);
+                tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
                 break;
             }
             case CELL: {
+                prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
                 prepare_data_for_scalar_cell_attribute<T>(tri, value_tri);
+                tri_renderer.color_map_prop = 1;
+                show_object_id(attr_id);
+                tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
                 break;
             }
             case POINT: {
+                prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
                 prepare_data_for_scalar_point_attribute<T>(tri, visible_tri, value_tri, primitive_id);
+                tri_renderer.color_map_prop = 1;
+                show_object_id(attr_id);
+                tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
                 break;
             }
             case CORNER_GLYPH: {
+                // Here no prepare data without
                 prepare_data_for_scalar_corner_glyph_attribute<T>(tri, visible_tri, value_tri, primitive_id);
+                tri_renderer.color_map_prop = 1;
+                show_object_id(attr_id);
+                tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
                 break;
             }
             case POINT_SPHERE: {
+                Hexahedra& hex = mesh;
+                VolumeAttributes& attr = mesh;
                 for (auto& it : attr.points) if (it.name == attr_name()) {
+                    PointAttribute<bool> visible_pts(hex,false);
+                    PointAttribute<float> value_float(hex);
+                    PointAttribute<int> primitive_id_pts(hex.points);
+
+                    point_renderer.color_map_prop = 1;
+                    prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
                     update_data_for_scalar_point_attribute_as_sphere<T>(visible_pts, value_float, primitive_id_pts);
+                    point_renderer.update(hex.points, visible_pts, value_float, primitive_id_pts);
                     return;
                 }
-
                 break;
             }
         };
-
-        // Update renderers
-        switch (rt) {
-            case PLAIN: {
-                tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
-                break;
-            }
-            case POINT:
-            case CORNER:
-            case FACET:
-            case CELL: {
-                tri_renderer.color_map_prop = 1;
-                tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
-                break;
-            }
-            case POINT_SPHERE: {
-                point_renderer.color_map_prop = 1;
-                point_renderer.update(hex.points, visible_pts, value_float, primitive_id_pts);
-            }
-        }
     }
 
     void HexahedraLayer::reset() {
