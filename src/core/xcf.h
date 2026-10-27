@@ -18,7 +18,6 @@ namespace UM {
         PointSet pointset;
         PointSetAttributes pointset_attributes;
 
-        // /!\ Note: replace by a single map of MeshAttrVariant
         std::map<std::string,MeshAttr<PolyLine,PolyLineAttributes>> polylines;
 
         std::map<std::string,MeshAttr<Triangles,SurfaceAttributes>> triangles;
