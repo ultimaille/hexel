@@ -102,31 +102,39 @@
     }
 
     template<class T>
-    void HexahedraLayer::prepare_data_for_scalar_cell_attribute(
-        Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri, FacetAttribute<int>& primitive_id
-    ){
+    void HexahedraLayer::update_data_for_scalar_cell_attribute(){
+        Triangles tri;
+        FacetAttribute<bool> visible_tri(tri, true);
+        FacetAttribute<int> primitive_id(tri, 0);
+        CornerAttribute<float> value_tri(tri, 0);
         Hexahedra& hex = mesh;
         VolumeAttributes& attr = mesh;
         CellAttribute<bool> visible_hex("visible", attr, hex, true);
         CellAttribute<T> value_hex(attr_name(), attr, hex);
         prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
         for (auto h : tri.iter_halfedges()) value_tri[h] = value_hex[h / 36];
+        tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
     }
     template<class T>
-    void HexahedraLayer::prepare_data_for_scalar_facet_attribute(
-        Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri, FacetAttribute<int>& primitive_id
-    ){
+    void HexahedraLayer::update_data_for_scalar_facet_attribute() {
+        Triangles tri;
+        FacetAttribute<bool> visible_tri(tri, true);
+        FacetAttribute<int> primitive_id(tri, 0);
+        CornerAttribute<float> value_tri(tri, 0);
         Hexahedra& hex = mesh;
         VolumeAttributes& attr = mesh;
         CellAttribute<bool> visible_hex("visible", attr, hex, true);
         CellFacetAttribute<T> value_hex(attr_name(), attr, hex);
         prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
         for (auto h : tri.iter_halfedges()) value_tri[h] =  value_hex[h / 6];
+        tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
     }
     template<class T>
-    void HexahedraLayer::prepare_data_for_scalar_corner_attribute(
-        Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri, FacetAttribute<int>& primitive_id
-    ){
+    void HexahedraLayer::update_data_for_scalar_corner_attribute() {
+        Triangles tri;
+        FacetAttribute<bool> visible_tri(tri, true);
+        FacetAttribute<int> primitive_id(tri, 0);
+        CornerAttribute<float> value_tri(tri, 0);
         Hexahedra& hex = mesh;
         VolumeAttributes& attr = mesh;
         CellAttribute<bool> visible_hex("visible", attr, hex, true);
@@ -135,11 +143,14 @@
         int map[2][3] = { {0,1,2},{2,3,0} };
         for (auto f : hex.iter_facets())
             FOR(t, 2)FOR(v, 3)value_tri[3 * (2 * f + t) + v] = value_hex[f.corner(map[t][v])];
+        tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
     }
     template<class T>
-    void HexahedraLayer::prepare_data_for_scalar_corner_glyph_attribute(
-        Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri, FacetAttribute<int>& primitive_id
-    ){
+    void HexahedraLayer::update_data_for_scalar_corner_glyph_attribute() {
+        Triangles tri;
+        FacetAttribute<bool> visible_tri(tri, true);
+        FacetAttribute<int> primitive_id(tri, 0);
+        CornerAttribute<float> value_tri(tri, 0);
         Hexahedra& hex = mesh;
         VolumeAttributes& attr = mesh;
         CellAttribute<bool> visible_hex("visible", attr, hex, true);
@@ -164,23 +175,26 @@
                 value_tri[3 * h + v] = value_hex[h.from_corner()];
             }
         }
+        tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
     }
 
     template<class T> 
-    void HexahedraLayer::prepare_data_for_scalar_point_attribute(
-        Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri, FacetAttribute<int>& primitive_id
-    ){
+    void HexahedraLayer::update_data_for_scalar_point_attribute() {
+        Triangles tri;
+        FacetAttribute<bool> visible_tri(tri, true);
+        FacetAttribute<int> primitive_id(tri, 0);
+        CornerAttribute<float> value_tri(tri, 0);
         Hexahedra& hex = mesh;
         VolumeAttributes& attr = mesh;
         CellAttribute<bool> visible_hex("visible", attr, hex, true);
 
-        Log::add("::prepare_data_for_scalar_point_attribute(");
+        Log::add("::update_data_for_scalar_point_attribute(");
         PointAttribute<T> value_hex(attr_name(), attr, hex);
         prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
         int map[2][3] = { {0,1,2},{2,3,0} };
         for (auto f : hex.iter_facets())
             FOR(t, 2)FOR(v, 3)value_tri[3 * (2 * f + t)+v] = value_hex[f.vertex(map[t][v])];
-
+        tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
     }
 
     template<class T> void HexahedraLayer::update_data_for_scalar_point_attribute_as_sphere(){
@@ -199,33 +213,54 @@
         point_renderer.update(hex.points, visible_pts, value_float, primitive_id);
     }
 
+    void HexahedraLayer::update_data_for_plain() {
+        Triangles tri;
+        FacetAttribute<bool> visible_tri(tri, true);
+        FacetAttribute<int> primitive_id(tri, 0);
+        CornerAttribute<float> value_tri(tri, 0);
+        prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
+        tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
+    }
 
-    
+
+
     template<class T>
     void HexahedraLayer::update_typed(){
-        if (rt == RenderType::POINT_SPHERE){
-            update_data_for_scalar_point_attribute_as_sphere<T>();
-            return;
-        }else{
-            Triangles tri;
-            FacetAttribute<bool> visible_tri(tri, true);
-            FacetAttribute<int> primitive_id(tri, 0);
-            CornerAttribute<float> value_tri(tri, 0);
-            if (rt == RenderType::CELL)          prepare_data_for_scalar_cell_attribute<T>(tri, visible_tri, value_tri, primitive_id);
-            if (rt == RenderType::FACET)         prepare_data_for_scalar_facet_attribute<T>(tri, visible_tri, value_tri, primitive_id);
-            if (rt == RenderType::CORNER)        prepare_data_for_scalar_corner_attribute<T>(tri, visible_tri, value_tri, primitive_id);
-            if (rt == RenderType::CORNER_GLYPH)  prepare_data_for_scalar_corner_glyph_attribute<T>(tri, visible_tri, value_tri, primitive_id);
-            if (rt == RenderType::POINT)         prepare_data_for_scalar_point_attribute<T>(tri, visible_tri, value_tri, primitive_id);
-            tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
+        switch (rt) {
+            case POINT_SPHERE: {
+                update_data_for_scalar_point_attribute_as_sphere<T>();
+                break;
+            }
+            case CELL: {
+                update_data_for_scalar_cell_attribute<T>();
+                break;
+            }
+            case FACET: {
+                update_data_for_scalar_facet_attribute<T>();
+                break;
+            }
+            case CORNER: {
+                update_data_for_scalar_corner_attribute<T>();
+                break;
+            }
+            case CORNER_GLYPH: {
+                update_data_for_scalar_corner_glyph_attribute<T>();
+                break;
+            }
+            case POINT: {
+                update_data_for_scalar_point_attribute<T>();
+                break;
+            }
         }
     }
 
     void HexahedraLayer::update(){
-        if (attr_type() == "bool") update_typed<bool>();
-        if (attr_type() == "char") update_typed<char>();
-        if (attr_type() == "int") update_typed<int>();
-        if (attr_type() == "float") update_typed<float>();
-        if (attr_type() == "double") update_typed<double>();
+        if (!attr_active() || rt == PLAIN) update_data_for_plain();
+        else if (attr_type() == "bool") update_typed<bool>();
+        else if (attr_type() == "char") update_typed<char>();
+        else if (attr_type() == "int") update_typed<int>();
+        else if (attr_type() == "float") update_typed<float>();
+        else if (attr_type() == "double") update_typed<double>();
     }
 
 
@@ -238,49 +273,23 @@
         God::shaders.create_if_needed(std::string(SHADERS_DIR), "point_as_sphere");
         CellAttribute<bool> visible_hex("visible", attr, hex, true);
 
-
-        if (attr_active()){
-            if (rt == RenderType::POINT_SPHERE){
-                for (auto& it : attr.points) if (it.name == attr_name()){
-                    point_renderer.color_map_prop = 1;
-                    update();
-                    return;
-                }
+        if (attr_active()) {
+            show_object_id(attr_id);
+            if (rt == RenderType::POINT_SPHERE) {
+                point_renderer.color_map_prop = 1;
+            } else {
+                tri_renderer.color_map_prop = 1;
             }
         }
 
-        if (!attr_active()){
-            rt = PLAIN;
-            Triangles tri;
-            FacetAttribute<bool> visible_tri(tri, true);
-            FacetAttribute<int> primitive_id(tri, 0);
-            CornerAttribute<float> value_tri(tri, 0);
-            prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
-            tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
-        }
-        else {
-            tri_renderer.color_map_prop = 1;
-            show_object_id(attr_id);
-            if (attr_primitive() == "cells") for (auto& it : attr.cells) if (it.name == attr_name())
-                rt =RenderType::CELL;
-                
-            if (attr_primitive() == "facets")for (auto& it : attr.cell_facets) if (it.name == attr_name())
-                rt = RenderType::FACET; 
-
-            if (attr_primitive() == "corners")for (auto& it : attr.cell_corners) if (it.name == attr_name())
-                if (rt!= RenderType::CORNER_GLYPH) rt = RenderType::CORNER;
-            
-            if (attr_primitive() == "points")for (auto& it : attr.points) if (it.name == attr_name())
-                rt = RenderType::POINT;
-            update();
-        }
+        update();
     }
 
     void HexahedraLayer::init(ObjectId obj){
         mesh = obj;
         tri_renderer.init();
         point_renderer.init();
-        reset();
+        bind_attribute({});
     }
 
     void HexahedraLayer::render(){
@@ -299,6 +308,22 @@
 
     void HexahedraLayer::bind_attribute(ObjectId p_attr_id){
         attr_id = p_attr_id;
+
+        VolumeAttributes& attr = mesh;
+
+        if (attr_active()) {
+            if (attr_primitive() == "cells")
+                rt = RenderType::CELL;
+            else if (attr_primitive() == "facets")
+                rt = RenderType::FACET;
+            else if (attr_primitive() == "corners")
+                if (rt!= RenderType::CORNER_GLYPH) rt = RenderType::CORNER;
+            else if (attr_primitive() == "points")
+                rt = RenderType::POINT;
+        } else {
+            rt = PLAIN;
+        }
+
         reset();
     };
 
