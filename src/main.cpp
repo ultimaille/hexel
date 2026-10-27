@@ -59,6 +59,7 @@ void main_menu_gui(){
 
 
 int main(int argc, const char* argv[]) {
+
     God::context.init();
 
     God::modes.add<DefaultMode>("default");
