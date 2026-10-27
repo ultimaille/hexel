@@ -69,7 +69,7 @@ void TrianglesLayer::update_typed(){
             break;
         }
         case FACET: {
-            // update_data_for_scalar_facet_attribute<T>();
+            update_data_for_scalar_facet_attribute<T>();
             break;
         }
         case CORNER: {
@@ -93,6 +93,20 @@ void TrianglesLayer::update_data_for_plain() {
     FacetAttribute<int> primitive_id(tri, 0);
     CornerAttribute<float> value_tri(tri, 0);
     prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
+    tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
+}
+
+template<class T>
+void TrianglesLayer::update_data_for_scalar_facet_attribute() {
+    Triangles &tri = mesh;
+    SurfaceAttributes& attr = mesh;
+
+    FacetAttribute<bool> visible_tri(tri, true);
+    FacetAttribute<int> primitive_id(tri, 0);
+    CornerAttribute<float> value_tri(tri, 0);
+    FacetAttribute<T> value(attr_name(), attr, tri);
+    prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
+    for (auto h : tri.iter_halfedges()) value_tri[h] =  value[h / 3];
     tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
 }
 
