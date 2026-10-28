@@ -17,7 +17,9 @@ struct RenderTargetComposition {
 
     void init(int w, int h);
 
-    void resize(int w, int h) {
+    void resize(int w, int h) {      
+        width = w;
+        height = h;  
         composite.resize(w, h);
     }
 

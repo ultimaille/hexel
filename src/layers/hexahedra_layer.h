@@ -11,7 +11,9 @@ struct HexahedraLayer : public Layer {
         FACET,
         CORNER, CORNER_GLYPH,
         POINT, POINT_SPHERE
-    } rt;
+    };
+
+    RenderType rt = PLAIN;
 
     int primitive_type();
     float shrink = .1;
@@ -37,25 +39,14 @@ struct HexahedraLayer : public Layer {
     template<class T>void update_typed();
     void update();
 
-    void prepare_data_without_attribute(
-        Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri, FacetAttribute<int>& primitive_id
-    );
-    template<class T> void prepare_data_for_scalar_cell_attribute(
-        Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri, FacetAttribute<int>& primitive_id
-    );
-    template<class T> void prepare_data_for_scalar_facet_attribute(
-        Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri, FacetAttribute<int>& primitive_id
-    );
-    template<class T> void prepare_data_for_scalar_corner_attribute(
-        Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri, FacetAttribute<int>& primitive_id
-    );
-    template<class T> void prepare_data_for_scalar_corner_glyph_attribute(
-        Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri, FacetAttribute<int>& primitive_id
-    );
-    template<class T> void prepare_data_for_scalar_point_attribute(
-        Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri, FacetAttribute<int>& primitive_id
-    );
+    void prepare_data_without_attribute(Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri, FacetAttribute<int>& primitive_id);
+    template<class T> void update_data_for_scalar_cell_attribute();
+    template<class T> void update_data_for_scalar_facet_attribute();
+    template<class T> void update_data_for_scalar_corner_attribute();
+    template<class T> void update_data_for_scalar_corner_glyph_attribute();
+    template<class T> void update_data_for_scalar_point_attribute();
     template<class T> void update_data_for_scalar_point_attribute_as_sphere();
+    void update_data_for_plain();
 };
 
 
