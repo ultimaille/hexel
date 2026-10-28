@@ -19,7 +19,7 @@ bool FilePopup(const char* id, std::string in, std::string& out, std::vector<con
     ImGui::TextUnformatted(path.string().c_str());
     if (ImGui::Button("[..]") && path.has_parent_path())    path = path.parent_path(), sel.clear();
     ImGui::SameLine();
-    if (ImGui::Button("LoadMultiMesh##fileselector"))              out = sel.string(), done = true;
+    if (ImGui::Button("Return Directory##fileselector"))              out = sel.string(), done = true;
     ImGui::SameLine();
     if (ImGui::Button("Cancel"))                            out = "", done = true;
 

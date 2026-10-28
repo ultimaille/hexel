@@ -4,193 +4,20 @@
 #include "algo.h"
 #include <algo/pillowing.h>
 #include <algo/raster_iterator.h>
-
-
-void generate_edge_graph(Hexahedra& hex, PolyLine& pl, EdgeAttribute<int>& hex_halfedge,bool remove_isolated_vertices = true) {
-    std::vector<bool> to_kill(pl.nedges(), true);
-    pl.delete_edges(to_kill);
-    if (remove_isolated_vertices)
-        hex.delete_isolated_vertices();
-    if (!hex.connected()) hex.connect();
-    DisjointSet ds(hex.nhalfedges());
-    for (auto h : hex.iter_halfedges())
-        if (h.facet().opposite().active())
-            ds.merge(h, h.opposite_c().opposite_f());
-
-    std::vector<int> edges_;
-    int nedges = ds.get_sets_id(edges_);
-    pl.create_edges(nedges);
-    hex_halfedge.fill(- 1);
-    for (auto h : hex.iter_halfedges()) {
-        int e = edges_[h];
-        pl.vert(e, 0) = h.from();
-        pl.vert(e, 1) = h.to();
-        hex_halfedge[e] = h;
-    }
-    pl.connect();
-}
-
-struct MouseReactLayerSelection : public MouseReact {
-    MouseReactLayerSelection() {}
-    void init(ObjectId p_hex, ObjectId p_pl, ObjectId p_pts) { hex_id = p_hex; pl_id = p_pl; pts_id = p_pts; }
-    ObjectId hex_id;
-    ObjectId pl_id;
-    ObjectId pts_id;
-
-    void on_click(int button, vec2 p) {
-        if (button != 0) return;
-        Picker picker;
-        Picker::Result pr = picker.at(p);
-        int prim = pr.filtered_primitive_id(hex_id, 2);
-        if (prim != -1){
-            Hexahedra& hex = hex_id;
-            CellFacetAttribute<int> layer_id(hex);
-            compute_hex_layer_id(hex, layer_id);
-
-            VolumeAttributes& hex_attr = hex_id;
-            CellAttribute<bool> visible_cell("visible", hex_attr, hex);
-            visible_cell.fill(false);
-            for (auto f : hex.iter_facets()) if (layer_id[f] == layer_id[prim])
-                visible_cell[f.cell()] = true;
-            hex_id.broadcast(EventType::UPDATED);
-
-
-            PointSetAttributes& pts_attr = pts_id;
-            PointSet&  pts = pts_id;
-            PointAttribute<bool> visible_pts("visible", pts_attr, pts);
-            visible_pts.fill(false);
-            for (auto c : hex.iter_cells()) if (visible_cell[c])
-                FOR(lv,8)visible_pts[c.vertex(lv)] = true;
-
-
-            PolyLineAttributes& pl_attr = pl_id;
-            PolyLine& pl = pl_id;
-            EdgeAttribute<bool> visible_edge("visible", pl_attr, pl);
-            visible_edge.fill(false);
-            for (auto e : pl.iter_edges()) if (visible_pts[e.from()] && visible_pts[e.to()] )
-                visible_edge[e] = true;
-
-            hex_id.broadcast(EventType::UPDATED);
-            pl_id.broadcast(EventType::UPDATED);
-            pts_id.broadcast(EventType::UPDATED);
-        }
-    }
-};
-
-struct MouseReactMultiSelector : public MouseReact {
-    MouseReactMultiSelector() {}
-
-    void init(int button){ 
-        active_button = button;
-    }
-    
-    void reset(){
-        path.clear();
-        picked.clear();
-        done =false;
-    }
-
-    // filter the primitives
-    std::vector<std::pair<int,vec3> > primitives(ObjectId mesh_id, int primitive_type){
-        std::vector <std::pair<int, vec3>> res;
-        for (auto pr : picked) {
-            int prim = pr.filtered_primitive_id(mesh_id, primitive_type);
-            if (prim != -1) res.push_back({ prim,pr.point() });
-        }
-        return res;
-    }
-
-    void on_click(int button, vec2 p) {
-        if (button != active_button) return;
-        Picker::Result pr = picker.at(p);
-        picked.push_back(pr);
-        done = true;
-    }
-
-    void on_press(int button, vec2 p){
-        if (button != active_button) return;
-        picker.reset(); 
-        reset();
-        path.push_back(p);
-    }
-
-    void on_drag(int button, vec2 a, vec2 b){
-        if (button != active_button) return;
-        path.push_back(b);
-    }
-
-    void on_release(int button, vec2 p){
-        if (button != active_button) return;
-        path.push_back(p);
-        if (path.size() < 2) return;
-        FOR(s, path.size() - 1) for (vec2 P:iter_raster_line(path[s], path[s+1])){
-            Picker::Result pr = picker.at(P);
-            bool already_in = false;
-            for (auto pr_iter : picked)
-                already_in = already_in || (pr.layer_id == pr_iter.layer_id && pr.raw_primitive_id == pr_iter.raw_primitive_id);
-            if (!already_in) picked.push_back(pr);
-        }
-        done = true;
-    }
-
-    void feed_back_gui(){
-        std::vector<ImVec2> pts;
-        for (auto v : path)pts.push_back(ImVec2(v.x, v.y));
-        auto col = IM_COL32(127, 255, 255, 255);
-        if (active_button==1) col = IM_COL32(255, 255, 127, 255);
-        ImGui::GetBackgroundDrawList()->AddPolyline(pts.data(), pts.size(), col, ImDrawFlags_JoinMiter, 5.0f);
-        FOR(i, 10){
-            int decal = std::max(0, int(path.size()) - i);
-            ImGui::GetBackgroundDrawList()->AddPolyline(pts.data() + decal, int(pts.size()) - decal, col, ImDrawFlags_JoinMiter, 15.0f - float(i));
-        }
-    }
-
-    Picker picker;
-    int active_button=0;
-    std::vector<vec2> path;
-    std::vector<Picker::Result> picked;
-    bool done = false;
-};
+#include <modes/generic_mouse_reacts.h>
 
 
 
-struct MouseReactSplitMergeLayers : public MouseReact {
-    MouseReactSplitMergeLayers() {}
-
-    void init(ObjectId p_mesh) { mesh_id = p_mesh; }
-    ObjectId mesh_id;
-
-    void on_click(int button, vec2 p) {
-        Log::add("click " + std::to_string(button));
-        Picker picker;
-        Picker::Result pr = picker.at(p);
-        PolyLine& pl = mesh_id;
-        int prim = pr.filtered_primitive_id(mesh_id, 1);
-        if (prim != -1){
-            int v0 = pl.vert(prim, 0);
-            int v1 = pl.vert(prim, 1);
-            vec3 A = pl.points[v0];
-            vec3 B = pl.points[v1];
-            vec3 P = pr.point();
-            double c = (B - A) * (P - A) / (B - A).norm2();
-            plop(c);
-            if (button == 0) plop(prim);
-            if (button == 1) plop(prim);
-            mesh_id.broadcast(EventType::UPDATED);
-        }
-    }
-};
 
 #define WORKING_DIR std::string("C:\\NICOTMP\\tmp\\")
 
-
-struct LayerSplitMode : public Mode{
+struct HexModelerMode : public Mode{
 
     MouseReactTrackBallCamera camera_react;
-    MouseReactSplitMergeLayers split_merge_react;
     MouseReactLayerSelection layer_selection_react;
-    MouseReactMultiSelector multi_selector_react_left;
-    MouseReactMultiSelector multi_selector_react_right;
+    std::string working_directory = WORKING_DIR;
+    std::string project_directory = WORKING_DIR;
+    std::string CAD_file = std::string(TEST_INPUT_DIR) + "B1.geogram";
 
 
     inline ObjectId hex_id(){ return ObjectId(ObjectType::HEXAHEDRA, std::vector<std::string>{ "mesh", ""}); }
@@ -199,17 +26,19 @@ struct LayerSplitMode : public Mode{
 
     EdgeAttribute<int> edge2halfedge;
 
-
-
     Volume::Halfedge hex_halfedge_from_edge(int e){
         Hexahedra& hex = hex_id();
         return hex.halfedge(edge2halfedge[e]);
     }
 
-    LayerSplitMode(){
-        import_new_project_from_CAD(std::string(TEST_INPUT_DIR) + "B1.geogram");
-        load_mm_with_default_layers(std::string(WORKING_DIR) + "geom");
-        load_mm_with_default_layers(std::string(WORKING_DIR) + "mesh");
+    HexModelerMode(){
+        //import_new_project_from_CAD(std::string(TEST_INPUT_DIR) + "B1.geogram");
+    }
+
+    void load_project(){
+
+        load_mm_with_default_layers(project_directory + "geom");
+        load_mm_with_default_layers(project_directory + "mesh");
 
         Hexahedra& hex = hex_id();
         God::xcf["mesh"].polylines.clear();
@@ -222,12 +51,110 @@ struct LayerSplitMode : public Mode{
         PolyLineLayer& layer = God::layers.add<PolyLineLayer>("mesh_edge", 1);
         layer.init(pl_id());
         auto& pr = layer.primitive_renderer;        pr.color[0] = .5; pr.color[1] = .5; pr.color[2] = .7;
+        layer_selection_react.init(hex_id(), pl_id(), pts_id());
+        God::modes.switch_to("layer_split");
+    }
 
-        layer_selection_react.init(hex_id(),pl_id(),pts_id());
-        split_merge_react.init(pl_id());
+
+
+    void update_hex(){
+        generate_edge_graph(hex_id(), pl_id(), edge2halfedge);
+        hex_id().broadcast(EventType::UPDATED);
+        pl_id().broadcast(EventType::UPDATED);
+        pts_id().broadcast(EventType::UPDATED);
+    }
+
+    void handle(Event event){
+            send_instruction_to_react(event, camera_react);
+            send_instruction_to_react(event, layer_selection_react);
+    }
+
+
+    void import_new_project_from_CAD(std::string filename){
+        BBox3 bbox;
+        {
+            MultiMesh mm;
+            mm.load_geogram(filename, false);
+            FOR(v, mm.pointset.size()) bbox.add(mm.pointset[v]);
+
+            if (mm.polylines.empty()) mm.polylines.try_emplace("");
+            auto& pl = mm.polylines[""];
+            pl.attributes.points.clear();
+            pl.attributes.edges.clear();
+            EdgeAttribute<int> feature("feat_id", pl.attributes, pl.mesh);
+            for (auto e : pl.mesh.iter_edges()) feature[e] = e;
+
+            if (mm.triangles.empty()) mm.triangles.try_emplace("");
+            auto& tri = mm.triangles[""];
+            tri.attributes.points.clear();
+            tri.attributes.corners.clear();
+            tri.attributes.facets.clear();
+            FacetAttribute<int> region("region_id", tri.attributes, tri.mesh);
+            for (auto f : tri.mesh.iter_facets()) region[f] = f;
+
+            mm.quads.clear(); mm.polygons.clear(); mm.hexahedra.clear(); mm.pyramids.clear(); mm.wedges.clear();
+            mm.save_to_path(project_directory + "geom");
+
+        }
+
+        {
+            MultiMesh mm;
+            mm.hexahedra.try_emplace("");
+            CellAttribute<int> block_id("block_id", mm.hexahedra[""].attributes, mm.hexahedra[""].mesh);
+            //bbox
+            mm.pointset.create_points(8);
+            Hexahedra& hex = mm.hexahedra[""].mesh;
+            hex.create_cells(1);
+            FOR(k, 2)FOR(j, 2)FOR(i, 2) mm.pointset[i + 2 * j + 4 * k] = bbox.min + vec3(i * bbox.size()[0], j * bbox.size()[1], k * bbox.size()[2]);
+            FOR(v, 8) hex.vert(0, v) = v;
+
+            mm.save_to_path(project_directory + "mesh");
+        }
+
+    }
+
+    void define_gui() {
+        ImGui::Begin("HexModelerMode", nullptr);
+        if (ImGui::Button("Import From CAD")) ImGui::OpenPopup("CAD_file");
+        if (FilePopup("CAD_file", std::filesystem::path(CAD_file).parent_path().string(), CAD_file, {".geogram",".meshb",".mesh"}))
+            if (!CAD_file.empty()) {
+                project_directory = working_directory + std::filesystem::path(CAD_file).stem().string() + "\\";
+                std::filesystem::create_directory(project_directory);
+                import_new_project_from_CAD(CAD_file);
+                load_project();
+            }
+
+        if (ImGui::Button("Load project")) ImGui::OpenPopup("Load project");
+        if (FilePopup("Load project", project_directory, project_directory, {"*"}))
+            if (!project_directory.empty()){
+                project_directory = project_directory + "\\";
+                load_project();
+            }        
+        ImGui::End();
+    }
+
+};
+
+
+
+
+struct LayerSplitMode : public HexModelerMode{
+
+    MouseReactMultiSelector multi_selector_react_left;
+    MouseReactMultiSelector multi_selector_react_right;
+
+
+    void activate(){
+        edge2halfedge.bind("hex_halfedge", God::xcf["mesh"].polylines[""].attributes, God::xcf["mesh"].polylines[""].mesh);
+    }
+
+    LayerSplitMode() : HexModelerMode(){
         multi_selector_react_left.init(0);
         multi_selector_react_right.init(1);
     }
+
+
+
 
 
 
@@ -252,24 +179,12 @@ struct LayerSplitMode : public Mode{
 
     }
 
-    void update_hex(){
-        
-
-        generate_edge_graph(hex_id(), pl_id(), edge2halfedge);
-        hex_id().broadcast(EventType::UPDATED);
-        pl_id().broadcast(EventType::UPDATED);
-        pts_id().broadcast(EventType::UPDATED);
-    }
-
 
     void handle(Event event) {
         // forward mouse events to mouse reacts 
-        if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL)){
-            send_instruction_to_react(event, camera_react);
-            send_instruction_to_react(event, layer_selection_react);
-        }
+        if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL))
+            HexModelerMode::handle(event);
         else {
-            send_instruction_to_react(event, split_merge_react);
             send_instruction_to_react(event, multi_selector_react_left);
             send_instruction_to_react(event, multi_selector_react_right);
         }
@@ -332,48 +247,7 @@ struct LayerSplitMode : public Mode{
     }
 
 
-    void import_new_project_from_CAD(std::string filename){
-        BBox3 bbox;
-        {
-            MultiMesh mm;
-            mm.load_geogram(filename, false);
-            FOR(v, mm.pointset.size()) bbox.add(mm.pointset[v]);
 
-            if (mm.polylines.empty()) mm.polylines.try_emplace("");
-            auto& pl = mm.polylines[""];
-            pl.attributes.points.clear();
-            pl.attributes.edges.clear();
-            EdgeAttribute<int> feature("feat_id", pl.attributes, pl.mesh);
-            for (auto e : pl.mesh.iter_edges()) feature[e] = e;
-
-            if (mm.triangles.empty()) mm.triangles.try_emplace("");
-            auto& tri = mm.triangles[""];
-            tri.attributes.points.clear();
-            tri.attributes.corners.clear();
-            tri.attributes.facets.clear();
-            FacetAttribute<int> region("region_id", tri.attributes, tri.mesh);
-            for (auto f : tri.mesh.iter_facets()) region[f] = f;
-
-            mm.quads.clear(); mm.polygons.clear(); mm.hexahedra.clear(); mm.pyramids.clear(); mm.wedges.clear();
-            mm.save_to_path(WORKING_DIR + "geom");
-
-        }
-
-        {
-            MultiMesh mm;
-            mm.hexahedra.try_emplace("");
-            CellAttribute<int> block_id("block_id", mm.hexahedra[""].attributes, mm.hexahedra[""].mesh);
-            //bbox
-            mm.pointset.create_points(8);
-            Hexahedra &hex = mm.hexahedra[""].mesh;
-            hex.create_cells(1);
-            FOR(k, 2)FOR(j, 2)FOR(i, 2) mm.pointset[i + 2 * j + 4 * k] = bbox.min + vec3(i * bbox.size()[0], j * bbox.size()[1], k * bbox.size()[2]);
-            FOR(v, 8) hex.vert(0, v) = v;
-            
-            mm.save_to_path(WORKING_DIR + "mesh");
-        }
-
-    }
 
 
     void define_gui() {

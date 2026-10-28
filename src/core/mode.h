@@ -13,6 +13,8 @@ struct MouseReact{
 };
 
 struct Mode{
+    virtual void activate(){}
+    virtual void desactivate(){}
     virtual void define_gui() = 0;
     virtual void handle(Event event) = 0;
     void send_instruction_to_react(Event event, MouseReact &react);
@@ -51,6 +53,13 @@ struct ModeManager : private Registry<Mode> {
     template<class T> T& add(std::string str)   { return emplace_back<T>(str); }
 
     int current_mode = 0;
+    inline void switch_to(std::string s)        {
+        int new_mode = find(s);
+        um_assert(new_mode != -1);
+        (*this)[current_mode].desactivate();
+        current_mode = new_mode;
+        (*this)[current_mode].activate();
+    }
     inline void define_gui()        { (*this)[current_mode].define_gui(); }
     inline void handle(Event event) { (*this)[current_mode].handle(event); };
 };
