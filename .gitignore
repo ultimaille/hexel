@@ -3,5 +3,5 @@ build/**
 .idea/**
 imgui.ini
 .clangd
-src/config.h
+src/myconfig.h
 CMakeLists.local.txt
