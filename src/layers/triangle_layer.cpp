@@ -80,6 +80,10 @@ void TrianglesLayer::update_typed(){
             // update_data_for_scalar_corner_glyph_attribute<T>();
             break;
         }
+        case HALFEDGE_GLYPH: {
+            update_data_for_scalar_halfedge_glyph_attribute<T>();
+            break;
+        }
         case POINT: {
             update_data_for_scalar_point_attribute<T>();
             break;
@@ -125,6 +129,57 @@ void TrianglesLayer::update_data_for_scalar_corner_attribute() {
     for (auto &h : tri.iter_halfedges()) value_tri[h] = static_cast<float>(value[h]);
 
     tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
+}
+
+template<class T>
+void TrianglesLayer::update_data_for_scalar_halfedge_glyph_attribute() {
+    Triangles &tri = mesh;
+    SurfaceAttributes& attr = mesh;
+
+    FacetAttribute<bool> visible_tri("visible", attr, tri, true);
+    
+
+    // Note: need mesh to be connected
+    Triangles tri_glyph;
+    tri_glyph.points.create_points(tri.ncorners() * 6); // 4 point for deinfe a rect by halfedge
+    tri_glyph.create_facets(tri.ncorners() * 2);
+    
+    FacetAttribute<bool> visible_glyph(tri_glyph);
+    CornerAttribute<float> value_glyph(tri_glyph);
+    FacetAttribute<int> primitive_id(tri_glyph);
+
+    for (auto &h : tri.iter_halfedges()) {
+        auto v0 = h.from();
+        auto v1 = h.to();
+        vec3 p0 = v0;
+        vec3 p1 = v1;
+        vec3 d = (p1 - p0).normalized();
+        vec3 perp{-d.y, d.x};
+
+        int f0 = h * 2;
+        int f1 = h * 2 + 1;
+
+        // Create rect
+        tri_glyph.points[h * 6] = p0 + perp * 0.01;
+        tri_glyph.points[h * 6 + 1] = p0 - perp * 0.01;
+        tri_glyph.points[h * 6 + 2] = p1 - perp * 0.01;
+        tri_glyph.vert(h * 2, h * 6);
+        tri_glyph.vert(h * 2, h * 6 + 1);
+        tri_glyph.vert(h * 2, h * 6 + 2);
+
+        tri_glyph.points[h * 6 + 3] = p1 - perp * 0.01;
+        tri_glyph.points[h * 6 + 4] = p1 + perp * 0.01;
+        tri_glyph.points[h * 6 + 5] = p0 + perp * 0.01;
+        tri_glyph.vert(h * 2 + 1, h * 6 + 3);
+        tri_glyph.vert(h * 2 + 1, h * 6 + 4);
+        tri_glyph.vert(h * 2 + 1, h * 6 + 5);
+
+        visible_glyph[f0] = visible_tri[h.facet()];
+        visible_glyph[f1] = visible_tri[h.facet()];
+    }
+
+    tri_renderer.update(tri, visible_glyph, value_glyph, primitive_id);
+
 }
 
 template<class T> 
