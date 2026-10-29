@@ -65,7 +65,7 @@ template<class T>
 void TrianglesLayer::update_typed(){
     switch (rt) {
         case POINT_SPHERE: {
-            // update_data_for_scalar_point_attribute_as_sphere<T>();
+            update_data_for_scalar_point_attribute_as_sphere<T>();
             break;
         }
         case FACET: {
@@ -81,7 +81,7 @@ void TrianglesLayer::update_typed(){
             break;
         }
         case POINT: {
-            // update_data_for_scalar_point_attribute<T>();
+            update_data_for_scalar_point_attribute<T>();
             break;
         }
     }
@@ -125,6 +125,56 @@ void TrianglesLayer::update_data_for_scalar_corner_attribute() {
     for (auto &h : tri.iter_halfedges()) value_tri[h] = static_cast<float>(value[h]);
 
     tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
+}
+
+template<class T> 
+void TrianglesLayer::update_data_for_scalar_point_attribute() {
+    Triangles &tri = mesh;
+    SurfaceAttributes& attr = mesh;
+
+    FacetAttribute<bool> visible_tri("visible", attr, tri, true);
+    FacetAttribute<int> primitive_id(tri, 0);
+    CornerAttribute<float> value_tri(tri, 0);
+    PointAttribute<T> value(attr_name(), attr, tri);
+
+    prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
+
+    // Note: need the mesh to be connected...
+    // for (auto &h : tri.iter_halfedges()) value_tri[h] = value[h.from()];
+    // Note: below no need the mesh to be connected
+    for (auto &f : tri.iter_facets()) {
+        for (int lv = 0; lv < 3; ++lv) {
+            auto h = f.halfedge(lv);
+            auto v = f.vertex(lv);
+            value_tri[h] = static_cast<float>(value[v]);
+            if (visible_tri[f]) visible;
+        }
+    }
+
+    tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
+}
+
+template<class T> void TrianglesLayer::update_data_for_scalar_point_attribute_as_sphere() {
+    Triangles &tri = mesh;
+    SurfaceAttributes& attr = mesh;
+
+    FacetAttribute<bool> visible_tri("visible", attr, tri, true);
+    PointAttribute<T> value(attr_name(), attr, tri);
+
+    PointAttribute<bool> visible_pts(tri,false);
+    PointAttribute<float> value_float(tri);
+    PointAttribute<int> primitive_id(tri.points);
+
+    for (auto &f : tri.iter_facets()) {
+        for (int lv = 0; lv < 3; ++lv) {
+            auto v = f.vertex(lv);
+            visible_pts[v] = visible_tri[f];
+            value_float[v] = static_cast<float>(value[v]);
+            primitive_id[v] = v;
+        }
+    }
+
+    point_renderer.update(tri.points, visible_pts, value_float, primitive_id);
 }
 
 void TrianglesLayer::prepare_data_without_attribute(Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri, FacetAttribute<int>& primitive_id) {
