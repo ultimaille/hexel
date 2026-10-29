@@ -73,7 +73,7 @@ void TrianglesLayer::update_typed(){
             break;
         }
         case CORNER: {
-            // update_data_for_scalar_corner_attribute<T>();
+            update_data_for_scalar_corner_attribute<T>();
             break;
         }
         case CORNER_GLYPH: {
@@ -112,7 +112,7 @@ void TrianglesLayer::update_data_for_scalar_facet_attribute() {
 
 template<class T>
 void TrianglesLayer::update_data_for_scalar_corner_attribute() {
-    Triangles tri = mesh;
+    Triangles &tri = mesh;
     SurfaceAttributes& attr = mesh;
 
     FacetAttribute<bool> visible_tri("visible", attr, tri, true);
