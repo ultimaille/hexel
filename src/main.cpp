@@ -19,7 +19,7 @@
 #include "panels/layer_explorer.h"
 
 #ifdef HAS_CONFIG
-    #include "config.h"
+    #include "myconfig.h"
 #endif
 
 

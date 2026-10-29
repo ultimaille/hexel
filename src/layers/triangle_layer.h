@@ -27,6 +27,7 @@ struct TrianglesLayer : public Layer{
     template<class T> void update_data_for_scalar_facet_attribute();
     template<class T> void update_data_for_scalar_corner_attribute();
     template<class T> void update_data_for_scalar_corner_glyph_attribute();
+    template<class T> void update_data_for_scalar_halfedge_glyph_attribute();
     template<class T> void update_data_for_scalar_point_attribute();
     template<class T> void update_data_for_scalar_point_attribute_as_sphere();
     void update_data_for_plain();
@@ -35,7 +36,7 @@ struct TrianglesLayer : public Layer{
     enum RenderType {
         PLAIN,
         FACET,
-        CORNER, CORNER_GLYPH,
+        CORNER, CORNER_GLYPH, HALFEDGE_GLYPH,
         POINT, POINT_SPHERE
     };
 

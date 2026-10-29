@@ -14,13 +14,6 @@ if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
 endif()
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
-
-# Include local overrides if the file exists
-if(EXISTS "${CMAKE_SOURCE_DIR}/CMakeLists.local.txt")
-  message(STATUS "Including local configuration")
-  include("${CMAKE_SOURCE_DIR}/CMakeLists.local.txt")
-endif()
-
 add_definitions(-DTEST_INPUT_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/test-input/\")
 add_definitions(-DSHADERS_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/\")
 
@@ -165,7 +158,7 @@ file(GLOB_RECURSE HEXEL_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h"
 )
 
-if(EXISTS "${CMAKE_SOURCE_DIR}/src/config.h")
+if(EXISTS "${CMAKE_SOURCE_DIR}/src/myconfig.h")
     add_compile_definitions(HAS_CONFIG)
 endif()
 
