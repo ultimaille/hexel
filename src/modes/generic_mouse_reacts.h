@@ -1,4 +1,6 @@
 #pragma once
+#include <core/all.h>
+#include <algo/raster_iterator.h>
 
 struct MouseReactLayerSelection : public MouseReact {
     MouseReactLayerSelection() {}

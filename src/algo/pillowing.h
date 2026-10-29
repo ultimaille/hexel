@@ -1,3 +1,4 @@
+#pragma once
 #include <ultimaille/all.h>
 
 using namespace UM;

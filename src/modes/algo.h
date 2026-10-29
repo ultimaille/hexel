@@ -13,7 +13,7 @@ inline int compute_hex_layer_id(Hexahedra& hex, CellFacetAttribute<int>& layer_i
 }
 
 
-void generate_edge_graph(Hexahedra& hex, PolyLine& pl, EdgeAttribute<int>& hex_halfedge, bool remove_isolated_vertices = true) {
+inline void generate_edge_graph(Hexahedra& hex, PolyLine& pl, EdgeAttribute<int>& hex_halfedge, bool remove_isolated_vertices = true) {
     std::vector<bool> to_kill(pl.nedges(), true);
     pl.delete_edges(to_kill);
     if (remove_isolated_vertices)

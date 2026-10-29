@@ -1,7 +1,7 @@
 #pragma once
 
 #include <array>
-#include <core/core.h>
+#include <core/all.h>
 
 struct SSAO : Layer {
     const std::string ao_name = "ssao";

@@ -45,6 +45,7 @@ struct LayerManager: private Registry<Layer> {
     std::optional<std::reference_wrapper<Layer>> find_by_id(int id);
 
     template<class T> T& add(std::string str, int group)  { 
+        if (find(str) != -1)kill(str);
         auto &layer = emplace_back<T>(str); 
         layer.group = group;
         return layer; 
