@@ -112,7 +112,7 @@ void LayerExplorer::draw_group_gui() {
 
         ImGui::PushID(("widget_group_" + std::to_string(group.id)).c_str());
 
-        bool open = ImGui::TreeNodeEx(label("Group " + std::to_string(group.id), "group_" + std::to_string(group.id)));
+        bool open = ImGui::TreeNodeEx(label(group.name, "group_" + std::to_string(group.id)));
         
 
         // Button to open popup
@@ -209,7 +209,7 @@ void LayerExplorer::draw_group_gui() {
         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("LAYER_NODE_INDEX")) {
             int source = *(int*)payload->Data;
             if (source >= 0 && source < (int)God::layers.size()) {
-                int new_group_id = God::layers.add_group();
+                int new_group_id = God::layers.add_group("misc");
                 God::layers[source].group = new_group_id;
             }
         }

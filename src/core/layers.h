@@ -32,6 +32,7 @@ struct Group {
 
     int id;
     BlendOp blend_op;
+    std::string name;
 };
 
 struct LayerManager: private Registry<Layer> {
@@ -50,7 +51,7 @@ struct LayerManager: private Registry<Layer> {
         return layer; 
     }
 
-    int add_group();
+    int add_group(const std::string& name);
     void remove_group(int group_id);
     bool is_group_empty(int group_id);
 

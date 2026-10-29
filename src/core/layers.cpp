@@ -77,8 +77,8 @@
         kill(idx);
     }
 
-    int LayerManager::add_group() {
-        groups.emplace_back(max_group++, Group::BlendOp::NONE);
+    int LayerManager::add_group(const std::string& name) {
+        groups.emplace_back(max_group++, Group::BlendOp::NONE, name);
         return max_group - 1;
     }
 

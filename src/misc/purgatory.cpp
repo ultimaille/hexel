@@ -60,31 +60,31 @@ void look_at_pointset(PointSet& ps) {
 
 void load_mm_with_default_layers(std::string path) {
     // TODO rename to mm_name
-    auto mesh_name = God::xcf.load_multimesh(path, true);
+    auto mm_name = God::xcf.load_multimesh(path, true);
 
-    look_at_pointset(ObjectId(POINTSET, mesh_name));
+    look_at_pointset(ObjectId(POINTSET, mm_name));
 
-    int group = God::layers.add_group();
+    int group = God::layers.add_group(mm_name);
 
     {// point set
-        PointSetLayer& layer = God::layers.add<PointSetLayer>(mesh_name + "Pts", group);
-        layer.init(ObjectId(POINTSET, mesh_name));
+        PointSetLayer& layer = God::layers.add<PointSetLayer>(mm_name + "Pts", group);
+        layer.init(ObjectId(POINTSET, mm_name));
         auto& pr = layer.primitive_renderer;
         pr.color[0] = .5; pr.color[1] = 1.; pr.color[2] = .5;
         pr.radius_in_pixel = 4;
     }
-    for (auto& elt : God::xcf[mesh_name].polylines) {
-        PolyLineLayer& layer = God::layers.add<PolyLineLayer>(mesh_name + "Edges", group);
-        layer.init(ObjectId(POLYLINES, { mesh_name, elt.first }));
+    for (auto& elt : God::xcf[mm_name].polylines) {
+        PolyLineLayer& layer = God::layers.add<PolyLineLayer>(mm_name + "Edges", group);
+        layer.init(ObjectId(POLYLINES, { mm_name, elt.first }));
         auto& pr = layer.primitive_renderer;
         pr.color[0] = .5; pr.color[1] = .5; pr.color[2] = .7;
     }
-    for (auto& elt : God::xcf[mesh_name].triangles) {
-        TrianglesLayer& layer = God::layers.add<TrianglesLayer>(mesh_name + "Tri", group);
-        layer.init(ObjectId(TRIANGLES, { mesh_name, elt.first }));
+    for (auto& elt : God::xcf[mm_name].triangles) {
+        TrianglesLayer& layer = God::layers.add<TrianglesLayer>(mm_name + "Tri", group);
+        layer.init(ObjectId(TRIANGLES, { mm_name, elt.first }));
     }
-    for (auto& elt : God::xcf[mesh_name].hexahedra) {
-        HexahedraLayer& layer = God::layers.add<HexahedraLayer>(mesh_name + "Hex", group);
-        layer.init(ObjectId(HEXAHEDRA, { mesh_name, elt.first }));
+    for (auto& elt : God::xcf[mm_name].hexahedra) {
+        HexahedraLayer& layer = God::layers.add<HexahedraLayer>(mm_name + "Hex", group);
+        layer.init(ObjectId(HEXAHEDRA, { mm_name, elt.first }));
     }
 }
