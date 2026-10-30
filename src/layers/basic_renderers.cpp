@@ -46,8 +46,8 @@ void Renderer::generate_gui(std::string name){
             texture_repeat = std::clamp(texture_repeat, 0, 1000000);
         }
         if (ImGui::SmallButton(label("autorange##autorange", name))) {
-            data_autorange[0] = data_range[0];
-            data_autorange[1] = data_range[1];
+            data_range[0] = data_autorange[0];
+            data_range[1] = data_autorange[1];
         }
 
     }
