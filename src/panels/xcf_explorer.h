@@ -235,7 +235,12 @@ struct XCFExplorer : public Panel {
                 if (ImGui::IsItemClicked()) switch_selection(selected, mesh_id);
                 if (open_pointset) {
                     for (auto& it : mm.pointset_attributes.points) { 
-                        add_attribute(selected, mesh_id, ObjectId(ObjectType::POINTSET_ATTR, { mm_name, attribute_type(&*it.ptr),"points", it.name }), "points." + it.name);
+                        add_attribute(
+                            selected, 
+                            mesh_id, 
+                            ObjectId(ObjectType::POINTSET_ATTR, { mm_name, attribute_type(&*it.ptr), "points", it.name }), 
+                            "points." + it.name
+                        );
                     }
                     add_mesh_layers(selected, {POINTSET, { mm_name }}, "pointset");
                     close_mesh();

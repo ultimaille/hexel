@@ -19,7 +19,7 @@ TODO
 * Config fichier !
 * Bug on Picker::at when no buffer
 
-* Completer chargement des multimesh (layer + xcf explorer)
+* Completer chargement des multimesh (layer + xcf explorer), faire en sorte que ce soit bien (pointset, poly, triangle, hex, bien gérés, pour les autres message)
 * Ajouter des layers, ex: SSAO
 * Renommer les groupes
 * Merge gui layer / group
