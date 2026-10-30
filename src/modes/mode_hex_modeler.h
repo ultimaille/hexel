@@ -20,9 +20,9 @@ struct HexModelerMode : public Mode{
     ObjectId hex_id();
     ObjectId pl_id();
     ObjectId pts_id();
-    ObjectId tri_id();
-    ObjectId feature_edge_id();
-    ObjectId feature_vertex_id();
+    ObjectId geom_tri_id();
+    ObjectId geom_edge_id();
+    ObjectId geom_pts_id();
 
 
     // update coherence constraints
@@ -49,9 +49,9 @@ struct HexModelerMode : public Mode{
         inline ObjectId hex_id()                  { return mode.hex_id(); }
         inline ObjectId pl_id()                   { return mode.pl_id(); }
         inline ObjectId pts_id()                  { return mode.pts_id(); }
-        inline ObjectId tri_id()                  { return mode.tri_id(); }
-        inline ObjectId feature_edge_id()         { return mode.feature_edge_id(); }
-        inline ObjectId feature_vertex_id()       { return mode.feature_vertex_id(); }
+        inline ObjectId geom_tri_id()             { return mode.geom_tri_id(); }
+        inline ObjectId geom_edge_id()            { return mode.geom_edge_id(); }
+        inline ObjectId geom_pts_id()             { return mode.geom_pts_id(); }
 
         Volume::Halfedge hex_halfedge_from_edge(int e){ return mode.hex_halfedge_from_edge(e); }
         void update_hex(){ mode.update_hex(); }

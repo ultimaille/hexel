@@ -43,18 +43,11 @@ void Renderer::generate_gui(std::string name){
         }
         ImGui::InputFloat2(label("range##range", name), data_range);
         if (ImGui::InputInt(label("texture repeat##texture_repeat", name), &texture_repeat)) {
-            if (texture_repeat > 1) {
-                glBindTexture(GL_TEXTURE_1D, colormap);
-                glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            }
-            else {
-                glBindTexture(GL_TEXTURE_1D, colormap);
-                glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            }
-            texture_repeat = std::clamp(texture_repeat, 1, 1000000);
+            texture_repeat = std::clamp(texture_repeat, 0, 1000000);
         }
         if (ImGui::SmallButton(label("autorange##autorange", name))) {
-            std::copy(data_autorange, data_autorange + 2, data_range);
+            data_autorange[0] = data_range[0];
+            data_autorange[1] = data_range[1];
         }
 
     }
@@ -64,6 +57,14 @@ void Renderer::generate_gui(std::string name){
 }
 
 void Renderer::shared_setup_before_rendering(){
+    if (texture_repeat > 0) {
+        glBindTexture(GL_TEXTURE_1D, colormap);
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    }
+    else {
+        glBindTexture(GL_TEXTURE_1D, colormap);
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    }
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
     glUseProgram(shaderProgram);
@@ -186,6 +187,8 @@ void PointRenderer::update(PointSet& ps, PointAttribute<bool>& visible, PointAtt
 
 void PointRenderer::render(){
 //    um_assert(no_gl_error());
+
+
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_PROGRAM_POINT_SIZE);
     shared_setup_before_rendering();
@@ -243,7 +246,7 @@ void SegmentRenderer::init(){
     glBindVertexArray(0);
 }
 
-void SegmentRenderer::push(PolyLine& pl, EdgeAttribute<bool>& visible, PointAttribute<float>& value, EdgeAttribute<int>& primitive_id) {
+void SegmentRenderer::update(PolyLine& pl, EdgeAttribute<bool>& visible, PointAttribute<float>& value, EdgeAttribute<int>& primitive_id) {
     compute_value_range(value.ptr->data);
 
     npts = 2 * pl.nedges();

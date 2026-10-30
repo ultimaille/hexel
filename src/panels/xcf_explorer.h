@@ -259,10 +259,10 @@ struct XCFExplorer : public Panel {
                 for (auto& [mesh_name, obj] : mm.polylines) {
                     if (open_mesh(selected, mm_name, mesh_name, POLYLINES, "polylines")){
                         for (auto& it : obj.attributes.points) add_attribute(selected, mesh_id,
-                            ObjectId(ObjectType::POLYLINES_ATTR, { mm_name, mesh_name ,it.name }),
+                            ObjectId(ObjectType::POLYLINES_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"points",it.name }),
                             "points." + it.name);
                         for (auto& it : obj.attributes.edges) add_attribute(selected, mesh_id,
-                            ObjectId(ObjectType::POLYLINES_ATTR, { mm_name, mesh_name ,it.name }),
+                            ObjectId(ObjectType::POLYLINES_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"edges",it.name }),
                             "edges." + it.name);
                         add_mesh_layers(selected, mm_name, mesh_name, POLYLINES, "polylines");
                         close_mesh();

@@ -10,6 +10,7 @@ layout (location = 5) in int primitive_id;
 uniform mat4 view;
 uniform mat4 projection;
 uniform float texture_repeat;
+uniform vec2 data_range;
 
 flat out vec3 A;
 flat out vec3 B;
@@ -30,10 +31,12 @@ void main(){
 
     // the location of the point depends on gl_VertexID parity (origin/destination)
     if (gl_VertexID % 2 == 0){
-        value = ValueA* texture_repeat;
+        //value = ValueA* texture_repeat;
+        value = texture_repeat*(ValueA - data_range.x) / (data_range.y - data_range.x);
         gl_Position =projection *vec4(p0, 1.0);
     }else{
-        value = ValueB* texture_repeat;
+        //value = ValueB* texture_repeat;
+        value = texture_repeat*(ValueB - data_range.x) / (data_range.y - data_range.x);
         gl_Position =projection *vec4(p1, 1.0);
     }
     if (ValueA==-1)  value = -1;

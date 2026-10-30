@@ -81,6 +81,7 @@ vec3 Picker::Result::point() {
     return world_space.xyz();
 }
 
+//#include<misc/purgatory.h>
 int Picker::Result::filtered_primitive_id(ObjectId& requested_mesh, int requested_primitive_type){
     FOR(l, God::layers.size()) {
         if (God::layers[l].id != layer_id)                    continue;

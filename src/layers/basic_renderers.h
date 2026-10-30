@@ -82,7 +82,7 @@ struct SegmentRenderer: public Renderer{
 
 	void generate_gui(std::string name);
 	void init();
-	void push(PolyLine& pl, EdgeAttribute<bool>& visible, PointAttribute<float>& value, EdgeAttribute<int>& primitive_id);
+	void update(PolyLine& pl, EdgeAttribute<bool>& visible, PointAttribute<float>& value, EdgeAttribute<int>& primitive_id);
 	void render();
 };
 

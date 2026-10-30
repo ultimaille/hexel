@@ -76,7 +76,7 @@ void load_mm_with_default_layers(std::string path) {
     for (auto& elt : God::xcf[mm_name].polylines) {
         PolyLineLayer& layer = God::layers.add<PolyLineLayer>(mm_name + "Edges", group);
         layer.init(ObjectId(POLYLINES, { mm_name, elt.first }));
-        auto& pr = layer.primitive_renderer;
+        auto& pr = layer.edge_renderer;
         pr.color[0] = .5; pr.color[1] = .5; pr.color[2] = .7;
     }
     for (auto& elt : God::xcf[mm_name].triangles) {
