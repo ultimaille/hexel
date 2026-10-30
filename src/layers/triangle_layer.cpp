@@ -215,11 +215,11 @@ void TrianglesLayer::update_data_for_scalar_corner_glyph_attribute() {
                 tri_glyph.vert(h, i) = h * 3 + i;
 
                 value_glyph[h * 3 + i] = static_cast<float>(value[h]);
-                visible_glyph[h * 3 + i] = visible_tri[f];
+                visible_glyph[h] = visible_tri[f];
+                primitive_id[h] = h;
             }
 
         }
-        primitive_id[f] = f;
     }
 
     tri_renderer.update(tri_glyph, visible_glyph, value_glyph, primitive_id);
@@ -317,7 +317,6 @@ void TrianglesLayer::update_data_for_scalar_point_attribute() {
             auto h = f.halfedge(lv);
             auto v = f.vertex(lv);
             value_tri[h] = static_cast<float>(value[v]);
-            if (visible_tri[f]) visible;
         }
     }
 
