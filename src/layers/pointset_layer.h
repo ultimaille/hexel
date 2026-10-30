@@ -6,13 +6,13 @@ struct PointSetLayer : public Layer{
 
     PointSetLayer();
 
+    int primitive_type();
     void generate_gui(std::string name);
     void reset() override;
     void init(ObjectId obj);
     void render();
     void bind_attribute(ObjectId attr_id);
     void destroy();
-    int primitive_type();
 
 
     template<class T>void update_typed();
