@@ -15,7 +15,48 @@
 
 TrianglesLayer::TrianglesLayer() { point_renderer.layer_id = id; tri_renderer.layer_id = id; }
 
-void TrianglesLayer::generate_gui(std::string name){
+void TrianglesLayer::generate_gui(std::string name) {
+
+    if (attr_active() && attr_primitive() == "points"){
+        bool tmp = (rt==RenderType::POINT_SPHERE);
+            ImGui::Checkbox(label("Show vertices ", ""), &tmp);
+        if ((rt == RenderType::POINT_SPHERE) != tmp) {
+            if (tmp) rt = RenderType::POINT_SPHERE;
+            else  rt = RenderType::POINT;
+            reset();
+        }
+    }
+
+    if (attr_active() && attr_primitive() == "corners") {
+        bool tmp = (rt == RenderType::CORNER_GLYPH);
+        
+        ImGui::Checkbox(label("render_corners_as_glyphs ", ""), &tmp);
+        
+        if ((rt == RenderType::CORNER_GLYPH) != tmp){
+            if (tmp) rt = RenderType::CORNER_GLYPH;
+            else rt = RenderType::CORNER;
+            reset();
+        }
+
+        bool is_halfedge_glyphs = (rt == RenderType::HALFEDGE_GLYPH);
+
+        ImGui::Checkbox(label("render_corners_as_halfedge_glyphs ", ""), &is_halfedge_glyphs);
+
+        if ((rt == RenderType::HALFEDGE_GLYPH) != is_halfedge_glyphs) {
+            rt = is_halfedge_glyphs ? RenderType::HALFEDGE_GLYPH : RenderType::CORNER;
+            reset();
+        }
+
+    }
+
+    if (rt == RenderType::CORNER_GLYPH) {
+        float tmp_shrink = shrink;
+        float tmp_corner_size = corner_size;
+        ImGui::SliderFloat(label("shrink", name), &shrink, 0.0f, .9f, "%.2f", 0);
+        ImGui::SliderFloat(label("corner_size", name), &corner_size, 0.1f, 1.f, "%.2f", 0);
+        if (tmp_shrink != shrink || tmp_corner_size != corner_size) reset();
+    }
+
     if (rt == RenderType::POINT_SPHERE)
         point_renderer.generate_gui(name);
     else 
@@ -77,11 +118,12 @@ void TrianglesLayer::update_typed(){
             break;
         }
         case CORNER_GLYPH: {
-            // update_data_for_scalar_corner_glyph_attribute<T>();
+            update_data_for_scalar_corner_glyph_attribute<T>();
             break;
         }
         case HALFEDGE_GLYPH: {
-            update_data_for_scalar_halfedge_glyph_attribute<T>();
+            Log::add("To be implemented");
+            // update_data_for_scalar_halfedge_glyph_attribute<T>();
             break;
         }
         case POINT: {
@@ -132,12 +174,65 @@ void TrianglesLayer::update_data_for_scalar_corner_attribute() {
 }
 
 template<class T>
+void TrianglesLayer::update_data_for_scalar_corner_glyph_attribute() {
+    Triangles &tri = mesh;
+    SurfaceAttributes& attr = mesh;
+
+    FacetAttribute<bool> visible_tri("visible", attr, tri, true);
+    CornerAttribute<T> value(attr_name(), attr, tri);
+
+    Triangles tri_glyph;
+    tri_glyph.points.create_points(tri.ncorners() * 3);
+    tri_glyph.create_facets(tri.ncorners());
+
+    FacetAttribute<bool> visible_glyph(tri_glyph);
+    CornerAttribute<float> value_glyph(tri_glyph);
+    FacetAttribute<int> primitive_id(tri_glyph);
+
+    for (auto &f : tri.iter_facets()) {
+        Triangle3 t = f;
+        vec3 bary = t.bary_verts();
+        for (int lv = 0; lv < 3; ++lv) {
+            vec3 from = f.vertex(lv);
+            vec3 to = f.vertex((lv + 1) % 3);
+            vec3 opp = f.vertex((lv + 2) % 3);
+            auto h = f.halfedge(lv);
+
+            vec3 a = from * (1. - shrink) + bary * shrink;
+            vec3 b = to * (1. - shrink) + bary * shrink;
+            vec3 c = opp * (1. - shrink) + bary * shrink;
+
+            vec3 d0 = (c - a);
+            vec3 d1 = (c - b);
+
+            // opp
+            float size = corner_size * .5;
+
+            tri_glyph.points[h * 3] = a * size + c * (1. - size);
+            tri_glyph.points[h * 3 + 1] = b * size + c * (1. - size);
+            tri_glyph.points[h * 3 + 2] = c;
+
+            for (int i = 0; i < 3; ++i) {
+                tri_glyph.vert(h, i) = h * 3 + i;
+
+                value_glyph[h * 3 + i] = static_cast<float>(value[h]);
+                visible_glyph[h] = visible_tri[f];
+                primitive_id[h] = h;
+            }
+
+        }
+    }
+
+    tri_renderer.update(tri_glyph, visible_glyph, value_glyph, primitive_id);
+}
+
+template<class T>
 void TrianglesLayer::update_data_for_scalar_halfedge_glyph_attribute() {
     Triangles &tri = mesh;
     SurfaceAttributes& attr = mesh;
 
     FacetAttribute<bool> visible_tri("visible", attr, tri, true);
-    
+    CornerAttribute<T> value(attr_name(), attr, tri);
 
     // Note: need mesh to be connected
     Triangles tri_glyph;
@@ -148,6 +243,19 @@ void TrianglesLayer::update_data_for_scalar_halfedge_glyph_attribute() {
     CornerAttribute<float> value_glyph(tri_glyph);
     FacetAttribute<int> primitive_id(tri_glyph);
 
+    // for (auto &f : tri.iter_facets()) {
+    //     for (int lv = 0; lv < 3; ++lv) {
+    //         auto from = f.vertex(lv);
+    //         auto to = f.vertex((lv + 1) % 3);
+    //         auto h = f.halfedge(lv);
+    //     }
+    // }
+
+    // for (auto &h : tri.iter_halfedges()) {
+    //     auto from = h.from();
+    //     auto to = h.to();
+    // }
+
     for (auto &h : tri.iter_halfedges()) {
         auto v0 = h.from();
         auto v1 = h.to();
@@ -156,29 +264,37 @@ void TrianglesLayer::update_data_for_scalar_halfedge_glyph_attribute() {
         vec3 d = (p1 - p0).normalized();
         vec3 perp{-d.y, d.x};
 
+        p0 += d * 0.005;
+        p1 -= d * 0.005;
+
         int f0 = h * 2;
         int f1 = h * 2 + 1;
+
 
         // Create rect
         tri_glyph.points[h * 6] = p0 + perp * 0.01;
         tri_glyph.points[h * 6 + 1] = p0 - perp * 0.01;
         tri_glyph.points[h * 6 + 2] = p1 - perp * 0.01;
-        tri_glyph.vert(h * 2, h * 6);
-        tri_glyph.vert(h * 2, h * 6 + 1);
-        tri_glyph.vert(h * 2, h * 6 + 2);
+        tri_glyph.vert(h * 2, 0) = h * 6;
+        tri_glyph.vert(h * 2, 1) = h * 6 + 1;
+        tri_glyph.vert(h * 2, 2) = h * 6 + 2;
 
         tri_glyph.points[h * 6 + 3] = p1 - perp * 0.01;
         tri_glyph.points[h * 6 + 4] = p1 + perp * 0.01;
         tri_glyph.points[h * 6 + 5] = p0 + perp * 0.01;
-        tri_glyph.vert(h * 2 + 1, h * 6 + 3);
-        tri_glyph.vert(h * 2 + 1, h * 6 + 4);
-        tri_glyph.vert(h * 2 + 1, h * 6 + 5);
+        tri_glyph.vert(h * 2 + 1, 0) = h * 6 + 3;
+        tri_glyph.vert(h * 2 + 1, 1) = h * 6 + 4;
+        tri_glyph.vert(h * 2 + 1, 2) = h * 6 + 5;
 
         visible_glyph[f0] = visible_tri[h.facet()];
         visible_glyph[f1] = visible_tri[h.facet()];
+        float val = static_cast<float>(value[h]);
+        for (int i = 0; i < 6; ++i)
+            value_glyph[h * 6 + i] = val;
+        
     }
 
-    tri_renderer.update(tri, visible_glyph, value_glyph, primitive_id);
+    tri_renderer.update(tri_glyph, visible_glyph, value_glyph, primitive_id);
 
 }
 
@@ -202,7 +318,6 @@ void TrianglesLayer::update_data_for_scalar_point_attribute() {
             auto h = f.halfedge(lv);
             auto v = f.vertex(lv);
             value_tri[h] = static_cast<float>(value[v]);
-            if (visible_tri[f]) visible;
         }
     }
 
@@ -261,9 +376,10 @@ void TrianglesLayer::bind_attribute(ObjectId p_attr_id){
     if (attr_active()) {
         if (attr_primitive() == "facets")
             rt = RenderType::FACET;
-        else if (attr_primitive() == "corners")
-            if (rt!= RenderType::CORNER_GLYPH) rt = RenderType::CORNER;
-        else if (attr_primitive() == "points")
+        else if (attr_primitive() == "corners") {
+            if (rt!= RenderType::CORNER_GLYPH && rt != RenderType::HALFEDGE_GLYPH) 
+                rt = RenderType::CORNER;
+        } else if (attr_primitive() == "points")
             rt = RenderType::POINT;
     } else {
         rt = PLAIN;

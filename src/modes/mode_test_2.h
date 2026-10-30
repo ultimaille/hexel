@@ -33,10 +33,10 @@ struct MouseReactPickerTest2 : public MouseReact {
                 auto mesh_id = layer.mesh;
                 Triangles &mesh = mesh_id;
                 SurfaceAttributes &attr = mesh_id;
-                FacetAttribute<int> fa("flag", attr, mesh);
-                if (result.raw_primitive_id != -1) {
-                    fa[result.raw_primitive_id] = 1;
-                }
+                // FacetAttribute<int> fa("flag", attr, mesh);
+                // if (result.raw_primitive_id != -1) {
+                //     fa[result.raw_primitive_id] = 1;
+                // }
 
                 // Beuuuurk !!!!
                 // Je convertis en object id pour bind ???!!!

@@ -44,4 +44,7 @@ struct TrianglesLayer : public Layer{
 
     TriangleRenderer tri_renderer;
     PointRenderer point_renderer;
+
+    float shrink = 0.f;
+    float corner_size = 1.f;
 };
