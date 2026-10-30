@@ -233,27 +233,15 @@ struct XCFExplorer : public Panel {
                 bool open_pointset = open_mesh(selected, {POINTSET, { mm_name }}, "pointset");
 
                 if (ImGui::IsItemClicked()) switch_selection(selected, mesh_id);
-                if (open_pointset){
+                if (open_pointset) {
+                    for (auto& it : mm.pointset_attributes.points) { 
+                        add_attribute(selected, mesh_id, ObjectId(ObjectType::POINTSET_ATTR, { mm_name, attribute_type(&*it.ptr),"points", it.name }), "points." + it.name);
+                    }
                     add_mesh_layers(selected, {POINTSET, { mm_name }}, "pointset");
                     close_mesh();
-                    // for (int i = 0; i < God::layers.size(); i++)
-                    //     if (God::layers[i].mesh==mesh_id){
-                    //         ObjectId layer_id(LAYER, God::layers.ith_name(i));
-                    //         bool open_layer;
-                    //         {
-                    //             int colorid = 2;
-                    //             if (!selected.contains(layer_id)) colorid = 0;
-                    //             NodeColor ncol(colorid);
-                    //             open_layer = ImGui::TreeNodeEx(label(God::layers.ith_name(i), mm_name), flag(selected.contains(mesh_id), true));
-                    //             object_id_drag_source(layer_id, mm_name);
-                    //         }
-                    //         if (open_layer){
-                    //             if (ImGui::IsItemClicked()) switch_selection(selected, layer_id);
-                    //             ImGui::TreePop();
-                    //         }
-                    //     }
-                    // ImGui::TreePop();
                 }
+
+
 
 
                 // ==> polylines
