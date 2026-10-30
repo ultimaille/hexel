@@ -16,6 +16,13 @@ TODO
 * UNDO / REDO
 * Different config by dev
 * Bug sur mode HexEdit, load mm, supprime, reload, attribut déjà bindé
+* Renommer les groupe
+* Autorange checkbox
+* Ajouter des layers, ex: SSAO
+* Camera resize ?
+* Config fichier !
+* Bug on Picker::at when no buffer
+
 
 ==================================================================
 GITERIES

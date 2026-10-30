@@ -282,10 +282,10 @@ struct XCFExplorer : public Panel {
                     }
                     if (!open) continue;
                     for (auto& it : obj.attributes.points) add_attribute(selected, mesh_id,
-                        ObjectId(ObjectType::TRIANGLES_ATTR, { mm_name, mesh_name, attribute_type(&*it.ptr),"facets", it.name}),
+                        ObjectId(ObjectType::TRIANGLES_ATTR, { mm_name, mesh_name, attribute_type(&*it.ptr),"points", it.name}),
                         "points." + it.name);
                     for (auto& it : obj.attributes.corners) add_attribute(selected, mesh_id,
-                        ObjectId(ObjectType::TRIANGLES_ATTR, { mm_name, mesh_name, attribute_type(&*it.ptr),"facets", it.name}),
+                        ObjectId(ObjectType::TRIANGLES_ATTR, { mm_name, mesh_name, attribute_type(&*it.ptr),"corners", it.name}),
                         "corners." + it.name);
                     for (auto& it : obj.attributes.facets) add_attribute(selected, mesh_id,
                         ObjectId(ObjectType::TRIANGLES_ATTR, { mm_name, mesh_name, attribute_type(&*it.ptr),"facets", it.name}),
