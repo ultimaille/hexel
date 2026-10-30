@@ -20,6 +20,7 @@ struct PointSetLayer : public Layer{
 
     // void prepare_data_without_attribute(Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri, FacetAttribute<int>& primitive_id);
     template<class T> void update_data_for_scalar_point_attribute_as_sphere();
+    template<class T> void update_data_for_scalar_point_attribute_as_sized_sphere();
     void update_data_for_plain();
 
     // TODO put this in layer or utils function as its copy / paste from hexahedra layer...
