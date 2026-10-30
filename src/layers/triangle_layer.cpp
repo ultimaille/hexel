@@ -122,7 +122,8 @@ void TrianglesLayer::update_typed(){
             break;
         }
         case HALFEDGE_GLYPH: {
-            update_data_for_scalar_halfedge_glyph_attribute<T>();
+            Log::add("To be implemented");
+            // update_data_for_scalar_halfedge_glyph_attribute<T>();
             break;
         }
         case POINT: {
