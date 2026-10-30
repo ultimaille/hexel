@@ -17,12 +17,12 @@ struct HexModelerMode : public Mode{
     HexModelerMode();
 
     // access to xcf bjects
-    ObjectId hex_id();
-    ObjectId pl_id();
-    ObjectId pts_id();
-    ObjectId geom_tri_id();
-    ObjectId geom_edge_id();
-    ObjectId geom_pts_id();
+    static ObjectId hex_id();
+    static ObjectId pl_id();
+    static ObjectId pts_id();
+    static ObjectId geom_tri_id();
+    static ObjectId geom_edge_id();
+    static ObjectId geom_pts_id();
 
 
     // update coherence constraints

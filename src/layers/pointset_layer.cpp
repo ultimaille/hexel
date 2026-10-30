@@ -19,6 +19,8 @@ void PointSetLayer::generate_gui(std::string name){
     Layer::generate_gui(name);
 }
 
+int PointSetLayer::primitive_type(){ return 0; }
+
 
 void PointSetLayer::reset(){
     PointSet& ps = mesh;

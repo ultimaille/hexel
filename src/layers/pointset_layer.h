@@ -10,4 +10,6 @@ struct PointSetLayer : public Layer{
     void render();
     void destroy();
     void reset();
+    int primitive_type();
+
 };
