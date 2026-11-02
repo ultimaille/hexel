@@ -50,6 +50,9 @@ void PointSetLayer::update(){
     else if (attr_type() == "int") update_typed<int>();
     else if (attr_type() == "float") update_typed<float>();
     else if (attr_type() == "double") update_typed<double>();
+    else {
+        Log::add("Display attribute of type " + attr_type() + " isn't currently supported by PointSetLayer");
+    }
 }
 
 template<class T>
