@@ -67,9 +67,13 @@ void PointSetLayer::update_typed(){
 
 void PointSetLayer::update_data_for_plain() {
     PointSet &ps = mesh;
-    PointAttribute<bool> visible_pts(ps, true);
+    PointSetAttributes &attr = mesh;
+    PointAttribute<bool> visible_pts("visible", attr, ps, true);
     PointAttribute<int> primitive_id(ps, 0);
     PointAttribute<float> value_pts(ps, 0);
+
+    for (int v = 0; v < ps.size(); ++v) primitive_id[v] = v;
+
     point_renderer.update(ps, visible_pts, value_pts, primitive_id);
 }
 
