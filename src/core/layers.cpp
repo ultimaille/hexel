@@ -13,7 +13,7 @@
     Layer::Layer() : id(max_id) { ++max_id; }
     void Layer::reset() { Log::error("reset called for a layer that does not implement it"); };
     void Layer::generate_gui(std::string name) {
-        ImGui::Checkbox(("visible##visible" + name).c_str(), &visible);
+        // ImGui::Checkbox(("visible##visible" + name).c_str(), &visible);
     }
 
 

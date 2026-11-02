@@ -136,9 +136,6 @@ constexpr std::array<float, 3> to_float3(const vec3& v) {
 }
 
 
-
-
-
 void PointRenderer::generate_gui(std::string name){
     ImGui::PushItemWidth(80);
     ImGui::InputInt(("point size##point_size" + name).c_str(), &radius_in_pixel);

@@ -31,8 +31,6 @@ struct MouseReactPickerTest2 : public MouseReact {
             if (layer_opt.has_value()) {
                 auto &layer = layer_opt.value().get();
                 auto mesh_id = layer.mesh;
-                Triangles &mesh = mesh_id;
-                SurfaceAttributes &attr = mesh_id;
                 // FacetAttribute<int> fa("flag", attr, mesh);
                 // if (result.raw_primitive_id != -1) {
                 //     fa[result.raw_primitive_id] = 1;

@@ -49,8 +49,8 @@ struct PanelManager : private Registry<Panel> {
 
         ImGui::DockBuilderDockWindow("XCFViewer", left_bar0);
         ImGui::DockBuilderDockWindow("LayersConfig", left_bar1);
-        ImGui::DockBuilderDockWindow("GroupsConfig", left_bar2);
-        ImGui::DockBuilderDockWindow("Properties", left_bar3);
+        ImGui::DockBuilderDockWindow("Properties", left_bar2);
+        ImGui::DockBuilderDockWindow("Mode", left_bar3);
 
         ImGui::DockBuilderFinish(dockspace_id);
     }

@@ -10,9 +10,6 @@
 #include <string>
 
 #include <core/all.h>
-//#include <modes/mode_test.h>
-//#include <modes/mode_test_2.h>
-//#include <modes/mode_layer_split.h>
 
 #include "panels/property_explorer.h"
 #include "panels/xcf_explorer.h"

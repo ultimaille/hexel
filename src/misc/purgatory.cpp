@@ -69,7 +69,7 @@ void load_mm_with_default_layers(std::string path) {
     {// point set
         PointSetLayer& layer = God::layers.add<PointSetLayer>(mm_name + "Pts", group);
         layer.init(ObjectId(POINTSET, mm_name));
-        auto& pr = layer.primitive_renderer;
+        auto& pr = layer.point_renderer;
         pr.color[0] = .5; pr.color[1] = 1.; pr.color[2] = .5;
         pr.radius_in_pixel = 4;
     }

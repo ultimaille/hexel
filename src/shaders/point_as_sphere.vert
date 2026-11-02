@@ -3,7 +3,7 @@
 layout(location = 0) in vec3 aPosition;
 layout(location = 1) in float value;
 layout(location = 2) in int visible;
-layout (location = 3) in int primitive_id;
+layout(location = 3) in int primitive_id;
 
 uniform mat4 view;
 uniform mat4 projection;
