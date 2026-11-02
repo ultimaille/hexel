@@ -87,25 +87,6 @@ void PointSetLayer::update_data_for_scalar_point_attribute_as_sphere() {
     point_renderer.update(ps, visible_pts, value_float, primitive_id);
 }
 
-template<class T> 
-void PointSetLayer::update_data_for_scalar_point_attribute_as_sized_sphere() {
-    PointSet &ps = mesh;
-    PointSetAttributes &attr = mesh;
-    PointAttribute<bool> visible_pts("visible", attr, ps, true);
-    PointAttribute<int> primitive_id(ps, 0);
-    PointAttribute<T> value_pts(attr_name(), attr, ps);
-    // PointAttribute<bool> value_bool(attr_name(), attr, ps);
-
-    for (int v = 0; v < ps.size(); ++v) {
-        primitive_id[v] = v;
-    }
-
-
-
-
-    point_renderer.update(ps, visible_pts, value_pts, primitive_id);
-}
-
 // Note: partially the same as HexahedraLayer
 void PointSetLayer::bind_attribute(ObjectId p_attr_id){
     attr_id = p_attr_id;
