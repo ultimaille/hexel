@@ -1,4 +1,5 @@
 #include <modes/submode_feature_edit.h>
+#include <algo/shuffle_for_colormap.h>
 
 void MouseReactSplitAddFeature::init(ObjectId p_pl, ObjectId p_pts) {
     pl_id = p_pl; pts_id = p_pts; org_vertex= -1;
@@ -70,8 +71,8 @@ void trace_feature(Triangles & tri,PolyLine& pl, EdgeAttribute<int>& feat_id,int
         pl.vert(offset + 2 * e, 1) = h.to();
         pl.vert(offset + 2 * e+1, 1) = h.from();
         pl.vert(offset + 2 * e+1, 0) = h.to();
-    }
-
+    }     
+    pl.connect();
 }
 
 void MouseReactSplitAddFeature::on_click(int button, vec2 p) {
@@ -87,7 +88,7 @@ void MouseReactSplitAddFeature::on_click(int button, vec2 p) {
         PolyLine& pl = HexModelerMode::geom_edge_id();
         PolyLineAttributes& attr = HexModelerMode::geom_edge_id();
         EdgeAttribute<int> feat_id("feat_id", attr, pl);
-        if (button == 0){
+        if (button == 0){// trace feature
             if (org_vertex == -1) {
                 org_vertex = v_selected;
                 return;
@@ -95,6 +96,7 @@ void MouseReactSplitAddFeature::on_click(int button, vec2 p) {
             Triangles& tri = HexModelerMode::geom_tri_id();
             trace_feature(tri,pl, feat_id, org_vertex, v_selected);
             org_vertex = -1;
+            smart_shuffle_edge_attribute(pl, feat_id);
             HexModelerMode::geom_edge_id().broadcast(UPDATED);
         }
         if (button == 1){// split feature
@@ -112,6 +114,7 @@ void MouseReactSplitAddFeature::on_click(int button, vec2 p) {
             std::vector<int> new_feat;
             ds.get_sets_id(new_feat);
             for (auto e : pl.iter_edges()) feat_id[e] = new_feat[e];
+            smart_shuffle_edge_attribute(pl, feat_id);
             HexModelerMode::geom_edge_id().broadcast(UPDATED);
         }
     }
@@ -144,14 +147,16 @@ void FeatureEditMode::activate(){
     God::layers["meshEdges"].visible = false;
     God::layers["geomEdges"].bind_attribute(ObjectId(ObjectType::POLYLINES_ATTR, { "geom", "","int","edges","feat_id" }));
     auto& er = static_cast<PolyLineLayer&>(God::layers["geomEdges"]).edge_renderer;
-    FOR(i, 2) er.data_range[i] = er.data_autorange[i];
     static_cast<PointSetLayer&>(God::layers["geomPts"]).primitive_renderer.radius_in_pixel = 7;
 }
 
 void FeatureEditMode::handle(Event event) {
     // forward mouse events to mouse reacts 
-    if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL))
+    if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL)){
         mode.handle_camera_and_layerselect(event);
+        multi_selector_react_right.path.clear();
+        multi_selector_react_left.path.clear();
+    }
     else {
         send_instruction_to_react(event, multi_selector_react_left);
         send_instruction_to_react(event, multi_selector_react_right);
@@ -210,9 +215,12 @@ void FeatureEditMode::handle(Event event) {
             std::vector<int> trash;
             int nconnex_components = ds.get_sets_id(trash);
 
-            if (nconnex_components == 1 && !has_branch) for (auto it : crossed_edges) {
-                int f = feat_id[it.first];
-                for (auto e : pl.iter_edges()) if (feat_id[e] == f) feat_id[e] = new_feat_id;
+            if (nconnex_components == 1 && !has_branch) {
+                for (auto it : crossed_edges) {
+                    int f = feat_id[it.first];
+                    for (auto e : pl.iter_edges()) if (feat_id[e] == f) feat_id[e] = new_feat_id;
+                }
+                smart_shuffle_edge_attribute(pl, feat_id);
                 geom_edge_id().broadcast(UPDATED);
             }
         }
@@ -228,6 +236,7 @@ void FeatureEditMode::handle(Event event) {
             pl.disconnect();
             pl.delete_edges(to_kill);
             pl.connect();
+            smart_shuffle_edge_attribute(pl, feat_id);
             geom_edge_id().broadcast(UPDATED);
         }
         multi_selector_react_right.reset();

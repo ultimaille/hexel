@@ -52,8 +52,8 @@ void PolyLineLayer::generate_gui(std::string name){
             if (tmp) {
                 rt = RenderType::EDGE_REPEAT;
                 edge_renderer.texture_repeat = 1;
-                edge_renderer.data_range[0] = 0;
-                edge_renderer.data_range[1] = 1;
+                edge_renderer.texture_range[0] = 0;
+                edge_renderer.texture_range[1] = 1;
             }
             else  rt = RenderType::EDGE;
             reset();

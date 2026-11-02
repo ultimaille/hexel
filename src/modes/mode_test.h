@@ -151,7 +151,7 @@ struct HexEdit : public Mode{
                 // set rendering
                 HexahedraLayer& hex_layer = dynamic_cast<HexahedraLayer&>(God::layers["hexskiHex"]);
                 hex_layer.attr_id = flag_id;
-                FOR(i, 2) hex_layer.tri_renderer.data_range[i] = -4+8*i;
+                FOR(i, 2) hex_layer.tri_renderer.texture_range[i] = -4+8*i;
                 hex_layer.reset();
             }
             

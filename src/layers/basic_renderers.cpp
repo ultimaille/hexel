@@ -41,15 +41,23 @@ void Renderer::generate_gui(std::string name){
             glDeleteTextures(1, &colormap);
             load_colormap(texture_id, colormap);
         }
-        ImGui::InputFloat2(label("range##range", name), data_range);
+        {
+            std::string msg = "Data range: [" + std::to_string(value_range[0]) + "," + std::to_string(value_range[1])+"]";
+                ImGui::Text(msg.c_str());
+        }
+        ImGui::InputFloat2(label("show range##range", name), texture_range);
         if (ImGui::InputInt(label("texture repeat##texture_repeat", name), &texture_repeat)) {
             texture_repeat = std::clamp(texture_repeat, 0, 1000000);
         }
-        if (ImGui::SmallButton(label("autorange##autorange", name))) {
-            data_autorange[0] = data_range[0];
-            data_autorange[1] = data_range[1];
+        {
+            bool tmp = auto_range;
+            ImGui::Checkbox(label("autorange##autorange", name), &auto_range);
+            if (auto_range){
+                texture_range[0] = value_range[0];
+                texture_range[1] = value_range[1];
+            }
+                
         }
-
     }
     ImGui::Checkbox(label("clip", name), &clipping.enabled);
 
@@ -71,8 +79,8 @@ void Renderer::shared_setup_before_rendering(){
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_1D, colormap);
     glBindVertexArray(vao);
-    glUniform1f(glGetUniformLocation(shaderProgram, "texture_repeat"), texture_repeat);
-    glUniform2fv(glGetUniformLocation(shaderProgram, "data_range"), 1, data_range);
+    glUniform1f(glGetUniformLocation(shaderProgram, "texture_repeat"), std::max(1,texture_repeat));
+    glUniform2fv(glGetUniformLocation(shaderProgram, "data_range"), 1, texture_range);
     glUniform1f(glGetUniformLocation(shaderProgram, "color_map_prop"), color_map_prop);
     glUniform1f(glGetUniformLocation(shaderProgram, "ambient_prop"), ambient_prop);
     glUniform1i(glGetUniformLocation(shaderProgram, "colormap"), 0);
@@ -112,21 +120,16 @@ void Renderer::destroy() {
 
 
 // TODO probably move this elsewhere
-std::array<float, 2> range(std::vector<float>& data) {
-    float min = std::numeric_limits<float>::max();
-    float max = std::numeric_limits<float>::min();
+void compute_range(std::vector<float>& data, float* range) {
+    range[0] = std::numeric_limits<float>::max();
+    range[1] = std::numeric_limits<float>::min();
     for (int i = 0; i < data.size(); ++i) {
         auto x = data[i];
-        min = std::min(min, x);
-        max = std::max(max, x);
+        range[0] = std::min(range[0], x);
+        range[1] = std::max(range[1], x);
     }
-    return { min, max };
 }
 
-void Renderer::compute_value_range(std::vector<float>& data) {
-    auto r = range(data);
-    std::copy(r.begin(), r.end(), data_autorange);
-}
 
 constexpr std::array<float, 3> to_float3(const vec3& v) {
     return {static_cast<float>(v.x),static_cast<float>(v.y),static_cast<float>(v.z)};
@@ -167,7 +170,12 @@ void PointRenderer::init(){
 }
 
 void PointRenderer::update(PointSet& ps, PointAttribute<bool>& visible, PointAttribute<float>& value, PointAttribute<int>& primitive_id) {
-    compute_value_range(value.ptr->data);
+    compute_range(value.ptr->data, value_range);
+    if (auto_range){
+        texture_range[0] = value_range[0];
+        texture_range[1] = value_range[1];
+    }
+
 
     npts = ps.size();
     std::vector<Vertex> vertices(ps.size());
@@ -220,7 +228,7 @@ void SegmentRenderer::generate_gui(std::string name){
 void SegmentRenderer::init(){
     glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE, width_range);
    
-        God::shaders.create_if_needed(std::string(SHADERS_DIR), "segment_as_tube");
+    God::shaders.create_if_needed(std::string(SHADERS_DIR), "segment_as_tube");
     shaderProgram = God::shaders["segment_as_tube"];
 
     load_colormap(texture_id, colormap);
@@ -247,7 +255,12 @@ void SegmentRenderer::init(){
 }
 
 void SegmentRenderer::update(PolyLine& pl, EdgeAttribute<bool>& visible, PointAttribute<float>& value, EdgeAttribute<int>& primitive_id) {
-    compute_value_range(value.ptr->data);
+    compute_range(value.ptr->data, value_range);
+    if (auto_range){
+        texture_range[0] = value_range[0];
+        texture_range[1] = value_range[1];
+    }
+
 
     npts = 2 * pl.nedges();
     std::vector<Vertex> vertices(npts);
@@ -351,7 +364,11 @@ void TriangleRenderer::init(){
 }
 
 void TriangleRenderer::update(Triangles& tri, FacetAttribute<bool>& visible, CornerAttribute<float>& value, FacetAttribute<int>& primitive_id) {
-    compute_value_range(value.ptr->data);
+    compute_range(value.ptr->data, value_range);
+    if (auto_range){
+        texture_range[0] = value_range[0];
+        texture_range[1] = value_range[1];
+    }
 
     std::vector<Vertex> vertices(tri.ncorners());
     npts = vertices.size();
@@ -373,7 +390,7 @@ void TriangleRenderer::update(Triangles& tri, FacetAttribute<bool>& visible, Cor
                 .primitive_id = primitive_id[f]
             };
         }
-    }
+    }                                         
 
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);

@@ -20,8 +20,9 @@ struct Renderer{
 	GLuint colormap;
 	int texture_repeat=1;
 	int texture_id=0;
-	float data_autorange[2] = {0,0};
-	float data_range[2] = {0,0};
+	bool auto_range = true;
+	float value_range[2] = { 0,0 };
+	float texture_range[2] = { 0,0 };
 	float color[3] = {.8,.8,.8};
 	float color_map_prop=0;
 	float ambient_prop=.5;
@@ -43,7 +44,6 @@ struct Renderer{
 	void declare_viewport();
 
 	virtual void destroy();
-	void compute_value_range(std::vector<float>& data);
 };
 
 

@@ -4,6 +4,7 @@ project(Hexel
     VERSION 1.0
     LANGUAGES C CXX
 )
+add_compile_options(/MP)# activate multiproc compilation
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
