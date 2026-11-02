@@ -5,115 +5,90 @@
 
 using namespace events;
 
-void LayerExplorer::draw_layer_gui() {
-    ImGui::Begin("LayersConfig", nullptr);
+// sync pressed with the property windows
+void LayerExplorer::sync_layer_from_property() {
+    layer_pressed = std::vector<bool>(God::layers.size(), false);
 
-    std::vector<bool> pressed(God::layers.size(), false);
-
-    {// sync pressed with the property windows
-        ObjectId id(ObjectType::PANEL, "property_window");
-        if (id.ref() != std::nullopt) {
-            PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(id));
-            for (auto id : pan.layers)
-                if (God::layers.contains(id.names.back()))
-                    pressed[God::layers.find(id.names.back())] = true;
-        }
-        else Log::add("Property_window not found");
+    ObjectId id(ObjectType::PANEL, "property_window");
+    
+    if (id.ref() == std::nullopt) {
+        Log::add("Property_window not found");
+        return;
     }
+
+    PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(id));
+    for (auto id : pan.layers)
+        if (God::layers.contains(id.names.back()))
+            layer_pressed[God::layers.find(id.names.back())] = true;
+}
+
+void LayerExplorer::sync_property_from_layer() {
+    ObjectId id(PANEL, "property_window");
+    PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(id));
+
+    pan.layers.clear();
+    for (int i = 0; i < God::layers.size(); ++i){
+        if (layer_pressed[i])
+            pan.layers.push_back(ObjectId(LAYER, God::layers.ith_name(i)));
+    }
+}
+
+void LayerExplorer::reorder_layers(int from, int to) {
+    
+    // Eventually change the layer group 
+    auto &layer_from = God::layers[from];
+    auto &layer_to = God::layers[to];
+    int old_group = layer_from.group;
+    int working_group = layer_to.group;
+    layer_from.group = working_group;
+
+    if (God::layers.is_group_empty(old_group))
+        God::layers.remove_group(old_group);
+
+    while (from < to) {
+        if (God::layers[from].group != working_group) {
+            from++;
+            continue;
+        }
+
+        God::layers.swap(from, from + 1);
+        
+        bool tmp = layer_pressed[from];
+        layer_pressed[from] = layer_pressed[from + 1];
+        layer_pressed[from + 1] = tmp;
+
+        from++;
+    }
+    while (from > to) {
+        if (God::layers[from].group != working_group) {
+            from--;
+            continue;
+        }
+
+        God::layers.swap(from, from - 1);
+
+        bool tmp = layer_pressed[from];
+        layer_pressed[from] = layer_pressed[from - 1];
+        layer_pressed[from - 1] = tmp;
+
+        from--;
+    }
+}
+
+void LayerExplorer::draw_layer_gui() {
+
+    sync_layer_from_property();
 
     std::vector<std::string> to_kill;
 
-    int drag_from = -1;
-    int drop_to = -1;
-
-    for (int i = 0; i < God::layers.size(); ++i){
-        Layer& layer = God::layers[i];
-        std::string layer_name = God::layers.ith_name(i);
-
-
-        bool was_pressed = pressed[i];
-        if (pressed[i]){
-            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.7f, 0.2f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.8f, 0.3f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.15f, 0.6f, 0.15f, 1.0f));
-        }
-        if (ImGui::Button(label(layer_name, "proppanel")))
-            pressed[i] = !pressed[i];
-        if (was_pressed) ImGui::PopStyleColor(3);
-
-        // The widget is the drag source
-        if (ImGui::BeginDragDropSource()){
-            ImGui::SetDragDropPayload("WIDGET", &i, sizeof(i));
-            ImGui::Text("Moving %s", (God::layers.ith_name(i)).c_str());
-            ImGui::EndDragDropSource();
-        }
-
-        // The same widget is the drop target
-        if (ImGui::BeginDragDropTarget()){
-            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("WIDGET")){
-                drag_from = *(const int*)payload->Data;
-                drop_to = i;
-            }
-            ImGui::EndDragDropTarget();
-        }
-        ImGui::SameLine();
-        float largeur = ImGui::GetContentRegionAvail().x;
-        float largeurWidget = 100.0f;
-        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + largeur - largeurWidget);
-
-        ImGui::Checkbox(label("##visible", layer_name), &layer.visible);
-        ImGui::SameLine(); if (ImGui::Button(label("X##", layer_name))){
-            to_kill.push_back(layer_name);
-        }
-    }
-    if (drag_from != -1 || drop_to != -1) {
-        while (drag_from < drop_to) {
-            God::layers.swap(drag_from, drag_from + 1);
-            bool tmp = pressed[drag_from];
-            pressed[drag_from] = pressed[drag_from + 1];
-            pressed[drag_from + 1] = tmp;
-
-            //std::swap(pressed[drag_from], pressed[drag_from +1]);
-            drag_from++;
-        }
-        while (drag_from > drop_to) {
-            God::layers.swap(drag_from, drag_from - 1);
-            bool tmp = pressed[drag_from];
-            pressed[drag_from] = pressed[drag_from - 1];
-            pressed[drag_from - 1] = tmp;
-            drag_from--;
-        }
-    }
-
-    {// update the set of current layers in the property windows
-        ObjectId id(PANEL, "property_window");
-        PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(id));
-
-        pan.layers.clear();
-        for (int i = 0; i < God::layers.size(); ++i){
-            if (pressed[i])
-                pan.layers.push_back(ObjectId(LAYER, God::layers.ith_name(i)));
-        }
-    }
-
-    for (std::string layer_name : to_kill){
-        God::layers.kill(layer_name);
-    }
-
-
-    ImGui::End();
-}
-
-void LayerExplorer::draw_group_gui() {
-    ImGui::Begin("GroupsConfig", nullptr);
+    ImGui::Begin("LayersConfig", nullptr);
 
     for (int i = 0; i < God::layers.groups.size(); ++i) {
         auto &group = God::layers.groups[i];
 
         ImGui::PushID(("widget_group_" + std::to_string(group.id)).c_str());
 
-        bool open = ImGui::TreeNodeEx(label(group.name, "group_" + std::to_string(group.id)));
-        
+        bool open = ImGui::TreeNodeEx(label(group.name, "group_" + std::to_string(group.id)), flag(false, false));
 
         // Button to open popup
         static bool showPopup = false;
@@ -181,7 +156,18 @@ void LayerExplorer::draw_group_gui() {
                 Layer &layer = God::layers[l];
                 if (layer.group == group.id) {
                     std::string layer_name = God::layers.ith_name(l);
-                    bool open_layer_node = ImGui::TreeNodeEx(label(layer_name, layer_name), ImGuiTreeNodeFlags_Leaf);
+
+                    // Apply pressed color style
+                    bool was_pressed = layer_pressed[l];
+                    if (layer_pressed[l]){
+                        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.2f, 0.7f, 0.2f, 1.0f));
+                        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.3f, 0.8f, 0.3f, 1.0f));
+                        ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.15f, 0.6f, 0.15f, 1.0f));
+                    }
+
+                    bool open_layer_node = ImGui::TreeNodeEx(label(layer_name, layer_name), flag(false, true));
+
+                    if (was_pressed) ImGui::PopStyleColor(3);
 
                     // Drag layer
                     if (ImGui::BeginDragDropSource()) {
@@ -189,6 +175,59 @@ void LayerExplorer::draw_group_gui() {
                         std::string layer_name = God::layers.ith_name(l);
                         ImGui::Text("%s", ("Move layer " + layer_name).c_str());
                         ImGui::EndDragDropSource();
+                    }
+
+
+                    bool was_dropped = false;
+                    // Drop target reorder layer
+                    if (ImGui::BeginDragDropTarget()) {
+                        int drag_from = -1;
+                        int drop_to = -1;
+
+                        // Drop to move layer
+                        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("LAYER_NODE_INDEX")) {
+                            int source = *(int*)payload->Data;
+                            if (source >= 0 && source < (int)God::layers.size()) {
+                                auto &source_layer = God::layers[source];
+                                drag_from = *(const int*)payload->Data;
+                                drop_to = l;
+                            }
+                        }
+
+                        // Reorder
+                        if (drag_from != -1 || drop_to != -1)
+                            reorder_layers(drag_from, drop_to);
+                        // if (drag_from != -1 || drop_to != -1) {
+                        //     while (drag_from < drop_to) {
+                        //         God::layers.swap(drag_from, drag_from + 1);
+                        //         bool tmp = layer_pressed[drag_from];
+                        //         layer_pressed[drag_from] = layer_pressed[drag_from + 1];
+                        //         layer_pressed[drag_from + 1] = tmp;
+                        //         drag_from++;
+                        //     }
+                        //     while (drag_from > drop_to) {
+                        //         God::layers.swap(drag_from, drag_from - 1);
+                        //         bool tmp = layer_pressed[drag_from];
+                        //         layer_pressed[drag_from] = layer_pressed[drag_from - 1];
+                        //         layer_pressed[drag_from - 1] = tmp;
+                        //         drag_from--;
+                        //     }
+                        // }
+
+                        ImGui::EndDragDropTarget();
+                        was_dropped = true;
+                    }
+
+                    if (!was_dropped && ImGui::IsMouseReleased(ImGuiMouseButton_Left) && ImGui::IsItemHovered())
+                        layer_pressed[l] = !layer_pressed[l];
+
+                    
+                    ImGui::SameLine(0.f, 4.f);
+                    ImGui::Checkbox(label("", "cb_layer_visible"), &layer.visible);
+
+                    ImGui::SameLine(); 
+                    if (ImGui::SmallButton(label("X##", layer_name))){
+                        to_kill.push_back(layer_name);
                     }
 
                     if (open_layer_node) {
@@ -200,10 +239,16 @@ void LayerExplorer::draw_group_gui() {
             ImGui::TreePop();
         }
 
+        sync_property_from_layer();
+
         ImGui::PopID();
+
+        for (std::string layer_name : to_kill){
+            God::layers.kill(layer_name);
+        }
     }
 
-    bool new_group_open = ImGui::TreeNodeEx(label("+", "group_new"), ImGuiTreeNodeFlags_Leaf);
+    bool new_group_open = ImGui::TreeNodeEx(label("+", "group_new"), flag(false, true));
     // Drop target
     if (ImGui::BeginDragDropTarget()) {
         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("LAYER_NODE_INDEX")) {

@@ -158,9 +158,13 @@ struct XCFExplorer : public Panel {
             static char tmp[1024] = "toto";
             ImGui::InputText(label("", "NewMultiMeshPopup"), tmp, 1024);
             ImGui::SameLine();
-            if (ImGui::Button("OK")) {
+            if (ImGui::SmallButton("OK")) {
                 ImGui::CloseCurrentPopup();
                 God::xcf.add(tmp);
+            }
+            ImGui::SameLine();
+            if (ImGui::SmallButton("Cancel")) {
+                ImGui::CloseCurrentPopup();
             }
             ImGui::EndPopup();
         }
