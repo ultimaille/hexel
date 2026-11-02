@@ -208,14 +208,15 @@ struct XCFExplorer : public Panel {
                         God::xcf.add_mesh(ObjectId(ObjectType::TRIANGLES, { mm_name,tmp }));
                         ImGui::CloseCurrentPopup();
                     }
-                    if (ImGui::MenuItem(label("Quads", mm_name))){
-                        God::xcf.add_mesh(ObjectId(ObjectType::QUADS, { mm_name,tmp }));
-                        ImGui::CloseCurrentPopup();
-                    }
-                    if (ImGui::MenuItem(label("Tetrahedra", mm_name))){
-                        God::xcf.add_mesh(ObjectId(ObjectType::TETRAHEDRA, { mm_name,tmp }));
-                        ImGui::CloseCurrentPopup();
-                    }
+                    // TODO: uncomment when layers implemented !
+                    // if (ImGui::MenuItem(label("Quads", mm_name))){
+                        // God::xcf.add_mesh(ObjectId(ObjectType::QUADS, { mm_name,tmp }));
+                        // ImGui::CloseCurrentPopup();
+                    // }
+                    // if (ImGui::MenuItem(label("Tetrahedra", mm_name))){
+                        // God::xcf.add_mesh(ObjectId(ObjectType::TETRAHEDRA, { mm_name,tmp }));
+                        // ImGui::CloseCurrentPopup();
+                    // }
                     if (ImGui::MenuItem(label("Hexahedra", mm_name))){
                         God::xcf.add_mesh(ObjectId(ObjectType::HEXAHEDRA, { mm_name,tmp }));
                         ImGui::CloseCurrentPopup();
@@ -274,6 +275,8 @@ struct XCFExplorer : public Panel {
                     close_mesh();
                 }
 
+                // TODO: can refactor duplicate (triangle / quads; tetrahedra / hexahedra), resolving some ObjectType at compile-time
+                // But wait for new object id before doing this !
                 // ==> triangles
                 std::vector<std::string> tri2kill;
                 for (auto& [mesh_name, obj] : mm.triangles) {
