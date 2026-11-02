@@ -33,11 +33,12 @@ struct MouseReactTrackBallCamera : public MouseReact{
 };
 
 
-
 struct DefaultMode : public  Mode{
     MouseReactTrackBallCamera camera_react;
     DefaultMode() {}
-    void define_gui()           { }
+    void define_gui()           { 
+
+    }
     void handle(Event event)    { send_instruction_to_react(event, camera_react); }
 };
 
