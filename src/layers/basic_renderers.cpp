@@ -45,10 +45,9 @@ void Renderer::generate_gui(std::string name){
         if (ImGui::InputInt(label("texture repeat##texture_repeat", name), &texture_repeat)) {
             texture_repeat = std::clamp(texture_repeat, 0, 1000000);
         }
-        if (ImGui::SmallButton(label("autorange##autorange", name))) {
-            data_range[0] = data_autorange[0];
-            data_range[1] = data_autorange[1];
-        }
+
+        if (ImGui::Checkbox(label("autorange##autorange", name), &is_autorange) && is_autorange)
+            autorange();
 
     }
     ImGui::Checkbox(label("clip", name), &clipping.enabled);
@@ -126,6 +125,7 @@ std::array<float, 2> range(std::vector<float>& data) {
 void Renderer::compute_value_range(std::vector<float>& data) {
     auto r = range(data);
     std::copy(r.begin(), r.end(), data_autorange);
+    if (is_autorange) autorange();
 }
 
 constexpr std::array<float, 3> to_float3(const vec3& v) {

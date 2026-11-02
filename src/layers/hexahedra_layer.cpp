@@ -33,7 +33,7 @@
     void HexahedraLayer::generate_gui(std::string name){
         if (attr_active()){
             std::string attrib_text = "ATTRIB: " + attr_primitive() + "." + attr_name() + " (" + attr_type() + ")";
-            ImGui::Text(attrib_text.c_str());
+            ImGui::TextUnformatted(attrib_text.c_str());
         }
         {
             float tmp = shrink;
@@ -298,7 +298,7 @@
         point_renderer.destroy();
     }
 
-    void HexahedraLayer::bind_attribute(ObjectId p_attr_id){
+    void HexahedraLayer::bind_attribute(ObjectId p_attr_id) {
         attr_id = p_attr_id;
 
         VolumeAttributes& attr = mesh;
