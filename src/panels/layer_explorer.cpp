@@ -45,33 +45,18 @@ void LayerExplorer::reorder_layers(int from, int to) {
     if (God::layers.is_group_empty(old_group))
         God::layers.remove_group(old_group);
 
-    while (from < to) {
-        if (God::layers[from].group != working_group) {
-            from++;
-            continue;
-        }
+    int step = (from < to) ? 1 : -1;
 
-        God::layers.swap(from, from + 1);
+    for (int i = from; i != to; i += step) {
+        if (God::layers[i].group != working_group)
+            continue;
+
+        int next = i + step;
+        God::layers.swap(i, next);
         
-        bool tmp = layer_pressed[from];
-        layer_pressed[from] = layer_pressed[from + 1];
-        layer_pressed[from + 1] = tmp;
-
-        from++;
-    }
-    while (from > to) {
-        if (God::layers[from].group != working_group) {
-            from--;
-            continue;
-        }
-
-        God::layers.swap(from, from - 1);
-
-        bool tmp = layer_pressed[from];
-        layer_pressed[from] = layer_pressed[from - 1];
-        layer_pressed[from - 1] = tmp;
-
-        from--;
+        bool tmp = layer_pressed[i];
+        layer_pressed[i] = layer_pressed[next];
+        layer_pressed[next] = tmp;
     }
 }
 
@@ -197,22 +182,6 @@ void LayerExplorer::draw_layer_gui() {
                         // Reorder
                         if (drag_from != -1 || drop_to != -1)
                             reorder_layers(drag_from, drop_to);
-                        // if (drag_from != -1 || drop_to != -1) {
-                        //     while (drag_from < drop_to) {
-                        //         God::layers.swap(drag_from, drag_from + 1);
-                        //         bool tmp = layer_pressed[drag_from];
-                        //         layer_pressed[drag_from] = layer_pressed[drag_from + 1];
-                        //         layer_pressed[drag_from + 1] = tmp;
-                        //         drag_from++;
-                        //     }
-                        //     while (drag_from > drop_to) {
-                        //         God::layers.swap(drag_from, drag_from - 1);
-                        //         bool tmp = layer_pressed[drag_from];
-                        //         layer_pressed[drag_from] = layer_pressed[drag_from - 1];
-                        //         layer_pressed[drag_from - 1] = tmp;
-                        //         drag_from--;
-                        //     }
-                        // }
 
                         ImGui::EndDragDropTarget();
                         was_dropped = true;
