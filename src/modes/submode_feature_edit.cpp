@@ -147,7 +147,7 @@ void FeatureEditMode::activate(){
     God::layers["meshEdges"].visible = false;
     God::layers["geomEdges"].bind_attribute(ObjectId(ObjectType::POLYLINES_ATTR, { "geom", "","int","edges","feat_id" }));
     auto& er = static_cast<PolyLineLayer&>(God::layers["geomEdges"]).edge_renderer;
-    static_cast<PointSetLayer&>(God::layers["geomPts"]).primitive_renderer.radius_in_pixel = 7;
+    static_cast<PointSetLayer&>(God::layers["geomPts"]).point_renderer.radius_in_pixel = 7;
 }
 
 void FeatureEditMode::handle(Event event) {

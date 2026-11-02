@@ -37,11 +37,7 @@ struct Renderer{
 
 	bool is_autorange = true;
 
-	void autorange() {
-		data_range[0] = data_autorange[0];
-		data_range[1] = data_autorange[1];
-	}
-
+	
 	void generate_gui(std::string name);
 	void shared_setup_before_rendering();
 
