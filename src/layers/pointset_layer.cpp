@@ -77,7 +77,7 @@ void PointSetLayer::update_data_for_scalar_point_attribute_as_sphere() {
     PointAttribute<bool> visible_pts("visible", attr, ps, true);
     PointAttribute<int> primitive_id(ps, 0);
     PointAttribute<T> value_pts(attr_name(), attr, ps);
-    PointAttribute<float> value_float(attr_name(), attr, ps);
+    PointAttribute<float> value_float(ps, 0);
 
     for (int v = 0; v < ps.size(); ++v) {
         value_float[v] = static_cast<float>(value_pts[v]);
