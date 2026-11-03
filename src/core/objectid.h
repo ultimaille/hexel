@@ -139,6 +139,8 @@ struct PathNode {
 //  void broadcast(events::EventType e) {
 //      ObjectId(*this).broadcast(e);
 //  }
+    [[deprecated("temporary compatibility conversion; migrate callers to Path")]]
+        operator ObjectId() const;    
 
     protected:
     std::vector<std::string> concat(std::vector<std::string> path, std::string name) const {
@@ -217,9 +219,47 @@ struct Path : PathNode {
             return { concat(path, s) };
         }
     } xcf = {{{ "xcf" }}};
+
 };
 
 inline Path path() {
+    return {};
+}
+
+inline PathNode::operator ObjectId() const {
+    const auto& p = path;
+
+    if (p == std::vector<std::string>{"keys"})   return {events::KEYBOARD};
+    if (p == std::vector<std::string>{"mouse"})  return {events::MOUSE};
+    if (p == std::vector<std::string>{"camera"}) return {events::CAMERA};
+
+    if (p.size() == 2 && p[0] == "layers")
+        return {events::LAYER, p[1]};
+    if (p.size() == 2 && p[0] == "panels")
+        return {events::PANEL, p[1]};
+
+    if (p.size() == 2 && p[0] == "xcf")
+        return {events::MULTIMESH, p[1]};
+    if (p.size() == 3 && p[0] == "xcf" && p[2] == "pointset")
+        return {events::POINTSET, p[1]};
+
+    if (p.size() == 4 && p[0] == "xcf") {
+        events::ObjectType type = events::NA;
+        if      (p[2] == "polylines")  type = events::POLYLINES;
+        else if (p[2] == "triangles")  type = events::TRIANGLES;
+        else if (p[2] == "quads")      type = events::QUADS;
+        else if (p[2] == "polygons")   type = events::POLYGONS;
+        else if (p[2] == "tetrahedra") type = events::TETRAHEDRA;
+        else if (p[2] == "hexahedra")  type = events::HEXAHEDRA;
+        else if (p[2] == "wedges")     type = events::WEDGES;
+        else if (p[2] == "pyramids")   type = events::PYRAMIDS;
+
+        um_assert(type != events::NA);
+        return {type, {p[1], p[3]}};
+    }
+
+    // No legacy ObjectId equivalent, or an unsupported path shape.
+    um_assert(!"Path cannot be converted to ObjectId");
     return {};
 }
 
