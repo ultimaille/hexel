@@ -16,11 +16,8 @@
             }
 
         if (ImGui::Button("Load project")) ImGui::OpenPopup("Load project");
-                std::cerr << mode.project_directory << std::endl;
         if (FilePopup("Load project", mode.project_directory, mode.project_directory, { "*" })) {
-            std::cerr << "GNA!\n";
             if (!mode.project_directory.empty()){
-                std::cerr << mode.project_directory << std::endl;
                 mode.load_project();
             }
         }
