@@ -114,17 +114,31 @@ inline bool operator==(const ObjectId& a, const ObjectId& b) {
     return a.path == b.path && a.names == b.names;
 }
 
-/*
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 struct PathNode {
     const std::vector<std::string> path;
 
-    operator ObjectId() const {
-        return ObjectId{ path };
-    }
+//  operator ObjectId() const {
+//      return ObjectId{ path };
+//  }
 
-    void broadcast(events::EventType e) {
-        ObjectId(*this).broadcast(e);
-    }
+//  void broadcast(events::EventType e) {
+//      ObjectId(*this).broadcast(e);
+//  }
 
     protected:
     std::vector<std::string> concat(std::vector<std::string> path, std::string name) const {
@@ -134,16 +148,16 @@ struct PathNode {
 };
 
 struct PathCollection : PathNode {
-    ObjectId operator[](std::string s) const {
+    PathNode operator[](std::string s) const {
         return { concat(path, s) };
     }
 };
 
 struct Path : PathNode {
-    ObjectId keys    = {{ "keys"    }};
-    ObjectId mouse   = {{ "mouse"   }};
-    ObjectId camera  = {{ "camera"  }};
-    ObjectId context = {{ "context" }};
+    PathNode keys    = {{ "keys"    }};
+    PathNode mouse   = {{ "mouse"   }};
+    PathNode camera  = {{ "camera"  }};
+    PathNode context = {{ "context" }};
 
     PathCollection modes   = {{{ "modes"   }}};
     PathCollection layers  = {{{ "layers"  }}};
@@ -209,6 +223,5 @@ inline Path path() {
     return {};
 }
 
-*/
 #endif //__OBJECTID_H__
 
