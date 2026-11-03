@@ -66,7 +66,8 @@
         int id = find(layer_name);
         std::swap(items[id], items.back());
         items.pop_back();
-        ObjectId(path().layers[layer_name]).broadcast(events::KILLED);
+        ObjectId(events::LAYER, layer_name).broadcast(events::KILLED);
+//      ObjectId(path().layers[layer_name]).broadcast(events::KILLED);
     }
 
     void LayerManager::destroy() {

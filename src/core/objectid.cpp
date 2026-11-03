@@ -19,7 +19,6 @@ void ObjectId::broadcast(EventType e) {
 }
 
 std::optional<ObjectId::ObjectRef> ObjectId::ref() {
-    /*
     switch (path) {
         case KEYBOARD:
             return std::ref(God::keys);
@@ -96,7 +95,6 @@ std::optional<ObjectId::ObjectRef> ObjectId::ref() {
         default:
             return std::nullopt;
     }
-*/
     return std::nullopt;
 }
 
@@ -159,14 +157,12 @@ ObjectId::operator Polygons&() {
 }
 
 ObjectId::operator SurfaceAttributes&() {
-    /*
     switch (path) {
         case TRIANGLES: return as<MultiMesh::MeshAttr<Triangles, SurfaceAttributes>>().attributes;
         case QUADS:     return as<MultiMesh::MeshAttr<Quads,     SurfaceAttributes>>().attributes;
         case POLYGONS:  return as<MultiMesh::MeshAttr<Polygons,  SurfaceAttributes>>().attributes;
         default: um_assert(!"invalid cast");
     }
-    */
     static SurfaceAttributes dummy = {};
     return dummy;
 }
@@ -192,7 +188,6 @@ ObjectId::operator Pyramids&() {
 }
 
 ObjectId::operator VolumeAttributes&() {
-/*
     switch (path) {
         case TETRAHEDRA: return as<MultiMesh::MeshAttr<Tetrahedra, VolumeAttributes>>().attributes;
         case HEXAHEDRA:  return as<MultiMesh::MeshAttr<Hexahedra,  VolumeAttributes>>().attributes;
@@ -200,8 +195,19 @@ ObjectId::operator VolumeAttributes&() {
         case PYRAMIDS:   return as<MultiMesh::MeshAttr<Pyramids,   VolumeAttributes>>().attributes;
         default: um_assert(!"invalid cast");
     }
-*/
     static VolumeAttributes dummy = {};
     return dummy;
 }
 
+/*
+void EventManager::dispatch() {
+    while (!queue.empty()) {
+        auto event = queue.back();
+        queue.pop_back();
+        God::camera.handle(event);
+        God::layers.handle(event);
+        God::modes.handle(event);
+    }
+}
+
+*/

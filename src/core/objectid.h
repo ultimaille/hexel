@@ -20,17 +20,25 @@ struct Panel;
 struct Layer;
 
 namespace events {
+    enum ObjectType { NA, KEYBOARD, MOUSE, CAMERA, PANEL, LAYER, MULTIMESH, 
+        POINTSET, POLYLINES, TRIANGLES, QUADS, POLYGONS, TETRAHEDRA, HEXAHEDRA, WEDGES, PYRAMIDS,
+        POINTSET_ATTR, POLYLINES_ATTR, TRIANGLES_ATTR, QUADS_ATTR, POLYGONS_ATTR, TETRAHEDRA_ATTR, HEXAHEDRA_ATTR, WEDGES_ATTR, PYRAMIDS_ATTR
+    };
     enum EventType {
         CREATED, KILLED, UPDATED
     };
 }
 
 struct ObjectId {
-    const std::vector<std::string> path = {};
+   events::ObjectType path = events::NA;
+    std::vector<std::string> names = {}; // multimesh name, mesh name, etc.
 
     ObjectId() = default;
-    ObjectId(std::vector<std::string> p) : path(p) {}
-    ObjectId(std::initializer_list<std::string> p) : path(p) {}
+    ObjectId(events::ObjectType path, std::vector<std::string> names={}) : path(path), names(names) {}
+    ObjectId(events::ObjectType path, std::string name) : path(path), names(1, name) {}
+
+//  ObjectId(std::vector<std::string> p) : path(p) {}
+//  ObjectId(std::initializer_list<std::string> p) : path(p) {}
 
     using ObjectRef = std::variant<
         std::reference_wrapper<KeyboardState>,
@@ -74,6 +82,7 @@ struct ObjectId {
 
     void broadcast(events::EventType e);
 
+/*
     inline bool is_prefix(const ObjectId& other) const {
         return path.size() <= other.path.size() && 
             std::ranges::equal(
@@ -90,6 +99,7 @@ struct ObjectId {
         return out;
     }
 
+*/
     private:
     template<typename T> T& as() {
         std::optional<ObjectRef> v = ref();
@@ -101,9 +111,10 @@ struct ObjectId {
 };
 
 inline bool operator==(const ObjectId& a, const ObjectId& b) {
-    return a.path == b.path;
+    return a.path == b.path && a.names == b.names;
 }
 
+/*
 struct PathNode {
     const std::vector<std::string> path;
 
@@ -198,5 +209,6 @@ inline Path path() {
     return {};
 }
 
+*/
 #endif //__OBJECTID_H__
 
