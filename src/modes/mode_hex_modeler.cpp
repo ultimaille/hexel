@@ -166,7 +166,7 @@ HexModelerMode::HexModelerMode(){
     modes.emplace_back<LayerSplitMode>("LayerSplitMode", *this);
     modes.emplace_back<FeatureEditMode>("FeatureEditMode", *this);
 
-    if (0){
+    if (1){
         project_directory = WORKING_DIR + "B1";
         load_project();
         set_active_mode("FeatureEditMode");
