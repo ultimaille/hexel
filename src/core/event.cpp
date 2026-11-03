@@ -1,7 +1,13 @@
 #include "event.h"
-#include "layers.h"
-#include "camera.h"
 #include "core.h"
+#include "camera.h"
+#include "picker.h"
+#include "xcf.h"
+#include "render_target.h"
+#include "window.h"
+#include "panels.h"
+#include "layers.h"
+#include "shaders.h"
 #include "mode.h"
 
 using namespace events;
