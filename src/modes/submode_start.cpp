@@ -9,18 +9,21 @@
         if (ImGui::Button("Import From CAD")) ImGui::OpenPopup("CAD_file");
         if (FilePopup("CAD_file", std::filesystem::path(mode.CAD_file).parent_path().string(), mode.CAD_file, { ".geogram",".meshb",".mesh" }))
             if (!mode.CAD_file.empty()) {
-                mode.project_directory = mode.working_directory + std::filesystem::path(mode.CAD_file).stem().string() + "\\";
+                mode.project_directory = mode.working_directory + std::filesystem::path(mode.CAD_file).stem().string();
                 std::filesystem::create_directory(mode.project_directory);
                 mode.import_new_project_from_CAD(mode.CAD_file);
                 mode.load_project();
             }
 
         if (ImGui::Button("Load project")) ImGui::OpenPopup("Load project");
-        if (FilePopup("Load project", mode.project_directory, mode.project_directory, { "*" }))
+                std::cerr << mode.project_directory << std::endl;
+        if (FilePopup("Load project", mode.project_directory, mode.project_directory, { "*" })) {
+            std::cerr << "GNA!\n";
             if (!mode.project_directory.empty()){
-                mode.project_directory = mode.project_directory + "\\";
+                std::cerr << mode.project_directory << std::endl;
                 mode.load_project();
             }
+        }
         ImGui::End();
     }
 

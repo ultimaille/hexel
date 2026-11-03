@@ -12,7 +12,9 @@
 
 
 
+//#define WORKING_DIR std::string("/home/ssloy/+/hexel/build/NICO/")
 #define WORKING_DIR std::string("C:\\NICOTMP\\tmp\\")
+
 
 
 // access to xcf bjects
@@ -55,8 +57,9 @@ void HexModelerMode::reset_xcf(){
 }
 void HexModelerMode::load_project(){
     reset_xcf();
-    load_mm_with_default_layers(project_directory + "geom");
-    load_mm_with_default_layers(project_directory + "mesh");
+    const std::filesystem::path project_dir{project_directory};
+    load_mm_with_default_layers((project_dir / "geom").string());
+    load_mm_with_default_layers((project_dir / "mesh").string());
 
     Hexahedra& hex = hex_id();
     God::xcf["mesh"].polylines.clear();
@@ -75,6 +78,7 @@ void HexModelerMode::load_project(){
     set_active_mode("LayerSplitMode");
 }
 void HexModelerMode::import_new_project_from_CAD(std::string filename){
+    const std::filesystem::path project_dir{project_directory};
     reset_xcf();
     BBox3 bbox;
     {   // import the CAD
@@ -116,7 +120,7 @@ void HexModelerMode::import_new_project_from_CAD(std::string filename){
         for (auto f : tri.mesh.iter_facets()) region[f] = f;
 
         mm.quads.clear(); mm.polygons.clear(); mm.hexahedra.clear(); mm.pyramids.clear(); mm.wedges.clear();
-        mm.save_to_path(project_directory + "geom",true);
+        mm.save_to_path((project_dir / "geom").string(),true);
 
     }
 
@@ -131,7 +135,7 @@ void HexModelerMode::import_new_project_from_CAD(std::string filename){
         FOR(k, 2)FOR(j, 2)FOR(i, 2) mm.pointset[i + 2 * j + 4 * k] = bbox.min + vec3(i * bbox.size()[0], j * bbox.size()[1], k * bbox.size()[2]);
         FOR(v, 8) hex.vert(0, v) = v;
 
-        mm.save_to_path(project_directory + "mesh", true);
+        mm.save_to_path((project_dir / "mesh").string(), true);
     }
     reset_xcf();
 }
@@ -162,8 +166,8 @@ HexModelerMode::HexModelerMode(){
     modes.emplace_back<LayerSplitMode>("LayerSplitMode", *this);
     modes.emplace_back<FeatureEditMode>("FeatureEditMode", *this);
 
-    if (1){
-        project_directory = WORKING_DIR + "B1\\";
+    if (0){
+        project_directory = WORKING_DIR + "B1";
         load_project();
         set_active_mode("FeatureEditMode");
     }else
