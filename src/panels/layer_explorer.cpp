@@ -206,11 +206,6 @@ void LayerExplorer::draw_layer_gui() {
                     ImGui::SameLine(0.f, 4.f);
                     ImGui::Checkbox(label("", "cb_layer_visible"), &layer.visible);
 
-                    // ImGui::SameLine(); 
-                    // if (ImGui::SmallButton(label("X##", layer_name))){
-                    //     to_kill.push_back(layer_name);
-                    // }
-
                     if (open_layer_node) {
                         ImGui::TreePop();
                     }
@@ -223,10 +218,10 @@ void LayerExplorer::draw_layer_gui() {
         sync_property_from_layer();
 
         ImGui::PopID();
+    }
 
-        for (std::string layer_name : to_kill){
-            God::layers.kill(layer_name);
-        }
+    for (std::string layer_name : to_kill){
+        God::layers.kill(layer_name);
     }
 
     bool new_group_open = ImGui::TreeNodeEx(label("+", "group_new"), flag(false, true));
