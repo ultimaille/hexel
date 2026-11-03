@@ -28,6 +28,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
     God::mouse.current.buttons[button] = (action == GLFW_PRESS);
     for (auto it : God::events.queue) if (it.who.path == MOUSE) return;
     ObjectId(MOUSE).broadcast(UPDATED);
+//    path().mouse.broadcast(UPDATED);
 }
 
 void cursor_position_callback(GLFWwindow* window, double x, double y) {
@@ -36,6 +37,7 @@ void cursor_position_callback(GLFWwindow* window, double x, double y) {
     God::mouse.current.y = y;
     for (auto it : God::events.queue) if (it.who.path == MOUSE) return;
     ObjectId(MOUSE).broadcast(UPDATED);
+//    path().mouse.broadcast(UPDATED);
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
@@ -43,13 +45,16 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
     God::mouse.wheel_speed = yoffset;
     for (auto it : God::events.queue) if (it.who.path == MOUSE) return;
     ObjectId(MOUSE).broadcast(UPDATED);
+//    path().mouse.broadcast(UPDATED);
 }
 
 void KeyboardState::update() {
     for (int k = 0; k <= GLFW_KEY_LAST; ++k) {
         bool down = glfwGetKey(God::context.window, k) == GLFW_PRESS;
-        if (down != keys[k])
+        if (down != keys[k]) {
             ObjectId(KEYBOARD).broadcast(UPDATED);
+//            path().keys.broadcast(UPDATED);
+        }
         keys[k] = down;
     }
 }

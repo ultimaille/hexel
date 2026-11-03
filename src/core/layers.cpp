@@ -70,6 +70,7 @@
 
         // Broadcast event
         ObjectId(events::LAYER, layer_name).broadcast(events::KILLED);
+//      ObjectId(path().layers[layer_name]).broadcast(events::KILLED);
     }
 
     void LayerManager::kill(std::string layer_name){

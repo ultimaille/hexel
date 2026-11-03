@@ -15,6 +15,13 @@
 #include "panels/xcf_explorer.h"
 #include "panels/layer_explorer.h"
 
+#include "misc/purgatory.h"
+
+#include "layers/basic_layers.h"
+#include "layers/ssao.h"
+
+#include "core/objectid.h"
+
 #ifdef HAS_CONFIG
     #include "myconfig.h"
 #endif
