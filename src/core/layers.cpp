@@ -13,7 +13,7 @@
     Layer::Layer() : id(max_id) { ++max_id; }
     void Layer::reset() { Log::error("reset called for a layer that does not implement it"); };
     void Layer::generate_gui(std::string name) {
-        ImGui::Checkbox(("visible##visible" + name).c_str(), &visible);
+        // ImGui::Checkbox(("visible##visible" + name).c_str(), &visible);
     }
 
 
@@ -21,19 +21,12 @@
     void Layer::render_constant_color(int layerid) { Log::add("To be implemented"); }
     void Layer::destroy() {}
 
-
-    int Layer::primitive_id(int vertex_id) { return vertex_id; } // TODO to pure virtual
-
-
-
-
-
-
     void LayerManager::render() {
         for (auto& [name, obj] : *this)
             if (obj->visible)
                 obj->render();
     }
+
     void LayerManager::handle(Event event) {
         // if (event.who == events::MOUSE) return;
 
@@ -42,7 +35,7 @@
         std::vector<std::string> to_kill;
         if (event.what_happened == events::KILLED) for (int i = 0; i < this->size(); i) {
             if ((*this)[i].mesh==event.who)
-                erase(i);
+                kill(i);
             else i++;
         }
         if (event.what_happened == events::UPDATED)
@@ -61,14 +54,51 @@
         return std::nullopt;
     }
 
-    void LayerManager::kill(std::string layer_name){
-        (*this)[layer_name].destroy();
-        int id = find(layer_name);
-        std::swap(items[id], items.back());
-        items.pop_back();
+    void LayerManager::kill(int idx){
+        std::string layer_name = ith_name(idx);
+
+        // Clean GPU memory
+        (*this)[idx].destroy();
+
+        // Erase element
+        int group_id = items[idx].object->group;
+        items.erase(items.begin() + idx);
+
+        // Eventually remove group
+        if (God::layers.is_group_empty(group_id))
+            God::layers.remove_group(group_id);
+
+        // Broadcast event
         ObjectId(events::LAYER, layer_name).broadcast(events::KILLED);
 //      ObjectId(path().layers[layer_name]).broadcast(events::KILLED);
     }
+
+    void LayerManager::kill(std::string layer_name){
+        int idx = find(layer_name);        
+        kill(idx);
+    }
+
+    int LayerManager::add_group(const std::string& name) {
+        groups.emplace_back(max_group++, Group::BlendOp::NONE, name);
+        return max_group - 1;
+    }
+
+    void LayerManager::remove_group(int group_id) {
+        auto it = std::find_if(groups.begin(), groups.end(), [&group_id](const auto &g) { return g.id == group_id; });
+        if (it != groups.end())
+            groups.erase(it);
+    }
+
+    bool LayerManager::is_group_empty(int group_id) {
+        for (int l = 0; l < size(); ++l) {
+            auto &layer = Registry<Layer>::operator[](l);
+            if (layer.group == group_id)
+                return false;
+        }
+
+        return true;
+    }
+
 
     void LayerManager::destroy() {
         for (auto& [name, obj] : *this)

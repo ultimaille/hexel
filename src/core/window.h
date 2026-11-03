@@ -7,6 +7,7 @@
 #include <imgui_impl_opengl3.h>
 
 #include "render_target.h"
+#include "render_target_composition.h"
 
 void framebuffer_size_callback(GLFWwindow* window,int width,int height);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
@@ -15,7 +16,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 struct WindowContext {
     GLFWwindow* window = nullptr;
-    RenderTarget render_target = {};
+    RenderTargetComposition render_target = {};
 
     void init(int w = 1000, int h = 1000);
 
@@ -29,15 +30,9 @@ struct WindowContext {
 
     void init_imgui();
 
-    void bind_render_target();
-
     void bind_default_framebuffer();
 
     void begin_frame(bool offscreen = false);
-
-    void begin_scissor(vec4 rect);
-
-    void end_scissor();
 
     void present_render_target();
 

@@ -4,11 +4,19 @@ project(Hexel
     VERSION 1.0
     LANGUAGES C CXX
 )
+if(MSVC)
+    add_compile_options(/MP)# activate multiproc compilation
+endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
 add_definitions(-DTEST_INPUT_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/test-input/\")
 add_definitions(-DSHADERS_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/\")
@@ -153,6 +161,10 @@ file(GLOB_RECURSE HEXEL_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h"
 )
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/src/myconfig.h")
+    add_compile_definitions(HAS_CONFIG)
+endif()
 
 source_group(
     TREE "${CMAKE_CURRENT_SOURCE_DIR}/src"

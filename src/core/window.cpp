@@ -6,6 +6,7 @@
 #include "picker.h"
 #include "xcf.h"
 #include "render_target.h"
+#include "render_target_composition.h"
 #include "panels.h"
 #include "layers.h"
 #include "shaders.h"
@@ -25,21 +26,24 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
     ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
     um_assert(button >= 0 && button < MouseState::ButtonCount);
     God::mouse.current.buttons[button] = (action == GLFW_PRESS);
+    for (auto it : God::events.queue) if (it.who.path == MOUSE) return;
     ObjectId(MOUSE).broadcast(UPDATED);
 //    path().mouse.broadcast(UPDATED);
 }
 
 void cursor_position_callback(GLFWwindow* window, double x, double y) {
     ImGui_ImplGlfw_CursorPosCallback(window, x, y);
-    ObjectId(MOUSE).broadcast(UPDATED);
-//    path().mouse.broadcast(UPDATED);
     God::mouse.current.x = x;
     God::mouse.current.y = y;
+    for (auto it : God::events.queue) if (it.who.path == MOUSE) return;
+    ObjectId(MOUSE).broadcast(UPDATED);
+//    path().mouse.broadcast(UPDATED);
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
     ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
     God::mouse.wheel_speed = yoffset;
+    for (auto it : God::events.queue) if (it.who.path == MOUSE) return;
     ObjectId(MOUSE).broadcast(UPDATED);
 //    path().mouse.broadcast(UPDATED);
 }
@@ -130,10 +134,6 @@ void WindowContext::init_imgui() {
     um_assert(ImGui_ImplOpenGL3_Init("#version 330"));
 }
 
-void WindowContext::bind_render_target() {
-    render_target.bind();
-}
-
 void WindowContext::bind_default_framebuffer() {
     RenderTarget::bind_default(render_target.width, render_target.height);
 }
@@ -144,28 +144,21 @@ void WindowContext::begin_frame(bool offscreen) {
         return;
     }
     render_target.clear(0.05f, 0.05f, 0.08f, 1.0f);
+    render_target.begin();
 
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     if (!offscreen) ImGui::NewFrame();
 }
 
-void WindowContext::begin_scissor(vec4 rect) {
-    glEnable(GL_SCISSOR_TEST);
-    glScissor(rect[0], rect[1], rect[2], rect[3]);
-}
-
-void WindowContext::end_scissor() {
-    glDisable(GL_SCISSOR_TEST);
-}
-
 void WindowContext::present_render_target() {
-    if (!render_target.valid()) {
-        Log::error("RenderTarget is invalid");
-        return;
-    }
+    // if (!render_target.valid()) {
+    //     Log::error("RenderTarget is invalid");
+    //     return;
+    // }
 
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, render_target.framebuffer);
+    render_target.end();
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, render_target.composite.framebuffer);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     glBlitFramebuffer(0, 0, render_target.width, render_target.height, 0, 0, render_target.width, render_target.height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
     bind_default_framebuffer();
@@ -180,8 +173,8 @@ void WindowContext::end_frame(bool offscreen) {
     if (!offscreen) {
         present_render_target();
         ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     }
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     glfwSwapBuffers(window);
 }
 

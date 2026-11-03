@@ -7,11 +7,9 @@
 
 #include <cstdlib>
 #include <iostream>
-
 #include <string>
 
 #include <core/all.h>
-#include <modes/mode_test.h>
 
 #include "panels/property_explorer.h"
 #include "panels/xcf_explorer.h"
@@ -23,6 +21,11 @@
 #include "layers/ssao.h"
 
 #include "core/objectid.h"
+
+#ifdef HAS_CONFIG
+    #include "myconfig.h"
+#endif
+
 
 
 
@@ -61,9 +64,11 @@ void main_menu_gui(){
 
 int main(int argc, const char* argv[]) {
     God::context.init();
+
     God::modes.add<DefaultMode>("default");
-    God::modes.add<HexEdit>("hexedit");
-    God::modes.current_mode = 1;
+    #ifdef HAS_CONFIG
+    Config::init_modes();
+    #endif
 
     God::panels.add<XCFExplorer>("xcf_window");
     God::panels.add<LayerExplorer>("layer_window");
@@ -80,10 +85,22 @@ int main(int argc, const char* argv[]) {
         glfwPollEvents();
         if (!ImGui::GetIO().WantCaptureKeyboard || !ImGui::GetIO().WantCaptureMouse)
             God::keys.update();
-        God::events.dispatch();
 
+    
         God::context.begin_frame();
-        God::layers.render();
+        
+        for (auto &group : God::layers.groups) {
+            
+            God::context.render_target.bind(group.id);
+
+            for (int l = 0; l < God::layers.size(); ++l) {
+                Layer &layer = God::layers[l];
+                if (layer.group == group.id)
+                    layer.render();
+            }
+        }
+        
+        God::events.dispatch();
 
         main_menu_gui();
         God::panels.show_gui();

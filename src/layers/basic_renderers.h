@@ -20,8 +20,9 @@ struct Renderer{
 	GLuint colormap;
 	int texture_repeat=1;
 	int texture_id=0;
-	float data_autorange[2] = {0,0};
-	float data_range[2] = {0,0};
+	bool auto_range = true;
+	float value_range[2] = { 0,0 };
+	float texture_range[2] = { 0,0 };
 	float color[3] = {.8,.8,.8};
 	float color_map_prop=0;
 	float ambient_prop=.5;
@@ -34,7 +35,9 @@ struct Renderer{
 		bool enabled{false};
 	} clipping;
 
+	bool is_autorange = true;
 
+	
 	void generate_gui(std::string name);
 	void shared_setup_before_rendering();
 
@@ -43,7 +46,6 @@ struct Renderer{
 	void declare_viewport();
 
 	virtual void destroy();
-	void compute_value_range(std::vector<float>& data);
 };
 
 
@@ -58,10 +60,11 @@ struct PointRenderer: public Renderer{
 		std::array<float, 3> pos;
 		float v;
 		int visible;
+		int primitive_id;
 	};
 	void generate_gui(std::string name);
 	void init();
-	void update(PointSet& ps, PointAttribute<bool>& visible, PointAttribute<float>& value);
+	void update(PointSet& ps, PointAttribute<bool>& visible, PointAttribute<float>& value, PointAttribute<int>& primitive_id);
 	void render();
 };
 
@@ -73,6 +76,7 @@ struct SegmentRenderer: public Renderer{
 		std::array<float, 3> p1;
 		float v1;
 		int visible;
+		int primitive_id;
 	};
 
 	int line_width=10;
@@ -80,7 +84,7 @@ struct SegmentRenderer: public Renderer{
 
 	void generate_gui(std::string name);
 	void init();
-	void push(PolyLine& pl, EdgeAttribute<bool>& visible, PointAttribute<float>& value);
+	void update(PolyLine& pl, EdgeAttribute<bool>& visible, PointAttribute<float>& value, EdgeAttribute<int>& primitive_id);
 	void render();
 };
 
@@ -94,22 +98,17 @@ struct TriangleRenderer: public Renderer{
 	struct Vertex {
 		std::array<float, 3> pos;
 		std::array<float, 3> n; // normal
-		float v; // value
+		float v;                // value
 		std::array<float, 3> b; // bary
 		int visible;
+		int primitive_id;
 	};
 
 	void generate_gui(std::string name);
 
 	void init();
 
-	void update(Triangles& tri, FacetAttribute<bool>& visible, CornerAttribute<float>& value);
-
-	void update(Quads& quads, FacetAttribute<bool>& visible, CornerAttribute<float>& value);
-
-	void update(Tetrahedra& tet, CellAttribute<bool>& visible, CellCornerAttribute<float>& value);
-
-	void update(Hexahedra& hex, CellAttribute<bool>& visible, CellCornerAttribute<float>& value);
+	void update(Triangles& tri, FacetAttribute<bool>& visible, CornerAttribute<float>& value, FacetAttribute<int>& primitive_id);
 
 	void render();
 };

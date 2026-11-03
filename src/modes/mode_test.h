@@ -1,22 +1,73 @@
+#pragma once
 #include "misc/purgatory.h"
 #include "layers/ssao.h"
-
+#include <layers/basic_layers.h>
+#include "algo.h"
 
 
 
 
 struct MouseReactPickerTest : public MouseReact {
-    MouseReactPickerTest(int filter = 0) { MouseReact::active_sub_modes = {filter}; }
+    MouseReactPickerTest() {  }
+
+    void init(ObjectId p_attr_id, ObjectId p_mesh) {
+        attr_id = p_attr_id;
+        mesh_id = p_mesh;
+        flag.bind(
+            attr_id.names[4],
+            God::xcf[attr_id.names[0]].hexahedra[attr_id.names[1]].attributes,
+            God::xcf[attr_id.names[0]].hexahedra[attr_id.names[1]].mesh
+        );
+    }
+    ObjectId attr_id;
+    ObjectId mesh_id;
+    CellFacetAttribute<int> flag;
+
 
     void on_wheel(double v) { Log::add("Wheel " + std::to_string(v)); }
     void on_click(int button, vec2 p) {
         Log::add("click " + std::to_string(button));
         Picker picker;
-        return;
-        auto pr = picker.at(p);
-        Log::add("layer id: " + std::to_string(pr.layer_id));
-        Log::add("primitive id: " + std::to_string(pr.primitive_id));
-        Log::add("object id: " + to_string(pr.object_id));
+        Picker::Result pr = picker.at(p);
+        int prim = pr.filtered_primitive_id(mesh_id, 2);
+        if (prim != -1){
+            if (button == 0) flag[pr.raw_primitive_id]++;
+            if (button == 1) flag[pr.raw_primitive_id]--;
+            mesh_id.broadcast(EventType::UPDATED);
+        }
+    }
+    void on_press(int button, vec2 p)           { Log::add("press " + std::to_string(button)); }
+    void on_release(int button, vec2 p)         { Log::add("release " + std::to_string(button)); }
+    void on_drag(int button, vec2 a, vec2 b)    { Log::add("drag " + std::to_string(button)); }
+};
+
+
+struct MouseReactLayerSelectionTest : public MouseReact {
+    MouseReactLayerSelectionTest() {}
+
+    void init(ObjectId p_mesh) {
+        mesh_id = p_mesh;
+    }
+    ObjectId mesh_id;
+
+    void on_wheel(double v) { Log::add("Wheel " + std::to_string(v)); }
+    void on_click(int button, vec2 p) {
+        Log::add("click " + std::to_string(button));
+        if (button != 0) return;
+        Picker picker;
+        Picker::Result pr = picker.at(p);
+        int prim = pr.filtered_primitive_id(mesh_id, 2);
+        if (prim != -1){
+            VolumeAttributes& attr = mesh_id;
+            Hexahedra& hex = mesh_id;
+            CellAttribute<bool> visible("visible", attr, hex);
+            CellFacetAttribute<int> layer_id(hex);
+            compute_hex_layer_id( hex, layer_id);
+            visible.fill(false);
+            for (auto f : hex.iter_facets()) if (layer_id[f] == layer_id[prim])
+                visible[f.cell()] = true;
+            mesh_id.broadcast(EventType::UPDATED);
+        }
     }
     void on_press(int button, vec2 p)           { Log::add("press " + std::to_string(button)); }
     void on_release(int button, vec2 p)         { Log::add("release " + std::to_string(button)); }
@@ -26,20 +77,21 @@ struct MouseReactPickerTest : public MouseReact {
 
 struct HexEdit : public Mode{
 
-    HexEdit(){
-        God::layers.add<SSAO>("SSAO").init();
-        mouse_react.emplace_back<MouseReactTrackBallCamera>("camera").active_sub_modes = { 1 };
-        mouse_react.emplace_back < MouseReactPickerTest>("picktest");
-    }
+    MouseReactTrackBallCamera camera_react;
+    MouseReactPickerTest pick_react;
+    MouseReactLayerSelectionTest layer_selection_react;
 
+    HexEdit(){}
     void handle(Event event) { 
-        sub_mode = 0;
-        if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL)) sub_mode += 1;
-        if (God::keys.pressed(GLFW_KEY_LEFT_SHIFT)) sub_mode += 2;
-        handle_mouse(event); 
+        
+        if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL)){
+            send_instruction_to_react(event, camera_react);
+            send_instruction_to_react(event, layer_selection_react);
+        }
+        else {
+            send_instruction_to_react(event, pick_react);
+        }
     }
-
-
     void command_gui() {
         static ObjectId arg0;
         ImGui::TextColored(ImVec4(1, .8, .8, 1.), "Target"); ImGui::SameLine();
@@ -65,30 +117,49 @@ struct HexEdit : public Mode{
             ImGui::EndMenu();
         }
     }
-
-
-
-
     void define_gui() {
         ImGui::Begin("Mode", nullptr);
         ImGui::Text("Window used to launch debug tests");
         if (ImGui::Button("LoadSomething")) {
             load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "hexski.geogram");
-            
+
             auto& attr = God::xcf["hexski"].hexahedra[""].attributes;
             auto& hex = God::xcf["hexski"].hexahedra[""].mesh;
 
-            CellFacetAttribute<float> cfa("cfa", attr, hex);
-            for (auto f : hex.iter_facets()) cfa[f] = f;
-            CellCornerAttribute<float> cca("cca", attr, hex);
-            for (auto c : hex.iter_corners()) cca[c] = c;
-            CellAttribute<bool> visible("visible", attr, hex);
-            for (auto c : hex.iter_cells()) visible[c] = c%2;
-            God::layers["hexskiHex"].reset();
+            {// some attributes for rendering tests
+                CellFacetAttribute<float> cfa("cfa", attr, hex);
+                for (auto f : hex.iter_facets()) cfa[f] = f;
+                CellCornerAttribute<float> cca("cca", attr, hex);
+                for (auto c : hex.iter_corners()) cca[c] = c;
+                CellAttribute<bool> visible("visible", attr, hex);
+                for (auto c : hex.iter_cells()) visible[c] = c % 2;
+            }
 
+
+            {// a flag attibute for painting test
+                
+                //create and init attribute
+                CellFacetAttribute<int> flag("flag", attr, hex);
+                for (auto f : hex.iter_facets()) flag[f] = f%2;
+                ObjectId hex_id(ObjectType::HEXAHEDRA, std::vector<std::string>{ "hexski", ""});
+                ObjectId flag_id(ObjectType::HEXAHEDRA_ATTR, { "hexski", "","int","facets","flag" });
+
+                // bind the attribute to the paint mouse action
+                pick_react.init(flag_id,hex_id);
+                layer_selection_react.init(hex_id);
+
+                // set rendering
+                HexahedraLayer& hex_layer = dynamic_cast<HexahedraLayer&>(God::layers["hexskiHex"]);
+                hex_layer.attr_id = flag_id;
+                FOR(i, 2) hex_layer.tri_renderer.texture_range[i] = -4+8*i;
+                hex_layer.reset();
+            }
+            
             //load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "B1.geogram");
             //God::xcf["B1"].save_to_path(std::string(TEST_INPUT_DIR) + "B1", false);
             //load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "B1");
+            
+            God::layers.add<SSAO>("SSAO", God::layers.max_group - 1).init();
         }
 
         ImGui::Separator();

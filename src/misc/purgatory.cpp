@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <string>
 #include <core/all.h>
+#include <layers/basic_layers.h>
 ObjectId grad_and_drop_objectid;
 
 
@@ -18,7 +19,7 @@ bool FilePopup(const char* id, std::string in, std::string& out, std::vector<con
     ImGui::TextUnformatted(path.string().c_str());
     if (ImGui::Button("[..]") && path.has_parent_path())    path = path.parent_path(), sel.clear();
     ImGui::SameLine();
-    if (ImGui::Button("LoadMultiMesh##fileselector"))              out = sel.string(), done = true;
+    if (ImGui::Button("Return Directory##fileselector"))              out = sel.string(), done = true;
     ImGui::SameLine();
     if (ImGui::Button("Cancel"))                            out = "", done = true;
 
@@ -50,6 +51,7 @@ bool FilePopup(const char* id, std::string in, std::string& out, std::vector<con
 
 using namespace events;
 void look_at_pointset(PointSet& ps) {
+    if (ps.size() == 0) return;
     BBox3 box;
     FOR(v, ps.size()) box.add(ps[v]);
     God::camera.pose.pivot = box.center();
@@ -57,36 +59,32 @@ void look_at_pointset(PointSet& ps) {
 }
 
 void load_mm_with_default_layers(std::string path) {
-    auto mesh_name = God::xcf.load_multimesh(path, true);
-    look_at_pointset(ObjectId(POINTSET, mesh_name));
+    // TODO rename to mm_name
+    auto mm_name = God::xcf.load_multimesh(path, true);
+
+    look_at_pointset(ObjectId(POINTSET, mm_name));
+
+    int group = God::layers.add_group(mm_name);
 
     {// point set
-        PointSetLayer& layer = God::layers.add<PointSetLayer>(mesh_name + "Pts");
-        layer.init(ObjectId(POINTSET, mesh_name));
-        auto& pr = layer.primitive_renderer;
+        PointSetLayer& layer = God::layers.add<PointSetLayer>(mm_name + "Pts", group);
+        layer.init(ObjectId(POINTSET, mm_name));
+        auto& pr = layer.point_renderer;
         pr.color[0] = .5; pr.color[1] = 1.; pr.color[2] = .5;
         pr.radius_in_pixel = 4;
     }
-    for (auto& elt : God::xcf[mesh_name].polylines) {
-        PolyLineLayer& layer = God::layers.add<PolyLineLayer>(mesh_name + "Edges");
-        layer.init(ObjectId(POLYLINES, { mesh_name, elt.first }));
-        auto& pr = layer.primitive_renderer;
+    for (auto& elt : God::xcf[mm_name].polylines) {
+        PolyLineLayer& layer = God::layers.add<PolyLineLayer>(mm_name + "Edges", group);
+        layer.init(ObjectId(POLYLINES, { mm_name, elt.first }));
+        auto& pr = layer.edge_renderer;
         pr.color[0] = .5; pr.color[1] = .5; pr.color[2] = .7;
     }
-    for (auto& elt : God::xcf[mesh_name].triangles) {
-        TrianglesLayer& layer = God::layers.add<TrianglesLayer>(mesh_name + "Tri");
-        layer.init(ObjectId(TRIANGLES, { mesh_name, elt.first }));
+    for (auto& elt : God::xcf[mm_name].triangles) {
+        TrianglesLayer& layer = God::layers.add<TrianglesLayer>(mm_name + "Tri", group);
+        layer.init(ObjectId(TRIANGLES, { mm_name, elt.first }));
     }
-    for (auto& elt : God::xcf[mesh_name].quads) {
-        QuadsLayer& layer = God::layers.add<QuadsLayer>(mesh_name + "Quad");
-        layer.init(ObjectId(QUADS, { mesh_name, elt.first }));
-    }
-    for (auto& elt : God::xcf[mesh_name].tetrahedra) {
-        TetrahedraLayer& layer = God::layers.add<TetrahedraLayer>(mesh_name + "Tet");
-        layer.init(ObjectId(TETRAHEDRA, { mesh_name, elt.first }));
-    }
-    for (auto& elt : God::xcf[mesh_name].hexahedra) {
-        HexahedraLayer& layer = God::layers.add<HexahedraLayer>(mesh_name + "Hex");
-        layer.init(ObjectId(HEXAHEDRA, { mesh_name, elt.first }));
+    for (auto& elt : God::xcf[mm_name].hexahedra) {
+        HexahedraLayer& layer = God::layers.add<HexahedraLayer>(mm_name + "Hex", group);
+        layer.init(ObjectId(HEXAHEDRA, { mm_name, elt.first }));
     }
 }

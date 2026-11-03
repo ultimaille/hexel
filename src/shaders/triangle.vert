@@ -5,9 +5,7 @@ layout (location = 1) in vec3 aNormal;
 layout (location = 2) in float value;
 layout (location = 3) in vec3 bary;
 layout (location = 4) in int visible;
-
-// layout (location = 5) in int primitive_id;
-// uniform usamplerBuffer ivisible;
+layout (location = 5) in int primitive_id;
 
 uniform mat4 view;
 uniform mat4 projection;
@@ -27,12 +25,9 @@ flat out int frag_visible;
 
 
 void main(){
-    if (value==-1)  Value = -1;
-    else  {
-        Value = (value - data_range.x) / (data_range.y - data_range.x);
-        Value = Value * texture_repeat;
-    }
-
+    
+    Value = texture_repeat*(value - data_range.x) / (data_range.y - data_range.x);
+    
     vec3 p = aPos - (aPos - bary) * 1.;
     vec4 viewPos = view * vec4(aPos, 1.0);
     FragPos = viewPos.xyz;
@@ -40,7 +35,7 @@ void main(){
     FragBary = bary;
     Normal = normalize(mat3(transpose(inverse(view))) * aNormal);
     gl_Position = projection * viewPos;
-    frag_primitive_id = gl_VertexID / 3;
+    frag_primitive_id = primitive_id;
     frag_layer_id = layer_id;
     frag_visible = visible;
 }

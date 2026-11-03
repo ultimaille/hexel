@@ -202,6 +202,7 @@ void XCF::kill_mesh(ObjectId obj) {
 
 void XCF::kill_multimesh(const std::string& mm_name) {
     MultiMesh& mm = (*this)[mm_name];
+
     std::vector<std::string> to_kill;
     for (auto& [name, obj] : mm.polylines)  to_kill.push_back(name);
     for (auto name : to_kill) kill_mesh(ObjectId(POLYLINES, { mm_name, name }));
@@ -211,6 +212,9 @@ void XCF::kill_multimesh(const std::string& mm_name) {
     for (auto name : to_kill) kill_mesh(ObjectId(TRIANGLES, { mm_name, name }));
     //for (auto name : to_kill) kill_mesh(path().xcf[mm_name].triangles[name]);
 
+    for (auto& [name, obj] : mm.hexahedra)  to_kill.push_back(name);
+    for (auto name : to_kill) kill_mesh(ObjectId(HEXAHEDRA, { mm_name, name }));
+
 
     std::map<std::string, MultiMesh>::erase(mm_name);
     ObjectId(MULTIMESH, mm_name).broadcast(KILLED);
@@ -218,23 +222,15 @@ void XCF::kill_multimesh(const std::string& mm_name) {
 //  path().xcf[mm_name].broadcast(KILLED);
 //  path().xcf[mm_name].pointset.broadcast(KILLED);
 }
+
+
+
 MultiMesh& XCF::add(std::string str) {
     ObjectId(MULTIMESH, str).broadcast(CREATED);
 //  path().xcf[str].broadcast(CREATED);
     return std::map<std::string, MultiMesh>::operator[](str);
 }
 
-MultiMesh::MeshAttr<Triangles, SurfaceAttributes>& XCF::add_triangles(std::string mm_name, std::string tri_name) {
-    auto& collection = (*this)[mm_name].triangles;
-    collection.try_emplace(tri_name);
-    plop(collection.contains(tri_name));
-    plop(tri_name);
-    ObjectId obj(TRIANGLES, { mm_name, tri_name });
-//  ObjectId obj = path().xcf[mm_name].triangles[tri_name];
-    //    obj.show();
-    obj.broadcast(CREATED);
-    return collection[tri_name];
-}
 std::string XCF::load_multimesh(std::string filename, bool connect ){
     std::string mm_name = std::filesystem::path(filename).stem().string();
     while (contains(mm_name)) mm_name += "_";

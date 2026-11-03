@@ -169,11 +169,7 @@ RenderTarget::~RenderTarget() {
         };
     }
 
-    void RenderTarget::read_framebuffer(std::vector<unsigned char>& data, vec4 rect, int attachment) {
-        int x = static_cast<int>(rect[0]);
-        int y = static_cast<int>(rect[1]);
-        int w = static_cast<int>(rect[2]);
-        int h = static_cast<int>(rect[3]);
+    void RenderTarget::read_framebuffer(std::vector<unsigned char>& data, int x, int y, int w, int h, int attachment) {
 
         glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer);
         glReadBuffer(GL_COLOR_ATTACHMENT0 + attachment);
@@ -196,12 +192,7 @@ RenderTarget::~RenderTarget() {
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
     }
 
-    void RenderTarget::read_depth(std::vector<float>& data, vec4 rect) {
-        int x = static_cast<int>(rect[0]);
-        int y = static_cast<int>(rect[1]);
-        int w = static_cast<int>(rect[2]);
-        int h = static_cast<int>(rect[3]);
-
+    void RenderTarget::read_depth(std::vector<float>& data, int x, int y, int w, int h) {
         glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer);
 
         data.resize(w * h);
@@ -216,6 +207,27 @@ RenderTarget::~RenderTarget() {
             Log::error("Picking glReadPixels error: " + std::to_string(err));
 
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+    }
+
+    void RenderTarget::copy_to(const RenderTarget& destination) {
+        // TODO assert dest same size as source
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer);
+        um_assert(glCheckFramebufferStatus(GL_READ_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destination.framebuffer);
+        um_assert(glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+
+        glBlitFramebuffer(
+            0, 0, width, height,
+            0, 0, destination.width, destination.height,
+            GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT,
+            GL_NEAREST
+        );
+
+        #ifdef DEBUG
+        GLenum error = glGetError();
+        um_assert(error == GL_NO_ERROR);
+        #endif
     }
 
 

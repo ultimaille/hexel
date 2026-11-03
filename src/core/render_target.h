@@ -16,6 +16,7 @@ struct RenderTarget {
     int height = 0;
 
     RenderTarget() = default;
+    RenderTarget(RenderTarget&&) = default;
     RenderTarget(const RenderTarget&) = delete;
     RenderTarget& operator=(const RenderTarget&) = delete;
 
@@ -37,8 +38,10 @@ struct RenderTarget {
     void allocate(int w, int h);
 
     vec2 get_ndc(int x, int y);
-    void read_framebuffer(std::vector<unsigned char>& data, vec4 rect, int attachment);
-    void read_depth(std::vector<float>& data, vec4 rect);
+    void read_framebuffer(std::vector<unsigned char>& data, int x, int y, int w, int h, int attachment);
+    void read_depth(std::vector<float>& data, int x, int y, int w, int h);
+
+    void copy_to(const RenderTarget& destination);
 
 };
 
