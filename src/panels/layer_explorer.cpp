@@ -220,7 +220,7 @@ void LayerExplorer::draw_layer_gui() {
         ImGui::PopID();
     }
 
-    for (std::string layer_name : to_kill){
+    for (std::string layer_name : to_kill) {
         God::layers.kill(layer_name);
     }
 
