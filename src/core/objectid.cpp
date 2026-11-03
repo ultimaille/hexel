@@ -14,6 +14,7 @@
 
 using namespace events;
 
+/*
 void ObjectId::broadcast(EventType e) {
     God::events.queue.emplace(Event(*this, e));
 }
@@ -198,6 +199,7 @@ ObjectId::operator VolumeAttributes&() {
     static VolumeAttributes dummy = {};
     return dummy;
 }
+*/
 
 /*
 void EventManager::dispatch() {
