@@ -32,6 +32,7 @@
     }
 
     void LayerSplitMode::handle(Event event) {
+        if (event.who.path != ObjectType::MOUSE) return;
         // forward mouse events to mouse reacts 
         if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL))
             mode.handle_camera_and_layerselect(event);
@@ -49,6 +50,8 @@
             auto crossed_edges = multi_selector_react_left.primitives(pl_id(), 1);
             for (auto it : crossed_edges) std::cerr << it.first << "  " << it.second << std::endl;
             if (!crossed_edges.empty()){
+
+                mode.backup();
                 int prim = crossed_edges.front().first;
                 vec3 I = crossed_edges.front().second;
                 vec3 P[2]; FOR(i, 2) P[i] = pl.points[pl.vert(prim, i)];
@@ -74,6 +77,7 @@
             auto crossed_edges = multi_selector_react_right.primitives(pl_id(), 1);
             for (auto it : crossed_edges) std::cerr << it.first << "  " << it.second << std::endl;
             if (!crossed_edges.empty()){
+                mode.backup();
                 int prim = crossed_edges.front().first;
                 vec3 I = crossed_edges.front().second;
                 vec3 P[2]; FOR(i, 2) P[i] = pl.points[pl.vert(prim, i)];
@@ -100,6 +104,12 @@
     void LayerSplitMode::define_gui() {
             ImGui::Begin("HexModelerMode", nullptr);
             ImGui::Text("MODE: LayerSplitMode");
+            if (ImGui::Button("Backup")) mode.backup();
+            ImGui::SameLine();
+            if (ImGui::Button("Undo")) mode.undo();
+            ImGui::SameLine();
+            if (ImGui::Button("Reset GUI")) mode.reset_gui();
+            ImGui::Separator();
             multi_selector_react_left.feed_back_gui();
             multi_selector_react_right.feed_back_gui();
             ImGui::End();

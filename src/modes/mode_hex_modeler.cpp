@@ -34,8 +34,28 @@ Volume::Halfedge HexModelerMode::hex_halfedge_from_edge(int e){
 }
 void HexModelerMode::update_hex(){
     EdgeAttribute<int> edge2halfedge("hex_halfedge", God::xcf["mesh"].polylines[""].attributes, God::xcf["mesh"].polylines[""].mesh);
-
     generate_edge_graph(hex_id(), pl_id(), edge2halfedge);
+
+    Hexahedra& hex = hex_id();
+    VolumeAttributes& hex_attr = hex_id();
+    CellAttribute<bool> visible_cell("visible", hex_attr, hex);
+
+    PointSetAttributes& pts_attr = pts_id();
+    PointSet& pts = pts_id();
+    PointAttribute<bool> visible_pts("visible", pts_attr, pts);
+    visible_pts.fill(false);
+    for (auto c : hex.iter_cells()) if (visible_cell[c])
+        FOR(lv, 8)visible_pts[c.vertex(lv)] = true;
+
+
+    PolyLineAttributes& pl_attr = pl_id();
+    PolyLine& pl = pl_id();
+    EdgeAttribute<bool> visible_edge("visible", pl_attr, pl);
+    visible_edge.fill(false);
+    for (auto e : pl.iter_edges()) if (visible_pts[e.from()] && visible_pts[e.to()])
+        visible_edge[e] = true;
+
+
     hex_id().broadcast(EventType::UPDATED);
     pl_id().broadcast(EventType::UPDATED);
     pts_id().broadcast(EventType::UPDATED);
@@ -55,13 +75,21 @@ void HexModelerMode::reset_xcf(){
     for (auto it : mms) God::xcf.kill_multimesh(it);
     God::events.dispatch();
 }
-void HexModelerMode::load_project(){
+void HexModelerMode::save_project(std::string directory){
+    MultiMesh& geommm = ObjectId(MULTIMESH, "geom");
+    geommm.save_to_path(directory + "geom", true);
+    MultiMesh& meshmm = ObjectId(MULTIMESH, "mesh");
+    meshmm.save_to_path(directory + "mesh", true);
+
+}
+
+void HexModelerMode::load_project(std::string directory){
     reset_xcf();
-    const std::filesystem::path project_dir{project_directory};
+    const std::filesystem::path project_dir{directory};
     load_mm_with_default_layers((project_dir / "geom").string());
     load_mm_with_default_layers((project_dir / "mesh").string());
 
-    Hexahedra& hex = hex_id();
+    Hexahedra& hex = hex_id();                                       
     God::xcf["mesh"].polylines.clear();
     God::xcf["mesh"].polylines.try_emplace("");
     PolyLine& pl = pl_id();
@@ -79,7 +107,6 @@ void HexModelerMode::load_project(){
 }
 void HexModelerMode::import_new_project_from_CAD(std::string filename){
     const std::filesystem::path project_dir{project_directory};
-    reset_xcf();
     BBox3 bbox;
     {   // import the CAD
         MultiMesh mm;
@@ -137,9 +164,43 @@ void HexModelerMode::import_new_project_from_CAD(std::string filename){
 
         mm.save_to_path((project_dir / "mesh").string(), true);
     }
-    reset_xcf();
 }
 
+void HexModelerMode::backup(){
+    int undo_stack_size = 5;
+    undo_id++;
+    if (undo_begin < undo_id - undo_stack_size){
+        undo_begin++; 
+        std::string kill_dir = WORKING_DIR + "undo" + std::to_string(undo_begin) ;
+        std::filesystem::remove_all(kill_dir);
+    }
+
+    std::string dir = WORKING_DIR + "undo" + std::to_string(undo_id)+"/";
+    std::filesystem::create_directory(dir);
+    save_project(dir);
+}
+void HexModelerMode::undo(){
+    if (undo_id == undo_begin) {
+        Log::add("Undo stack is empty");
+        return;
+    }
+    std::string dir = WORKING_DIR + "undo" + std::to_string(undo_id);
+
+    std::vector<std::string> mms;
+    for (auto& [key, value] : God::xcf) mms.push_back(key);
+    for (auto it : mms) God::xcf.kill_multimesh(it);
+    God::events.queue.clear();
+
+    reset_xcf();
+    God::xcf.load_multimesh(dir + "/geom", true);
+    God::xcf.load_multimesh(dir + "/mesh", true);
+    update_hex();                                                        
+    undo_id--;
+}
+
+void HexModelerMode::reset_gui(){
+    load_project(project_directory);
+}
 
 void HexModelerMode::set_active_mode(std::string s){
     int id = modes.find(s);
@@ -148,8 +209,10 @@ void HexModelerMode::set_active_mode(std::string s){
     modes[id].activate();
 }
 void HexModelerMode::define_gui(){
-    modes[active_mode_id].define_gui();
+    modes[active_mode_id].define_gui();                     
 }
+
+
 void HexModelerMode::handle(Event event) {
     modes[active_mode_id].handle(event);
 };
@@ -161,15 +224,16 @@ HexModelerMode::HexModelerMode(){
     working_directory = WORKING_DIR;
     project_directory = WORKING_DIR;
     CAD_file = std::string(TEST_INPUT_DIR) + "B1.geogram";
+    undo_stack_size = 5;
 
     modes.emplace_back<StartingMode>("StartingMode", *this);
     modes.emplace_back<LayerSplitMode>("LayerSplitMode", *this);
     modes.emplace_back<FeatureEditMode>("FeatureEditMode", *this);
 
-    if (1){
+    if (0){
         project_directory = WORKING_DIR + "B1";
-        load_project();
+        load_project(project_directory);
         set_active_mode("FeatureEditMode");
     }else
-    set_active_mode("StartingMode");
+        set_active_mode("StartingMode");
 }

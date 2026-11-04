@@ -16,7 +16,7 @@ struct HexModelerMode : public Mode{
 
     HexModelerMode();
 
-    // access to xcf bjects
+    // access to xcf objects
     static ObjectId hex_id();
     static ObjectId pl_id();
     static ObjectId pts_id();
@@ -40,8 +40,16 @@ struct HexModelerMode : public Mode{
     std::string project_directory;
     std::string CAD_file;
     void reset_xcf();
-    void load_project();
+    void load_project(std::string directory);
+    void save_project(std::string directory);
     void import_new_project_from_CAD(std::string filename);
+
+    // manage undo
+    int undo_begin = -1;
+    int undo_stack_size = 5;
+    int undo_id=-1;
+    void backup();
+    void undo();
 
     // manage submodules
     struct SubMode : public Mode{
@@ -64,6 +72,7 @@ struct HexModelerMode : public Mode{
     void set_active_mode(std::string s);
     void define_gui();
     void handle(Event event);
+    void reset_gui();
 };
 
 
