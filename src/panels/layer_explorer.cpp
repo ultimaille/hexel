@@ -80,11 +80,11 @@ void LayerExplorer::draw_layer_gui() {
         static int selectedItem = -1;
 
         if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
-            ImGui::OpenPopup("BlendSelectionListPopup");
+            ImGui::OpenPopup("blend_context");
         }
 
         // Popup with selection list
-        if (ImGui::BeginPopup("BlendSelectionListPopup")) {
+        if (ImGui::BeginPopup("blend_context")) {
             ImGui::Text("Select merge option:");
             ImGui::Separator();
             
@@ -152,6 +152,18 @@ void LayerExplorer::draw_layer_gui() {
 
                     bool open_layer_node = ImGui::TreeNodeEx(label(layer_name, layer_name), flag(false, true));
 
+                    if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
+                        ImGui::OpenPopup("layer_context");
+                    }
+
+                    if (ImGui::BeginPopup("layer_context")) {
+                        if (ImGui::Button("Delete")) {
+                            to_kill.push_back(layer_name);
+                            ImGui::CloseCurrentPopup();
+                        }
+                        ImGui::EndPopup();
+                    }
+
                     if (was_pressed) ImGui::PopStyleColor(3);
 
                     // Drag layer
@@ -194,11 +206,6 @@ void LayerExplorer::draw_layer_gui() {
                     ImGui::SameLine(0.f, 4.f);
                     ImGui::Checkbox(label("", "cb_layer_visible"), &layer.visible);
 
-                    ImGui::SameLine(); 
-                    if (ImGui::SmallButton(label("X##", layer_name))){
-                        to_kill.push_back(layer_name);
-                    }
-
                     if (open_layer_node) {
                         ImGui::TreePop();
                     }
@@ -211,10 +218,10 @@ void LayerExplorer::draw_layer_gui() {
         sync_property_from_layer();
 
         ImGui::PopID();
+    }
 
-        for (std::string layer_name : to_kill){
-            God::layers.kill(layer_name);
-        }
+    for (std::string layer_name : to_kill) {
+        God::layers.kill(layer_name);
     }
 
     bool new_group_open = ImGui::TreeNodeEx(label("+", "group_new"), flag(false, true));
