@@ -67,6 +67,11 @@ void PolyLineLayer::generate_gui(std::string name){
     Layer::generate_gui(name);
 }
 
+void PolyLineLayer::set_default_values() {
+    auto& r = edge_renderer;
+    r.color[0] = .5; r.color[1] = .5; r.color[2] = .7;
+}
+
 
 template<class T>
 void PolyLineLayer::update_data_for_scalar_edge_attribute() {

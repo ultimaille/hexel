@@ -216,6 +216,7 @@ void XCFExplorer::generate_gui() {
                             int group_id = group_opt ? group_opt.value().id : God::layers.add_group(mm_name);
                             auto &layer = God::layers.add<PolyLineLayer>(tmp, group_id);
                             layer.init(mesh_id);
+                            layer.set_default_values();
                             ImGui::CloseCurrentPopup();
                         }
 

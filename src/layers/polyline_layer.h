@@ -26,6 +26,7 @@ struct PolyLineLayer : public Layer {
 
     PolyLineLayer();
     void generate_gui(std::string name);
+    void set_default_values() override;
     void reset();
     void init(ObjectId obj);
     void render();
