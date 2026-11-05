@@ -3,6 +3,8 @@
 #include <core/layers.h>
 #include <core/event.h>
 
+#include <layers/ssao.h>
+
 using namespace events;
 
 // sync pressed with the property windows
@@ -239,5 +241,14 @@ void LayerExplorer::draw_layer_gui() {
     if (new_group_open) {
         ImGui::TreePop();
     }
+
+    if (ImGui::SmallButton("Add SSAO")) {
+        int group_id = God::layers.max_group - 1;
+        auto &layer = God::layers.add<SSAO>("SSAO", group_id);
+        layer.init();
+        layer.visible = true;
+        ImGui::CloseCurrentPopup();
+    }
+
     ImGui::End();
 }

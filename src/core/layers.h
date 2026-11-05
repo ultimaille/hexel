@@ -7,6 +7,7 @@ struct Layer {
     virtual ~Layer() = default;
     virtual void reset();
     virtual void generate_gui(std::string name);
+    virtual void set_default_values() {}
 
     virtual void render() = 0;
     virtual void render_primitive_id();
@@ -52,6 +53,7 @@ struct LayerManager: private Registry<Layer> {
         return layer; 
     }
 
+    std::optional<Group> get_group(const std::string& name);
     int add_group(const std::string& name);
     void remove_group(int group_id);
     bool is_group_empty(int group_id);
@@ -67,5 +69,3 @@ struct LayerManager: private Registry<Layer> {
     static inline int max_group = 0;
 
 };
-
-

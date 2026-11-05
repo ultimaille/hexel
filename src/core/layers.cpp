@@ -78,6 +78,14 @@
         kill(idx);
     }
 
+    std::optional<Group> LayerManager::get_group(const std::string& name) {
+        for (auto &group : groups) {
+            if (group.name == name)
+                return group;
+        }
+        return std::nullopt;
+    }
+
     int LayerManager::add_group(const std::string& name) {
         groups.emplace_back(max_group++, Group::BlendOp::NONE, name);
         return max_group - 1;

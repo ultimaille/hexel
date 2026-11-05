@@ -2,6 +2,12 @@
 #include <core/all.h>
 #include "panels/property_explorer.h"
 
+#include <layers/pointset_layer.h> 
+#include <layers/triangle_layer.h> 
+#include <layers/polyline_layer.h> 
+#include <layers/hexahedra_layer.h> 
+#include <layers/ssao.h>
+
 void XCFExplorer::object_id_drag_source(ObjectId id, std::string name) {
     if (ImGui::BeginDragDropSource()) {
         grad_and_drop_objectid = id;
@@ -145,6 +151,28 @@ void XCFExplorer::generate_gui() {
 
             bool open_pointset = open_mesh(selected, {POINTSET, { mm_name }}, "pointset");
 
+            if (ImGui::BeginPopupContextItem(label("pointset_context", mm_name + "pointset"))) {
+
+                if (ImGui::BeginMenu("create")) {
+                    
+                    static char tmp[1024] = "toto";
+                    ImGui::Text("name"); ImGui::SameLine();
+                    ImGui::InputText(label("", "gloglo"), tmp, 1024);
+                    
+                    if (ImGui::MenuItem(label("PointSetLayer", mm_name))) {
+                        auto group_opt = God::layers.get_group(mm_name);
+                        int group_id = group_opt ? group_opt.value().id : God::layers.add_group(mm_name);
+                        auto &layer = God::layers.add<PointSetLayer>(tmp, group_id);
+                        layer.init(mesh_id);
+                        layer.set_default_values();
+                        ImGui::CloseCurrentPopup();
+                    }
+
+                    ImGui::EndMenu();
+                }
+                ImGui::EndPopup();
+            }
+
             if (ImGui::IsItemClicked()) switch_selection(selected, mesh_id);
             if (open_pointset) {
                 for (auto& it : mm.pointset_attributes.points) { 
@@ -162,15 +190,37 @@ void XCFExplorer::generate_gui() {
 
 
 
+
+
             // ==> polylines
             std::vector<std::string> polyline2kill;
             for (auto& [mesh_name, obj] : mm.polylines) {
-                bool open = open_mesh(selected, {POLYLINES, { mm_name, mesh_name }}, "polylines");
+                ObjectId mesh_id{POLYLINES, { mm_name, mesh_name }};
 
-                if (ImGui::BeginPopupContextItem(label("killpolylinepopup", mm_name + mesh_name))){
+                bool open = open_mesh(selected, mesh_id, "polylines");
+
+                if (ImGui::BeginPopupContextItem(label("killpolylinepopup", mm_name + mesh_name))) {
                     if (ImGui::Button("Delete")){
                         polyline2kill.push_back(mesh_name);
                         ImGui::CloseCurrentPopup();
+                    }
+
+                    if (ImGui::BeginMenu("create")) {
+                        
+                        static char tmp[1024] = "toto";
+                        ImGui::Text("name"); ImGui::SameLine();
+                        ImGui::InputText(label("", "gloglo"), tmp, 1024);
+                        
+                        if (ImGui::MenuItem(label("PolyLineLayer", mm_name))) {
+                            auto group_opt = God::layers.get_group(mm_name);
+                            int group_id = group_opt ? group_opt.value().id : God::layers.add_group(mm_name);
+                            auto &layer = God::layers.add<PolyLineLayer>(tmp, group_id);
+                            layer.init(mesh_id);
+                            ImGui::CloseCurrentPopup();
+                        }
+
+
+                        ImGui::EndMenu();
                     }
                     ImGui::EndPopup();
                 }
@@ -192,14 +242,34 @@ void XCFExplorer::generate_gui() {
             // ==> triangles
             std::vector<std::string> tri2kill;
             for (auto& [mesh_name, obj] : mm.triangles) {
-                bool open = open_mesh(selected, {TRIANGLES, { mm_name, mesh_name }}, "triangles");
-                if (ImGui::BeginPopupContextItem(label("killtripopup", mm_name + mesh_name))){
-                    if (ImGui::Button("Delete")){
+
+                ObjectId mesh_id{TRIANGLES, { mm_name, mesh_name }};
+
+                bool open = open_mesh(selected, mesh_id, "triangles");
+                if (ImGui::BeginPopupContextItem(label("killtripopup", mm_name + mesh_name))) {
+                    if (ImGui::Button("Delete")) {
                         tri2kill.push_back(mesh_name);
                         ImGui::CloseCurrentPopup();
                     }
+                    if (ImGui::BeginMenu("create")) {
+                        
+                        static char tmp[1024] = "toto";
+                        ImGui::Text("name"); ImGui::SameLine();
+                        ImGui::InputText(label("", "gloglo"), tmp, 1024);
+                        
+                        if (ImGui::MenuItem(label("TrianglesLayer", mm_name))) {
+                            auto group_opt = God::layers.get_group(mm_name);
+                            int group_id = group_opt ? group_opt.value().id : God::layers.add_group(mm_name);
+                            auto &layer = God::layers.add<TrianglesLayer>(tmp, group_id);
+                            layer.init(mesh_id);
+                            ImGui::CloseCurrentPopup();
+                        }
+
+                        ImGui::EndMenu();
+                    }
                     ImGui::EndPopup();
                 }
+
                 if (!open) continue;
                 for (auto& it : obj.attributes.points) add_attribute(selected, mesh_id,
                     ObjectId(ObjectType::TRIANGLES_ATTR, { mm_name, mesh_name, attribute_type(&*it.ptr),"points", it.name}),
@@ -272,11 +342,28 @@ void XCFExplorer::generate_gui() {
             // ==> hexahedra
             std::vector<std::string> hex2kill;
             for (auto& [mesh_name, obj] : mm.hexahedra) {
-                bool open = open_mesh(selected, {HEXAHEDRA, { mm_name, mesh_name }}, "hexahedra");
+                ObjectId mesh_id = {HEXAHEDRA, { mm_name, mesh_name }};
+                bool open = open_mesh(selected, mesh_id, "hexahedra");
                 if (ImGui::BeginPopupContextItem(label("killhexpopup", mm_name + mesh_name))){
                     if (ImGui::Button("Delete")){
                         hex2kill.push_back(mesh_name);
                         ImGui::CloseCurrentPopup();
+                    }
+                    if (ImGui::BeginMenu("create")) {
+                        
+                        static char tmp[1024] = "toto";
+                        ImGui::Text("name"); ImGui::SameLine();
+                        ImGui::InputText(label("", "gloglo"), tmp, 1024);
+                        
+                        if (ImGui::MenuItem(label("HexahedraLayer", mm_name))) {
+                            auto group_opt = God::layers.get_group(mm_name);
+                            int group_id = group_opt ? group_opt.value().id : God::layers.add_group(mm_name);
+                            auto &layer = God::layers.add<HexahedraLayer>(tmp, group_id);
+                            layer.init(mesh_id);
+                            ImGui::CloseCurrentPopup();
+                        }
+
+                        ImGui::EndMenu();
                     }
                     ImGui::EndPopup();
                 }

@@ -19,6 +19,13 @@ void PointSetLayer::generate_gui(std::string name){
     Layer::generate_gui(name);
 }
 
+void PointSetLayer::set_default_values() {
+    auto& pr = point_renderer;
+    pr.color[0] = .5; pr.color[1] = 1.; pr.color[2] = .5;
+    pr.radius_in_pixel = 4;
+}
+
+
 int PointSetLayer::primitive_type(){ return 0; }
 
 void PointSetLayer::init(ObjectId obj){
