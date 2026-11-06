@@ -69,15 +69,12 @@ void load_mm_with_default_layers(std::string path) {
     {// point set
         PointSetLayer& layer = God::layers.add<PointSetLayer>(mm_name + "Pts", group);
         layer.init(ObjectId(POINTSET, mm_name));
-        auto& pr = layer.point_renderer;
-        pr.color[0] = .5; pr.color[1] = 1.; pr.color[2] = .5;
-        pr.radius_in_pixel = 4;
+        layer.set_default_values();
     }
     for (auto& elt : God::xcf[mm_name].polylines) {
         PolyLineLayer& layer = God::layers.add<PolyLineLayer>(mm_name + "Edges", group);
         layer.init(ObjectId(POLYLINES, { mm_name, elt.first }));
-        auto& pr = layer.edge_renderer;
-        pr.color[0] = .5; pr.color[1] = .5; pr.color[2] = .7;
+        layer.set_default_values();
     }
     for (auto& elt : God::xcf[mm_name].triangles) {
         TrianglesLayer& layer = God::layers.add<TrianglesLayer>(mm_name + "Tri", group);

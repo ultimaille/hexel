@@ -9,7 +9,6 @@
 #include "shaders.h"
 #include "mode.h"
 
-
     Layer::Layer() : id(max_id) { ++max_id; }
     void Layer::reset() { Log::error("reset called for a layer that does not implement it"); };
     void Layer::generate_gui(std::string name) {
@@ -21,10 +20,19 @@
     void Layer::render_constant_color(int layerid) { Log::add("To be implemented"); }
     void Layer::destroy() {}
 
+    // TODO remove
     void LayerManager::render() {
-        for (auto& [name, obj] : *this)
-            if (obj->visible)
-                obj->render();
+        for (auto& [_, layer] : *this)
+            if (groups[layer->group].visible && layer->visible)
+                layer->render();
+    }
+
+    void LayerManager::render_group(int group_id) {
+        for (int l = 0; l < God::layers.size(); ++l) {
+            Layer &layer = God::layers[l];
+            if (layer.group == group_id && groups[group_id].visible && layer.visible)
+                layer.render();
+        }
     }
 
     void LayerManager::handle(Event event) {
@@ -78,6 +86,14 @@
         kill(idx);
     }
 
+    std::optional<Group> LayerManager::get_group(const std::string& name) {
+        for (auto &group : groups) {
+            if (group.name == name)
+                return group;
+        }
+        return std::nullopt;
+    }
+
     int LayerManager::add_group(const std::string& name) {
         groups.emplace_back(max_group++, Group::BlendOp::NONE, name);
         return max_group - 1;
@@ -98,6 +114,17 @@
 
         return true;
     }
+
+    std::vector<std::reference_wrapper<Layer>> LayerManager::from_group(int group_id) {
+        std::vector<std::reference_wrapper<Layer>> result;
+        for (auto& e : items) {
+            if (e.object->group == group_id) {
+                result.push_back(*e.object);
+            }
+        }
+        return result;
+    }
+
 
 
     void LayerManager::destroy() {
