@@ -4,7 +4,7 @@
 #include <map>
 #include <ultimaille/all.h>
 #include <fstream>
-struct ObjectId;
+struct MeshPath;
 
 namespace UM {
     struct MultiMesh {
@@ -48,9 +48,9 @@ namespace UM {
 
 
         MultiMesh& add(std::string str);
-        void add_mesh(ObjectId obj); // /!\ Note: devrait être dans MultiMesh
+        void add_mesh(MeshPath obj); // /!\ Note: devrait être dans MultiMesh
 
-        void kill_mesh(ObjectId obj);
+        void kill_mesh(MeshPath obj);
         void kill_multimesh(const std::string& name);
 
         std::string load_multimesh(std::string filename, bool connect = true);

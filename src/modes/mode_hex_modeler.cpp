@@ -12,8 +12,8 @@
 
 
 
-//#define WORKING_DIR std::string("/home/ssloy/+/hexel/build/NICO/")
-#define WORKING_DIR std::string("C:\\NICOTMP\\tmp\\")
+#define WORKING_DIR std::string("/home/ssloy/+/hexel/build/NICO/")
+//#define WORKING_DIR std::string("C:\\NICOTMP\\tmp\\")
 
 
 
@@ -230,7 +230,7 @@ HexModelerMode::HexModelerMode(){
     modes.emplace_back<LayerSplitMode>("LayerSplitMode", *this);
     modes.emplace_back<FeatureEditMode>("FeatureEditMode", *this);
 
-    if (0){
+    if (1){
         project_directory = WORKING_DIR + "B1";
         load_project(project_directory);
         set_active_mode("FeatureEditMode");
