@@ -15,6 +15,18 @@
 
 TrianglesLayer::TrianglesLayer() { point_renderer.layer_id = id; tri_renderer.layer_id = id; }
 
+
+int TrianglesLayer::primitive_type(){
+    switch (rt){
+    case RenderType::POINT_SPHERE: return 0;
+    case RenderType::CORNER_GLYPH:
+    case RenderType::HALFEDGE_GLYPH: 
+        return 2;
+    };
+    return 1;
+}
+
+
 void TrianglesLayer::generate_gui(std::string name) {
 
     if (attr_active() && attr_primitive() == "points"){
@@ -82,7 +94,6 @@ void TrianglesLayer::reset() {
     FacetAttribute<bool> visible_tri("visible", attr, tri, true);
 
     if (attr_active()) {
-        show_object_id(attr_id);
         if (rt == RenderType::POINT_SPHERE) {
             point_renderer.color_map_prop = 1;
         } else {

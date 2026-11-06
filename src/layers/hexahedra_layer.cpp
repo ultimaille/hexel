@@ -266,7 +266,6 @@
         CellAttribute<bool> visible_hex("visible", attr, hex, true);
 
         if (attr_active()) {
-            show_object_id(attr_id);
             if (rt == RenderType::POINT_SPHERE) {
                 point_renderer.color_map_prop = 1;
             } else {

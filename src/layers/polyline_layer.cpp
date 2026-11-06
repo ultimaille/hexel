@@ -212,10 +212,8 @@ void PolyLineLayer::reset() {
     God::shaders.create_if_needed(std::string(SHADERS_DIR), "segment_as_tube");
     God::shaders.create_if_needed(std::string(SHADERS_DIR), "point_as_sphere");
     EdgeAttribute<bool> visible_pl("visible", attr, pl, true);
-    show_object_id(attr_id);
 
     if (attr_active()) {
-        show_object_id(attr_id);
         if (rt == RenderType::POINT_SPHERE) {
             point_renderer.color_map_prop = 1;
         }
