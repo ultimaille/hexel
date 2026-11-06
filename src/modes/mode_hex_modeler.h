@@ -44,6 +44,11 @@ struct HexModelerMode : public Mode{
     void save_project(std::string directory);
     void import_new_project_from_CAD(std::string filename);
 
+
+
+    bool xcf_is_valid_for_editing();
+    void reset_layers_options();
+
     // manage undo
     int undo_begin = -1;
     int undo_stack_size = 5;
@@ -70,6 +75,8 @@ struct HexModelerMode : public Mode{
     Registry<SubMode> modes;
     int active_mode_id;
     void set_active_mode(std::string s);
+
+    void header_gui_for_submodes();
     void define_gui();
     void handle(Event event);
     void reset_gui();

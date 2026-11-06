@@ -16,6 +16,17 @@ PointSetLayer::PointSetLayer() { point_renderer.layer_id = id; }
 
 void PointSetLayer::generate_gui(std::string name){
     point_renderer.generate_gui(name);
+
+    
+    if (ImGui::Checkbox(label("mask a value##autorange", name), &mask))update();
+    if (mask) if (ImGui::InputInt(label("mask value", name), &skip_value)){ plop(skip_value); update(); }
+    
+
+
+    
+    
+
+
     Layer::generate_gui(name);
 }
 
@@ -65,7 +76,7 @@ void PointSetLayer::update(){
 template<class T>
 void PointSetLayer::update_typed(){
     switch (rt) {
-        case POINT_SPHERE: {
+        case ATTRIBUTE_SPHERE: {
             update_data_for_scalar_point_attribute_as_sphere<T>();
             break;
         }
@@ -80,8 +91,13 @@ void PointSetLayer::update_data_for_plain() {
     PointAttribute<float> value_pts(ps, 0);
 
     for (int v = 0; v < ps.size(); ++v) primitive_id[v] = v;
-
-    point_renderer.update(ps, visible_pts, value_pts, primitive_id);
+    if (!mask)
+        point_renderer.update(ps, visible_pts, value_pts, primitive_id);
+    else{
+        PointAttribute<bool> masked_visible_pts(ps);
+        for (int v = 0; v < ps.size(); ++v)  masked_visible_pts[v] = visible_pts[v] && value_pts[v] != skip_value;
+        point_renderer.update(ps, masked_visible_pts, value_pts, primitive_id);
+    }
 }
 
 template<class T> 
@@ -97,20 +113,24 @@ void PointSetLayer::update_data_for_scalar_point_attribute_as_sphere() {
         value_float[v] = static_cast<float>(value_pts[v]);
         primitive_id[v] = v;
     }
-
-    point_renderer.update(ps, visible_pts, value_float, primitive_id);
+     if (!mask)
+         point_renderer.update(ps, visible_pts, value_float, primitive_id);
+     else{
+         PointAttribute<bool> masked_visible_pts(ps);
+         for (int v = 0; v < ps.size(); ++v)  masked_visible_pts[v] = visible_pts[v] && value_float[v] != skip_value;
+         point_renderer.update(ps, masked_visible_pts, value_float, primitive_id);
+     }
 }
 
 // Note: partially the same as HexahedraLayer
 void PointSetLayer::bind_attribute(ObjectId p_attr_id){
     attr_id = p_attr_id;
 
-    PointSetAttributes& attr = mesh;
-
     if (attr_active()) {
         if (attr_primitive() == "points")
-            rt = RenderType::POINT_SPHERE;
+            rt = RenderType::ATTRIBUTE_SPHERE;
     } else {
+        Log::error("try to bind an attribute that does not exists");
         rt = PLAIN;
     }
 

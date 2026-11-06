@@ -133,7 +133,8 @@ FeatureEditMode::FeatureEditMode(HexModelerMode& mode) : HexModelerMode::SubMode
 }
 void FeatureEditMode::define_gui() {
     ImGui::Begin("HexModelerMode", nullptr);
-    ImGui::Text("MODE: FeatureEditMode");
+    mode.header_gui_for_submodes();
+
     split_add_react.define_gui();
     multi_selector_react_left.feed_back_gui();
     multi_selector_react_right.feed_back_gui();

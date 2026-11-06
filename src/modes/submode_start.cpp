@@ -4,8 +4,10 @@
 
 
     StartingMode::StartingMode(HexModelerMode& mode) : HexModelerMode::SubMode(mode){}
+   
     void StartingMode::define_gui() {
         ImGui::Begin("HexModelerMode", nullptr);
+        mode.header_gui_for_submodes();
 
 
 

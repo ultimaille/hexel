@@ -33,8 +33,10 @@ struct PointSetLayer : public Layer{
     ObjectId attr_id;
     enum RenderType {
         PLAIN,
-        POINT_SPHERE
+        ATTRIBUTE_SPHERE
     };
+    bool mask = false;
+    int skip_value = -1;
 
     RenderType rt = PLAIN;
 

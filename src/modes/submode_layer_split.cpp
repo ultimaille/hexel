@@ -3,7 +3,6 @@
 
 
 
-    void activate(){}
 
     LayerSplitMode::LayerSplitMode(HexModelerMode& mode) : HexModelerMode::SubMode(mode){
         multi_selector_react_left.init(0);
@@ -103,13 +102,7 @@
 
     void LayerSplitMode::define_gui() {
             ImGui::Begin("HexModelerMode", nullptr);
-            ImGui::Text("MODE: LayerSplitMode");
-            if (ImGui::Button("Backup")) mode.backup();
-            ImGui::SameLine();
-            if (ImGui::Button("Undo")) mode.undo();
-            ImGui::SameLine();
-            if (ImGui::Button("Reset GUI")) mode.reset_gui();
-            ImGui::Separator();
+            mode.header_gui_for_submodes();
             multi_selector_react_left.feed_back_gui();
             multi_selector_react_right.feed_back_gui();
             ImGui::End();

@@ -8,7 +8,7 @@
 #include <modes/submode_start.h>
 #include <modes/submode_layer_split.h>
 #include <modes/submode_feature_edit.h>
-
+#include <modes/submode_basic_edit.h>
 
 
 
@@ -68,6 +68,64 @@ void HexModelerMode::handle_camera_and_layerselect(Event event){
 }
 
 
+bool HexModelerMode::xcf_is_valid_for_editing(){
+    if (!God::xcf.contains("mesh")) goto reset;
+    if (!God::xcf.contains("geom")) goto reset;
+    return true;
+reset:
+    reset_xcf();
+    return false;
+}
+
+void HexModelerMode::reset_layers_options(){
+    if (!xcf_is_valid_for_editing()) return;
+
+    {// rendering of the geom object
+        God::layers["geomPts"].visible = false;
+        God::layers["geomTri"].visible = true;
+        God::layers["geomEdges"].visible = true;
+
+
+        static_cast<PointSetLayer&>(God::layers["geomPts"]).point_renderer.radius_in_pixel = 5;
+
+        if (!God::layers.contains("geomLock")){
+            PointSetLayer& layer = God::layers.add<PointSetLayer>("geomLock", 1);
+            layer.group = 0;
+            layer.init(geom_pts_id());
+        }
+
+        PointAttribute<int> touch_lock("lock", God::xcf["geom"].pointset_attributes, God::xcf["geom"].pointset, 0);
+        God::layers["geomLock"].bind_attribute(ObjectId(ObjectType::POINTSET_ATTR, { "geom", "int","points","lock" }));
+        {
+            auto& layer = static_cast<PointSetLayer&>(God::layers["geomLock"]);
+            layer.point_renderer.radius_in_pixel = 7;
+            layer.skip_value = 0;
+            layer.mask = true;
+        }
+
+        God::layers["geomEdges"].bind_attribute(ObjectId(ObjectType::POLYLINES_ATTR, { "geom", "","int","edges","feat_id" }));
+        auto& er = static_cast<PolyLineLayer&>(God::layers["geomEdges"]).edge_renderer;
+    }
+
+    {// rendering of the hexahedral mesh
+        if (!God::layers.contains("meshEdges")){
+            PolyLineLayer& layer = God::layers.add<PolyLineLayer>("meshEdges", 1);
+            layer.init(pl_id());
+        }
+        God::layers["meshPts"].visible = true;
+        God::layers["meshHex"].visible = true;
+        God::layers["meshEdges"].visible = true;
+
+        auto& pr = dynamic_cast<PolyLineLayer&> (God::layers["meshEdges"]).edge_renderer;        pr.color[0] = .5; pr.color[1] = .5; pr.color[2] = .7;
+    }
+
+
+
+
+
+}
+
+
 // manage import/load/write of project
 void HexModelerMode::reset_xcf(){
     std::vector<std::string> mms;
@@ -98,20 +156,23 @@ void HexModelerMode::load_project(std::string directory){
     EdgeAttribute<int> edge2halfedge("hex_halfedge", God::xcf["mesh"].polylines[""].attributes, God::xcf["mesh"].polylines[""].mesh);
     generate_edge_graph(hex, pl, edge2halfedge);
 
-    PolyLineLayer& layer = God::layers.add<PolyLineLayer>("meshEdges", 1);
-    layer.init(pl_id());
-    auto& pr = layer.edge_renderer;        pr.color[0] = .5; pr.color[1] = .5; pr.color[2] = .7;
+    reset_layers_options();
     layer_selection_react.init(hex_id(), pl_id(), pts_id());
 
-    set_active_mode("LayerSplitMode");
+    set_active_mode("BasicEditMode");
 }
 void HexModelerMode::import_new_project_from_CAD(std::string filename){
     const std::filesystem::path project_dir{project_directory};
+    std::filesystem::create_directory(project_dir);
+
     BBox3 bbox;
     {   // import the CAD
         MultiMesh mm;
         mm.load_geogram(filename, false);
         FOR(v, mm.pointset.size()) bbox.add(mm.pointset[v]);
+
+        PointAttribute<int> touch_lock("lock", mm.pointset_attributes, mm.pointset, 0);
+
 
         if (mm.polylines.empty()) mm.polylines.try_emplace("");
         auto& pl = mm.polylines[""];
@@ -136,6 +197,9 @@ void HexModelerMode::import_new_project_from_CAD(std::string filename){
                 feat_id[e + nedges] = feat_id[e];
             }
         }
+        pl.mesh.connect();
+        for (auto v : pl.mesh.iter_vertices()) for (auto e0 : v.iter_edges())for (auto e1 : v.iter_edges())
+            if (feat_id[e0] != feat_id[e1]) touch_lock[v] = 1;
 
 
         if (mm.triangles.empty()) mm.triangles.try_emplace("");
@@ -148,7 +212,6 @@ void HexModelerMode::import_new_project_from_CAD(std::string filename){
 
         mm.quads.clear(); mm.polygons.clear(); mm.hexahedra.clear(); mm.pyramids.clear(); mm.wedges.clear();
         mm.save_to_path((project_dir / "geom").string(),true);
-
     }
 
     { // create an empty mesh
@@ -206,10 +269,44 @@ void HexModelerMode::set_active_mode(std::string s){
     int id = modes.find(s);
     um_assert(id != -1);
     active_mode_id = id;
+    reset_layers_options();
     modes[id].activate();
 }
+
+static void ImGui_help(const char* desc){
+    ImGui::SameLine(); 
+    ImGui::TextDisabled("(?)");
+    if (ImGui::BeginItemTooltip())
+    {
+        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+        ImGui::TextUnformatted(desc);
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+    }
+}
+void HexModelerMode::header_gui_for_submodes(){
+    if (ImGui::Button("Backup")) backup();
+    ImGui::SameLine();
+    if (ImGui::Button("Undo")) undo();
+    ImGui::SameLine();
+    if (ImGui::Button("Reset GUI")) reset_gui();
+    ImGui::Separator();
+
+    const char* items[] = { "Load/Import", "BasicEdit", "LayerSplit", "CAD_feature" };
+    static int current_mode = 1;
+
+    if (ImGui::Combo("SubMode", &current_mode, items, IM_COUNTOF(items))){
+        if (current_mode == 0) set_active_mode("StartingMode");
+        if (current_mode == 1) set_active_mode("BasicEditMode");
+        if (current_mode == 2) set_active_mode("LayerSplitMode");
+        if (current_mode == 3) set_active_mode("FeatureEditMode");
+    }
+    
+    ImGui_help("Choose the current submode\n" "hopefully you can go there");
+}
+
 void HexModelerMode::define_gui(){
-    modes[active_mode_id].define_gui();                     
+    modes[active_mode_id].define_gui();
 }
 
 
@@ -227,13 +324,15 @@ HexModelerMode::HexModelerMode(){
     undo_stack_size = 5;
 
     modes.emplace_back<StartingMode>("StartingMode", *this);
+    modes.emplace_back<BasicEditMode>("BasicEditMode", *this);
     modes.emplace_back<LayerSplitMode>("LayerSplitMode", *this);
     modes.emplace_back<FeatureEditMode>("FeatureEditMode", *this);
 
-    if (0){
+    if (1){
         project_directory = WORKING_DIR + "B1";
+        import_new_project_from_CAD(CAD_file);
         load_project(project_directory);
-        set_active_mode("FeatureEditMode");
+        set_active_mode("BasicEditMode");
     }else
         set_active_mode("StartingMode");
 }
