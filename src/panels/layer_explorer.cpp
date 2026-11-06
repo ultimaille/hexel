@@ -186,12 +186,14 @@ void LayerExplorer::draw_layer_gui() {
 
             if (is_tree_node_group_open) {
                 for (int l = 0; l < God::layers.size(); ++l) {
-                    ImGui::TableNextRow();
 
-                    ImGui::PushID(("tree_node_layer_" + std::to_string(l)).c_str());
 
                     Layer &layer = God::layers[l];
                     if (layer.group == group.id) {
+
+                        ImGui::TableNextRow();
+                        ImGui::PushID(("tree_node_layer_" + std::to_string(l)).c_str());
+
                         std::string layer_name = God::layers.ith_name(l);
 
                         // Apply pressed color style
@@ -266,8 +268,9 @@ void LayerExplorer::draw_layer_gui() {
                         if (open_layer_node) {
                             ImGui::TreePop();
                         }
+                        ImGui::PopID();
+
                     }
-                    ImGui::PopID();
                 }
                 ImGui::TreePop();
             }
