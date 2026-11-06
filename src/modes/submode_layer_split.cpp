@@ -60,14 +60,20 @@
                 compute_hex_layer_id(hex, layer_id);
                 auto h = hex_halfedge_from_edge(prim);
                 int selected_layer = layer_id[h.prev().opposite_f().facet()];
+
                 CellFacetAttribute<int> pillow(hex, 0);
                 for (auto f : hex.iter_facets())
                     if (selected_layer == layer_id[f])
                         pillow[f] = 1;
 
+                Hexahedra& hex = mode.hex_id();
+                CellAttribute<int> block_id("block_id", mode.hex_id(), hex,-1);
                 Pillow(hex, pillow).apply(1. - c);
-
                 update_hex();
+                for (auto f : hex.iter_facets()){
+                    auto opp = f.opposite();
+                    if (pillow[f]) block_id[opp.cell()] = block_id[f.cell()];
+                }
             }
             multi_selector_react_left.reset();
         }

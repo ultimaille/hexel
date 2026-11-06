@@ -18,7 +18,7 @@ struct Renderer{
 	int layer_id = -1;
 
 	GLuint colormap;
-	int texture_repeat=1;
+	int texture_repeat=0;
 	int texture_id=0;
 	bool auto_range = true;
 	float value_range[2] = { 0,0 };

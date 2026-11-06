@@ -116,12 +116,16 @@ void HexModelerMode::reset_layers_options(){
         God::layers["meshHex"].visible = true;
         God::layers["meshEdges"].visible = true;
 
-        auto& pr = dynamic_cast<PolyLineLayer&> (God::layers["meshEdges"]).edge_renderer;        pr.color[0] = .5; pr.color[1] = .5; pr.color[2] = .7;
+        PointAttribute<int> touch_lock("lock", God::xcf["mesh"].pointset_attributes, God::xcf["mesh"].pointset, 0);
+        God::layers["meshPts"].bind_attribute(ObjectId(ObjectType::POINTSET_ATTR, { "mesh", "int","points","lock" }));
+        {
+            auto& layer = static_cast<PointSetLayer&>(God::layers["meshPts"]);
+            layer.point_renderer.radius_in_pixel = 10;
+        }
+
+        God::layers["meshHex"].bind_attribute(ObjectId(ObjectType::HEXAHEDRA_ATTR, { "mesh", "","int","cells","block_id" }));
+        //auto& pr = dynamic_cast<PolyLineLayer&> (God::layers["meshEdges"]).edge_renderer;        pr.color[0] = .5; pr.color[1] = .5; pr.color[2] = .7;
     }
-
-
-
-
 
 }
 
@@ -187,7 +191,7 @@ void HexModelerMode::import_new_project_from_CAD(std::string filename){
         pl.attributes.edges.clear();
         EdgeAttribute<int> feat_id("feat_id", pl.attributes, pl.mesh);
         for (auto e : pl.mesh.iter_edges()) feat_id[e] = gmsh_import_feature[e];
-
+                                                                        
         {// create opposite edges
             pl.mesh.disconnect();
             int nedges = pl.mesh.nedges();
@@ -219,11 +223,14 @@ void HexModelerMode::import_new_project_from_CAD(std::string filename){
         mm.hexahedra.try_emplace("");
         CellAttribute<int> block_id("block_id", mm.hexahedra[""].attributes, mm.hexahedra[""].mesh);
         
-        mm.pointset.create_points(8);
         Hexahedra& hex = mm.hexahedra[""].mesh;
-        hex.create_cells(1);
-        FOR(k, 2)FOR(j, 2)FOR(i, 2) mm.pointset[i + 2 * j + 4 * k] = bbox.min + vec3(i * bbox.size()[0], j * bbox.size()[1], k * bbox.size()[2]);
+        mm.pointset.create_points(12);
+        hex.create_cells(2);
+        FOR(k, 3)FOR(j, 2)FOR(i, 2) 
+            mm.pointset[i + 2 * j + 4 * k] = bbox.min + vec3(i * bbox.size()[0], j * bbox.size()[1], k * bbox.size()[2]/2.);
         FOR(v, 8) hex.vert(0, v) = v;
+        FOR(v, 8) hex.vert(1, v) = 4+v;
+        FOR(c,2) block_id[c] = c;
 
         mm.save_to_path((project_dir / "mesh").string(), true);
     }

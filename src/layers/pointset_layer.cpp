@@ -54,7 +54,6 @@ void PointSetLayer::reset() {
     PointAttribute<bool> visible_pts("visible", attr, ps, true);
 
     if (attr_active()) {
-        show_object_id(attr_id);
         point_renderer.color_map_prop = 1;
     }
 
@@ -130,7 +129,6 @@ void PointSetLayer::bind_attribute(ObjectId p_attr_id){
         if (attr_primitive() == "points")
             rt = RenderType::ATTRIBUTE_SPHERE;
     } else {
-        Log::error("try to bind an attribute that does not exists");
         rt = PLAIN;
     }
 

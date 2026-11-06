@@ -101,7 +101,7 @@ void MultiMesh::load_geogram(std::string filename, bool connect){
     else primitives_loaded += "wedges ";
     if (pyramids[""].mesh.ncells() == 0)                              pyramids.erase("");
     else primitives_loaded += "pyramid ";
-    plop(triangles.size());
+   
 
     Log::add("primitives loaded in .geogram: " + primitives_loaded);
 }
