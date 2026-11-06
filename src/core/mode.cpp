@@ -34,8 +34,7 @@ void Mode::send_instruction_to_react(Event event,MouseReact& react) {
 
     static vec2 pos_on_press[3];
 
-    if (event.who == events::MOUSE && !ImGui::GetIO().WantCaptureMouse) {    
-//    if (event.who == path().mouse && !ImGui::GetIO().WantCaptureMouse) {
+    if (event.who == root().mouse && !ImGui::GetIO().WantCaptureMouse) {
         const double wheel = God::mouse.wheel_speed;
         if (wheel != 0) react.on_wheel(wheel);
         vec2 a = { God::mouse.previous.x, God::mouse.previous.y };

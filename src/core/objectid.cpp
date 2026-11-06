@@ -99,6 +99,7 @@ std::optional<ObjectId::ObjectRef> ObjectId::ref() {
 }
 
 
+/*
 ObjectId::operator KeyboardState& () {
     return as<KeyboardState>();
 }
@@ -110,6 +111,7 @@ ObjectId::operator MouseState& () {
 ObjectId::operator TrackBallCamera& () {
     return as<TrackBallCamera>();
 }
+*/
 
 ObjectId::operator Panel& () {
     return as<Panel>();

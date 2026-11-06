@@ -60,9 +60,9 @@ struct ObjectId {
 
     std::optional<ObjectRef> ref();  // returns std::nullopt if path invalid
 
-    operator KeyboardState&();
-    operator MouseState&();
-    operator TrackBallCamera&();
+//  operator KeyboardState&();
+//  operator MouseState&();
+//  operator TrackBallCamera&();
     operator Panel& ();
     operator Layer&();
 
@@ -127,10 +127,6 @@ inline bool operator==(const ObjectId& a, const ObjectId& b) {
 struct Path {
     const std::vector<std::string> path;
 
-//  operator ObjectId() const {
-//      return ObjectId{ path };
-//  }
-
     void broadcast(events::EventType e) {
         ObjectId(*this).broadcast(e);
     }
@@ -153,14 +149,66 @@ struct Path {
     }
 };
 
-struct PathCollection : Path {
-    Path operator[](std::string s) const {
-        return { concat(path, s) };
-    }
-};
+struct MultiMeshPath;
 
 struct MeshPath : Path {
-    auto parent() const;
+    MultiMeshPath parent() const;
+};
+
+struct AttributePath : Path {};
+
+struct MultiMeshPath : Path {
+    struct AttributeCollection : Path {
+        AttributePath operator[](std::string s) const {
+            return { concat(path, s) };
+        }
+    };
+
+    struct PointSet : Path {
+        AttributeCollection attr_points = { concat(path, "attr_points") };
+    } pointset = { concat(path, "pointset") };
+
+    struct PolyLines : Path {
+        struct PolyLine : MeshPath {
+            AttributeCollection attr_points  = { concat(path, "attr_points" ) };
+            AttributeCollection attr_edges   = { concat(path, "attr_edges" ) };
+        };
+        PolyLine operator[](std::string s) const {
+            return { concat(path, s) };
+        }
+    } polylines = { concat(path, "polylines") };
+
+    struct Surfaces : Path {
+        struct Surface : MeshPath {
+            AttributeCollection attr_points  = { concat(path, "attr_points" ) };
+            AttributeCollection attr_facets  = { concat(path, "attr_facets" ) };
+            AttributeCollection attr_corners = { concat(path, "attr_corners") };
+        };
+        Surface operator[](std::string s) const {
+            return { concat(path, s) };
+        }
+    };
+
+    Surfaces triangles = { concat(path, "triangles") };
+    Surfaces quads     = { concat(path, "quads"    ) };
+    Surfaces polygons  = { concat(path, "polygons" ) };
+
+    struct Volumes : Path {
+        struct Volume : MeshPath {
+            AttributeCollection attr_points  = { concat(path, "attr_points" ) };
+            AttributeCollection attr_cells   = { concat(path, "attr_cells"  ) };
+            AttributeCollection attr_facets  = { concat(path, "attr_facets" ) };
+            AttributeCollection attr_corners = { concat(path, "attr_corners") };
+        };
+        Volume operator[](std::string s) const {
+            return { concat(path, s) };
+        }
+    };
+
+    Volumes tetrahedra = { concat(path, "tetrahedra") };
+    Volumes hexahedra  = { concat(path, "hexahedra" ) };
+    Volumes wedges     = { concat(path, "wedges"    ) };
+    Volumes pyramids   = { concat(path, "pyramids"  ) };
 };
 
 struct RootPath : Path {
@@ -169,68 +217,25 @@ struct RootPath : Path {
     Path camera  = {{ "camera"  }};
     Path context = {{ "context" }};
 
+    struct PathCollection : Path {
+        Path operator[](std::string s) const {
+            return { concat(path, s) };
+        }
+    };
+
     PathCollection modes   = {{{ "modes"   }}};
     PathCollection layers  = {{{ "layers"  }}};
     PathCollection panels  = {{{ "panels"  }}};
     PathCollection shaders = {{{ "shaders" }}};
 
-
     struct XCF : Path {
-        struct MultiMesh : Path {
-            struct PointSet : Path {
-                PathCollection attr_points = { concat(path, "attr_points") };
-            } pointset = { concat(path, "pointset") };
-
-            struct PolyLines : Path {
-                struct PolyLine : MeshPath {
-                    PathCollection attr_points  = { concat(path, "attr_points" ) };
-                    PathCollection attr_edges   = { concat(path, "attr_edges" ) };
-                };
-                PolyLine operator[](std::string s) const {
-                    return { concat(path, s) };
-                }
-            } polylines = { concat(path, "polylines") };
-
-            struct Surfaces : Path {
-                struct Surface : MeshPath {
-                    PathCollection attr_points  = { concat(path, "attr_points" ) };
-                    PathCollection attr_facets  = { concat(path, "attr_facets" ) };
-                    PathCollection attr_corners = { concat(path, "attr_corners") };
-                };
-                Surface operator[](std::string s) const {
-                    return { concat(path, s) };
-                }
-            };
-
-            Surfaces triangles = { concat(path, "triangles") };
-            Surfaces quads     = { concat(path, "quads"    ) };
-            Surfaces polygons  = { concat(path, "polygons" ) };
-
-            struct Volumes : Path {
-                struct Volume : MeshPath {
-                    PathCollection attr_points  = { concat(path, "attr_points" ) };
-                    PathCollection attr_cells   = { concat(path, "attr_cells"  ) };
-                    PathCollection attr_facets  = { concat(path, "attr_facets" ) };
-                    PathCollection attr_corners = { concat(path, "attr_corners") };
-                };
-                Volume operator[](std::string s) const {
-                    return { concat(path, s) };
-                }
-            };
-
-            Volumes tetrahedra = { concat(path, "tetrahedra") };
-            Volumes hexahedra  = { concat(path, "hexahedra" ) };
-            Volumes wedges     = { concat(path, "wedges"    ) };
-            Volumes pyramids   = { concat(path, "pyramids"  ) };
-        };
-
-        MultiMesh operator[](std::string s) const {
+        MultiMeshPath operator[](std::string s) const {
             return { concat(path, s) };
         }
     } xcf = {{{ "xcf" }}};
 };
 
-inline RootPath path() {
+inline RootPath root() {
     return {};
 }
 
@@ -271,10 +276,10 @@ inline Path::operator ObjectId() const {
     return {};
 }
 
-inline auto MeshPath::parent() const {
+inline MultiMeshPath MeshPath::parent() const {
     um_assert(path.size() == 4);
-    um_assert(has_prefix(::path().xcf));
-    return RootPath::XCF::MultiMesh{
+    um_assert(has_prefix(root().xcf));
+    return MultiMeshPath{
         std::vector<std::string>{path[0], path[1]}
     };
 }

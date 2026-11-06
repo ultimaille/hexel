@@ -12,5 +12,5 @@ struct Event {
 struct EventManager {
     void dispatch();
     std::vector<Event> queue;
-};                                                           
+};
 
