@@ -34,6 +34,7 @@ struct Group {
     int id;
     BlendOp blend_op;
     std::string name;
+    bool visible = true;
 };
 
 struct LayerManager: private Registry<Layer> {
@@ -59,6 +60,7 @@ struct LayerManager: private Registry<Layer> {
     bool is_group_empty(int group_id);
 
     void render();
+    void render_group(int group_id);
     void handle(Event event);
     void kill(std::string layer_name);
     void kill(int idx);

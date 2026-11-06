@@ -70,156 +70,178 @@ void LayerExplorer::draw_layer_gui() {
 
     ImGui::Begin("LayersConfig", nullptr);
 
-    for (int i = 0; i < God::layers.groups.size(); ++i) {
-        auto &group = God::layers.groups[i];
+    if (ImGui::BeginTable("groups", 2, ImGuiTableFlags_SizingStretchProp)) {
+        ImGui::TableSetupColumn("name", ImGuiTableColumnFlags_WidthStretch);
+        ImGui::TableSetupColumn("visible", ImGuiTableColumnFlags_WidthFixed, ImGui::GetFrameHeight());
 
-        ImGui::PushID(("widget_group_" + std::to_string(group.id)).c_str());
+        for (int i = 0; i < God::layers.groups.size(); ++i) {
+            auto &group = God::layers.groups[i];
 
-        bool open = ImGui::TreeNodeEx(label(group.name, "group_" + std::to_string(group.id)), flag(false, false));
+            ImGui::PushID(("widget_group_" + std::to_string(group.id)).c_str());
 
-        // Button to open popup
-        static bool showPopup = false;
-        static int selectedItem = -1;
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
 
-        if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
-            ImGui::OpenPopup("blend_context");
-        }
+            bool open = ImGui::TreeNodeEx(label(group.name, "group_" + std::to_string(group.id)), flag(false, false));
 
-        // Popup with selection list
-        if (ImGui::BeginPopup("blend_context")) {
-            ImGui::Text("Select merge option:");
-            ImGui::Separator();
-            
-            static const char* items[] = {"None", "Average"};
-            
-            for (int i = 0; i < IM_ARRAYSIZE(items); i++) {
-                if (ImGui::Selectable(items[i], i == group.blend_op)) {
-                    group.blend_op = static_cast<Group::BlendOp>(i);
-                    // Do something with the selected item
-                    ImGui::CloseCurrentPopup();
-                }
-            }
-            ImGui::EndPopup();
-        }
+            bool is_tree_node_group_clicked = ImGui::IsItemClicked(ImGuiMouseButton_Right);
+
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Checkbox(label("", "cb_group_visible"), &group.visible);
 
 
-        // Drag source
-        if (ImGui::BeginDragDropSource()) {
-            ImGui::SetDragDropPayload("NODE_INDEX", &i, sizeof(int));
-            ImGui::Text("%s", ("Move group " + std::to_string(group.id)).c_str());
-            ImGui::EndDragDropSource();
-        }
-        
-        // Drop target (reorder within same level)
-        if (ImGui::BeginDragDropTarget()) {
-            
-            // Drop to swap two groups
-            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("NODE_INDEX")) {
-                int source = *(int*)payload->Data;
-                if (source != i && source >= 0 && source < (int)God::layers.groups.size()) {
-                    std::swap(God::layers.groups[source], God::layers.groups[i]);
-                }
+            // Button to open popup
+            static bool showPopup = false;
+            static int selectedItem = -1;
+
+            if (is_tree_node_group_clicked) {
+                ImGui::OpenPopup("blend_context");
             }
 
-            // Drop to move layer into another group
-            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("LAYER_NODE_INDEX")) {
-                int source = *(int*)payload->Data;
-                if (source >= 0 && source < (int)God::layers.size()) {
-                    auto &layer = God::layers[source];
-                    int old_group = layer.group;
-                    layer.group = God::layers.groups[i].id;
-                    // Eventually remove group
-                    if (God::layers.is_group_empty(old_group))
-                        God::layers.remove_group(old_group);
+            // Popup with selection list
+            if (ImGui::BeginPopup("blend_context")) {
+                ImGui::Text("Select merge option:");
+                ImGui::Separator();
+                
+                static const char* items[] = {"None", "Average"};
+                
+                for (int i = 0; i < IM_ARRAYSIZE(items); i++) {
+                    if (ImGui::Selectable(items[i], i == group.blend_op)) {
+                        group.blend_op = static_cast<Group::BlendOp>(i);
+                        // Do something with the selected item
+                        ImGui::CloseCurrentPopup();
+                    }
                 }
+                ImGui::EndPopup();
             }
-            ImGui::EndDragDropTarget();
-        }
 
-        if (open) {
-            for (int l = 0; l < God::layers.size(); ++l) {
-                ImGui::PushID(("tree_node_layer_" + std::to_string(l)).c_str());
 
-                Layer &layer = God::layers[l];
-                if (layer.group == group.id) {
-                    std::string layer_name = God::layers.ith_name(l);
-
-                    // Apply pressed color style
-                    bool was_pressed = layer_pressed[l];
-                    if (layer_pressed[l]){
-                        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.2f, 0.7f, 0.2f, 1.0f));
-                        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.3f, 0.8f, 0.3f, 1.0f));
-                        ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.15f, 0.6f, 0.15f, 1.0f));
+            // Drag source
+            if (ImGui::BeginDragDropSource()) {
+                ImGui::SetDragDropPayload("NODE_INDEX", &i, sizeof(int));
+                ImGui::Text("%s", ("Move group " + std::to_string(group.id)).c_str());
+                ImGui::EndDragDropSource();
+            }
+            
+            // Drop target (reorder within same level)
+            if (ImGui::BeginDragDropTarget()) {
+                
+                // Drop to swap two groups
+                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("NODE_INDEX")) {
+                    int source = *(int*)payload->Data;
+                    if (source != i && source >= 0 && source < (int)God::layers.groups.size()) {
+                        std::swap(God::layers.groups[source], God::layers.groups[i]);
                     }
+                }
 
-                    bool open_layer_node = ImGui::TreeNodeEx(label(layer_name, layer_name), flag(false, true));
-
-                    if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
-                        ImGui::OpenPopup("layer_context");
+                // Drop to move layer into another group
+                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("LAYER_NODE_INDEX")) {
+                    int source = *(int*)payload->Data;
+                    if (source >= 0 && source < (int)God::layers.size()) {
+                        auto &layer = God::layers[source];
+                        int old_group = layer.group;
+                        layer.group = God::layers.groups[i].id;
+                        // Eventually remove group
+                        if (God::layers.is_group_empty(old_group))
+                            God::layers.remove_group(old_group);
                     }
+                }
+                ImGui::EndDragDropTarget();
+            }
 
-                    if (ImGui::BeginPopup("layer_context")) {
-                        if (ImGui::Button("Delete")) {
-                            to_kill.push_back(layer_name);
-                            ImGui::CloseCurrentPopup();
-                        }
-                        ImGui::EndPopup();
-                    }
+            if (open) {
+                for (int l = 0; l < God::layers.size(); ++l) {
+                    ImGui::TableNextRow();
 
-                    if (was_pressed) ImGui::PopStyleColor(3);
+                    ImGui::PushID(("tree_node_layer_" + std::to_string(l)).c_str());
 
-                    // Drag layer
-                    if (ImGui::BeginDragDropSource()) {
-                        ImGui::SetDragDropPayload("LAYER_NODE_INDEX", &l, sizeof(int));
+                    Layer &layer = God::layers[l];
+                    if (layer.group == group.id) {
                         std::string layer_name = God::layers.ith_name(l);
-                        ImGui::Text("%s", ("Move layer " + layer_name).c_str());
-                        ImGui::EndDragDropSource();
-                    }
 
-
-                    bool was_dropped = false;
-                    // Drop target reorder layer
-                    if (ImGui::BeginDragDropTarget()) {
-                        int drag_from = -1;
-                        int drop_to = -1;
-
-                        // Drop to move layer
-                        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("LAYER_NODE_INDEX")) {
-                            int source = *(int*)payload->Data;
-                            if (source >= 0 && source < (int)God::layers.size()) {
-                                auto &source_layer = God::layers[source];
-                                drag_from = *(const int*)payload->Data;
-                                drop_to = l;
-                            }
+                        // Apply pressed color style
+                        bool was_pressed = layer_pressed[l];
+                        if (layer_pressed[l]){
+                            ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.2f, 0.7f, 0.2f, 1.0f));
+                            ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.3f, 0.8f, 0.3f, 1.0f));
+                            ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.15f, 0.6f, 0.15f, 1.0f));
                         }
 
-                        // Reorder
-                        if (drag_from != -1 || drop_to != -1)
-                            reorder_layers(drag_from, drop_to);
+                        ImGui::TableSetColumnIndex(0);
+                        bool open_layer_node = ImGui::TreeNodeEx(label(layer_name, layer_name), flag(false, true));
 
-                        ImGui::EndDragDropTarget();
-                        was_dropped = true;
+                        bool is_tree_node_layer_clicked = ImGui::IsItemClicked(ImGuiMouseButton_Right);
+                        bool is_tree_node_layer_mouse_released = ImGui::IsMouseReleased(ImGuiMouseButton_Left) && ImGui::IsItemHovered();
+
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Checkbox(label("", "cb_layer_visible"), &layer.visible);
+
+                        if (is_tree_node_layer_clicked) {
+                            ImGui::OpenPopup("layer_context");
+                        }
+
+                        if (ImGui::BeginPopup("layer_context")) {
+                            if (ImGui::Button("Delete")) {
+                                to_kill.push_back(layer_name);
+                                ImGui::CloseCurrentPopup();
+                            }
+                            ImGui::EndPopup();
+                        }
+
+                        if (was_pressed) ImGui::PopStyleColor(3);
+
+                        // Drag layer
+                        if (ImGui::BeginDragDropSource()) {
+                            ImGui::SetDragDropPayload("LAYER_NODE_INDEX", &l, sizeof(int));
+                            std::string layer_name = God::layers.ith_name(l);
+                            ImGui::Text("%s", ("Move layer " + layer_name).c_str());
+                            ImGui::EndDragDropSource();
+                        }
+
+
+                        bool was_dropped = false;
+                        // Drop target reorder layer
+                        if (ImGui::BeginDragDropTarget()) {
+                            int drag_from = -1;
+                            int drop_to = -1;
+
+                            // Drop to move layer
+                            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("LAYER_NODE_INDEX")) {
+                                int source = *(int*)payload->Data;
+                                if (source >= 0 && source < (int)God::layers.size()) {
+                                    auto &source_layer = God::layers[source];
+                                    drag_from = *(const int*)payload->Data;
+                                    drop_to = l;
+                                }
+                            }
+
+                            // Reorder
+                            if (drag_from != -1 || drop_to != -1)
+                                reorder_layers(drag_from, drop_to);
+
+                            ImGui::EndDragDropTarget();
+                            was_dropped = true;
+                        }
+
+                        if (!was_dropped && is_tree_node_layer_mouse_released)
+                            layer_pressed[l] = !layer_pressed[l];
+
+                        if (open_layer_node) {
+                            ImGui::TreePop();
+                        }
                     }
-
-                    if (!was_dropped && ImGui::IsMouseReleased(ImGuiMouseButton_Left) && ImGui::IsItemHovered())
-                        layer_pressed[l] = !layer_pressed[l];
-
-                    
-                    ImGui::SameLine(0.f, 4.f);
-                    ImGui::Checkbox(label("", "cb_layer_visible"), &layer.visible);
-
-                    if (open_layer_node) {
-                        ImGui::TreePop();
-                    }
+                    ImGui::PopID();
                 }
-                ImGui::PopID();
+                ImGui::TreePop();
             }
-            ImGui::TreePop();
+
+            sync_property_from_layer();
+
+            ImGui::PopID();
         }
 
-        sync_property_from_layer();
+        ImGui::EndTable();
 
-        ImGui::PopID();
     }
 
     for (std::string layer_name : to_kill) {

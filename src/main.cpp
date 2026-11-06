@@ -57,11 +57,7 @@ int main(int argc, const char* argv[]) {
             
             God::context.render_target.bind(group.id);
 
-            for (int l = 0; l < God::layers.size(); ++l) {
-                Layer &layer = God::layers[l];
-                if (layer.group == group.id)
-                    layer.render();
-            }
+            God::layers.render_group(group.id);
         }
         
         God::events.dispatch();

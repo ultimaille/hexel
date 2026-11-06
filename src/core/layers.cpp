@@ -21,10 +21,19 @@
     void Layer::render_constant_color(int layerid) { Log::add("To be implemented"); }
     void Layer::destroy() {}
 
+    // TODO remove
     void LayerManager::render() {
-        for (auto& [name, obj] : *this)
-            if (obj->visible)
-                obj->render();
+        for (auto& [_, layer] : *this)
+            if (groups[layer->group].visible && layer->visible)
+                layer->render();
+    }
+
+    void LayerManager::render_group(int group_id) {
+        for (int l = 0; l < God::layers.size(); ++l) {
+            Layer &layer = God::layers[l];
+            if (layer.group == group_id && groups[group_id].visible && layer.visible)
+                layer.render();
+        }
     }
 
     void LayerManager::handle(Event event) {
