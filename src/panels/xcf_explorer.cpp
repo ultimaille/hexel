@@ -50,7 +50,7 @@ void XCFExplorer::generate_gui() {
     static ObjectIdSet selected([&](const ObjectId& a, const ObjectId& b) { if (a.path != b.path) return a.path < b.path; return a.names < b.names; });
 
     {// sync with property panel
-        PropertyExplorer& pan = dynamic_cast<PropertyExplorer&>(static_cast<Panel&>(ObjectId(PANEL, "property_window")));
+        PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(ObjectId(path().panels["property_window"])));
         std::vector<ObjectId> to_kill;
         for (auto sel : selected) if (sel.names.size() == 1 && sel.path == LAYER) to_kill.push_back(sel);
         for (auto id : to_kill)selected.erase(id);
@@ -119,11 +119,11 @@ void XCFExplorer::generate_gui() {
                 ImGui::InputText(label("", "gloglo"), tmp, 1024);
 
                 if (ImGui::MenuItem(label("Polyline", mm_name))){
-                    God::xcf.add_mesh(ObjectId(ObjectType::POLYLINES, { mm_name,tmp }));
+                    God::xcf.add_mesh(path().xcf[mm_name].polylines[tmp]);
                     ImGui::CloseCurrentPopup();
                 }
                 if (ImGui::MenuItem(label("Triangles", mm_name))){
-                    God::xcf.add_mesh(ObjectId(ObjectType::TRIANGLES, { mm_name,tmp }));
+                    God::xcf.add_mesh(path().xcf[mm_name].triangles[tmp]);
                     ImGui::CloseCurrentPopup();
                 }
                 // TODO: uncomment when layers implemented !
@@ -136,7 +136,7 @@ void XCFExplorer::generate_gui() {
                     // ImGui::CloseCurrentPopup();
                 // }
                 if (ImGui::MenuItem(label("Hexahedra", mm_name))){
-                    God::xcf.add_mesh(ObjectId(ObjectType::HEXAHEDRA, { mm_name,tmp }));
+                    God::xcf.add_mesh(path().xcf[mm_name].hexahedra[tmp]);
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::EndMenu();
@@ -386,11 +386,11 @@ void XCFExplorer::generate_gui() {
             }
 
 
-            for (auto n : polyline2kill) God::xcf.kill_mesh(ObjectId(ObjectType::POLYLINES, {mm_name, n}));
-            for (auto n : tri2kill) God::xcf.kill_mesh(ObjectId(ObjectType::TRIANGLES, {mm_name, n}));
+            for (auto n : polyline2kill) God::xcf.kill_mesh(path().xcf[mm_name].polylines[n]);
+            for (auto n : tri2kill) God::xcf.kill_mesh(path().xcf[mm_name].triangles[n]);
             // for (auto n : quad2kill) God::xcf.kill_mesh(ObjectId(ObjectType::QUADS, {mm_name, n}));
             // for (auto n : tet2kill) God::xcf.kill_mesh(ObjectId(ObjectType::TETRAHEDRA, {mm_name, n}));
-            for (auto n : hex2kill) God::xcf.kill_mesh(ObjectId(ObjectType::HEXAHEDRA, {mm_name, n}));
+            for (auto n : hex2kill) God::xcf.kill_mesh(path().xcf[mm_name].hexahedra[n]);
             ImGui::TreePop();
 
         }
@@ -398,8 +398,7 @@ void XCFExplorer::generate_gui() {
     for (auto n : mm2kill) God::xcf.kill_multimesh(n);
 
     {// sync with property panel
-//          PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(path().xcf["property_window"]));
-        PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(ObjectId(PANEL, "property_window")));
+        PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(ObjectId(path().panels["property_window"])));
         pan.layers.clear();
         for (auto sel : selected)if (sel.path == LAYER) pan.layers.push_back(sel);
     }
