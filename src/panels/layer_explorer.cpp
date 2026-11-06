@@ -77,44 +77,42 @@ void LayerExplorer::draw_layer_gui() {
         for (int i = 0; i < God::layers.groups.size(); ++i) {
             auto &group = God::layers.groups[i];
 
+            // Check whether all layers are pressed or not ?
+            bool all_pressed = true;
+            for (int l = 0; l < God::layers.size(); ++l) {
+                Layer &layer = God::layers[l];
+                if (layer.group == group.id) {
+                    all_pressed &= layer_pressed[l];
+                }
+            }
+
             ImGui::PushID(("widget_group_" + std::to_string(group.id)).c_str());
 
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
 
-            bool open = ImGui::TreeNodeEx(label(group.name, "group_" + std::to_string(group.id)), flag(false, false));
+            // Apply pressed color style
+            if (all_pressed){
+                ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.2f, 0.7f, 0.2f, 1.0f));
+                ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.3f, 0.8f, 0.3f, 1.0f));
+                ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.15f, 0.6f, 0.15f, 1.0f));
+            }
+
+            bool is_tree_node_group_open = ImGui::TreeNodeEx(label(group.name, "group_" + std::to_string(group.id)), flag(false, false));
+
+            if (all_pressed)
+                ImGui::PopStyleColor(3);
 
             bool is_tree_node_group_clicked = ImGui::IsItemClicked(ImGuiMouseButton_Right);
+            bool is_tree_node_group_mouse_released = ImGui::IsMouseReleased(ImGuiMouseButton_Left) && ImGui::IsItemHovered();
 
-            ImGui::TableSetColumnIndex(1);
-            ImGui::Checkbox(label("", "cb_group_visible"), &group.visible);
-
-
-            // Button to open popup
-            static bool showPopup = false;
-            static int selectedItem = -1;
-
-            if (is_tree_node_group_clicked) {
-                ImGui::OpenPopup("blend_context");
-            }
-
-            // Popup with selection list
-            if (ImGui::BeginPopup("blend_context")) {
-                ImGui::Text("Select merge option:");
-                ImGui::Separator();
-                
-                static const char* items[] = {"None", "Average"};
-                
-                for (int i = 0; i < IM_ARRAYSIZE(items); i++) {
-                    if (ImGui::Selectable(items[i], i == group.blend_op)) {
-                        group.blend_op = static_cast<Group::BlendOp>(i);
-                        // Do something with the selected item
-                        ImGui::CloseCurrentPopup();
-                    }
-                }
-                ImGui::EndPopup();
-            }
-
+            static std::unordered_map<int, bool> group_was_open;
+            bool& was_open = group_was_open[group.id];
+            bool is_tree_node_group_status_changed = is_tree_node_group_open != was_open;
+            // Only update this on mouse release, because switch selected layer is made on mouse release to not conflict with drag & drop
+            // Check whether tree status open / close changed must be verified at the time of mouse release
+            if (is_tree_node_group_mouse_released) 
+                was_open = is_tree_node_group_open;
 
             // Drag source
             if (ImGui::BeginDragDropSource()) {
@@ -122,8 +120,9 @@ void LayerExplorer::draw_layer_gui() {
                 ImGui::Text("%s", ("Move group " + std::to_string(group.id)).c_str());
                 ImGui::EndDragDropSource();
             }
-            
-            // Drop target (reorder within same level)
+
+            // Drop target: reorder groups
+            bool was_dropped_group = false;
             if (ImGui::BeginDragDropTarget()) {
                 
                 // Drop to swap two groups
@@ -147,9 +146,45 @@ void LayerExplorer::draw_layer_gui() {
                     }
                 }
                 ImGui::EndDragDropTarget();
+                was_dropped_group = true;
             }
 
-            if (open) {
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Checkbox(label("", "cb_group_visible"), &group.visible);
+
+
+            if (is_tree_node_group_clicked) {
+                ImGui::OpenPopup("blend_context");
+            }
+
+            // Popup with selection list
+            if (ImGui::BeginPopup("blend_context")) {
+                ImGui::Text("Select merge option:");
+                ImGui::Separator();
+                
+                static const char* items[] = {"None", "Average"};
+                
+                for (int i = 0; i < IM_ARRAYSIZE(items); i++) {
+                    if (ImGui::Selectable(items[i], i == group.blend_op)) {
+                        group.blend_op = static_cast<Group::BlendOp>(i);
+                        // Do something with the selected item
+                        ImGui::CloseCurrentPopup();
+                    }
+                }
+                ImGui::EndPopup();
+            }
+
+            // Here switch selected layers in group, if not drag & drop & not open / close the tree
+            if (!was_dropped_group && is_tree_node_group_mouse_released && !is_tree_node_group_status_changed) {
+                for (int l = 0; l < God::layers.size(); ++l) {
+                    Layer &layer = God::layers[l];
+                    if (layer.group == group.id) {
+                        layer_pressed[l] = !all_pressed;
+                    }
+                }
+            }
+
+            if (is_tree_node_group_open) {
                 for (int l = 0; l < God::layers.size(); ++l) {
                     ImGui::TableNextRow();
 
@@ -173,23 +208,6 @@ void LayerExplorer::draw_layer_gui() {
                         bool is_tree_node_layer_clicked = ImGui::IsItemClicked(ImGuiMouseButton_Right);
                         bool is_tree_node_layer_mouse_released = ImGui::IsMouseReleased(ImGuiMouseButton_Left) && ImGui::IsItemHovered();
 
-                        ImGui::TableSetColumnIndex(1);
-                        ImGui::Checkbox(label("", "cb_layer_visible"), &layer.visible);
-
-                        if (is_tree_node_layer_clicked) {
-                            ImGui::OpenPopup("layer_context");
-                        }
-
-                        if (ImGui::BeginPopup("layer_context")) {
-                            if (ImGui::Button("Delete")) {
-                                to_kill.push_back(layer_name);
-                                ImGui::CloseCurrentPopup();
-                            }
-                            ImGui::EndPopup();
-                        }
-
-                        if (was_pressed) ImGui::PopStyleColor(3);
-
                         // Drag layer
                         if (ImGui::BeginDragDropSource()) {
                             ImGui::SetDragDropPayload("LAYER_NODE_INDEX", &l, sizeof(int));
@@ -199,7 +217,7 @@ void LayerExplorer::draw_layer_gui() {
                         }
 
 
-                        bool was_dropped = false;
+                        bool was_dropped_layer = false;
                         // Drop target reorder layer
                         if (ImGui::BeginDragDropTarget()) {
                             int drag_from = -1;
@@ -220,10 +238,29 @@ void LayerExplorer::draw_layer_gui() {
                                 reorder_layers(drag_from, drop_to);
 
                             ImGui::EndDragDropTarget();
-                            was_dropped = true;
+                            was_dropped_layer = true;
                         }
 
-                        if (!was_dropped && is_tree_node_layer_mouse_released)
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Checkbox(label("", "cb_layer_visible"), &layer.visible);
+
+                        if (is_tree_node_layer_clicked) {
+                            ImGui::OpenPopup("layer_context");
+                        }
+
+                        if (ImGui::BeginPopup("layer_context")) {
+                            if (ImGui::Button("Delete")) {
+                                to_kill.push_back(layer_name);
+                                ImGui::CloseCurrentPopup();
+                            }
+                            ImGui::EndPopup();
+                        }
+
+                        if (was_pressed) ImGui::PopStyleColor(3);
+
+
+
+                        if (!was_dropped_layer && is_tree_node_layer_mouse_released)
                             layer_pressed[l] = !layer_pressed[l];
 
                         if (open_layer_node) {
@@ -265,7 +302,7 @@ void LayerExplorer::draw_layer_gui() {
     }
 
     if (ImGui::SmallButton("Add SSAO")) {
-        int group_id = God::layers.max_group - 1;
+        int group_id = God::layers.add_group("Post processing");
         auto &layer = God::layers.add<SSAO>("SSAO", group_id);
         layer.init();
         layer.visible = true;

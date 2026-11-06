@@ -58,6 +58,7 @@ struct LayerManager: private Registry<Layer> {
     int add_group(const std::string& name);
     void remove_group(int group_id);
     bool is_group_empty(int group_id);
+    std::vector<std::reference_wrapper<Layer>> from_group(int group_id);
 
     void render();
     void render_group(int group_id);

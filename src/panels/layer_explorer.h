@@ -11,6 +11,7 @@ struct LayerExplorer : public Panel {
             ImGuiTreeNodeFlags_Framed |
             ImGuiTreeNodeFlags_NavLeftJumpsToParent |
             ImGuiTreeNodeFlags_OpenOnDoubleClick |
+            ImGuiTreeNodeFlags_OpenOnArrow |
             ImGuiTreeNodeFlags_DrawLinesFull |
             (is_selected ? ImGuiTreeNodeFlags_Selected : 0) |
             (leaf ? ImGuiTreeNodeFlags_Leaf : 0);

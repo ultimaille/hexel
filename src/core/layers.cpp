@@ -9,7 +9,6 @@
 #include "shaders.h"
 #include "mode.h"
 
-
     Layer::Layer() : id(max_id) { ++max_id; }
     void Layer::reset() { Log::error("reset called for a layer that does not implement it"); };
     void Layer::generate_gui(std::string name) {
@@ -115,6 +114,17 @@
 
         return true;
     }
+
+    std::vector<std::reference_wrapper<Layer>> LayerManager::from_group(int group_id) {
+        std::vector<std::reference_wrapper<Layer>> result;
+        for (auto& e : items) {
+            if (e.object->group == group_id) {
+                result.push_back(*e.object);
+            }
+        }
+        return result;
+    }
+
 
 
     void LayerManager::destroy() {
