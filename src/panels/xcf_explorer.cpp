@@ -160,7 +160,7 @@ void XCFExplorer::generate_gui() {
                     ImGui::InputText(label("", "gloglo"), tmp, 1024);
                     
                     if (ImGui::MenuItem(label("PointSetLayer", mm_name))) {
-                        auto group_opt = God::layers.get_group(mm_name);
+                        auto group_opt = God::layers.find_group(mm_name);
                         int group_id = group_opt ? group_opt.value().id : God::layers.add_group(mm_name);
                         auto &layer = God::layers.add<PointSetLayer>(tmp, group_id);
                         layer.init(mesh_id);
@@ -212,7 +212,7 @@ void XCFExplorer::generate_gui() {
                         ImGui::InputText(label("", "gloglo"), tmp, 1024);
                         
                         if (ImGui::MenuItem(label("PolyLineLayer", mm_name))) {
-                            auto group_opt = God::layers.get_group(mm_name);
+                            auto group_opt = God::layers.find_group(mm_name);
                             int group_id = group_opt ? group_opt.value().id : God::layers.add_group(mm_name);
                             auto &layer = God::layers.add<PolyLineLayer>(tmp, group_id);
                             layer.init(mesh_id);
@@ -259,7 +259,7 @@ void XCFExplorer::generate_gui() {
                         ImGui::InputText(label("", "gloglo"), tmp, 1024);
                         
                         if (ImGui::MenuItem(label("TrianglesLayer", mm_name))) {
-                            auto group_opt = God::layers.get_group(mm_name);
+                            auto group_opt = God::layers.find_group(mm_name);
                             int group_id = group_opt ? group_opt.value().id : God::layers.add_group(mm_name);
                             auto &layer = God::layers.add<TrianglesLayer>(tmp, group_id);
                             layer.init(mesh_id);
@@ -357,7 +357,7 @@ void XCFExplorer::generate_gui() {
                         ImGui::InputText(label("", "gloglo"), tmp, 1024);
                         
                         if (ImGui::MenuItem(label("HexahedraLayer", mm_name))) {
-                            auto group_opt = God::layers.get_group(mm_name);
+                            auto group_opt = God::layers.find_group(mm_name);
                             int group_id = group_opt ? group_opt.value().id : God::layers.add_group(mm_name);
                             auto &layer = God::layers.add<HexahedraLayer>(tmp, group_id);
                             layer.init(mesh_id);

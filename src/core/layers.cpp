@@ -20,17 +20,14 @@
     void Layer::render_constant_color(int layerid) { Log::add("To be implemented"); }
     void Layer::destroy() {}
 
-    // TODO remove
-    void LayerManager::render() {
-        for (auto& [_, layer] : *this)
-            if (groups[layer->group].visible && layer->visible)
-                layer->render();
-    }
-
-    void LayerManager::render_group(int group_id) {
+    void LayerManager::render(int group_id) {
         for (int l = 0; l < God::layers.size(); ++l) {
+            auto group_opt = find_group(group_id);
+            if (!group_opt.has_value()) return;
+
             Layer &layer = God::layers[l];
-            if (layer.group == group_id && groups[group_id].visible && layer.visible)
+
+            if (layer.group == group_id && group_opt.value().visible && layer.visible)
                 layer.render();
         }
     }
@@ -86,9 +83,17 @@
         kill(idx);
     }
 
-    std::optional<Group> LayerManager::get_group(const std::string& name) {
+    std::optional<Group> LayerManager::find_group(const std::string& name) {
         for (auto &group : groups) {
             if (group.name == name)
+                return group;
+        }
+        return std::nullopt;
+    }
+
+    std::optional<Group> LayerManager::find_group(int group_id) {
+        for (auto &group : groups) {
+            if (group.id == group_id)
                 return group;
         }
         return std::nullopt;
