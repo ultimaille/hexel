@@ -12,8 +12,8 @@
 
 
 
-#define WORKING_DIR std::string("/home/ssloy/+/hexel/build/NICO/")
-//#define WORKING_DIR std::string("C:\\NICOTMP\\tmp\\")
+//#define WORKING_DIR std::string("/home/ssloy/+/hexel/build/NICO/")
+#define WORKING_DIR std::string("C:\\NICOTMP\\tmp\\")
 
 
 

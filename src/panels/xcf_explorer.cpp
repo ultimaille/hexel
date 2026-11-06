@@ -50,7 +50,7 @@ void XCFExplorer::generate_gui() {
     static ObjectIdSet selected([&](const ObjectId& a, const ObjectId& b) { if (a.path != b.path) return a.path < b.path; return a.names < b.names; });
 
     {// sync with property panel
-        PropertyExplorer& pan = dynamic_cast<PropertyExplorer&>(static_cast<Panel&>(ObjectId(PANEL, "property_window")));
+        PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(ObjectId(path().panels["property_window"])));
         std::vector<ObjectId> to_kill;
         for (auto sel : selected) if (sel.names.size() == 1 && sel.path == LAYER) to_kill.push_back(sel);
         for (auto id : to_kill)selected.erase(id);
@@ -398,8 +398,7 @@ void XCFExplorer::generate_gui() {
     for (auto n : mm2kill) God::xcf.kill_multimesh(n);
 
     {// sync with property panel
-//          PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(path().xcf["property_window"]));
-        PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(ObjectId(PANEL, "property_window")));
+        PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(ObjectId(path().panels["property_window"])));
         pan.layers.clear();
         for (auto sel : selected)if (sel.path == LAYER) pan.layers.push_back(sel);
     }

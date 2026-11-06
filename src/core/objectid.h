@@ -159,7 +159,9 @@ struct PathCollection : Path {
     }
 };
 
-struct MeshPath : Path {};
+struct MeshPath : Path {
+    auto parent() const;
+};
 
 struct RootPath : Path {
     Path keys    = {{ "keys"    }};
@@ -175,7 +177,6 @@ struct RootPath : Path {
 
     struct XCF : Path {
         struct MultiMesh : Path {
-
             struct PointSet : Path {
                 PathCollection attr_points = { concat(path, "attr_points") };
             } pointset = { concat(path, "pointset") };
@@ -270,116 +271,13 @@ inline Path::operator ObjectId() const {
     return {};
 }
 
-
-/*
-
-inline ObjectId::operator Path() const {
-    using namespace events;
-
-    auto make_node = [](std::initializer_list<std::string> parts) {
-        return Path{std::vector<std::string>(parts)};
+inline auto MeshPath::parent() const {
+    um_assert(path.size() == 4);
+    um_assert(has_prefix(::path().xcf));
+    return RootPath::XCF::MultiMesh{
+        std::vector<std::string>{path[0], path[1]}
     };
-
-    auto require_names = [this](std::size_t count) {
-        um_assert(names.size() == count);
-    };
-
-    switch (path) {
-    case KEYBOARD:
-        require_names(0);
-        return make_node({"keys"});
-    case MOUSE:
-        require_names(0);
-        return make_node({"mouse"});
-    case CAMERA:
-        require_names(0);
-        return make_node({"camera"});
-
-    case PANEL:
-        require_names(1);
-        return make_node({"panels", names[0]});
-    case LAYER:
-        require_names(1);
-        return make_node({"layers", names[0]});
-    case MULTIMESH:
-        require_names(1);
-        return make_node({"xcf", names[0]});
-    case POINTSET:
-        require_names(1);
-        return make_node({"xcf", names[0], "pointset"});
-
-    case POLYLINES:
-    case TRIANGLES:
-    case QUADS:
-    case POLYGONS:
-    case TETRAHEDRA:
-    case HEXAHEDRA:
-    case WEDGES:
-    case PYRAMIDS: {
-        require_names(2);
-
-        const char* collection = nullptr;
-        switch (path) {
-        case POLYLINES:  collection = "polylines";  break;
-        case TRIANGLES:  collection = "triangles";  break;
-        case QUADS:      collection = "quads";      break;
-        case POLYGONS:   collection = "polygons";   break;
-        case TETRAHEDRA: collection = "tetrahedra"; break;
-        case HEXAHEDRA:  collection = "hexahedra";  break;
-        case WEDGES:     collection = "wedges";     break;
-        case PYRAMIDS:   collection = "pyramids";   break;
-        default:         um_assert(!"Unexpected mesh type");
-        }
-
-        return make_node({"xcf", names[0], collection, names[1]});
-    }
-
-    case POINTSET_ATTR:
-        require_names(4);
-        um_assert(names[2] == "points");
-        return make_node({"xcf", names[0], "pointset", "attr_points", names[3]});
-
-    case POLYLINES_ATTR:
-    case TRIANGLES_ATTR:
-    case QUADS_ATTR:
-    case POLYGONS_ATTR:
-    case TETRAHEDRA_ATTR:
-    case HEXAHEDRA_ATTR:
-    case WEDGES_ATTR:
-    case PYRAMIDS_ATTR: {
-        require_names(5);
-
-        const char* collection = nullptr;
-        switch (path) {
-        case POLYLINES_ATTR:  collection = "polylines";  break;
-        case TRIANGLES_ATTR:  collection = "triangles";  break;
-        case QUADS_ATTR:      collection = "quads";      break;
-        case POLYGONS_ATTR:   collection = "polygons";   break;
-        case TETRAHEDRA_ATTR: collection = "tetrahedra"; break;
-        case HEXAHEDRA_ATTR:  collection = "hexahedra";  break;
-        case WEDGES_ATTR:     collection = "wedges";     break;
-        case PYRAMIDS_ATTR:   collection = "pyramids";   break;
-        default:              um_assert(!"Unexpected attribute type");
-        }
-
-        const char* domain = nullptr;
-        if      (names[3] == "points")  domain = "attr_points";
-        else if (names[3] == "edges")   domain = "attr_edges";
-        else if (names[3] == "facets")  domain = "attr_facets";
-        else if (names[3] == "corners") domain = "attr_corners";
-        else if (names[3] == "cells")   domain = "attr_cells";
-
-        um_assert(domain != nullptr);
-        return make_node({"xcf", names[0], collection, names[1], domain, names[4]});
-    }
-
-    default:
-        um_assert(!"ObjectId has no corresponding Path");
-        return {};
-    }
 }
-
-*/
 
 #endif //__OBJECTID_H__
 

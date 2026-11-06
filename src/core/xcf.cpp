@@ -160,7 +160,7 @@ void XCF::kill_mesh(MeshPath obj) {
     std::string mesh_type = obj.path[2];
 
     MultiMesh& mm = (*this)[mm_name];
-    auto mmpath = path().xcf[mm_name]; // TODO .parent()
+    auto mmpath = obj.parent();
 
     if (obj.has_prefix(mmpath.polylines)) {
         mm.polylines.erase(mesh);
@@ -238,7 +238,7 @@ void XCF::add_mesh(MeshPath obj) {
     std::string mesh = obj.path[3];
     std::string mesh_type = obj.path[2];
     MultiMesh& mm = (*this)[mm_name];
-    auto mmpath = path().xcf[mm_name]; // TODO .parent()
+    auto mmpath = obj.parent();
 
     if (obj.has_prefix(mmpath.polylines)) {
         if (!mm.polylines.contains(mesh))
