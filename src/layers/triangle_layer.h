@@ -8,7 +8,7 @@ struct TrianglesLayer : public Layer{
 
     std::optional<AttributeInfo> selected_attr;
 
-    // // TODO put this in layer or utils function as its copy / paste from hexahedra layer...
+    // Note: no need to this anymore, using AttributeInfo !
     // //attr_id.names = 0->mm_name, 1->hex_name, 2->attribute_type, 3->attribute_primitive, 4->attribute_name
     // inline bool attr_active()           { return attr_id.names.size() == 5; }// deso pour le jeu de mot
     // inline std::string attr_name()      { um_assert(attr_active()); return attr_id.names[4]; }
@@ -20,7 +20,7 @@ struct TrianglesLayer : public Layer{
     void reset() override;
     void init(ObjectId obj);
     void render();
-    void bind_attribute(AttributeInfo attr);
+    void bind_attribute(AttributeInfo attr) override;
     void destroy();
 
     template<class T>void update_typed();

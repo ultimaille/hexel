@@ -12,7 +12,7 @@ struct PointSetLayer : public Layer{
     void reset() override;
     void init(ObjectId obj);
     void render();
-    void bind_attribute(ObjectId attr_id);
+    void bind_attribute(AttributeInfo attr_info) override;
     void destroy();
 
 
@@ -23,14 +23,15 @@ struct PointSetLayer : public Layer{
     template<class T> void update_data_for_scalar_point_attribute_as_sphere();
     void update_data_for_plain();
 
-    // TODO put this in layer or utils function as its copy / paste from hexahedra layer...
-    //attr_id.names = 0->mm_name, 1->hex_name, 2->attribute_type, 3->attribute_primitive, 4->attribute_name
-    inline bool attr_active()           { return attr_id.names.size() == 4; }// deso pour le jeu de mot
-    inline std::string attr_name()      { um_assert(attr_active()); return attr_id.names[3]; }
-    inline std::string attr_primitive() { um_assert(attr_active()); return attr_id.names[2]; }
-    inline std::string attr_type()      { um_assert(attr_active()); return attr_id.names[1]; }
+    // // TODO put this in layer or utils function as its copy / paste from hexahedra layer...
+    // //attr_id.names = 0->mm_name, 1->hex_name, 2->attribute_type, 3->attribute_primitive, 4->attribute_name
+    // inline bool attr_active()           { return attr_id.names.size() == 4; }// deso pour le jeu de mot
+    // inline std::string attr_name()      { um_assert(attr_active()); return attr_id.names[3]; }
+    // inline std::string attr_primitive() { um_assert(attr_active()); return attr_id.names[2]; }
+    // inline std::string attr_type()      { um_assert(attr_active()); return attr_id.names[1]; }
 
-    ObjectId attr_id;
+    std::optional<AttributeInfo> selected_attr;
+
     enum RenderType {
         PLAIN,
         ATTRIBUTE_SPHERE
