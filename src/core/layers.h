@@ -1,6 +1,7 @@
 #pragma once
 #include <optional>
 #include <core/event.h>
+#include <core/attribute_info.h>
 
 struct Layer {
     Layer();
@@ -14,7 +15,7 @@ struct Layer {
     virtual void render_constant_color(int layerid);
     virtual void destroy();
 
-    virtual void bind_attribute(ObjectId attr_id){ Log::error("This layer does not support attribute binding."); }
+    virtual void bind_attribute(AttributeInfo attr_info){ Log::error("This layer does not support attribute binding."); }
 
     bool visible = true;
     ObjectId mesh;

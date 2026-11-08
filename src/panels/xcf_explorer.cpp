@@ -18,6 +18,24 @@ void XCFExplorer::object_id_drag_source(ObjectId id, std::string name) {
     }
 };
 
+struct AttributeInfoPayload {
+    int primitive;
+    char name[256];
+    char type[50];
+};
+
+void XCFExplorer::attribute_info_drag_source(AttributeInfo attr_info, std::string name) {
+    if (ImGui::BeginDragDropSource()) {
+        AttributeInfoPayload payload;
+        std::snprintf(payload.name, sizeof(payload.name), "%s", attr_info.name.c_str());
+        std::snprintf(payload.type, sizeof(payload.type), "%s", attr_info.type.c_str());
+        payload.primitive = static_cast<int>(attr_info.primitive);
+        ImGui::SetDragDropPayload("ATTR_INFO", &payload, sizeof(AttributeInfoPayload));
+        ImGui::Text("Moving %s", name.c_str());
+        ImGui::EndDragDropSource();
+    }
+};
+
 bool XCFExplorer::open_mesh(ObjectIdSet& selected, ObjectId mesh_id, std::string gna){
     auto mm_name = mesh_id.names[0];
     auto mesh_name = mesh_id.names.size() > 1 ? mesh_id.names[1] : "";
@@ -33,15 +51,16 @@ bool XCFExplorer::open_mesh(ObjectIdSet& selected, ObjectId mesh_id, std::string
     return open_mesh;
 };
 
-void XCFExplorer::add_attribute(ObjectIdSet& selected, ObjectId mesh_id, ObjectId attr_id, std::string name){
+void XCFExplorer::add_attribute(ObjectIdSet& selected, ObjectId mesh_id, AttributeInfo attr_info, std::string name){
     bool open_attr;
     {
         NodeColor ncol(3);
         open_attr = ImGui::TreeNodeEx(label(name, mesh_id.names[0]), flag(selected.contains(mesh_id), true));
-        object_id_drag_source(attr_id, name);
+        // Note: ici on sait qu'on veux un attribut ! on sait tjs quand on veux un attribut / mesh / ... pas besoin d'avoir un object id generique
+        attribute_info_drag_source(attr_info, name);
     }
     if (open_attr){
-        if (ImGui::IsItemClicked()) switch_selection(selected, attr_id);
+        // if (ImGui::IsItemClicked()) switch_selection(selected, attr_id);
         ImGui::TreePop();
     }
 };
@@ -179,7 +198,7 @@ void XCFExplorer::generate_gui() {
                     add_attribute(
                         selected, 
                         mesh_id, 
-                        ObjectId(ObjectType::POINTSET_ATTR, { mm_name, attribute_type(&*it.ptr), "points", it.name }), 
+                        { .name = it.name, .primitive = AttributeBase::TYPE::POINTS, .type = attribute_type(&*it.ptr)},
                         "points." + it.name
                     );
                 }
@@ -227,12 +246,18 @@ void XCFExplorer::generate_gui() {
                 }
                 if (!open) continue;
 
-                for (auto& it : obj.attributes.points) add_attribute(selected, mesh_id,
-                    ObjectId(ObjectType::POLYLINES_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"points",it.name }),
-                    "points." + it.name);
-                for (auto& it : obj.attributes.edges) add_attribute(selected, mesh_id,
-                    ObjectId(ObjectType::POLYLINES_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"edges",it.name }),
-                    "edges." + it.name);
+                for (auto& it : obj.attributes.points) 
+                    add_attribute(
+                        selected, mesh_id, 
+                        { .name = it.name, .primitive = AttributeBase::TYPE::POINTS, .type = attribute_type(&*it.ptr)},
+                        "points." + it.name
+                    );
+                for (auto& it : obj.attributes.edges) 
+                    add_attribute(
+                        selected, mesh_id,
+                        { .name = it.name, .primitive = AttributeBase::TYPE::EDGES, .type = attribute_type(&*it.ptr)},
+                        "edges." + it.name
+                    );
 
                 add_mesh_layers(selected, {POLYLINES, { mm_name, mesh_name }}, "polylines");
                 ImGui::TreePop();
@@ -272,73 +297,31 @@ void XCFExplorer::generate_gui() {
                 }
 
                 if (!open) continue;
-                for (auto& it : obj.attributes.points) add_attribute(selected, mesh_id,
-                    ObjectId(ObjectType::TRIANGLES_ATTR, { mm_name, mesh_name, attribute_type(&*it.ptr),"points", it.name}),
-                    "points." + it.name);
-                for (auto& it : obj.attributes.corners) add_attribute(selected, mesh_id,
-                    ObjectId(ObjectType::TRIANGLES_ATTR, { mm_name, mesh_name, attribute_type(&*it.ptr),"corners", it.name}),
-                    "corners." + it.name);
-                for (auto& it : obj.attributes.facets) add_attribute(selected, mesh_id,
-                    ObjectId(ObjectType::TRIANGLES_ATTR, { mm_name, mesh_name, attribute_type(&*it.ptr),"facets", it.name}),
-                    "facets." + it.name);
+                for (auto& it : obj.attributes.points) 
+                    add_attribute(
+                        selected, 
+                        mesh_id,
+                        { .name = it.name, .primitive = AttributeBase::TYPE::POINTS, .type = attribute_type(&*it.ptr)},
+                        "points." + it.name
+                    );
+                for (auto& it : obj.attributes.corners) 
+                    add_attribute(
+                        selected, 
+                        mesh_id,
+                        { .name = it.name, .primitive = AttributeBase::TYPE::CORNERS, .type = attribute_type(&*it.ptr)},
+                        "corners." + it.name
+                    );
+                for (auto& it : obj.attributes.facets) 
+                    add_attribute(
+                        selected, 
+                        mesh_id,
+                        { .name = it.name, .primitive = AttributeBase::TYPE::FACETS, .type = attribute_type(&*it.ptr)},
+                        "facets." + it.name
+                    );
                 add_mesh_layers(selected, {TRIANGLES, { mm_name, mesh_name }}, "triangles");
                 ImGui::TreePop();
 
             }
-
-            // // ==> quads
-            // std::vector<std::string> quad2kill;
-            // for (auto& [mesh_name, obj] : mm.quads) {
-            //     bool open = open_mesh(selected, mm_name, mesh_name, QUADS, "quads");
-            //     if (ImGui::BeginPopupContextItem(label("killquadpopup", mm_name + mesh_name))){
-            //         if (ImGui::Button("Delete")){
-            //             quad2kill.push_back(mesh_name);
-            //             ImGui::CloseCurrentPopup();
-            //         }
-            //         ImGui::EndPopup();
-            //     }
-            //     if (!open) continue;
-            //     for (auto& it : obj.attributes.points) add_attribute(selected, mesh_id,
-            //         ObjectId(ObjectType::QUADS_ATTR, { mm_name, mesh_name, attribute_type(&*it.ptr),"points", it.name}),
-            //         "points." + it.name);
-            //     for (auto& it : obj.attributes.corners) add_attribute(selected, mesh_id,
-            //         ObjectId(ObjectType::QUADS_ATTR, { mm_name, mesh_name, attribute_type(&*it.ptr),"corners", it.name}),
-            //         "corners." + it.name);
-            //     for (auto& it : obj.attributes.facets) add_attribute(selected, mesh_id,
-            //         ObjectId(ObjectType::QUADS_ATTR, { mm_name, mesh_name, attribute_type(&*it.ptr),"facets", it.name}),
-            //         "facets." + it.name);
-            //     add_mesh_layers(selected, mm_name, mesh_name, QUADS, "quads");
-            //     ImGui::TreePop();
-
-            // }
-
-            // // ==> tetrahedra
-            // std::vector<std::string> tet2kill;
-            // for (auto& [mesh_name, obj] : mm.tetrahedra) {
-            //     bool open = open_mesh(selected, mm_name, mesh_name, TETRAHEDRA, "tetrahedra");
-            //     if (ImGui::BeginPopupContextItem(label("killtetpopup", mm_name + mesh_name))){
-            //         if (ImGui::Button("Delete")){
-            //             tet2kill.push_back(mesh_name);
-            //             ImGui::CloseCurrentPopup();
-            //         }
-            //         ImGui::EndPopup();
-            //     }
-            //     if (!open) continue;
-            //     for (auto& it : obj.attributes.points) add_attribute(selected, mesh_id,
-            //         ObjectId(ObjectType::TETRAHEDRA_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"points",it.name }),
-            //         "points." + it.name);
-            //     for (auto& it : obj.attributes.cell_corners) add_attribute(selected, mesh_id,
-            //         ObjectId(ObjectType::TETRAHEDRA_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"corners",it.name }),
-            //         "corners." + it.name);
-            //     for (auto& it : obj.attributes.cell_facets) add_attribute(selected, mesh_id,
-            //         ObjectId(ObjectType::TETRAHEDRA_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"facets",it.name }),
-            //         "facets." + it.name);
-            //     for (auto& it : obj.attributes.cells) add_attribute(selected, mesh_id,
-            //         ObjectId(ObjectType::TETRAHEDRA_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"cells",it.name}),
-            //         "cells." + it.name);
-            //     add_mesh_layers(selected, mm_name, mesh_name, TETRAHEDRA, "tetrahedra");
-            //     ImGui::TreePop();
-            // }
 
             // ==> hexahedra
             std::vector<std::string> hex2kill;
@@ -369,18 +352,34 @@ void XCFExplorer::generate_gui() {
                     ImGui::EndPopup();
                 }
                 if (!open) continue;
-                for (auto& it : obj.attributes.points) add_attribute(selected, mesh_id,
-                    ObjectId(ObjectType::HEXAHEDRA_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"points",it.name }),
-                    "points." + it.name);
-                for (auto& it : obj.attributes.cell_corners) add_attribute(selected, mesh_id,
-                    ObjectId(ObjectType::HEXAHEDRA_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"corners",it.name }),
-                    "corners." + it.name);
-                for (auto& it : obj.attributes.cell_facets) add_attribute(selected, mesh_id,
-                    ObjectId(ObjectType::HEXAHEDRA_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"facets",it.name }),
-                    "facets." + it.name);
-                for (auto& it : obj.attributes.cells) add_attribute(selected, mesh_id,
-                    ObjectId(ObjectType::HEXAHEDRA_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"cells",it.name}),
-                    "cells." + it.name);
+                for (auto& it : obj.attributes.points) 
+                    add_attribute(
+                        selected, 
+                        mesh_id,
+                        { .name = it.name, .primitive = AttributeBase::TYPE::POINTS, .type = attribute_type(&*it.ptr)},
+                        "points." + it.name
+                    );
+                for (auto& it : obj.attributes.cell_corners) 
+                    add_attribute(
+                        selected, 
+                        mesh_id,
+                        { .name = it.name, .primitive = AttributeBase::TYPE::CELLCORNERS, .type = attribute_type(&*it.ptr)},
+                        "corners." + it.name
+                    );
+                for (auto& it : obj.attributes.cell_facets) 
+                    add_attribute(
+                        selected, 
+                        mesh_id,
+                        { .name = it.name, .primitive = AttributeBase::TYPE::CELLFACETS, .type = attribute_type(&*it.ptr)},
+                        "facets." + it.name
+                    );
+                for (auto& it : obj.attributes.cells) 
+                    add_attribute(
+                        selected, 
+                        mesh_id,
+                        { .name = it.name, .primitive = AttributeBase::TYPE::CELLS, .type = attribute_type(&*it.ptr)},
+                        "cells." + it.name
+                    );
                 add_mesh_layers(selected, {HEXAHEDRA, { mm_name, mesh_name }}, "hexahedra");
                 ImGui::TreePop();
             }
@@ -388,8 +387,6 @@ void XCFExplorer::generate_gui() {
 
             for (auto n : polyline2kill) God::xcf.kill_mesh(root().xcf[mm_name].polylines[n]);
             for (auto n : tri2kill) God::xcf.kill_mesh(root().xcf[mm_name].triangles[n]);
-            // for (auto n : quad2kill) God::xcf.kill_mesh(ObjectId(ObjectType::QUADS, {mm_name, n}));
-            // for (auto n : tet2kill) God::xcf.kill_mesh(ObjectId(ObjectType::TETRAHEDRA, {mm_name, n}));
             for (auto n : hex2kill) God::xcf.kill_mesh(root().xcf[mm_name].hexahedra[n]);
             ImGui::TreePop();
 
@@ -422,12 +419,18 @@ void XCFExplorer::add_mesh_layers(ObjectIdSet& selected, ObjectId mesh_id, std::
                 NodeColor ncol(colorid);
                 open_layer = ImGui::TreeNodeEx(label(God::layers.ith_name(i), mm_name), flag(selected.contains(layer_id), true));
             }
-            ObjectId attr_id;
+            
             if (ImGui::BeginDragDropTarget()) {
-                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("OBJECTID")) {
-                    attr_id = **(const ObjectId**)payload->Data;
+                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ATTR_INFO")) {
+                    // TODO check size of payload is AttributeInfoPayload here
+                    AttributeInfoPayload data;
+                    std::memcpy(&data, payload->Data, sizeof(data));
+                    AttributeInfo attr_info{};
+                    attr_info.name = data.name;
+                    attr_info.type = data.type;
+                    attr_info.primitive = static_cast<AttributeBase::TYPE>(data.primitive);
                     Layer& layer = layer_id;
-                    layer.bind_attribute(attr_id);
+                    layer.bind_attribute(attr_info);
                 }
                 ImGui::EndDragDropTarget();
             }

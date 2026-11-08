@@ -29,17 +29,19 @@ int TrianglesLayer::primitive_type(){
 
 void TrianglesLayer::generate_gui(std::string name) {
 
-    if (attr_active() && attr_primitive() == "points"){
-        bool tmp = (rt==RenderType::POINT_SPHERE);
-            ImGui::Checkbox(label("Show vertices ", ""), &tmp);
-        if ((rt == RenderType::POINT_SPHERE) != tmp) {
-            if (tmp) rt = RenderType::POINT_SPHERE;
+    if (selected_attr.has_value() && selected_attr.value().primitive == AttributeBase::TYPE::POINTS){
+        
+        bool show_vertices = (rt == RenderType::POINT_SPHERE);
+        ImGui::Checkbox(label("Show vertices ", ""), &show_vertices);
+        
+        if ((rt == RenderType::POINT_SPHERE) != show_vertices) {
+            if (show_vertices) rt = RenderType::POINT_SPHERE;
             else  rt = RenderType::POINT;
             reset();
         }
     }
 
-    if (attr_active() && attr_primitive() == "corners") {
+    if (selected_attr.has_value() && selected_attr.value().primitive == AttributeBase::TYPE::CORNERS) {
         bool tmp = (rt == RenderType::CORNER_GLYPH);
         
         ImGui::Checkbox(label("render_corners_as_glyphs ", ""), &tmp);
@@ -81,7 +83,7 @@ void TrianglesLayer::init(ObjectId obj){
     mesh = obj;
     tri_renderer.init();
     point_renderer.init();
-    bind_attribute({});
+    reset();
 }
 
 void TrianglesLayer::reset() {
@@ -93,7 +95,7 @@ void TrianglesLayer::reset() {
     God::shaders.create_if_needed(std::string(SHADERS_DIR), "point_as_sphere");
     FacetAttribute<bool> visible_tri("visible", attr, tri, true);
 
-    if (attr_active()) {
+    if (selected_attr.has_value()) {
         if (rt == RenderType::POINT_SPHERE) {
             point_renderer.color_map_prop = 1;
         } else {
@@ -105,14 +107,14 @@ void TrianglesLayer::reset() {
 }
 
 void TrianglesLayer::update(){
-    if (!attr_active() || rt == PLAIN) update_data_for_plain();
-    else if (attr_type() == "bool") update_typed<bool>();
-    else if (attr_type() == "char") update_typed<char>();
-    else if (attr_type() == "int") update_typed<int>();
-    else if (attr_type() == "float") update_typed<float>();
-    else if (attr_type() == "double") update_typed<double>();
+    if (!selected_attr.has_value() || rt == PLAIN) update_data_for_plain();
+    else if (selected_attr.value().type == "bool") update_typed<bool>();
+    else if (selected_attr.value().type == "char") update_typed<char>();
+    else if (selected_attr.value().type == "int") update_typed<int>();
+    else if (selected_attr.value().type == "float") update_typed<float>();
+    else if (selected_attr.value().type == "double") update_typed<double>();
     else {
-        Log::add("Display attribute of type " + attr_type() + " isn't currently supported by TrianglesLayer");
+        Log::add("Display attribute of type " + selected_attr.value().type + " isn't currently supported by TrianglesLayer");
     }
 }
 
@@ -164,7 +166,7 @@ void TrianglesLayer::update_data_for_scalar_facet_attribute() {
     FacetAttribute<bool> visible_tri("visible", attr, tri, true);
     FacetAttribute<int> primitive_id(tri, 0);
     CornerAttribute<float> value_tri(tri, 0);
-    FacetAttribute<T> value(attr_name(), attr, tri);
+    FacetAttribute<T> value(selected_attr.value().name, attr, tri);
     prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
     for (auto h : tri.iter_halfedges()) value_tri[h] =  static_cast<float>(value[h / 3]);
     tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
@@ -178,7 +180,7 @@ void TrianglesLayer::update_data_for_scalar_corner_attribute() {
     FacetAttribute<bool> visible_tri("visible", attr, tri, true);
     FacetAttribute<int> primitive_id(tri, 0);
     CornerAttribute<float> value_tri(tri, 0);
-    CornerAttribute<T> value(attr_name(), attr, tri);
+    CornerAttribute<T> value(selected_attr.value().name, attr, tri);
 
     prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
 
@@ -193,7 +195,7 @@ void TrianglesLayer::update_data_for_scalar_corner_glyph_attribute() {
     SurfaceAttributes& attr = mesh;
 
     FacetAttribute<bool> visible_tri("visible", attr, tri, true);
-    CornerAttribute<T> value(attr_name(), attr, tri);
+    CornerAttribute<T> value(selected_attr.value().name, attr, tri);
 
     Triangles tri_glyph;
     tri_glyph.points.create_points(tri.ncorners() * 3);
@@ -246,7 +248,7 @@ void TrianglesLayer::update_data_for_scalar_halfedge_glyph_attribute() {
     SurfaceAttributes& attr = mesh;
 
     FacetAttribute<bool> visible_tri("visible", attr, tri, true);
-    CornerAttribute<T> value(attr_name(), attr, tri);
+    CornerAttribute<T> value(selected_attr.value().name, attr, tri);
 
     // Note: need mesh to be connected
     Triangles tri_glyph;
@@ -320,7 +322,7 @@ void TrianglesLayer::update_data_for_scalar_point_attribute() {
     FacetAttribute<bool> visible_tri("visible", attr, tri, true);
     FacetAttribute<int> primitive_id(tri, 0);
     CornerAttribute<float> value_tri(tri, 0);
-    PointAttribute<T> value(attr_name(), attr, tri);
+    PointAttribute<T> value(selected_attr.value().name, attr, tri);
 
     prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
 
@@ -343,7 +345,7 @@ template<class T> void TrianglesLayer::update_data_for_scalar_point_attribute_as
     SurfaceAttributes& attr = mesh;
 
     FacetAttribute<bool> visible_tri("visible", attr, tri, true);
-    PointAttribute<T> value(attr_name(), attr, tri);
+    PointAttribute<T> value(selected_attr.value().name, attr, tri);
 
     PointAttribute<bool> visible_pts(tri,false);
     PointAttribute<float> value_float(tri);
@@ -382,22 +384,23 @@ void TrianglesLayer::destroy() {
 }
 
 // Note: almost the same as HexahedraLayer
-void TrianglesLayer::bind_attribute(ObjectId p_attr_id){
-    attr_id = p_attr_id;
+void TrianglesLayer::bind_attribute(AttributeInfo ai) {
+    selected_attr = ai;
 
     SurfaceAttributes& attr = mesh;
 
-    if (attr_active()) {
-        if (attr_primitive() == "facets")
-            rt = RenderType::FACET;
-        else if (attr_primitive() == "corners") {
-            if (rt!= RenderType::CORNER_GLYPH && rt != RenderType::HALFEDGE_GLYPH) 
-                rt = RenderType::CORNER;
-        } else if (attr_primitive() == "points")
-            rt = RenderType::POINT;
-    } else {
-        rt = PLAIN;
+    if (!selected_attr.has_value()) {
+        rt = RenderType::PLAIN;
+    } else if (selected_attr.value().primitive == AttributeBase::TYPE::FACETS) {
+        rt = RenderType::FACET;
+    } else if (selected_attr.value().primitive == AttributeBase::TYPE::CORNERS) {
+        rt = RenderType::CORNER;
+    } else if (selected_attr.value().primitive == AttributeBase::TYPE::POINTS) {
+        rt = RenderType::POINT;
     }
+    //         if (rt!= RenderType::CORNER_GLYPH && rt != RenderType::HALFEDGE_GLYPH) 
+    //             rt = RenderType::CORNER;
+
 
     reset();
 };

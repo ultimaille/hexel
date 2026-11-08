@@ -3,6 +3,7 @@
 #include <string>
 #include <set>
 #include <core/panels.h>
+#include <core/attribute_info.h>
 
 using namespace events;
 
@@ -21,6 +22,8 @@ struct XCFExplorer : public Panel {
     };
 
     void object_id_drag_source(ObjectId id, std::string name);
+    void attribute_info_drag_source(AttributeInfo attr_info, std::string name);
+
 
     void switch_selection(ObjectIdSet& selected, ObjectId object_id){
         if (selected.contains(object_id)) selected.erase(object_id);
@@ -30,7 +33,7 @@ struct XCFExplorer : public Panel {
     bool open_mesh(ObjectIdSet& selected, ObjectId mesh_id, std::string gna);
     void add_mesh_layers(ObjectIdSet& selected, ObjectId mesh_id, std::string gna);
 
-    void add_attribute(ObjectIdSet& selected, ObjectId mesh_id, ObjectId attr_id, std::string name);
+    void add_attribute(ObjectIdSet& selected, ObjectId mesh_id, AttributeInfo attr_id, std::string name);
     void generate_gui();
 
     struct NodeColor{

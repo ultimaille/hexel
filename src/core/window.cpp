@@ -89,6 +89,8 @@ void WindowContext::init_mouse_call_backs() {
 }
 
 void WindowContext::init_glfw(int& w, int& h) {
+    glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+
     um_assert(glfwInit());
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
