@@ -7,6 +7,7 @@
 #include <vector>
 #include <algorithm>
 #include <ranges>
+#include <type_traits>
 
 #include "xcf.h"
 #include <ultimaille/all.h>
@@ -141,38 +142,9 @@
                         );
         }
 
-    //  Path first(std::size_t count) const {
-    //      um_assert(count <= path.size());
-    //      return Path{ std::vector<std::string>(path.begin(), path.begin() + count) };
-    //  }
-
 
         [[deprecated("temporary compatibility conversion; migrate callers to Path")]]
             operator ObjectId() const;
-
-    /*
-        using ObjectRef = std::variant<
-            std::reference_wrapper<KeyboardState>,
-            std::reference_wrapper<MouseState>,
-            std::reference_wrapper<TrackBallCamera>,
-            std::reference_wrapper<WindowContext>,
-            std::reference_wrapper<Mode>,
-            std::reference_wrapper<Panel>,
-            std::reference_wrapper<Layer>,
-            std::reference_wrapper<MultiMesh>,
-            std::reference_wrapper<MultiMesh::MeshAttr<PolyLine,   PolyLineAttributes>>,
-            std::reference_wrapper<MultiMesh::MeshAttr<Triangles,  SurfaceAttributes>>,
-            std::reference_wrapper<MultiMesh::MeshAttr<Quads,      SurfaceAttributes>>,
-            std::reference_wrapper<MultiMesh::MeshAttr<Polygons,   SurfaceAttributes>>,
-            std::reference_wrapper<MultiMesh::MeshAttr<Tetrahedra, VolumeAttributes>>,
-            std::reference_wrapper<MultiMesh::MeshAttr<Hexahedra,  VolumeAttributes>>,
-            std::reference_wrapper<MultiMesh::MeshAttr<Wedges,     VolumeAttributes>>,
-            std::reference_wrapper<MultiMesh::MeshAttr<Pyramids,   VolumeAttributes>>,
-            std::reference_wrapper<ContainerBase>
-        >;
-
-        std::optional<ObjectRef> ref() const;
-        */
 
         using ObjectPtr = std::variant<
             std::monostate, // unresolved path
@@ -197,12 +169,43 @@
 
         ObjectPtr ptr() const;
 
+        operator KeyboardState*() const;
+        operator MouseState*() const;
+        operator TrackBallCamera*() const;
+        operator WindowContext*() const;
+        operator Mode*() const;
+        operator Panel*() const;
+        operator Layer*() const;
+
+        operator MultiMesh*() const;
+        operator PointSet*() const;
+        operator PointSetAttributes*() const;
+
+        operator PolyLine*() const;
+        operator PolyLineAttributes*() const;
+        operator Triangles*() const;
+        operator Quads*() const;
+        operator Polygons*() const;
+        operator SurfaceAttributes*() const;
+
+        operator Tetrahedra*() const;
+        operator Hexahedra*() const;
+        operator Wedges*() const;
+        operator Pyramids*() const;
+        operator VolumeAttributes*() const;
+
         int size() const { return static_cast<int>(path.size()); }
 
         protected:
         std::vector<std::string> concat(std::vector<std::string> path, std::string name) const {
             path.push_back(std::move(name));
             return path;
+        }
+
+        template<typename T> T* as() const {
+            ObjectPtr p = ptr();
+            auto* result = std::get_if<T*>(&p);
+            return result ? *result : nullptr;
         }
     };
 
