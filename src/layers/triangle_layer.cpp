@@ -90,7 +90,25 @@ void TrianglesLayer::reset() {
         }
     }
 
-    update();
+    // update();
+
+    if (rendering_type.contains(rt)) {
+        build_and_update_tri_renderer(rendering_type[rt]);
+    }
+}
+
+void TrianglesLayer::build_and_update_tri_renderer(TrianglesBuilder &builder) {
+    Triangles &tri = mesh;
+    SurfaceAttributes& attr = mesh;
+
+    FacetAttribute<bool> visible("visible", attr, tri, true);
+    FacetAttribute<T> value_t(attr_name(), attr, tri);
+    FacetAttribute<float> value(tri);
+    for (auto &f : tri.iter_facets()) value[f] = static_cast<float>(value_t[f]);
+
+    builder.transform(tri, visible, value, [&](auto &m_out, auto &visible_out, auto &value_out, auto &primitive_id) {
+        tri_renderer.update(m_out, visible_out, value_out, primitive_id);
+    });
 }
 
 void TrianglesLayer::update(){
@@ -150,13 +168,16 @@ void TrianglesLayer::update_data_for_scalar_facet_attribute() {
     Triangles &tri = mesh;
     SurfaceAttributes& attr = mesh;
 
-    FacetAttribute<bool> visible_tri("visible", attr, tri, true);
-    FacetAttribute<int> primitive_id(tri, 0);
-    CornerAttribute<float> value_tri(tri, 0);
-    FacetAttribute<T> value(attr_name(), attr, tri);
-    prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
-    for (auto h : tri.iter_halfedges()) value_tri[h] =  static_cast<float>(value[h / 3]);
-    tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
+    FacetAttribute<bool> visible("visible", attr, tri, true);
+    FacetAttribute<T> value_t(attr_name(), attr, tri);
+    FacetAttribute<float> value(tri);
+    for (auto &f : tri.iter_facets()) value[f] = static_cast<float>(value_t[f]);
+
+    ScalarFacetTrianglesBuilder dec;
+    // dec.update(tri, visible, value);
+    dec.transform(tri, visible, value, [&](auto &m_out, auto &visible_out, auto &value_out, auto &primitive_id) {
+        tri_renderer.update(m_out, visible_out, value_out, primitive_id);
+    });
 }
 
 template<class T>
@@ -164,16 +185,13 @@ void TrianglesLayer::update_data_for_scalar_corner_attribute() {
     Triangles &tri = mesh;
     SurfaceAttributes& attr = mesh;
 
-    FacetAttribute<bool> visible_tri("visible", attr, tri, true);
-    FacetAttribute<int> primitive_id(tri, 0);
-    CornerAttribute<float> value_tri(tri, 0);
-    CornerAttribute<T> value(attr_name(), attr, tri);
+    FacetAttribute<bool> visible("visible", attr, tri, true);
+    FacetAttribute<T> value_t(attr_name(), attr, tri);
+    FacetAttribute<float> value(tri);
+    for (auto &f : tri.iter_facets()) value[f] = static_cast<float>(value_t[f]);
 
-    prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
-
-    for (auto &h : tri.iter_halfedges()) value_tri[h] = static_cast<float>(value[h]);
-
-    tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
+    ScalarCornerAttrBuilder dec;
+    // dec.update(tri, visible, value);
 }
 
 template<class T>
@@ -181,52 +199,16 @@ void TrianglesLayer::update_data_for_scalar_corner_glyph_attribute() {
     Triangles &tri = mesh;
     SurfaceAttributes& attr = mesh;
 
-    FacetAttribute<bool> visible_tri("visible", attr, tri, true);
-    CornerAttribute<T> value(attr_name(), attr, tri);
+    FacetAttribute<bool> visible("visible", attr, tri, true);
+    FacetAttribute<T> value_t(attr_name(), attr, tri);
+    FacetAttribute<float> value(tri);
+    for (auto &f : tri.iter_facets()) value[f] = static_cast<float>(value_t[f]);
 
-    Triangles tri_glyph;
-    tri_glyph.points.create_points(tri.ncorners() * 3);
-    tri_glyph.create_facets(tri.ncorners());
-
-    FacetAttribute<bool> visible_glyph(tri_glyph);
-    CornerAttribute<float> value_glyph(tri_glyph);
-    FacetAttribute<int> primitive_id(tri_glyph);
-
-    for (auto &f : tri.iter_facets()) {
-        Triangle3 t = f;
-        vec3 bary = t.bary_verts();
-        for (int lv = 0; lv < 3; ++lv) {
-            vec3 from = f.vertex(lv);
-            vec3 to = f.vertex((lv + 1) % 3);
-            vec3 opp = f.vertex((lv + 2) % 3);
-            auto h = f.halfedge(lv);
-
-            vec3 a = from * (1. - shrink) + bary * shrink;
-            vec3 b = to * (1. - shrink) + bary * shrink;
-            vec3 c = opp * (1. - shrink) + bary * shrink;
-
-            vec3 d0 = (c - a);
-            vec3 d1 = (c - b);
-
-            // opp
-            float size = corner_size * .5;
-
-            tri_glyph.points[h * 3] = a * size + c * (1. - size);
-            tri_glyph.points[h * 3 + 1] = b * size + c * (1. - size);
-            tri_glyph.points[h * 3 + 2] = c;
-
-            for (int i = 0; i < 3; ++i) {
-                tri_glyph.vert(h, i) = h * 3 + i;
-
-                value_glyph[h * 3 + i] = static_cast<float>(value[h]);
-                visible_glyph[h] = visible_tri[f];
-                primitive_id[h] = h;
-            }
-
-        }
-    }
-
-    tri_renderer.update(tri_glyph, visible_glyph, value_glyph, primitive_id);
+    ScalarCornerGlyphAttrBuilder dec;
+    
+    dec.transform(tri, visible, value, [&](auto &m_out, auto &visible_out, auto &value_out, auto &primitive_id) {
+        tri_renderer.update(m_out, visible_out, value_out, primitive_id);
+    });
 }
 
 template<class T>
