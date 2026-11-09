@@ -285,8 +285,9 @@ std::optional<Path::ObjectRef> Path::ref() const {
         return std::ref(mm);
 
     if (has_prefix(mm_path.pointset)) {
-        if (path.size()==3)
-            return std::ref(mm.pointset);
+        // no meshattr for pointsets...
+        //      if (path.size()==3) 
+        //          return std::ref(mm.pointset);
 
         if (path.size()==5 && has_prefix(mm_path.pointset.attr_points))
             return find_attribute(mm.pointset_attributes.points, path.back());

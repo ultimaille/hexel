@@ -23,7 +23,7 @@ struct Path;
 struct Mode;
 
 namespace events {
-    enum ObjectType { NA, KEYBOARD, MOUSE, CAMERA, PANEL, LAYER, MULTIMESH, 
+    enum ObjectType { NA, KEYBOARD, MOUSE, CAMERA, PANEL, LAYER, MULTIMESH,
         POINTSET, POLYLINES, TRIANGLES, QUADS, POLYGONS, TETRAHEDRA, HEXAHEDRA, WEDGES, PYRAMIDS,
         POINTSET_ATTR, POLYLINES_ATTR, TRIANGLES_ATTR, QUADS_ATTR, POLYGONS_ATTR, TETRAHEDRA_ATTR, HEXAHEDRA_ATTR, WEDGES_ATTR, PYRAMIDS_ATTR
     };
@@ -134,7 +134,7 @@ struct Path {
     }
 
     inline bool has_prefix(const Path& other) const {
-        return path.size() >= other.path.size() && 
+        return path.size() >= other.path.size() &&
             std::ranges::equal(
                     other.path.begin(), other.path.end(),
                     path.begin(), path.begin() + other.path.size()
@@ -148,7 +148,7 @@ struct Path {
 
 
     [[deprecated("temporary compatibility conversion; migrate callers to Path")]]
-        operator ObjectId() const;    
+        operator ObjectId() const;
 
 
     using ObjectRef = std::variant<
@@ -160,8 +160,6 @@ struct Path {
         std::reference_wrapper<Panel>,
         std::reference_wrapper<Layer>,
         std::reference_wrapper<MultiMesh>,
-        std::reference_wrapper<PointSet>,
-        std::reference_wrapper<PointSetAttributes>,
         std::reference_wrapper<MultiMesh::MeshAttr<PolyLine,   PolyLineAttributes>>,
         std::reference_wrapper<MultiMesh::MeshAttr<Triangles,  SurfaceAttributes>>,
         std::reference_wrapper<MultiMesh::MeshAttr<Quads,      SurfaceAttributes>>,
@@ -172,7 +170,6 @@ struct Path {
         std::reference_wrapper<MultiMesh::MeshAttr<Pyramids,   VolumeAttributes>>,
         std::reference_wrapper<ContainerBase>
     >;
-
 
     std::optional<ObjectRef> ref() const;
 
