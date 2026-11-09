@@ -27,39 +27,10 @@ bool no_gl_error() {
 void Renderer::generate_gui(std::string name){
     ImGui::PushItemWidth(120);
     ImGui::SliderFloat(label("ambient_M##slider", name), &ambient_prop, 0.0f, 1.0f, "%.3f", 0);
+    
+    ImGui::ColorEdit3(label("ConstColor##", name), (float*)&color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+    ImGui::SameLine();
     ImGui::SliderFloat(label("color/texture##slider", name), &color_map_prop, 0.0f, 1.0f, "%.3f", 0);
-
-    // need the constant color
-    if (color_map_prop < 1)
-        ImGui::ColorEdit3(label("ConstColor##", name), (float*)&color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
-
-    // need a colormap
-    if (color_map_prop > 0){
-        int prev = texture_id;
-        ColormapCombo("Colormap", texture_id);
-        if (texture_id != prev) {
-            glDeleteTextures(1, &colormap);
-            load_colormap(texture_id, colormap);
-        }
-        {
-            std::string msg = "Data range: [" + std::to_string(value_range[0]) + "," + std::to_string(value_range[1])+"]";
-                ImGui::Text(msg.c_str());
-        }
-        ImGui::InputFloat2(label("show range##range", name), texture_range);
-        if (ImGui::InputInt(label("texture repeat##texture_repeat", name), &texture_repeat)) {
-            texture_repeat = std::clamp(texture_repeat, 0, 1000000);
-        }
-        {
-            bool tmp = auto_range;
-            ImGui::Checkbox(label("autorange##autorange", name), &auto_range);
-            if (auto_range){
-                texture_range[0] = value_range[0];
-                texture_range[1] = value_range[1];
-            }
-                
-        }
-    }
-    ImGui::Checkbox(label("clip", name), &clipping.enabled);
 
     ImGui::PopItemWidth();
 }

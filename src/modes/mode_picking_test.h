@@ -55,11 +55,11 @@ struct BenjiMode : public Mode{
 
     void handle(Event event) { 
         
-        if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL))
-            send_instruction_to_react(event,camera_react);
-        else {
-            send_instruction_to_react(event, pick_react);
-        }
+        // if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL))
+        //     send_instruction_to_react(event,camera_react);
+        // else {
+        //     send_instruction_to_react(event, pick_react);
+        // }
     }
 
 

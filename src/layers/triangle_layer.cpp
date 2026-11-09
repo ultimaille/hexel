@@ -1,7 +1,6 @@
 #include "triangle_layer.h"
 #include "core/layers.h"
 #include "core/camera.h"
-#include "core/picker.h"
 #include "core/xcf.h"
 #include "core/render_target.h"
 #include "core/window.h"
@@ -10,7 +9,9 @@
 #include "core/mode.h"
 
 #include <misc/purgatory.h>
+#include <layers/layer_ui.h>
 #include <format>
+
 
 
 TrianglesLayer::TrianglesLayer() { point_renderer.layer_id = id; tri_renderer.layer_id = id; }
@@ -29,51 +30,71 @@ int TrianglesLayer::primitive_type(){
 
 void TrianglesLayer::generate_gui(std::string name) {
 
-    if (attr_active() && attr_primitive() == "points"){
-        bool tmp = (rt==RenderType::POINT_SPHERE);
-            ImGui::Checkbox(label("Show vertices ", ""), &tmp);
-        if ((rt == RenderType::POINT_SPHERE) != tmp) {
-            if (tmp) rt = RenderType::POINT_SPHERE;
-            else  rt = RenderType::POINT;
-            reset();
+    Renderer& renderer = (rt == RenderType::POINT_SPHERE)
+        ? static_cast<Renderer&>(point_renderer)
+        : static_cast<Renderer&>(tri_renderer);
+
+    ImGui::PushID(name.c_str());
+
+    // renderer.generate_gui(name);
+    LayerUI::generate(renderer);
+
+    if (ImGui::CollapsingHeader(label("Attributes", name))) {
+
+        int prev = renderer.texture_id;
+        ColormapCombo("Colormap", renderer.texture_id);
+        if (renderer.texture_id != prev) {
+            glDeleteTextures(1, &renderer.colormap);
+            load_colormap(renderer.texture_id, renderer.colormap);
+        }
+
+        auto new_attr_id = AttributeCombo(mesh.names[0], mesh.names[1], mesh, attr_id);
+        if (new_attr_id.path != ObjectType::NA) bind_attribute(new_attr_id);
+
+        AttributeRange(renderer.value_range, renderer.texture_range, renderer.texture_repeat, renderer.auto_range);
+
+        if (attr_active() && attr_primitive() == "points"){
+            bool tmp = (rt==RenderType::POINT_SPHERE);
+                ImGui::Checkbox(label("Show vertices ", ""), &tmp);
+            if ((rt == RenderType::POINT_SPHERE) != tmp) {
+                if (tmp) rt = RenderType::POINT_SPHERE;
+                else  rt = RenderType::POINT;
+                reset();
+            }
+        }
+
+        if (attr_active() && attr_primitive() == "corners") {
+            bool tmp = (rt == RenderType::CORNER_GLYPH);
+            
+            ImGui::Checkbox(label("render_corners_as_glyphs ", ""), &tmp);
+            
+            if ((rt == RenderType::CORNER_GLYPH) != tmp){
+                if (tmp) rt = RenderType::CORNER_GLYPH;
+                else rt = RenderType::CORNER;
+                reset();
+            }
+
+            bool is_halfedge_glyphs = (rt == RenderType::HALFEDGE_GLYPH);
+
+            ImGui::Checkbox(label("render_corners_as_halfedge_glyphs ", ""), &is_halfedge_glyphs);
+
+            if ((rt == RenderType::HALFEDGE_GLYPH) != is_halfedge_glyphs) {
+                rt = is_halfedge_glyphs ? RenderType::HALFEDGE_GLYPH : RenderType::CORNER;
+                reset();
+            }
+
+        }
+
+        if (rt == RenderType::CORNER_GLYPH) {
+            float tmp_shrink = shrink;
+            float tmp_corner_size = corner_size;
+            ImGui::SliderFloat(label("shrink", name), &shrink, 0.0f, .9f, "%.2f", 0);
+            ImGui::SliderFloat(label("corner_size", name), &corner_size, 0.1f, 1.f, "%.2f", 0);
+            if (tmp_shrink != shrink || tmp_corner_size != corner_size) reset();
         }
     }
 
-    if (attr_active() && attr_primitive() == "corners") {
-        bool tmp = (rt == RenderType::CORNER_GLYPH);
-        
-        ImGui::Checkbox(label("render_corners_as_glyphs ", ""), &tmp);
-        
-        if ((rt == RenderType::CORNER_GLYPH) != tmp){
-            if (tmp) rt = RenderType::CORNER_GLYPH;
-            else rt = RenderType::CORNER;
-            reset();
-        }
-
-        bool is_halfedge_glyphs = (rt == RenderType::HALFEDGE_GLYPH);
-
-        ImGui::Checkbox(label("render_corners_as_halfedge_glyphs ", ""), &is_halfedge_glyphs);
-
-        if ((rt == RenderType::HALFEDGE_GLYPH) != is_halfedge_glyphs) {
-            rt = is_halfedge_glyphs ? RenderType::HALFEDGE_GLYPH : RenderType::CORNER;
-            reset();
-        }
-
-    }
-
-    if (rt == RenderType::CORNER_GLYPH) {
-        float tmp_shrink = shrink;
-        float tmp_corner_size = corner_size;
-        ImGui::SliderFloat(label("shrink", name), &shrink, 0.0f, .9f, "%.2f", 0);
-        ImGui::SliderFloat(label("corner_size", name), &corner_size, 0.1f, 1.f, "%.2f", 0);
-        if (tmp_shrink != shrink || tmp_corner_size != corner_size) reset();
-    }
-
-    if (rt == RenderType::POINT_SPHERE)
-        point_renderer.generate_gui(name);
-    else 
-        tri_renderer.generate_gui(name);
-    Layer::generate_gui(name);
+    ImGui::PopID();
 }
 
 // Note: same as HexahedraLayer

@@ -11,10 +11,6 @@
 
     Layer::Layer() : id(max_id) { ++max_id; }
     void Layer::reset() { Log::error("reset called for a layer that does not implement it"); };
-    void Layer::generate_gui(std::string name) {
-        // ImGui::Checkbox(("visible##visible" + name).c_str(), &visible);
-    }
-
 
     void Layer::render_primitive_id()              { Log::add("To be implemented"); }
     void Layer::render_constant_color(int layerid) { Log::add("To be implemented"); }
