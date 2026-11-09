@@ -285,10 +285,10 @@ std::optional<Path::ObjectRef> Path::ref() const {
         return std::ref(mm);
 
     if (has_prefix(mm_path.pointset)) {
-        if (path.size()==2)
+        if (path.size()==3)
             return std::ref(mm.pointset);
 
-        if (path.size()==4 && has_prefix(mm_path.pointset.attr_points))
+        if (path.size()==5 && has_prefix(mm_path.pointset.attr_points))
             return find_attribute(mm.pointset_attributes.points, path.back());
 
         return std::nullopt;
@@ -349,7 +349,69 @@ std::optional<Path::ObjectRef> Path::ref() const {
         return std::nullopt;
     }
 
+    auto resolve_surface_attribute = [&](SurfaceAttributes& attributes, const MultiMeshPath::Surfaces::Surface& surface_path) -> std::optional<Path::ObjectRef> {
+        if (has_prefix(surface_path.attr_points))
+            return find_attribute(attributes.points, path[5]);
 
+        if (has_prefix(surface_path.attr_facets))
+            return find_attribute(attributes.facets, path[5]);
+
+        if (has_prefix(surface_path.attr_corners))
+            return find_attribute(attributes.corners, path[5]);
+
+        return std::nullopt;
+    };    
+
+    if (auto* ref = std::get_if<std::reference_wrapper<MultiMesh::MeshAttr<Triangles, SurfaceAttributes>>>(&*mesh_ref)) {
+        auto surface_path = r.xcf[mm_name].triangles[meshattr_name];
+        return resolve_surface_attribute(ref->get().attributes, surface_path);
+    }
+
+    if (auto* ref = std::get_if<std::reference_wrapper<MultiMesh::MeshAttr<Quads, SurfaceAttributes>>>(&*mesh_ref)) {
+        auto surface_path = r.xcf[mm_name].quads[meshattr_name];
+        return resolve_surface_attribute(ref->get().attributes, surface_path);
+    }
+
+    if (auto* ref = std::get_if<std::reference_wrapper<MultiMesh::MeshAttr<Polygons, SurfaceAttributes>>>(&*mesh_ref)) {
+        auto surface_path = r.xcf[mm_name].polygons[meshattr_name];
+        return resolve_surface_attribute(ref->get().attributes, surface_path);
+    }
+
+    auto resolve_volume_attribute = [&](VolumeAttributes& attributes, const MultiMeshPath::Volumes::Volume& volume_path) -> std::optional<Path::ObjectRef> {
+        if (has_prefix(volume_path.attr_points))
+            return find_attribute(attributes.points, path[5]);
+
+        if (has_prefix(volume_path.attr_cells))
+            return find_attribute(attributes.cells, path[5]);
+
+        if (has_prefix(volume_path.attr_facets))
+            return find_attribute(attributes.cell_facets, path[5]);
+
+        if (has_prefix(volume_path.attr_corners))
+            return find_attribute(attributes.cell_corners, path[5]);
+
+        return std::nullopt;
+    };
+
+    if (auto* ref = std::get_if<std::reference_wrapper<MultiMesh::MeshAttr<Tetrahedra, VolumeAttributes>>>(&*mesh_ref)) {
+        auto volume_path = r.xcf[mm_name].tetrahedra[meshattr_name];
+        return resolve_volume_attribute(ref->get().attributes, volume_path);
+    }
+
+    if (auto* ref = std::get_if<std::reference_wrapper<MultiMesh::MeshAttr<Hexahedra, VolumeAttributes>>>(&*mesh_ref)) {
+        auto volume_path = r.xcf[mm_name].hexahedra[meshattr_name];
+        return resolve_volume_attribute(ref->get().attributes, volume_path);
+    }
+
+    if (auto* ref = std::get_if<std::reference_wrapper<MultiMesh::MeshAttr<Wedges, VolumeAttributes>>>(&*mesh_ref)) {
+        auto volume_path = r.xcf[mm_name].wedges[meshattr_name];
+        return resolve_volume_attribute(ref->get().attributes, volume_path);
+    }
+
+    if (auto* ref = std::get_if<std::reference_wrapper<MultiMesh::MeshAttr<Pyramids, VolumeAttributes>>>(&*mesh_ref)) {
+        auto volume_path = r.xcf[mm_name].pyramids[meshattr_name];
+        return resolve_volume_attribute(ref->get().attributes, volume_path);
+    }
 
     return std::nullopt;
 }

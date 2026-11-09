@@ -21,7 +21,6 @@ struct Panel;
 struct Layer;
 struct Path;
 struct Mode;
-struct Shader;
 
 namespace events {
     enum ObjectType { NA, KEYBOARD, MOUSE, CAMERA, PANEL, LAYER, MULTIMESH, 
@@ -160,7 +159,6 @@ struct Path {
         std::reference_wrapper<Mode>,
         std::reference_wrapper<Panel>,
         std::reference_wrapper<Layer>,
-        std::reference_wrapper<Shader>,
         std::reference_wrapper<MultiMesh>,
         std::reference_wrapper<PointSet>,
         std::reference_wrapper<PointSetAttributes>,
@@ -263,7 +261,7 @@ struct RootPath : Path {
     PathCollection modes   = {{{ "modes"   }}};
     PathCollection layers  = {{{ "layers"  }}};
     PathCollection panels  = {{{ "panels"  }}};
-    PathCollection shaders = {{{ "shaders" }}};
+    // TODO shaders?
 
     struct XCF : Path {
         MultiMeshPath operator[](std::string s) const {
