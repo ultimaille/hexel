@@ -11,194 +11,219 @@
 #include "xcf.h"
 #include <ultimaille/all.h>
 
-using namespace UM;
+    using namespace UM;
 
-struct KeyboardState;
-struct MouseState;
-struct TrackBallCamera;
-struct WindowContext;
-struct Panel;
-struct Layer;
-struct Path;
-struct Mode;
+    struct KeyboardState;
+    struct MouseState;
+    struct TrackBallCamera;
+    struct WindowContext;
+    struct Panel;
+    struct Layer;
+    struct Path;
+    struct Mode;
 
-namespace events {
-    enum ObjectType { NA, KEYBOARD, MOUSE, CAMERA, PANEL, LAYER, MULTIMESH,
-        POINTSET, POLYLINES, TRIANGLES, QUADS, POLYGONS, TETRAHEDRA, HEXAHEDRA, WEDGES, PYRAMIDS,
-        POINTSET_ATTR, POLYLINES_ATTR, TRIANGLES_ATTR, QUADS_ATTR, POLYGONS_ATTR, TETRAHEDRA_ATTR, HEXAHEDRA_ATTR, WEDGES_ATTR, PYRAMIDS_ATTR
-    };
-    enum EventType {
-        CREATED, KILLED, UPDATED
-    };
-}
+    namespace events {
+        enum ObjectType { NA, KEYBOARD, MOUSE, CAMERA, PANEL, LAYER, MULTIMESH,
+            POINTSET, POLYLINES, TRIANGLES, QUADS, POLYGONS, TETRAHEDRA, HEXAHEDRA, WEDGES, PYRAMIDS,
+            POINTSET_ATTR, POLYLINES_ATTR, TRIANGLES_ATTR, QUADS_ATTR, POLYGONS_ATTR, TETRAHEDRA_ATTR, HEXAHEDRA_ATTR, WEDGES_ATTR, PYRAMIDS_ATTR
+        };
+        enum EventType {
+            CREATED, KILLED, UPDATED
+        };
+    }
 
-struct ObjectId {
-   events::ObjectType path = events::NA;
-    std::vector<std::string> names = {}; // multimesh name, mesh name, etc.
+    struct ObjectId {
+       events::ObjectType path = events::NA;
+        std::vector<std::string> names = {}; // multimesh name, mesh name, etc.
 
-    ObjectId() = default;
-    ObjectId(events::ObjectType path, std::vector<std::string> names={}) : path(path), names(names) {}
-    ObjectId(events::ObjectType path, std::string name) : path(path), names(1, name) {}
+        ObjectId() = default;
+        ObjectId(events::ObjectType path, std::vector<std::string> names={}) : path(path), names(names) {}
+        ObjectId(events::ObjectType path, std::string name) : path(path), names(1, name) {}
 
-//  ObjectId(std::vector<std::string> p) : path(p) {}
-//  ObjectId(std::initializer_list<std::string> p) : path(p) {}
+    //  ObjectId(std::vector<std::string> p) : path(p) {}
+    //  ObjectId(std::initializer_list<std::string> p) : path(p) {}
 
-    using ObjectRef = std::variant<
-        std::reference_wrapper<KeyboardState>,
-        std::reference_wrapper<MouseState>,
-        std::reference_wrapper<TrackBallCamera>,
-        std::reference_wrapper<Panel>,
-        std::reference_wrapper<Layer>,
-        std::reference_wrapper<MultiMesh>,
-        std::reference_wrapper<MultiMesh::MeshAttr<PolyLine,   PolyLineAttributes>>,
-        std::reference_wrapper<MultiMesh::MeshAttr<Triangles,  SurfaceAttributes>>,
-        std::reference_wrapper<MultiMesh::MeshAttr<Quads,      SurfaceAttributes>>,
-        std::reference_wrapper<MultiMesh::MeshAttr<Polygons,   SurfaceAttributes>>,
-        std::reference_wrapper<MultiMesh::MeshAttr<Tetrahedra, VolumeAttributes>>,
-        std::reference_wrapper<MultiMesh::MeshAttr<Hexahedra,  VolumeAttributes>>,
-        std::reference_wrapper<MultiMesh::MeshAttr<Wedges,     VolumeAttributes>>,
-        std::reference_wrapper<MultiMesh::MeshAttr<Pyramids,   VolumeAttributes>>
-            >;
+        using ObjectRef = std::variant<
+            std::reference_wrapper<KeyboardState>,
+            std::reference_wrapper<MouseState>,
+            std::reference_wrapper<TrackBallCamera>,
+            std::reference_wrapper<Panel>,
+            std::reference_wrapper<Layer>,
+            std::reference_wrapper<MultiMesh>,
+            std::reference_wrapper<MultiMesh::MeshAttr<PolyLine,   PolyLineAttributes>>,
+            std::reference_wrapper<MultiMesh::MeshAttr<Triangles,  SurfaceAttributes>>,
+            std::reference_wrapper<MultiMesh::MeshAttr<Quads,      SurfaceAttributes>>,
+            std::reference_wrapper<MultiMesh::MeshAttr<Polygons,   SurfaceAttributes>>,
+            std::reference_wrapper<MultiMesh::MeshAttr<Tetrahedra, VolumeAttributes>>,
+            std::reference_wrapper<MultiMesh::MeshAttr<Hexahedra,  VolumeAttributes>>,
+            std::reference_wrapper<MultiMesh::MeshAttr<Wedges,     VolumeAttributes>>,
+            std::reference_wrapper<MultiMesh::MeshAttr<Pyramids,   VolumeAttributes>>
+                >;
 
-    std::optional<ObjectRef> ref();  // returns std::nullopt if path invalid
+        std::optional<ObjectRef> ref();  // returns std::nullopt if path invalid
 
-//  operator KeyboardState&();
-//  operator MouseState&();
-//  operator TrackBallCamera&();
-    operator Panel& ();
-    operator Layer&();
+    //  operator KeyboardState&();
+    //  operator MouseState&();
+    //  operator TrackBallCamera&();
+        operator Panel& ();
+        operator Layer&();
 
-    operator MultiMesh&();
-    operator PointSet&();
-    operator PointSetAttributes&();
-    operator PolyLine&();
-    operator PolyLineAttributes&();
-    operator Triangles&();
-    operator Quads&();
-    operator Polygons&();
-    operator SurfaceAttributes&();
-    operator Tetrahedra&();
-    operator Hexahedra&();
-    operator Wedges&();
-    operator Pyramids&();
-    operator VolumeAttributes&();
+        operator MultiMesh&();
+        operator PointSet&();
+        operator PointSetAttributes&();
+        operator PolyLine&();
+        operator PolyLineAttributes&();
+        operator Triangles&();
+        operator Quads&();
+        operator Polygons&();
+        operator SurfaceAttributes&();
+        operator Tetrahedra&();
+        operator Hexahedra&();
+        operator Wedges&();
+        operator Pyramids&();
+        operator VolumeAttributes&();
 
-    [[deprecated("temporary compatibility conversion; migrate callers to Path")]]
-    operator Path() const;
+        [[deprecated("temporary compatibility conversion; migrate callers to Path")]]
+        operator Path() const;
 
-    void broadcast(events::EventType e);
+        void broadcast(events::EventType e);
 
-/*
-    operator std::string() const { // TODO: remove this debug helper
-        std::string out;
-        for (size_t i = 0; i < path.size(); ++i) {
-            out += "/" + path[i];
+    /*
+        operator std::string() const { // TODO: remove this debug helper
+            std::string out;
+            for (size_t i = 0; i < path.size(); ++i) {
+                out += "/" + path[i];
+            }
+            return out;
         }
-        return out;
-    }
 
-*/
-    private:
-    template<typename T> T& as() {
-        std::optional<ObjectRef> v = ref();
-        um_assert(v.has_value());
-        auto* p = std::get_if<std::reference_wrapper<T>>(&*v);
-        um_assert(p != nullptr);
-        return p->get();
-    }
-};
-
-inline bool operator==(const ObjectId& a, const ObjectId& b) {
-    return a.path == b.path && a.names == b.names;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-struct Path {
-    const std::vector<std::string> path;
-
-    void broadcast(events::EventType e) {
-        ObjectId(*this).broadcast(e);
-    }
-
-    inline bool has_prefix(const Path& other) const {
-        return path.size() >= other.path.size() &&
-            std::ranges::equal(
-                    other.path.begin(), other.path.end(),
-                    path.begin(), path.begin() + other.path.size()
-                    );
-    }
-
-//  Path first(std::size_t count) const {
-//      um_assert(count <= path.size());
-//      return Path{ std::vector<std::string>(path.begin(), path.begin() + count) };
-//  }
-
-
-    [[deprecated("temporary compatibility conversion; migrate callers to Path")]]
-        operator ObjectId() const;
-
-
-    using ObjectRef = std::variant<
-        std::reference_wrapper<KeyboardState>,
-        std::reference_wrapper<MouseState>,
-        std::reference_wrapper<TrackBallCamera>,
-        std::reference_wrapper<WindowContext>,
-        std::reference_wrapper<Mode>,
-        std::reference_wrapper<Panel>,
-        std::reference_wrapper<Layer>,
-        std::reference_wrapper<MultiMesh>,
-        std::reference_wrapper<MultiMesh::MeshAttr<PolyLine,   PolyLineAttributes>>,
-        std::reference_wrapper<MultiMesh::MeshAttr<Triangles,  SurfaceAttributes>>,
-        std::reference_wrapper<MultiMesh::MeshAttr<Quads,      SurfaceAttributes>>,
-        std::reference_wrapper<MultiMesh::MeshAttr<Polygons,   SurfaceAttributes>>,
-        std::reference_wrapper<MultiMesh::MeshAttr<Tetrahedra, VolumeAttributes>>,
-        std::reference_wrapper<MultiMesh::MeshAttr<Hexahedra,  VolumeAttributes>>,
-        std::reference_wrapper<MultiMesh::MeshAttr<Wedges,     VolumeAttributes>>,
-        std::reference_wrapper<MultiMesh::MeshAttr<Pyramids,   VolumeAttributes>>,
-        std::reference_wrapper<ContainerBase>
-    >;
-
-    std::optional<ObjectRef> ref() const;
-
-
-    protected:
-    std::vector<std::string> concat(std::vector<std::string> path, std::string name) const {
-        path.push_back(std::move(name));
-        return path;
-    }
-};
-
-struct MultiMeshPath;
-
-struct MeshPath : Path {
-    MultiMeshPath parent() const;
-};
-
-struct AttributePath : Path {};
-
-struct MultiMeshPath : Path {
-    struct AttributeCollection : Path {
-        AttributePath operator[](std::string s) const {
-            return { concat(path, s) };
+    */
+        private:
+        template<typename T> T& as() {
+            std::optional<ObjectRef> v = ref();
+            um_assert(v.has_value());
+            auto* p = std::get_if<std::reference_wrapper<T>>(&*v);
+            um_assert(p != nullptr);
+            return p->get();
         }
     };
 
-    struct PointSet : Path {
-        AttributeCollection attr_points = { concat(path, "attr_points") };
-    } pointset = { concat(path, "pointset") };
+    inline bool operator==(const ObjectId& a, const ObjectId& b) {
+        return a.path == b.path && a.names == b.names;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    struct Path {
+        const std::vector<std::string> path;
+
+        void broadcast(events::EventType e) {
+            ObjectId(*this).broadcast(e);
+        }
+
+        inline bool has_prefix(const Path& other) const {
+            return path.size() >= other.path.size() &&
+                std::ranges::equal(
+                        other.path.begin(), other.path.end(),
+                        path.begin(), path.begin() + other.path.size()
+                        );
+        }
+
+    //  Path first(std::size_t count) const {
+    //      um_assert(count <= path.size());
+    //      return Path{ std::vector<std::string>(path.begin(), path.begin() + count) };
+    //  }
+
+
+        [[deprecated("temporary compatibility conversion; migrate callers to Path")]]
+            operator ObjectId() const;
+
+    /*
+        using ObjectRef = std::variant<
+            std::reference_wrapper<KeyboardState>,
+            std::reference_wrapper<MouseState>,
+            std::reference_wrapper<TrackBallCamera>,
+            std::reference_wrapper<WindowContext>,
+            std::reference_wrapper<Mode>,
+            std::reference_wrapper<Panel>,
+            std::reference_wrapper<Layer>,
+            std::reference_wrapper<MultiMesh>,
+            std::reference_wrapper<MultiMesh::MeshAttr<PolyLine,   PolyLineAttributes>>,
+            std::reference_wrapper<MultiMesh::MeshAttr<Triangles,  SurfaceAttributes>>,
+            std::reference_wrapper<MultiMesh::MeshAttr<Quads,      SurfaceAttributes>>,
+            std::reference_wrapper<MultiMesh::MeshAttr<Polygons,   SurfaceAttributes>>,
+            std::reference_wrapper<MultiMesh::MeshAttr<Tetrahedra, VolumeAttributes>>,
+            std::reference_wrapper<MultiMesh::MeshAttr<Hexahedra,  VolumeAttributes>>,
+            std::reference_wrapper<MultiMesh::MeshAttr<Wedges,     VolumeAttributes>>,
+            std::reference_wrapper<MultiMesh::MeshAttr<Pyramids,   VolumeAttributes>>,
+            std::reference_wrapper<ContainerBase>
+        >;
+
+        std::optional<ObjectRef> ref() const;
+        */
+
+        using ObjectPtr = std::variant<
+            std::monostate, // unresolved path
+            KeyboardState*,
+            MouseState*,
+            TrackBallCamera*,
+            WindowContext*,
+            Mode*,
+            Panel*,
+            Layer*,
+            MultiMesh*,
+            MultiMesh::MeshAttr<PolyLine,   PolyLineAttributes>*,
+            MultiMesh::MeshAttr<Triangles,  SurfaceAttributes>*,
+            MultiMesh::MeshAttr<Quads,      SurfaceAttributes>*,
+            MultiMesh::MeshAttr<Polygons,   SurfaceAttributes>*,
+            MultiMesh::MeshAttr<Tetrahedra, VolumeAttributes>*,
+            MultiMesh::MeshAttr<Hexahedra,  VolumeAttributes>*,
+            MultiMesh::MeshAttr<Wedges,     VolumeAttributes>*,
+            MultiMesh::MeshAttr<Pyramids,   VolumeAttributes>*,
+            ContainerBase*
+                >;
+
+        ObjectPtr ptr() const;
+
+        int size() const { return static_cast<int>(path.size()); }
+
+        protected:
+        std::vector<std::string> concat(std::vector<std::string> path, std::string name) const {
+            path.push_back(std::move(name));
+            return path;
+        }
+    };
+
+    struct MultiMeshPath;
+
+    struct MeshPath : Path {
+        MultiMeshPath parent() const;
+    };
+
+    struct AttributePath : Path {};
+
+    struct MultiMeshPath : Path {
+        struct AttributeCollection : Path {
+            AttributePath operator[](std::string s) const {
+                return { concat(path, s) };
+            }
+        };
+
+        struct PointSet : Path {
+            AttributeCollection attr_points = { concat(path, "attr_points") };
+        } pointset = { concat(path, "pointset") };
 
     struct PolyLines : Path {
         struct PolyLine : MeshPath {
