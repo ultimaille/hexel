@@ -16,9 +16,12 @@ using namespace UM;
 struct KeyboardState;
 struct MouseState;
 struct TrackBallCamera;
+struct WindowContext;
 struct Panel;
 struct Layer;
 struct Path;
+struct Mode;
+struct Shader;
 
 namespace events {
     enum ObjectType { NA, KEYBOARD, MOUSE, CAMERA, PANEL, LAYER, MULTIMESH, 
@@ -139,8 +142,42 @@ struct Path {
                     );
     }
 
+//  Path first(std::size_t count) const {
+//      um_assert(count <= path.size());
+//      return Path{ std::vector<std::string>(path.begin(), path.begin() + count) };
+//  }
+
+
     [[deprecated("temporary compatibility conversion; migrate callers to Path")]]
         operator ObjectId() const;    
+
+
+    using ObjectRef = std::variant<
+        std::reference_wrapper<KeyboardState>,
+        std::reference_wrapper<MouseState>,
+        std::reference_wrapper<TrackBallCamera>,
+        std::reference_wrapper<WindowContext>,
+        std::reference_wrapper<Mode>,
+        std::reference_wrapper<Panel>,
+        std::reference_wrapper<Layer>,
+        std::reference_wrapper<Shader>,
+        std::reference_wrapper<MultiMesh>,
+        std::reference_wrapper<PointSet>,
+        std::reference_wrapper<PointSetAttributes>,
+        std::reference_wrapper<MultiMesh::MeshAttr<PolyLine,   PolyLineAttributes>>,
+        std::reference_wrapper<MultiMesh::MeshAttr<Triangles,  SurfaceAttributes>>,
+        std::reference_wrapper<MultiMesh::MeshAttr<Quads,      SurfaceAttributes>>,
+        std::reference_wrapper<MultiMesh::MeshAttr<Polygons,   SurfaceAttributes>>,
+        std::reference_wrapper<MultiMesh::MeshAttr<Tetrahedra, VolumeAttributes>>,
+        std::reference_wrapper<MultiMesh::MeshAttr<Hexahedra,  VolumeAttributes>>,
+        std::reference_wrapper<MultiMesh::MeshAttr<Wedges,     VolumeAttributes>>,
+        std::reference_wrapper<MultiMesh::MeshAttr<Pyramids,   VolumeAttributes>>,
+        std::reference_wrapper<ContainerBase>
+    >;
+
+
+    std::optional<ObjectRef> ref() const;
+
 
     protected:
     std::vector<std::string> concat(std::vector<std::string> path, std::string name) const {
@@ -170,7 +207,7 @@ struct MultiMeshPath : Path {
 
     struct PolyLines : Path {
         struct PolyLine : MeshPath {
-            AttributeCollection attr_points  = { concat(path, "attr_points" ) };
+            AttributeCollection attr_points  = { concat(path, "attr_points") };
             AttributeCollection attr_edges   = { concat(path, "attr_edges" ) };
         };
         PolyLine operator[](std::string s) const {
@@ -283,6 +320,11 @@ inline MultiMeshPath MeshPath::parent() const {
         std::vector<std::string>{path[0], path[1]}
     };
 }
+
+inline bool operator==(const Path& a, const Path& b) {
+    return a.path == b.path;
+}
+
 
 #endif //__OBJECTID_H__
 

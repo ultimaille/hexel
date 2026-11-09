@@ -201,3 +201,158 @@ ObjectId::operator VolumeAttributes&() {
     return dummy;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+template<class Collection>
+std::optional<std::reference_wrapper<ContainerBase>>
+find_attribute(Collection& attributes, const std::string& name) {
+    for (auto& attribute : attributes) {
+        if (attribute.name == name && attribute.ptr) {
+            return std::ref(static_cast<ContainerBase&>(*attribute.ptr));
+        }
+    }
+    return std::nullopt;
+}
+
+std::optional<Path::ObjectRef> Path::ref() const {
+    const RootPath r = root();
+
+    if (*this == r.keys)    return std::ref(God::keys);
+    if (*this == r.mouse)   return std::ref(God::mouse);
+    if (*this == r.camera)  return std::ref(God::camera);
+    if (*this == r.context) return std::ref(God::context);
+
+    if (path.size() == 2) {
+        const std::string& name = path.back();
+        if (has_prefix(r.layers)) {
+            if (God::layers.contains(name))
+                return std::ref(God::layers[name]);
+            return std::nullopt;
+        }
+
+        if (has_prefix(r.panels)) {
+            if (God::panels.contains(name))
+                return std::ref(God::panels[name]);
+            return std::nullopt;
+        }
+
+        if (has_prefix(r.modes)) {
+            if (God::modes.contains(name))
+                return std::ref(God::modes[name]);
+            return std::nullopt;
+        }
+    }
+
+    if (!has_prefix(r.xcf) || path.size() < 2)
+        return std::nullopt;
+
+    const std::string& mm_name = path[1];
+    if (!God::xcf.contains(mm_name))
+        return std::nullopt;
+
+    MultiMesh& mm = God::xcf[mm_name];
+    const MultiMeshPath mm_path = r.xcf[mm_name];
+
+    if (*this == mm_path)
+        return std::ref(mm);
+
+    if (has_prefix(mm_path.pointset)) {
+        if (path.size()==2)
+            return std::ref(mm.pointset);
+
+        if (path.size()==4 && has_prefix(mm_path.pointset.attr_points))
+            return find_attribute(mm.pointset_attributes.points, path.back());
+
+        return std::nullopt;
+    }
+
+    // resolve a mesh path, such as xcf/<multimesh>/triangles/<mesh>.
+    if (path.size() == 4) {
+        const std::string& meshattr_name = path.back();
+        if (has_prefix(mm_path.polylines) && mm.polylines.contains(meshattr_name))
+                return mm.polylines[meshattr_name];
+
+        if (has_prefix(mm_path.triangles) && mm.triangles.contains(meshattr_name))
+                return mm.triangles[meshattr_name];
+
+        if (has_prefix(mm_path.quads) && mm.quads.contains(meshattr_name))
+                return mm.quads[meshattr_name];
+
+        if (has_prefix(mm_path.polygons) && mm.polygons.contains(meshattr_name))
+                return mm.polygons[meshattr_name];
+
+        if (has_prefix(mm_path.tetrahedra) && mm.tetrahedra.contains(meshattr_name))
+                return mm.tetrahedra[meshattr_name];
+
+        if (has_prefix(mm_path.hexahedra) && mm.hexahedra.contains(meshattr_name))
+                return mm.hexahedra[meshattr_name];
+
+        if (has_prefix(mm_path.wedges) && mm.wedges.contains(meshattr_name))
+                return mm.wedges[meshattr_name];
+
+        if (has_prefix(mm_path.pyramids) && mm.pyramids.contains(meshattr_name))
+                return mm.pyramids[meshattr_name];
+
+        return std::nullopt;
+    }
+
+    // attribute paths have one additional segment after their collection:
+    // xcf/<multimesh>/<collection>/<mesh>/<attribute collection>/<attribute>
+    if (path.size() != 6)
+        return std::nullopt;
+
+    MeshPath mesh_path{
+        std::vector<std::string>(path.begin(), path.begin() + 4)
+    };
+
+    auto mesh_ref = mesh_path.ref();
+    if (!mesh_ref)
+        return std::nullopt;
+
+    const std::string& meshattr_name = path[3];
+
+    auto* polyline_ref = std::get_if<std::reference_wrapper<MultiMesh::MeshAttr<PolyLine, PolyLineAttributes>>>(&*mesh_ref);
+    if (polyline_ref) {
+        auto& attributes = polyline_ref->get().attributes;
+        if (has_prefix(r.xcf[mm_name].polylines[meshattr_name].attr_points))
+            return find_attribute(attributes.points, path[5]);
+        if (has_prefix(r.xcf[mm_name].polylines[meshattr_name].attr_edges))
+            return find_attribute(attributes.edges, path[5]);
+        return std::nullopt;
+    }
+
+
+
+    return std::nullopt;
+}
+
+
+
