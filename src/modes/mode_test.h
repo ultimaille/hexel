@@ -85,11 +85,11 @@ struct HexEdit : public Mode{
     void handle(Event event) { 
         
         if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL)){
-            send_instruction_to_react(event, camera_react);
-            send_instruction_to_react(event, layer_selection_react);
+            camera_react.handle(event);
+            layer_selection_react.handle(event);
         }
         else {
-            send_instruction_to_react(event, pick_react);
+            pick_react.handle(event);
         }
     }
     void command_gui() {

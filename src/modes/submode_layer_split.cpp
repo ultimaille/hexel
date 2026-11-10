@@ -36,8 +36,8 @@
         if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL))
             mode.handle_camera_and_layerselect(event);
         else {
-            send_instruction_to_react(event, multi_selector_react_left);
-            send_instruction_to_react(event, multi_selector_react_right);
+            multi_selector_react_left.handle(event);
+            multi_selector_react_right.handle(event);
         }
 
         // consume mouse react "return values"

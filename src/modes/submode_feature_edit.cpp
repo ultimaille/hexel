@@ -159,9 +159,9 @@ void FeatureEditMode::handle(Event event) {
         multi_selector_react_left.path.clear();
     }
     else {
-        send_instruction_to_react(event, multi_selector_react_left);
-        send_instruction_to_react(event, multi_selector_react_right);
-        send_instruction_to_react(event, split_add_react);
+        multi_selector_react_left.handle(event);
+        multi_selector_react_right.handle(event);
+        split_add_react.handle(event);
     }
 
     // consume mouse react "return values"

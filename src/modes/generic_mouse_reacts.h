@@ -24,7 +24,7 @@ struct MouseReactLayerSelection : public MouseReact {
             visible_cell.fill(false);
             for (auto f : hex.iter_facets()) if (layer_id[f] == layer_id[prim])
                 visible_cell[f.cell()] = true;
-            hex_id.broadcast(EventType::UPDATED);
+            //hex_id.broadcast(EventType::UPDATED);
 
 
             PointSetAttributes& pts_attr = pts_id;

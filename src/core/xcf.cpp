@@ -191,12 +191,15 @@ void XCF::kill_multimesh(const std::string& mm_name) {
     std::vector<std::string> to_kill;
     for (auto& [name, obj] : mm.polylines)  to_kill.push_back(name);
     for (auto name : to_kill) kill_mesh(mmpath.polylines[name]);
+    to_kill.clear();
 
     for (auto& [name, obj] : mm.triangles)  to_kill.push_back(name);
     for (auto name : to_kill) kill_mesh(mmpath.triangles[name]);
+    to_kill.clear();
 
     for (auto& [name, obj] : mm.hexahedra)  to_kill.push_back(name);
     for (auto name : to_kill) kill_mesh(mmpath.hexahedra[name]);
+    to_kill.clear();
 
     std::map<std::string, MultiMesh>::erase(mm_name);
     mmpath.broadcast(KILLED);

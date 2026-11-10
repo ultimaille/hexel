@@ -5,19 +5,38 @@
 
 struct MouseReact{
 
+    // high level events
     virtual void on_wheel(double v) {}
     virtual void on_click(int button, vec2 p){}
     virtual void on_press(int button, vec2 p) {}
     virtual void on_release(int button, vec2 p) {}
     virtual void on_drag(int button, vec2 a, vec2 b) {}
+
+    // gather informations to manage the life cycle
+    virtual void handle(Event event){}
+
+    // to have trace on screen
+    virtual void draw_data_gui(){}
+    virtual void generate_gui(){}
+
+
+    // manage switch key conditions
+    bool key_state_is_OK();
+
+    bool ctrl_must_be_down=false;
+    bool shift_must_be_down = false;
+    bool ctrl_must_be_up = false;
+    bool shift_must_be_up = false;
 };
 
 struct Mode{
+    std::vector<MouseReact*> interactors;
     virtual void activate(){}
     virtual void desactivate(){}
-    virtual void define_gui() = 0;
-    virtual void handle(Event event) = 0;
-    void send_instruction_to_react(Event event, MouseReact &react);
+    virtual void define_gui() {}
+    void handle(Event event);
+    void draw_data_gui();
+    void generate_interactor_gui();
 };
 
 
@@ -26,20 +45,13 @@ struct Mode{
 
 struct MouseReactTrackBallCamera : public MouseReact{
     void on_wheel(double v);
-    void on_click(int button, vec2 p){}
-    void on_press(int button, vec2 p){}
-    void on_release(int button, vec2 p){}
     void on_drag(int button, vec2 a, vec2 b);
 };
 
 
 struct DefaultMode : public  Mode{
-    MouseReactTrackBallCamera camera_react;
-    DefaultMode() {}
-    void define_gui()           { 
-
-    }
-    void handle(Event event)    { send_instruction_to_react(event, camera_react); }
+    MouseReactTrackBallCamera interactor_camera;
+    DefaultMode();
 };
 
 

@@ -33,17 +33,21 @@ Volume::Halfedge HexModelerMode::hex_halfedge_from_edge(int e){
     return hex.halfedge(edge2halfedge[e]);
 }
 void HexModelerMode::update_hex(){
-    EdgeAttribute<int> edge2halfedge("hex_halfedge", God::xcf["mesh"].polylines[""].attributes, God::xcf["mesh"].polylines[""].mesh);
-    generate_edge_graph(hex_id(), pl_id(), edge2halfedge);
-
     Hexahedra& hex = hex_id();
+    plop(hex.nverts());
+    EdgeAttribute<int> edge2halfedge("hex_halfedge", God::xcf["mesh"].polylines[""].attributes, God::xcf["mesh"].polylines[""].mesh);
+    generate_edge_graph(hex_id(), pl_id(), edge2halfedge,false);
+
     VolumeAttributes& hex_attr = hex_id();
     CellAttribute<bool> visible_cell("visible", hex_attr, hex);
 
     PointSetAttributes& pts_attr = pts_id();
     PointSet& pts = pts_id();
     PointAttribute<bool> visible_pts("visible", pts_attr, pts);
-    visible_pts.fill(false);
+    visible_pts.fill(true);
+    for (auto c : hex.iter_cells()) if (!visible_cell[c])
+        FOR(lv, 8)visible_pts[c.vertex(lv)] = false;
+
     for (auto c : hex.iter_cells()) if (visible_cell[c])
         FOR(lv, 8)visible_pts[c.vertex(lv)] = true;
 
@@ -63,8 +67,8 @@ void HexModelerMode::update_hex(){
 
 // manage camera + layer selection
 void HexModelerMode::handle_camera_and_layerselect(Event event){
-    send_instruction_to_react(event, camera_react);
-    send_instruction_to_react(event, layer_selection_react);
+    camera_react.handle(event);
+    layer_selection_react.handle(event);
 }
 
 
@@ -318,7 +322,8 @@ void HexModelerMode::define_gui(){
 
 
 void HexModelerMode::handle(Event event) {
-    modes[active_mode_id].handle(event);
+    Mode::handle(event);
+    //modes[active_mode_id].handle(event);
 };
 
 
