@@ -1,4 +1,5 @@
 #include <core/all.h>
+#include <layers/layer_ui.h>
 #include "property_explorer.h"
 void PropertyExplorer::generate_gui(){
         ImGui::Begin("Properties", nullptr);
@@ -9,7 +10,13 @@ void PropertyExplorer::generate_gui(){
             ImGui::Separator();
             ImGui::TextUnformatted(id.names.back().c_str());
             Layer& layer = id;
-            layer.generate_gui(id.names.back());
+
+            ImGui::PushID(id.names.back().c_str());
+
+            LayerUI layer_ui(layer);
+            layer_ui.show();
+
+            ImGui::PopID();
         }
         ImGui::End();
         layers = nv_layers;

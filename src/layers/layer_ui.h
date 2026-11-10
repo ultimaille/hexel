@@ -13,17 +13,25 @@ struct ButtonPalette { ImVec4 base, hovered, active; };
 
 static ButtonPalette GetPalette(std::string type)
 {
-    if (type == "points") return { ImVec4(0.20f, 0.45f, 0.90f, 1.0f),
-                                    ImVec4(0.30f, 0.55f, 1.00f, 1.0f),
-                                    ImVec4(0.15f, 0.35f, 0.75f, 1.0f) }; // blue
+    if (type == "points") 
+        return { ImVec4(0.20f, 0.45f, 0.90f, 1.0f),
+            ImVec4(0.30f, 0.55f, 1.00f, 1.0f),
+            ImVec4(0.15f, 0.35f, 0.75f, 1.0f) }; // blue
 
-    if (type == "corners") return { ImVec4(0.95f, 0.55f, 0.15f, 1.0f),
-                                    ImVec4(1.00f, 0.65f, 0.25f, 1.0f),
-                                    ImVec4(0.80f, 0.45f, 0.10f, 1.0f) }; // orange
+    if (type == "corners") 
+        return { ImVec4(0.95f, 0.55f, 0.15f, 1.0f),
+            ImVec4(1.00f, 0.65f, 0.25f, 1.0f),
+            ImVec4(0.80f, 0.45f, 0.10f, 1.0f) }; // orange
 
-    if (type == "facets")  return { ImVec4(0.20f, 0.70f, 0.20f, 1.0f),
-                                    ImVec4(0.30f, 0.80f, 0.30f, 1.0f),
-                                    ImVec4(0.15f, 0.60f, 0.15f, 1.0f) }; // green
+    if (type == "facets")  
+        return { ImVec4(0.20f, 0.70f, 0.20f, 1.0f),
+            ImVec4(0.30f, 0.80f, 0.30f, 1.0f),
+            ImVec4(0.15f, 0.60f, 0.15f, 1.0f) }; // green
+
+    if (type == "cells")   
+        return { ImVec4(1.00f, 1.00f, 1.00f, 1.0f),
+            ImVec4(0.92f, 0.92f, 0.92f, 1.0f),
+            ImVec4(0.80f, 0.80f, 0.80f, 1.0f) }; // white
     return {};
 }
 
@@ -133,6 +141,151 @@ static ObjectId AttributeCombo(std::string mm_name, std::string mesh_name, Surfa
     return sel_attr_id;
 }
 
+static ObjectId AttributeCombo(std::string mm_name, std::string mesh_name, VolumeAttributes &attr, ObjectId& current_id) {
+    ObjectId sel_attr_id;
+    static ImGuiTextFilter filter;
+    // static std::string current_key;
+
+    // Collect all attributes into a flat list
+    std::vector<AttrItem> items;
+    auto collect = [&](auto &containers, const char *section) {
+        for (auto &container : containers) {
+            ObjectId id{ObjectType::TRIANGLES_ATTR,
+                        {mm_name, mesh_name, attribute_type(&*container.ptr), section, container.name}};
+            items.push_back({
+                id,
+                std::string(section) + "/" + container.name,
+                std::string(section) + ": " + container.name,
+                GetPalette(section).base   // same color key ColoredButton uses
+            });
+        }
+    };
+    collect(attr.points,  "points");
+    collect(attr.cell_corners, "corners");
+    collect(attr.cell_facets,  "facets");
+    collect(attr.cells,  "cells");
+
+    // Find the currently displayed item, if any
+    const AttrItem *current = nullptr;
+    for (const auto &it : items)
+        if (it.id == current_id) { current = &it; break; }
+
+
+    // Preview text takes the color of the current selection
+    const bool has_current = current != nullptr;
+    if (has_current)
+        ImGui::PushStyleColor(ImGuiCol_Text, current->color);
+    const bool open = ImGui::BeginCombo("##attr_combo",
+                                        has_current ? current->label.c_str() : "Select attribute...");
+    if (has_current)
+        ImGui::PopStyleColor();
+
+    if (open) {
+        filter.Draw("##attr_filter");
+        ImGui::Separator();
+
+        for (const auto &it : items) {
+            if (!filter.PassFilter(it.label.c_str()))
+                continue;
+
+            ImGui::PushID(it.key.c_str());
+
+            // Color swatch
+            ImGui::ColorButton("##swatch", it.color,
+                               ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoBorder,
+                               ImVec2(12, 12));
+            ImGui::SameLine();
+
+            // Colored item label
+            ImGui::PushStyleColor(ImGuiCol_Text, it.color);
+            const bool clicked = ImGui::Selectable(it.label.c_str(), it.id == current_id);
+            ImGui::PopStyleColor();
+
+            ImGui::PopID();
+
+            if (clicked) {
+                current_id = it.id;
+                sel_attr_id = it.id;
+                ImGui::CloseCurrentPopup();
+            }
+        }
+        ImGui::EndCombo();
+    }
+
+    return sel_attr_id;
+}
+
+static ObjectId AttributeCombo(std::string mm_name, std::string mesh_name, PointSetAttributes &attr, ObjectId& current_id) {
+    ObjectId sel_attr_id;
+    static ImGuiTextFilter filter;
+    // static std::string current_key;
+
+    // Collect all attributes into a flat list
+    std::vector<AttrItem> items;
+    auto collect = [&](auto &containers, const char *section) {
+        for (auto &container : containers) {
+            ObjectId id{ObjectType::POINTSET_ATTR,
+                        {mm_name, attribute_type(&*container.ptr), section, container.name}};
+            items.push_back({
+                id,
+                std::string(section) + "/" + container.name,
+                std::string(section) + ": " + container.name,
+                GetPalette(section).base   // same color key ColoredButton uses
+            });
+        }
+    };
+    collect(attr.points,  "points");
+
+    // Find the currently displayed item, if any
+    const AttrItem *current = nullptr;
+    for (const auto &it : items)
+        if (it.id == current_id) { current = &it; break; }
+
+
+    // Preview text takes the color of the current selection
+    const bool has_current = current != nullptr;
+    if (has_current)
+        ImGui::PushStyleColor(ImGuiCol_Text, current->color);
+    const bool open = ImGui::BeginCombo("##attr_combo",
+                                        has_current ? current->label.c_str() : "Select attribute...");
+    if (has_current)
+        ImGui::PopStyleColor();
+
+    if (open) {
+        filter.Draw("##attr_filter");
+        ImGui::Separator();
+
+        for (const auto &it : items) {
+            if (!filter.PassFilter(it.label.c_str()))
+                continue;
+
+            ImGui::PushID(it.key.c_str());
+
+            // Color swatch
+            ImGui::ColorButton("##swatch", it.color,
+                               ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoBorder,
+                               ImVec2(12, 12));
+            ImGui::SameLine();
+
+            // Colored item label
+            ImGui::PushStyleColor(ImGuiCol_Text, it.color);
+            const bool clicked = ImGui::Selectable(it.label.c_str(), it.id == current_id);
+            ImGui::PopStyleColor();
+
+            ImGui::PopID();
+
+            if (clicked) {
+                current_id = it.id;
+                sel_attr_id = it.id;
+                ImGui::CloseCurrentPopup();
+            }
+        }
+        ImGui::EndCombo();
+    }
+
+    return sel_attr_id;
+}
+
 #include <layers/basic_layers.h>
 struct RendererUI {
 
@@ -167,6 +320,7 @@ struct LayerUI {
 
     LayerUI(Layer &l) : l(l), renderer_ui(l.renderer()) {}
 
+    template<class T>
     void attribute_combo(ObjectId attr_id);
     bool render_type_combo(std::vector<std::tuple<std::string, int>> items);
 
@@ -174,9 +328,11 @@ struct LayerUI {
     void show_basic_parameters();
     void show_basic_parameters(TrianglesLayer &l);
     void show_basic_parameters(HexahedraLayer &l);
+    void show_basic_parameters(PointSetLayer &l);
     void show_attribute_parameters();
     void show_attribute_parameters(TrianglesLayer &l);
     void show_attribute_parameters(HexahedraLayer &l);
+    void show_attribute_parameters(PointSetLayer &l);
 
     private:
     Layer &l;

@@ -11,7 +11,7 @@ struct Layer {
 
     virtual int render_type() { return 0; }
     virtual void render_type(int v) {}
-    virtual Renderer& renderer() {}
+    virtual Renderer& renderer() { throw std::runtime_error("Not supported"); };
 
     virtual void render() = 0;
     virtual void render_primitive_id();

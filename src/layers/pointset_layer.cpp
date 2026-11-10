@@ -15,19 +15,7 @@
 PointSetLayer::PointSetLayer() { point_renderer.layer_id = id; }
 
 void PointSetLayer::generate_gui(std::string name){
-    point_renderer.generate_gui(name);
 
-    
-    if (ImGui::Checkbox(label("mask a value##autorange", name), &mask))update();
-    if (mask) if (ImGui::InputInt(label("mask value", name), &skip_value)){ plop(skip_value); update(); }
-    
-
-
-    
-    
-
-
-    Layer::generate_gui(name);
 }
 
 void PointSetLayer::set_default_values() {

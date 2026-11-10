@@ -31,41 +31,7 @@
 
 
     void HexahedraLayer::generate_gui(std::string name){
-        if (attr_active()){
-            std::string attrib_text = "ATTRIB: " + attr_primitive() + "." + attr_name() + " (" + attr_type() + ")";
-            ImGui::TextUnformatted(attrib_text.c_str());
-        }
-        {
-            float tmp = shrink;
-            ImGui::SliderFloat(label("shrink", name), &shrink, 0.0f, .9f, "%.2f", 0);
-            if (tmp != shrink) reset();
-        }
 
-        if (attr_active() && attr_primitive() == "points"){
-            bool tmp = (rt==RenderType::POINT_SPHERE);
-                ImGui::Checkbox(label("Show vertices ", ""), &tmp);
-            if ((rt == RenderType::POINT_SPHERE) != tmp) {
-                if (tmp) rt = RenderType::POINT_SPHERE;
-                else  rt = RenderType::POINT;
-                reset();
-            }
-        }
-
-        if (attr_active() && attr_primitive() == "corners"){
-            bool tmp = (rt == RenderType::CORNER_GLYPH);
-            ImGui::Checkbox(label("render_corners_as_glyphs ", ""), &tmp);
-            if ((rt == RenderType::CORNER_GLYPH) != tmp){
-                if (tmp) rt = RenderType::CORNER_GLYPH;
-                else rt = RenderType::CORNER;
-                reset();
-            }
-        }
-
-        if (rt == RenderType::POINT_SPHERE)
-            point_renderer.generate_gui(name);
-        else 
-            tri_renderer.generate_gui(name);
-        Layer::generate_gui(name);
     }
 
     void HexahedraLayer::prepare_data_without_attribute(

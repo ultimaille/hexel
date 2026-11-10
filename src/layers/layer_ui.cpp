@@ -66,18 +66,27 @@ void RendererUI::show_basic_parameters(TriangleRenderer &r) {
     ImGui::PopItemWidth();
 }
 
-
+template<class T>
 void LayerUI::attribute_combo(ObjectId attr_id) {
-    auto new_attr_id = AttributeCombo(l.mesh.names[0], l.mesh.names[1], l.mesh, attr_id);
+    std::string mm_name = l.mesh.names[0];
+    std::string mesh_name = l.mesh.names.size() > 1 ? l.mesh.names[1] : "";
+    auto new_attr_id = AttributeCombo(mm_name, mesh_name, static_cast<T&>(l.mesh), attr_id);
     if (new_attr_id.path != ObjectType::NA) l.bind_attribute(new_attr_id);
 }
 
 bool LayerUI::render_type_combo(std::vector<std::tuple<std::string, int>> items) {
-    // auto primitive = attr_id.names[2];
     bool has_selected = false;
     int current_item = l.render_type();
 
-    if (ImGui::BeginCombo("RenderType", "")) {
+    std::string label = "";
+    for (auto &[l, i] : items) {
+        if (current_item == i) {
+            label = l;
+            break;
+        }
+    }
+
+    if (ImGui::BeginCombo("RenderType", label.c_str())) {
         for (int n = 0; n < (int)items.size(); n++) {
             auto [name, rt] = items[n];
             bool is_selected = (current_item == rt);
@@ -108,6 +117,8 @@ void LayerUI::show_basic_parameters() {
         show_basic_parameters(*tl);
     } else if (HexahedraLayer *hl = dynamic_cast<HexahedraLayer*>(&l)) {
         show_basic_parameters(*hl);
+    } else if (PointSetLayer *pl = dynamic_cast<PointSetLayer*>(&l)) {
+        show_basic_parameters(*pl);
     } else {
         Log::error("Layer isn't supported by LayerUI");
     }
@@ -127,7 +138,14 @@ void LayerUI::show_basic_parameters(TrianglesLayer &l) {
 }
 
 void LayerUI::show_basic_parameters(HexahedraLayer &l) {
+    float prev_shrink = l.shrink;
+    ImGui::SliderFloat("shrink", &l.shrink, 0.0f, .9f, "%.2f", 0);
+    if (prev_shrink != l.shrink) l.reset();
+}
 
+void LayerUI::show_basic_parameters(PointSetLayer &l) {
+    if (ImGui::Checkbox("mask a value##autorange", &l.mask)) l.update();
+    if (l.mask) if (ImGui::InputInt("mask value", &l.skip_value)){ l.update(); }
 }
 
 void LayerUI::show_attribute_parameters() {
@@ -135,6 +153,8 @@ void LayerUI::show_attribute_parameters() {
         show_attribute_parameters(*tl);
     } else if (HexahedraLayer *hl = dynamic_cast<HexahedraLayer*>(&l)) {
         show_attribute_parameters(*hl);
+    } else if (PointSetLayer *pl = dynamic_cast<PointSetLayer*>(&l)) {
+        show_attribute_parameters(*pl);
     } else {
         Log::error("Layer isn't supported by LayerUI");
     }
@@ -143,9 +163,8 @@ void LayerUI::show_attribute_parameters() {
 void LayerUI::show_attribute_parameters(TrianglesLayer &l) {
     if (ImGui::CollapsingHeader("Attributes")) {
 
-
         renderer_ui.colormap_combo();
-        attribute_combo(l.attr_id);
+        attribute_combo<SurfaceAttributes>(l.attr_id);
         renderer_ui.attribute_range();
 
         std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
@@ -174,5 +193,52 @@ void LayerUI::show_attribute_parameters(TrianglesLayer &l) {
 }
 
 void LayerUI::show_attribute_parameters(HexahedraLayer &l) {
+    if (ImGui::CollapsingHeader("Attributes")) {
 
+        renderer_ui.colormap_combo();
+        attribute_combo<VolumeAttributes>(l.attr_id);
+        renderer_ui.attribute_range();
+
+        std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
+            {"points", {
+                {"POINT", HexahedraLayer::RenderType::POINT}, 
+                {"POINT_SPHERE", HexahedraLayer::RenderType::POINT_SPHERE}}
+            },
+            {"corners", {
+                {"CORNER", HexahedraLayer::RenderType::CORNER}, 
+                {"CORNER_GLYPH", HexahedraLayer::RenderType::CORNER_GLYPH}}
+            },
+            {"facets", {{"FACET", HexahedraLayer::RenderType::FACET}}},
+            {"cells", {{"CELL", HexahedraLayer::RenderType::CELL}}}
+        };
+
+        if (l.attr_active()) {
+            int last_rt = static_cast<int>(l.rt);
+            if (render_type_combo(render_types_by_attr_type[l.attr_primitive()])) {
+                if (l.rt != last_rt)
+                    l.reset();
+            }
+        }
+    }
+}
+
+void LayerUI::show_attribute_parameters(PointSetLayer &l) {
+    if (ImGui::CollapsingHeader("Attributes")) {
+
+        renderer_ui.colormap_combo();
+        attribute_combo<PointSetAttributes>(l.attr_id);
+        renderer_ui.attribute_range();
+
+        std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
+            {"points", {{"ATTRIBUTE_SPHERE", PointSetLayer::RenderType::ATTRIBUTE_SPHERE}}
+        }};
+
+        if (l.attr_active()) {
+            int last_rt = static_cast<int>(l.rt);
+            if (render_type_combo(render_types_by_attr_type[l.attr_primitive()])) {
+                if (l.rt != last_rt)
+                    l.reset();
+            }
+        }
+    }
 }

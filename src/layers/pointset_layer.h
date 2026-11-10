@@ -8,6 +8,11 @@ struct PointSetLayer : public Layer{
 
     int primitive_type();
     void generate_gui(std::string name);
+    virtual int render_type() { return static_cast<int>(rt); }
+    virtual void render_type(int v) { rt = static_cast<RenderType>(v); }
+    Renderer& renderer() override {
+        return static_cast<Renderer&>(point_renderer);
+    }
     void set_default_values() override;
     void reset() override;
     void init(ObjectId obj);
