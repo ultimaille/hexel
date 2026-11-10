@@ -50,21 +50,21 @@ static bool ColoredButton(const char* label, std::string type) {
     return clicked;
 }
 
-static void AttributeRange(float value_range[2], float texture_range[2], int &texture_repeat, bool &auto_range) {
+// static void AttributeRange(float value_range[2], float texture_range[2], int &texture_repeat, bool &auto_range) {
 
-    ImGui::InputFloat2("Data range##input_data_range", value_range, "%.2f", ImGuiInputTextFlags_ReadOnly);
-    ImGui::InputFloat2("Show range##input_show_range", texture_range);
+//     ImGui::InputFloat2("##input_data_range", value_range, "%.2f", ImGuiInputTextFlags_ReadOnly);
+//     ImGui::InputFloat2("##input_show_range", texture_range);
 
-    ImGui::SameLine();
-    if (ImGui::Checkbox("autorange##autorange", &auto_range)){
-        texture_range[0] = value_range[0];
-        texture_range[1] = value_range[1];
-    }
+//     ImGui::SameLine();
+//     if (ImGui::Checkbox("autorange##autorange", &auto_range)){
+//         texture_range[0] = value_range[0];
+//         texture_range[1] = value_range[1];
+//     }
 
-    if (ImGui::InputInt("texture repeat##texture_repeat", &texture_repeat))
-        texture_repeat = std::clamp(texture_repeat, 0, 1000000);
+//     if (ImGui::InputInt("texture repeat##texture_repeat", &texture_repeat))
+//         texture_repeat = std::clamp(texture_repeat, 0, 1000000);
 
-}
+// }
 
 struct AttrItem {
     ObjectId id;
@@ -212,11 +212,12 @@ struct RendererUI {
 
     bool color_picker();
 
-    bool color_texture_slider();
-
     bool colormap_combo();
 
-    void attribute_range();
+    void data_range_input();
+    void show_range_input();
+    void auto_range_checkbox();
+    void texture_repeat_input();
 
     protected:
 
@@ -240,8 +241,8 @@ struct LayerUI {
     bool render_type_combo(std::vector<std::tuple<std::string, int>> items);
 
     void show_basic_parameters();
+    void show_advanced_parameters();
     void show_attribute_parameters();
-
 
     protected:
     void show_basic_parameters(PointSetLayer &l);
@@ -249,12 +250,18 @@ struct LayerUI {
     void show_basic_parameters(TrianglesLayer &l);
     void show_basic_parameters(HexahedraLayer &l);
 
+    void show_advanced_parameters(PointSetLayer &l);
+    void show_advanced_parameters(PolyLineLayer &l);
+    void show_advanced_parameters(TrianglesLayer &l);
+    void show_advanced_parameters(HexahedraLayer &l);
+
     void show_attribute_parameters(PointSetLayer &l);
     void show_attribute_parameters(PolyLineLayer &l);
     void show_attribute_parameters(TrianglesLayer &l);
     void show_attribute_parameters(HexahedraLayer &l);
-    
+
     private:
     Layer &l;
     RendererUI renderer_ui;
+
 };

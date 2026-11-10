@@ -5,7 +5,7 @@
 void PropertyExplorer::generate_gui(){
         ImGui::Begin("Properties", nullptr);
 
-        // Basic parameters
+        
         for (ObjectId& id : layers){
             if (!id.ref().has_value()) continue;
             Layer &layer = id;
@@ -18,18 +18,15 @@ void PropertyExplorer::generate_gui(){
             ImGui::TextUnformatted(layer_name.c_str());
 
             LayerUI layer_ui(layer);
+            // Basic parameters
             layer_ui.show_basic_parameters();
-            ImGui::PopID();
-        }
-
-        // Attribute parameters
-        for (ObjectId& id : layers){
-            if (!id.ref().has_value()) continue;
-            Layer &layer = id;
-            auto layer_name = id.names.back();
-            ImGui::PushID(layer_name.c_str());
-            LayerUI layer_ui(layer);
-            if (ImGui::CollapsingHeader(("Attributes " + layer_name).c_str())) {
+            
+            // Advanced parameters
+            if (ImGui::CollapsingHeader("Advanced")) {
+                layer_ui.show_attribute_parameters();
+            }
+            // Attribute parameters
+            if (ImGui::CollapsingHeader("Attributes")) {
                 layer_ui.show_attribute_parameters();
             }
             ImGui::PopID();

@@ -24,13 +24,9 @@ bool RendererUI::color_picker() {
     return ImGui::ColorEdit3("##picker_color", (float*)&r.color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
 }
 
-bool RendererUI::color_texture_slider() {
-    return ImGui::SliderFloat("##slider_color_texture", &r.color_map_prop, 0.0f, 1.0f, "%.3f", 0);
-}
-
 bool RendererUI::colormap_combo() {
     int prev = r.texture_id;
-    bool used = ColormapCombo("Colormap", r.texture_id);
+    bool used = ColormapCombo("##combo_colormap", r.texture_id);
     if (r.texture_id != prev) {
         glDeleteTextures(1, &r.colormap);
         load_colormap(r.texture_id, r.colormap);
@@ -38,8 +34,24 @@ bool RendererUI::colormap_combo() {
     return used;
 }
 
-void RendererUI::attribute_range() {
-    AttributeRange(r.value_range, r.texture_range, r.texture_repeat, r.auto_range);
+void RendererUI::data_range_input() {
+    ImGui::InputFloat2("##input_data_range", r.value_range, "%.2f", ImGuiInputTextFlags_ReadOnly);
+}
+
+void RendererUI::show_range_input() {
+    ImGui::InputFloat2("##input_show_range", r.texture_range);
+}
+
+void RendererUI::auto_range_checkbox() {
+    if (ImGui::Checkbox("##autorange", &r.auto_range)){
+        r.texture_range[0] = r.value_range[0];
+        r.texture_range[1] = r.value_range[1];
+    }
+}
+
+void RendererUI::texture_repeat_input() {
+    if (ImGui::InputInt("##texture_repeat", &r.texture_repeat))
+        r.texture_repeat = std::clamp(r.texture_repeat, 0, 1000000);
 }
 
 bool RendererUI::radius_input(PointRenderer &r) {
@@ -48,15 +60,11 @@ bool RendererUI::radius_input(PointRenderer &r) {
 
 void RendererUI::show_basic_parameters(PointRenderer &r) {
     PropertyTable("point_table_basic_parameter", {
-        {"Size", [&] {
+        {"Style", [&] {
+            color_picker();
             ImGui::PushItemWidth(80);
             radius_input(r);
             ImGui::PopItemWidth();
-        }},
-        {"Color / Texture", [&] {
-            color_picker();
-            ImGui::SameLine();
-            color_texture_slider();
         }},
         {"Ambient", [&] {
             ambiant_slider();
@@ -66,10 +74,8 @@ void RendererUI::show_basic_parameters(PointRenderer &r) {
 
 void RendererUI::show_basic_parameters(TriangleRenderer &r) {
     PropertyTable("tri_table_basic_parameter", {
-        {"Color / Texture", [&] {
+        {"Style", [&] {
             color_picker();
-            ImGui::SameLine();
-            color_texture_slider();
         }},
         {"Ambient", [&] {
             ambiant_slider();
@@ -79,18 +85,15 @@ void RendererUI::show_basic_parameters(TriangleRenderer &r) {
 
 void RendererUI::show_basic_parameters(SegmentRenderer &r) {
     PropertyTable("tri_table_basic_parameter", {
-        {"Width / O. scale", [&]() {
+        {"Style", [&]() {
+            color_picker();
+            ImGui::SameLine();
             ImGui::PushItemWidth(80);
             ImGui::InputInt("##input_width", &r.line_width);
             r.line_width = std::clamp(r.line_width, int(r.width_range[0]), int(r.width_range[1]));
             ImGui::PopItemWidth();
             ImGui::SameLine();
             ImGui::SliderFloat("##slider_scale", &r.origin_scale, 0.4f, 1.0f, "%.3f", 0);
-        }},
-        {"Color / Texture", [&]() {
-            color_picker();
-            ImGui::SameLine();
-            color_texture_slider();
         }},
         {"Ambient", [&]() {
             ambiant_slider();
@@ -153,6 +156,21 @@ void LayerUI::show_basic_parameters() {
     }
 }
 
+void LayerUI::show_advanced_parameters() {
+
+    if (PointSetLayer *pl = dynamic_cast<PointSetLayer*>(&l)) {
+        show_advanced_parameters(*pl);
+    } else if (PolyLineLayer *pl = dynamic_cast<PolyLineLayer*>(&l)) {
+        show_advanced_parameters(*pl);
+    } else if (TrianglesLayer *tl = dynamic_cast<TrianglesLayer*>(&l)) {
+        show_advanced_parameters(*tl);
+    } else if (HexahedraLayer *hl = dynamic_cast<HexahedraLayer*>(&l)) {
+        show_advanced_parameters(*hl);
+    } else {
+        Log::error("Layer isn't supported by LayerUI");
+    }
+}
+
 void LayerUI::show_basic_parameters(PointSetLayer &l) {
     PropertyTable("point_set_layer_table_basic_parameter", {
         {"Mask value", [&] {
@@ -193,6 +211,22 @@ void LayerUI::show_basic_parameters(HexahedraLayer &l) {
     });
 }
 
+void LayerUI::show_advanced_parameters(PointSetLayer &l) {
+
+}
+
+void LayerUI::show_advanced_parameters(PolyLineLayer &l) {
+    
+}
+
+void LayerUI::show_advanced_parameters(TrianglesLayer &l) {
+
+}
+
+void LayerUI::show_advanced_parameters(HexahedraLayer &l) {
+    
+}
+
 void LayerUI::show_attribute_parameters() {
     if (PointSetLayer *pl = dynamic_cast<PointSetLayer*>(&l)) {
         show_attribute_parameters(*pl);
@@ -208,28 +242,37 @@ void LayerUI::show_attribute_parameters() {
 }
 
 void LayerUI::show_attribute_parameters(PointSetLayer &l) {
-    renderer_ui.colormap_combo();
-    attribute_combo<PointSetAttributes>(l.attr_id);
-    renderer_ui.attribute_range();
-
     std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
         {"points", {{"ATTRIBUTE_SPHERE", PointSetLayer::RenderType::ATTRIBUTE_SPHERE}}
     }};
 
-    if (l.attr_active()) {
-        int last_rt = static_cast<int>(l.rt);
-        if (render_type_combo(render_types_by_attr_type[l.attr_primitive()])) {
-            if (l.rt != last_rt)
-                l.reset();
-        }
-    }
+    PropertyTable("pointset_layer_table_attribute", {
+        {"Attribute", [&] {
+            attribute_combo<PointSetAttributes>(l.attr_id);
+        }},
+        {"Render type", [&] {
+            if (l.rt != PointSetLayer::RenderType::PLAIN) {
+                int last_rt = static_cast<int>(l.rt);
+                if (render_type_combo(render_types_by_attr_type[l.attr_primitive()])) {
+                    if (l.rt != last_rt)
+                        l.reset();
+                }
+            }
+        }},
+        {"Colormap", [&] {
+            renderer_ui.colormap_combo();
+        }},
+        {"Data range", [&] { renderer_ui.data_range_input(); }},
+        {"Show range", [&] { 
+            renderer_ui.show_range_input(); 
+            ImGui::SameLine();
+            renderer_ui.auto_range_checkbox();
+        }},
+        {"Texture repeat", [&] { renderer_ui.texture_repeat_input(); }}
+    });
 }
 
 void LayerUI::show_attribute_parameters(PolyLineLayer &l) {
-    renderer_ui.colormap_combo();
-    attribute_combo<PolyLineAttributes>(l.attr_id);
-    renderer_ui.attribute_range();
-
     std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
         {"points", {
             {"POINT", PolyLineLayer::RenderType::POINT}, 
@@ -241,20 +284,33 @@ void LayerUI::show_attribute_parameters(PolyLineLayer &l) {
         }
     };
 
-    if (l.attr_active()) {
-        int last_rt = static_cast<int>(l.rt);
-        if (render_type_combo(render_types_by_attr_type[l.attr_primitive()])) {
-            if (l.rt != last_rt)
-                l.reset();
-        }
-    }
+    PropertyTable("polyline_layer_table_attribute", {
+        {"Attribute", [&] {
+            attribute_combo<PolyLineAttributes>(l.attr_id);
+        }},
+        {"Render type", [&] {
+            if (l.rt != PolyLineLayer::RenderType::PLAIN) {
+                int last_rt = static_cast<int>(l.rt);
+                if (render_type_combo(render_types_by_attr_type[l.attr_primitive()])) {
+                    if (l.rt != last_rt)
+                        l.reset();
+                }
+            }
+        }},
+        {"Colormap", [&] {
+            renderer_ui.colormap_combo();
+        }},
+        {"Data range", [&] { renderer_ui.data_range_input(); }},
+        {"Show range", [&] { 
+            renderer_ui.show_range_input(); 
+            ImGui::SameLine();
+            renderer_ui.auto_range_checkbox();
+        }},
+        {"Texture repeat", [&] { renderer_ui.texture_repeat_input(); }}
+    });
 }
 
 void LayerUI::show_attribute_parameters(TrianglesLayer &l) {
-    renderer_ui.colormap_combo();
-    attribute_combo<SurfaceAttributes>(l.attr_id);
-    renderer_ui.attribute_range();
-
     std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
         {"points", {
             {"POINT", TrianglesLayer::RenderType::POINT}, 
@@ -270,19 +326,33 @@ void LayerUI::show_attribute_parameters(TrianglesLayer &l) {
         },
     };
 
-    if (l.attr_active()) {
-        int last_rt = static_cast<int>(l.rt);
-        if (render_type_combo(render_types_by_attr_type[l.attr_primitive()])) {
-            if (l.rt != last_rt)
-                l.reset();
-        }
-    }
+    PropertyTable("triangle_layer_table_attribute", {
+        {"Attribute", [&] {
+            attribute_combo<SurfaceAttributes>(l.attr_id);
+        }},
+        {"Render type", [&] {
+            if (l.rt != TrianglesLayer::RenderType::PLAIN) {
+                int last_rt = static_cast<int>(l.rt);
+                if (render_type_combo(render_types_by_attr_type[l.attr_primitive()])) {
+                    if (l.rt != last_rt)
+                        l.reset();
+                }
+            }
+        }},
+        {"Colormap", [&] {
+            renderer_ui.colormap_combo();
+        }},
+        {"Data range", [&] { renderer_ui.data_range_input(); }},
+        {"Show range", [&] { 
+            renderer_ui.show_range_input(); 
+            ImGui::SameLine();
+            renderer_ui.auto_range_checkbox();
+        }},
+        {"Texture repeat", [&] { renderer_ui.texture_repeat_input(); }}
+    });
 }
 
 void LayerUI::show_attribute_parameters(HexahedraLayer &l) {
-    renderer_ui.colormap_combo();
-    attribute_combo<VolumeAttributes>(l.attr_id);
-    renderer_ui.attribute_range();
 
     std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
         {"points", {
@@ -297,12 +367,31 @@ void LayerUI::show_attribute_parameters(HexahedraLayer &l) {
         {"cells", {{"CELL", HexahedraLayer::RenderType::CELL}}}
     };
 
-    if (l.attr_active()) {
-        int last_rt = static_cast<int>(l.rt);
-        if (render_type_combo(render_types_by_attr_type[l.attr_primitive()])) {
-            if (l.rt != last_rt)
-                l.reset();
-        }
-    }
+    PropertyTable("hexahedra_layer_table_attribute", {
+        {"Attribute", [&] {
+            attribute_combo<VolumeAttributes>(l.attr_id);
+        }},
+        {"Render type", [&] {
+            if (l.rt != HexahedraLayer::RenderType::PLAIN) {
+                int last_rt = static_cast<int>(l.rt);
+                if (render_type_combo(render_types_by_attr_type[l.attr_primitive()])) {
+                    if (l.rt != last_rt)
+                        l.reset();
+                }
+            }
+        }},
+        {"Colormap", [&] {
+            renderer_ui.colormap_combo();
+        }},
+        {"Data range", [&] { renderer_ui.data_range_input(); }},
+        {"Show range", [&] { 
+            renderer_ui.show_range_input(); 
+            ImGui::SameLine();
+            renderer_ui.auto_range_checkbox();
+            ImGui::SameLine();
+            
+        }},
+        {"Texture repeat", [&] { renderer_ui.texture_repeat_input(); }}
+    });
 }
 
