@@ -30,10 +30,6 @@ int PolyLineLayer::primitive_type(){
 
 
 void PolyLineLayer::generate_gui(std::string name){
-    if (attr_active()){
-        std::string attrib_text = "ATTRIB: " + attr_primitive() + "." + attr_name() + " (" + attr_type() + ")";
-        ImGui::TextUnformatted(attrib_text.c_str());
-    }
 
     if (attr_active() && attr_primitive() == "points"){
         bool tmp = (rt == RenderType::POINT_SPHERE);

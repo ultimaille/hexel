@@ -273,8 +273,9 @@
                 rt = RenderType::CELL;
             else if (attr_primitive() == "facets")
                 rt = RenderType::FACET;
-            else if (attr_primitive() == "corners")
+            else if (attr_primitive() == "corners") {
                 if (rt!= RenderType::CORNER_GLYPH) rt = RenderType::CORNER;
+            }
             else if (attr_primitive() == "points")
                 rt = RenderType::POINT;
         } else {
