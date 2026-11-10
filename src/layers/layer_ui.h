@@ -185,6 +185,22 @@ static ObjectId AttributeCombo(std::string mm_name, std::string mesh_name,
     return DrawAttributeCombo(items, current_id);
 }
 
+static void PropertyTable(std::string name, std::vector<std::pair<std::string, std::function<void()>>> rows) {
+    if (ImGui::BeginTable(name.c_str(), 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
+        ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+        ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
+        for (auto &[row_name, row_f] : rows) {
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::AlignTextToFramePadding();
+            ImGui::TextUnformatted(row_name.c_str());
+            ImGui::TableSetColumnIndex(1);
+            row_f();
+        }
+        ImGui::EndTable();
+    }
+}
+
 #include <layers/basic_layers.h>
 struct RendererUI {
 

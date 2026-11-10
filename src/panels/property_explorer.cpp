@@ -10,9 +10,13 @@ void PropertyExplorer::generate_gui(){
             if (!id.ref().has_value()) continue;
             Layer &layer = id;
             auto layer_name = id.names.back();
+            ImGui::PushID(layer_name.c_str());
+
+            ImGui::Separator();
+            ImGui::Checkbox("##visible", &layer.visible);
+            ImGui::SameLine();
             ImGui::TextUnformatted(layer_name.c_str());
 
-            ImGui::PushID(layer_name.c_str());
             LayerUI layer_ui(layer);
             layer_ui.show_basic_parameters();
             ImGui::PopID();

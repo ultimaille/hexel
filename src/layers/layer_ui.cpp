@@ -47,107 +47,55 @@ bool RendererUI::radius_input(PointRenderer &r) {
 }
 
 void RendererUI::show_basic_parameters(PointRenderer &r) {
-    if (ImGui::BeginTable("point_table_basic_parameter", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
-        ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
-        ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
-        // ImGui::TableHeadersRow();
-
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted("Size");
-        ImGui::TableSetColumnIndex(1);
-        ImGui::PushItemWidth(80);
-        radius_input(r);
-        ImGui::PopItemWidth();
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted("Color / Texture");
-        ImGui::TableSetColumnIndex(1);
-        color_picker();
-        ImGui::SameLine();
-        color_texture_slider();
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted("Ambient");
-        ImGui::TableSetColumnIndex(1);
-        ambiant_slider();
-
-        ImGui::EndTable();
-    }
+    PropertyTable("point_table_basic_parameter", {
+        {"Size", [&] {
+            ImGui::PushItemWidth(80);
+            radius_input(r);
+            ImGui::PopItemWidth();
+        }},
+        {"Color / Texture", [&] {
+            color_picker();
+            ImGui::SameLine();
+            color_texture_slider();
+        }},
+        {"Ambient", [&] {
+            ambiant_slider();
+        }},
+    });
 }
 
 void RendererUI::show_basic_parameters(TriangleRenderer &r) {
-
-    if (ImGui::BeginTable("tri_table_basic_parameter", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
-        ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
-        ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
-        // ImGui::TableHeadersRow();
-
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted("Color / Texture");
-        ImGui::TableSetColumnIndex(1);
-        color_picker();
-        ImGui::SameLine();
-        color_texture_slider();
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted("Ambient");
-        ImGui::TableSetColumnIndex(1);
-        ambiant_slider();
-
-        ImGui::EndTable();
-    }
+    PropertyTable("tri_table_basic_parameter", {
+        {"Color / Texture", [&] {
+            color_picker();
+            ImGui::SameLine();
+            color_texture_slider();
+        }},
+        {"Ambient", [&] {
+            ambiant_slider();
+        }},
+    });
 }
 
 void RendererUI::show_basic_parameters(SegmentRenderer &r) {
-    // ImGui::PushItemWidth(80);
-    // ImGui::InputInt("width##input_width", &r.line_width);
-    // r.line_width = std::clamp(r.line_width, int(r.width_range[0]), int(r.width_range[1]));
-    // ImGui::PopItemWidth();
-    // ImGui::SameLine();
-    // ImGui::SliderFloat("scale##slider_scale", &r.origin_scale, 0.4f, 1.0f, "%.3f", 0);
-
-    if (ImGui::BeginTable("tri_table_basic_parameter", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
-        ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthFixed, 120.0f);
-        ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch);
-        // ImGui::TableHeadersRow();
-
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted("Width / O. scale");
-        ImGui::TableSetColumnIndex(1);
-
-        ImGui::PushItemWidth(80);
-        ImGui::InputInt("##input_width", &r.line_width);
-        r.line_width = std::clamp(r.line_width, int(r.width_range[0]), int(r.width_range[1]));
-        ImGui::PopItemWidth();
-        ImGui::SameLine();
-        ImGui::SliderFloat("##slider_scale", &r.origin_scale, 0.4f, 1.0f, "%.3f", 0);
-
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted("Color / Texture");
-        ImGui::TableSetColumnIndex(1);
-        color_picker();
-        ImGui::SameLine();
-        color_texture_slider();
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted("Ambient");
-        ImGui::TableSetColumnIndex(1);
-        ambiant_slider();
-
-        ImGui::EndTable();
-    }
+    PropertyTable("tri_table_basic_parameter", {
+        {"Width / O. scale", [&]() {
+            ImGui::PushItemWidth(80);
+            ImGui::InputInt("##input_width", &r.line_width);
+            r.line_width = std::clamp(r.line_width, int(r.width_range[0]), int(r.width_range[1]));
+            ImGui::PopItemWidth();
+            ImGui::SameLine();
+            ImGui::SliderFloat("##slider_scale", &r.origin_scale, 0.4f, 1.0f, "%.3f", 0);
+        }},
+        {"Color / Texture", [&]() {
+            color_picker();
+            ImGui::SameLine();
+            color_texture_slider();
+        }},
+        {"Ambient", [&]() {
+            ambiant_slider();
+        }},
+    });
 }
 
 template<class T>
@@ -206,8 +154,13 @@ void LayerUI::show_basic_parameters() {
 }
 
 void LayerUI::show_basic_parameters(PointSetLayer &l) {
-    if (ImGui::Checkbox("mask a value##autorange", &l.mask)) l.update();
-    if (l.mask) if (ImGui::InputInt("mask value", &l.skip_value)){ l.update(); }
+    PropertyTable("point_set_layer_table_basic_parameter", {
+        {"Mask value", [&] {
+            if (ImGui::Checkbox("##cb_mask_value", &l.mask)) l.update();
+            ImGui::SameLine();
+            if (l.mask) if (ImGui::InputInt("##input_mask_value", &l.skip_value)) { l.update(); }
+        }},
+    });
 }
 
 void LayerUI::show_basic_parameters(PolyLineLayer &l) {
@@ -217,20 +170,27 @@ void LayerUI::show_basic_parameters(PolyLineLayer &l) {
 void LayerUI::show_basic_parameters(TrianglesLayer &l) {
     switch (static_cast<TrianglesLayer::RenderType>(l.render_type())) {
         case TrianglesLayer::RenderType::CORNER_GLYPH: {
-            float tmp_shrink = l.shrink;
-            float tmp_corner_size = l.corner_size;
-            ImGui::SliderFloat("shrink", &l.shrink, 0.0f, .9f, "%.2f", 0);
-            ImGui::SliderFloat("corner_size", &l.corner_size, 0.1f, 1.f, "%.2f", 0);
-            if (tmp_shrink != l.shrink || tmp_corner_size != l.corner_size) l.reset();
+            PropertyTable("point_set_layer_table_basic_parameter", {
+                {"Shrink", [&] {
+                    if (ImGui::SliderFloat("##slider_shrink", &l.shrink, 0.0f, .9f, "%.2f", 0)) l.reset();
+                }},
+                {"Corner size", [&] {
+                    if (ImGui::SliderFloat("##slider_corner_size", &l.corner_size, 0.1f, 1.f, "%.2f", 0)) l.reset();
+                }},
+            });
             break;
         }
     }
 }
 
 void LayerUI::show_basic_parameters(HexahedraLayer &l) {
-    float prev_shrink = l.shrink;
-    ImGui::SliderFloat("shrink", &l.shrink, 0.0f, .9f, "%.2f", 0);
-    if (prev_shrink != l.shrink) l.reset();
+    PropertyTable("hexahedra_layer_table_basic_parameter", {
+        {"Shrink", [&] {
+            float prev_shrink = l.shrink;
+            ImGui::SliderFloat("##slider_shrink", &l.shrink, 0.0f, .9f, "%.2f", 0);
+            if (prev_shrink != l.shrink) l.reset();
+        }},
+    });
 }
 
 void LayerUI::show_attribute_parameters() {
