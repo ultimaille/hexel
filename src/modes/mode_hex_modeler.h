@@ -17,12 +17,12 @@ struct HexModelerMode : public Mode{
     HexModelerMode();
 
     // access to xcf objects
-    static ObjectId hex_id();
-    static ObjectId pl_id();
-    static ObjectId pts_id();
-    static ObjectId geom_tri_id();
-    static ObjectId geom_edge_id();
-    static ObjectId geom_pts_id();
+    static MeshPath hex_id();
+    static MeshPath pl_id();
+    static PointSetPath pts_id();
+    static MeshPath geom_tri_id();
+    static MeshPath geom_edge_id();
+    static PointSetPath geom_pts_id();
 
 
     // update coherence constraints
@@ -59,12 +59,12 @@ struct HexModelerMode : public Mode{
     // manage submodules
     struct SubMode : public Mode{
         SubMode(HexModelerMode& mode) :mode(mode){}
-        inline ObjectId hex_id()                  { return mode.hex_id(); }
-        inline ObjectId pl_id()                   { return mode.pl_id(); }
-        inline ObjectId pts_id()                  { return mode.pts_id(); }
-        inline ObjectId geom_tri_id()             { return mode.geom_tri_id(); }
-        inline ObjectId geom_edge_id()            { return mode.geom_edge_id(); }
-        inline ObjectId geom_pts_id()             { return mode.geom_pts_id(); }
+        inline MeshPath hex_id()                  { return mode.hex_id(); }
+        inline MeshPath pl_id()                   { return mode.pl_id(); }
+        inline PointSetPath pts_id()                  { return mode.pts_id(); }
+        inline MeshPath geom_tri_id()             { return mode.geom_tri_id(); }
+        inline MeshPath geom_edge_id()            { return mode.geom_edge_id(); }
+        inline PointSetPath geom_pts_id()             { return mode.geom_pts_id(); }
 
         Volume::Halfedge hex_halfedge_from_edge(int e){ return mode.hex_halfedge_from_edge(e); }
         void update_hex(){ mode.update_hex(); }

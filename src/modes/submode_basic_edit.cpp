@@ -11,8 +11,9 @@ void MouseReactKillHex::on_click(int button, vec2 p) {
         auto result = d.at(p);
         int picked_cell = result.filtered_primitive_id(mode.hex_id(), 1);
         if (picked_cell != -1){
-            Hexahedra& hex = mode.hex_id();
-            CellAttribute<int> block_id("block_id", mode.hex_id(), hex);
+            Hexahedra& hex = *(Hexahedra *)mode.hex_id();
+            VolumeAttributes& attr = *(VolumeAttributes *)mode.hex_id();
+            CellAttribute<int> block_id("block_id", attr, hex);
             int block2kill = block_id[picked_cell];
             std::vector<bool> to_kill(hex.ncells());
             for (auto c : hex.iter_cells()) to_kill[c] = block_id[c] == block2kill;
@@ -43,7 +44,6 @@ void MouseReactCreateHex::on_click(int button, vec2 p) {
         int picked_vert = result.filtered_primitive_id(mode.hex_id(), 0);
         if (picked_vert != -1){
             plop(picked_vert);
-            Hexahedra& hex = mode.hex_id();
             mode.update_hex();
         }
     }
@@ -59,7 +59,6 @@ void MouseReactCreateHex::on_click(int button, vec2 p) {
         int picked_triangle = result.filtered_primitive_id(mode.geom_tri_id(), 1);
         if (picked_triangle != -1){
             plop(picked_triangle);
-            Hexahedra& hex = mode.hex_id();
             mode.update_hex();
         }
     }
@@ -89,8 +88,6 @@ void MouseReactCreateHex::on_click(int button, vec2 p) {
         }
 
         // consume mouse react "return values"
-        Hexahedra& hex = hex_id();
-        PolyLine& pl = pl_id();
 
     }
 

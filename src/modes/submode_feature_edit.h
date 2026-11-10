@@ -3,10 +3,10 @@
 
 
 struct MouseReactSplitAddFeature : public MouseReact {
-    ObjectId pl_id;
-    ObjectId pts_id;
+    MeshPath pl_id;
+    MeshPath pts_id;
     int org_vertex;
-    void init(ObjectId p_pl, ObjectId p_pts);
+    void init(MeshPath p_pl, MeshPath p_pts);
     void on_click(int button, vec2 p);
     void define_gui();
 };

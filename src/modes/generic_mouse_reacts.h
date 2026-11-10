@@ -4,10 +4,10 @@
 
 struct MouseReactLayerSelection : public MouseReact {
     MouseReactLayerSelection() {}
-    void init(ObjectId p_hex, ObjectId p_pl, ObjectId p_pts) { hex_id = p_hex; pl_id = p_pl; pts_id = p_pts; }
-    ObjectId hex_id;
-    ObjectId pl_id;
-    ObjectId pts_id;
+    void init(MeshPath p_hex, MeshPath p_pl, MeshPath p_pts) { hex_id = p_hex; pl_id = p_pl; pts_id = p_pts; }
+    MeshPath hex_id;
+    MeshPath pl_id;
+    MeshPath pts_id;
 
     inline void on_click(int button, vec2 p) {
         if (button != 0) return;
@@ -15,11 +15,11 @@ struct MouseReactLayerSelection : public MouseReact {
         Picker::Result pr = picker.at(p);
         int prim = pr.filtered_primitive_id(hex_id, 2);
         if (prim != -1){
-            Hexahedra& hex = hex_id;
+            Hexahedra& hex = *(Hexahedra *)hex_id;
             CellFacetAttribute<int> layer_id(hex);
             compute_hex_layer_id(hex, layer_id);
 
-            VolumeAttributes& hex_attr = hex_id;
+            VolumeAttributes& hex_attr = *(VolumeAttributes *)hex_id;
             CellAttribute<bool> visible_cell("visible", hex_attr, hex);
             visible_cell.fill(false);
             for (auto f : hex.iter_facets()) if (layer_id[f] == layer_id[prim])
@@ -27,16 +27,16 @@ struct MouseReactLayerSelection : public MouseReact {
             hex_id.broadcast(EventType::UPDATED);
 
 
-            PointSetAttributes& pts_attr = pts_id;
-            PointSet& pts = pts_id;
+            PointSetAttributes& pts_attr = *(PointSetAttributes *)pts_id;
+            PointSet& pts = *(PointSet *)pts_id;
             PointAttribute<bool> visible_pts("visible", pts_attr, pts);
             visible_pts.fill(false);
             for (auto c : hex.iter_cells()) if (visible_cell[c])
                 FOR(lv, 8)visible_pts[c.vertex(lv)] = true;
 
 
-            PolyLineAttributes& pl_attr = pl_id;
-            PolyLine& pl = pl_id;
+            PolyLineAttributes& pl_attr = *(PolyLineAttributes *)pl_id;
+            PolyLine& pl = *(PolyLine *)pl_id;
             EdgeAttribute<bool> visible_edge("visible", pl_attr, pl);
             visible_edge.fill(false);
             for (auto e : pl.iter_edges()) if (visible_pts[e.from()] && visible_pts[e.to()])
@@ -63,7 +63,7 @@ struct MouseReactMultiSelector : public MouseReact {
     }
 
     // filter the primitives
-    inline std::vector<std::pair<int, vec3> > primitives(ObjectId mesh_id, int primitive_type){
+    inline std::vector<std::pair<int, vec3> > primitives(MeshPath mesh_id, int primitive_type){
         std::vector <std::pair<int, vec3>> res;
         for (auto pr : picked) {
             int prim = pr.filtered_primitive_id(mesh_id, primitive_type);

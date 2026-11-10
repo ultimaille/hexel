@@ -128,7 +128,7 @@
 
 
     struct Path {
-        const std::vector<std::string> path;
+        std::vector<std::string> path;
 
         void broadcast(events::EventType e) {
             ObjectId(*this).broadcast(e);
@@ -194,6 +194,21 @@
         operator Pyramids*() const;
         operator VolumeAttributes*() const;
 
+        operator MultiMesh&() const;
+        operator PointSet&() const;
+        operator PointSetAttributes&() const;
+        operator PolyLine&() const;
+        operator PolyLineAttributes&() const;
+        operator Triangles&() const;
+        operator Quads&() const;
+        operator Polygons&() const;
+        operator SurfaceAttributes&() const;
+        operator Tetrahedra&() const;
+        operator Hexahedra&() const;
+        operator Wedges&() const;
+        operator Pyramids&() const;
+        operator VolumeAttributes&() const;
+
         int size() const { return static_cast<int>(path.size()); }
 
         protected:
@@ -224,7 +239,7 @@
             }
         };
 
-        struct PointSet : Path {
+        struct PointSet : MeshPath {
             AttributeCollection attr_points = { concat(path, "attr_points") };
         } pointset = { concat(path, "pointset") };
 
@@ -270,6 +285,8 @@
     Volumes wedges     = { concat(path, "wedges"    ) };
     Volumes pyramids   = { concat(path, "pyramids"  ) };
 };
+
+using PointSetPath = MultiMeshPath::PointSet;
 
 struct RootPath : Path {
     Path keys    = {{ "keys"    }};
@@ -346,6 +363,121 @@ inline MultiMeshPath MeshPath::parent() const {
 
 inline bool operator==(const Path& a, const Path& b) {
     return a.path == b.path;
+}
+
+
+
+inline ObjectId::operator Path() const {
+    using events::ObjectType;
+
+    auto make_path = [](std::initializer_list<std::string> parts) {
+        return Path{std::vector<std::string>(parts)};
+    };
+
+    auto require_names = [this](std::size_t count) {
+        um_assert(names.size() == count);
+    };
+
+    auto collection_for = [](ObjectType type) -> const char* {
+        switch (type) {
+        case events::POLYLINES:
+        case events::POLYLINES_ATTR:  return "polylines";
+        case events::TRIANGLES:
+        case events::TRIANGLES_ATTR:  return "triangles";
+        case events::QUADS:
+        case events::QUADS_ATTR:      return "quads";
+        case events::POLYGONS:
+        case events::POLYGONS_ATTR:   return "polygons";
+        case events::TETRAHEDRA:
+        case events::TETRAHEDRA_ATTR: return "tetrahedra";
+        case events::HEXAHEDRA:
+        case events::HEXAHEDRA_ATTR:  return "hexahedra";
+        case events::WEDGES:
+        case events::WEDGES_ATTR:     return "wedges";
+        case events::PYRAMIDS:
+        case events::PYRAMIDS_ATTR:   return "pyramids";
+        default:                      return nullptr;
+        }
+    };
+
+    auto attribute_domain = [](const std::string& domain) -> const char* {
+        if (domain == "points")  return "attr_points";
+        if (domain == "edges")   return "attr_edges";
+        if (domain == "facets")  return "attr_facets";
+        if (domain == "corners") return "attr_corners";
+        if (domain == "cells")   return "attr_cells";
+        return nullptr;
+    };
+
+    switch (path) {
+    case events::KEYBOARD:
+        require_names(0);
+        return make_path({"keys"});
+    case events::MOUSE:
+        require_names(0);
+        return make_path({"mouse"});
+    case events::CAMERA:
+        require_names(0);
+        return make_path({"camera"});
+
+    case events::PANEL:
+        require_names(1);
+        return make_path({"panels", names[0]});
+    case events::LAYER:
+        require_names(1);
+        return make_path({"layers", names[0]});
+    case events::MULTIMESH:
+        require_names(1);
+        return make_path({"xcf", names[0]});
+    case events::POINTSET:
+        require_names(1);
+        return make_path({"xcf", names[0], "pointset"});
+
+    case events::POLYLINES:
+    case events::TRIANGLES:
+    case events::QUADS:
+    case events::POLYGONS:
+    case events::TETRAHEDRA:
+    case events::HEXAHEDRA:
+    case events::WEDGES:
+    case events::PYRAMIDS: {
+        require_names(2);
+        const char* collection = collection_for(path);
+        um_assert(collection != nullptr);
+        return make_path({"xcf", names[0], collection, names[1]});
+    }
+
+    case events::POINTSET_ATTR: {
+        // Legacy layout: {multimesh, attribute_type, domain, attribute_name}
+        require_names(4);
+        const char* domain = attribute_domain(names[2]);
+        um_assert(domain == std::string("attr_points"));
+        return make_path({"xcf", names[0], "pointset", domain, names[3]});
+    }
+
+    case events::POLYLINES_ATTR:
+    case events::TRIANGLES_ATTR:
+    case events::QUADS_ATTR:
+    case events::POLYGONS_ATTR:
+    case events::TETRAHEDRA_ATTR:
+    case events::HEXAHEDRA_ATTR:
+    case events::WEDGES_ATTR:
+    case events::PYRAMIDS_ATTR: {
+        // Legacy layout: {multimesh, mesh, attribute_type, domain, attribute_name}
+        require_names(5);
+        const char* collection = collection_for(path);
+        const char* domain = attribute_domain(names[3]);
+        um_assert(collection != nullptr);
+        um_assert(domain != nullptr);
+        return make_path(
+            {"xcf", names[0], collection, names[1], domain, names[4]}
+        );
+    }
+
+    default:
+        um_assert(!"ObjectId has no corresponding Path");
+        return {};
+    }
 }
 
 

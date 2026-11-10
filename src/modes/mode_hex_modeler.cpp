@@ -18,12 +18,12 @@
 
 
 // access to xcf bjects
-ObjectId HexModelerMode::hex_id(){ return ObjectId(ObjectType::HEXAHEDRA, std::vector<std::string>{ "mesh", ""}); }
-ObjectId HexModelerMode::pl_id(){ return ObjectId(ObjectType::POLYLINES, std::vector<std::string>{ "mesh", ""}); };
-ObjectId HexModelerMode::pts_id(){ return ObjectId(ObjectType::POINTSET, std::vector<std::string>{ "mesh"}); };
-ObjectId HexModelerMode::geom_tri_id(){ return ObjectId(ObjectType::TRIANGLES, std::vector<std::string>{ "geom", ""}); }
-ObjectId HexModelerMode::geom_edge_id(){ return ObjectId(ObjectType::POLYLINES, std::vector<std::string>{ "geom", ""}); }
-ObjectId HexModelerMode::geom_pts_id(){ return ObjectId(ObjectType::POINTSET, std::vector<std::string>{ "geom"}); }
+MeshPath HexModelerMode::hex_id(){ return root().xcf["mesh"].hexahedra[""]; }
+MeshPath HexModelerMode::pl_id(){ return  root().xcf["mesh"].polylines[""]; };
+PointSetPath HexModelerMode::pts_id(){ return root().xcf["mesh"].pointset; };
+MeshPath HexModelerMode::geom_tri_id(){ return  root().xcf["geom"].triangles[""]; }
+MeshPath HexModelerMode::geom_edge_id(){ return  root().xcf["geom"].polylines[""]; }
+PointSetPath HexModelerMode::geom_pts_id(){ return  root().xcf["geom"].pointset; }
 
 
 // update coherence constraints

@@ -481,3 +481,47 @@ Path::operator VolumeAttributes*() const {
     return nullptr;
 }
 
+Path::operator PointSet&() const {
+    PointSet *ptr = *this;
+    um_assert(ptr != nullptr);
+    return *ptr;
+}
+
+
+Path::operator PolyLine&() const {
+    PolyLine *ptr = *this;
+    um_assert(ptr != nullptr);
+    return *ptr;
+}
+
+Path::operator Triangles&() const {
+    Triangles *ptr = *this;
+    um_assert(ptr != nullptr);
+    return *ptr;
+}
+
+Path::operator PointSetAttributes&() const {
+    PointSetAttributes *attr = *this;
+    um_assert(attr != nullptr);
+    return *attr;
+}
+
+
+Path::operator PolyLineAttributes&() const {
+    PolyLineAttributes *attr = *this;
+    um_assert(attr != nullptr);
+    return *attr;
+}
+
+Path::operator VolumeAttributes&() const {
+    VolumeAttributes *attr = *this;
+    um_assert(attr != nullptr);
+    return *attr;
+}
+
+Path::operator Hexahedra&() const {
+    Hexahedra *ptr = *this;
+    um_assert(ptr != nullptr);
+    return *ptr;
+}
+
