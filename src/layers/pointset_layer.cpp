@@ -14,10 +14,6 @@
 
 PointSetLayer::PointSetLayer() { point_renderer.layer_id = id; }
 
-void PointSetLayer::generate_gui(std::string name){
-
-}
-
 void PointSetLayer::set_default_values() {
     auto& r = point_renderer;
     r.color[0] = .5; r.color[1] = 1.; r.color[2] = .5;

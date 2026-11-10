@@ -30,10 +30,6 @@
     }
 
 
-    void HexahedraLayer::generate_gui(std::string name){
-
-    }
-
     void HexahedraLayer::prepare_data_without_attribute(
         Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri, FacetAttribute<int>& primitive_id
     ){

@@ -29,40 +29,6 @@ int PolyLineLayer::primitive_type(){
 }
 
 
-void PolyLineLayer::generate_gui(std::string name){
-
-    if (attr_active() && attr_primitive() == "points"){
-        bool tmp = (rt == RenderType::POINT_SPHERE);
-        ImGui::Checkbox(label("Show vertices ", ""), &tmp);
-        if ((rt == RenderType::POINT_SPHERE) != tmp) {
-            if (tmp) rt = RenderType::POINT_SPHERE;
-            else  rt = RenderType::POINT;
-            reset();
-        }
-    }
-
-    if (attr_active() && attr_primitive() == "edges"){
-        bool tmp = (rt == RenderType::EDGE_REPEAT);
-        ImGui::Checkbox(label("Show as repeat ", ""), &tmp);
-        if ((rt == RenderType::EDGE_REPEAT) != tmp) {
-            if (tmp) {
-                rt = RenderType::EDGE_REPEAT;
-                edge_renderer.texture_repeat = 1;
-                edge_renderer.texture_range[0] = 0;
-                edge_renderer.texture_range[1] = 1;
-            }
-            else  rt = RenderType::EDGE;
-            reset();
-        }
-    }
-
-    if (rt == RenderType::POINT_SPHERE)
-        point_renderer.generate_gui(name);
-    else
-        edge_renderer.generate_gui(name);
-    Layer::generate_gui(name);
-}
-
 void PolyLineLayer::set_default_values() {
     auto& r = edge_renderer;
     r.color[0] = .5; r.color[1] = .5; r.color[2] = .7;

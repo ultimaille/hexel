@@ -207,9 +207,7 @@ struct RendererUI {
     bool radius_input(PointRenderer &r);
 
     void show_basic_parameters(PointRenderer &r);
-
     void show_basic_parameters(TriangleRenderer &r);
-
     void show_basic_parameters(SegmentRenderer &r);
 
     private:
@@ -225,19 +223,21 @@ struct LayerUI {
     void attribute_combo(ObjectId attr_id);
     bool render_type_combo(std::vector<std::tuple<std::string, int>> items);
 
-    void show();
     void show_basic_parameters();
+    void show_attribute_parameters();
+
+
+    protected:
     void show_basic_parameters(PointSetLayer &l);
     void show_basic_parameters(PolyLineLayer &l);
     void show_basic_parameters(TrianglesLayer &l);
     void show_basic_parameters(HexahedraLayer &l);
 
-    void show_attribute_parameters();
     void show_attribute_parameters(PointSetLayer &l);
     void show_attribute_parameters(PolyLineLayer &l);
     void show_attribute_parameters(TrianglesLayer &l);
     void show_attribute_parameters(HexahedraLayer &l);
-
+    
     private:
     Layer &l;
     RendererUI renderer_ui;

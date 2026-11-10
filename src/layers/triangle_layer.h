@@ -13,7 +13,6 @@ struct TrianglesLayer : public Layer{
     inline std::string attr_type()      { um_assert(attr_active()); return attr_id.names[2]; }
 
     TrianglesLayer();
-    void generate_gui(std::string name);
     virtual int render_type() { return static_cast<int>(rt); }
     virtual void render_type(int v) { rt = static_cast<RenderType>(v); }
     Renderer& renderer() override {

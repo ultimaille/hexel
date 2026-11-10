@@ -28,16 +28,6 @@ int TrianglesLayer::primitive_type(){
 }
 
 
-void TrianglesLayer::generate_gui(std::string name) {
-
-    ImGui::PushID(name.c_str());
-
-    LayerUI layer_ui(*this);
-    layer_ui.show();
-
-    ImGui::PopID();
-}
-
 // Note: same as HexahedraLayer
 void TrianglesLayer::init(ObjectId obj){
     mesh = obj;
