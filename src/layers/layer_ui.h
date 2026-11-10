@@ -40,30 +40,14 @@ static ButtonPalette GetPalette(std::string type)
     return {};
 }
 
-static bool ColoredButton(const char* label, std::string type) {
-    ButtonPalette p = GetPalette(type);
-    ImGui::PushStyleColor(ImGuiCol_Button,        p.base);
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, p.hovered);
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive,  p.active);
-    bool clicked = ImGui::Button(label, ImVec2(-FLT_MIN, 0.0f));
-    ImGui::PopStyleColor(3);
-    return clicked;
-}
-
-// static void AttributeRange(float value_range[2], float texture_range[2], int &texture_repeat, bool &auto_range) {
-
-//     ImGui::InputFloat2("##input_data_range", value_range, "%.2f", ImGuiInputTextFlags_ReadOnly);
-//     ImGui::InputFloat2("##input_show_range", texture_range);
-
-//     ImGui::SameLine();
-//     if (ImGui::Checkbox("autorange##autorange", &auto_range)){
-//         texture_range[0] = value_range[0];
-//         texture_range[1] = value_range[1];
-//     }
-
-//     if (ImGui::InputInt("texture repeat##texture_repeat", &texture_repeat))
-//         texture_repeat = std::clamp(texture_repeat, 0, 1000000);
-
+// static bool ColoredButton(const char* label, std::string type) {
+//     ButtonPalette p = GetPalette(type);
+//     ImGui::PushStyleColor(ImGuiCol_Button,        p.base);
+//     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, p.hovered);
+//     ImGui::PushStyleColor(ImGuiCol_ButtonActive,  p.active);
+//     bool clicked = ImGui::Button(label, ImVec2(-FLT_MIN, 0.0f));
+//     ImGui::PopStyleColor(3);
+//     return clicked;
 // }
 
 struct AttrItem {
@@ -206,14 +190,11 @@ struct RendererUI {
 
     RendererUI(Renderer &r) : r(r) {}
 
-    void show_basic_parameters();
+    void show_parameters();
 
     bool ambiant_slider();
-
     bool color_picker();
-
     bool colormap_combo();
-
     void data_range_input();
     void show_range_input();
     void auto_range_checkbox();
@@ -223,18 +204,36 @@ struct RendererUI {
 
     bool radius_input(PointRenderer &r);
 
-    void show_basic_parameters(PointRenderer &r);
-    void show_basic_parameters(TriangleRenderer &r);
-    void show_basic_parameters(SegmentRenderer &r);
+    virtual void show_parameters(PointRenderer &r) = 0;
+    virtual void show_parameters(TriangleRenderer &r) = 0;
+    virtual void show_parameters(SegmentRenderer &r) = 0;
 
     private:
     Renderer &r;
 };
 
+struct BasicParametersRendererUI : public RendererUI {
+    using RendererUI::RendererUI;
+    using RendererUI::show_parameters;
+    protected:
+    void show_parameters(PointRenderer &r) override;
+    void show_parameters(TriangleRenderer &r) override;
+    void show_parameters(SegmentRenderer &r) override;
+};
+
+struct AdvancedParametersRendererUI : public RendererUI {
+    using RendererUI::RendererUI;
+    using RendererUI::show_parameters;
+    protected:
+    void show_parameters(PointRenderer &r) override;
+    void show_parameters(TriangleRenderer &r) override;
+    void show_parameters(SegmentRenderer &r) override;
+};
+
 
 struct LayerUI {
 
-    LayerUI(Layer &l) : l(l), renderer_ui(l.renderer()) {}
+    LayerUI(Layer &l) : l(l), basic_renderer_ui(l.renderer()), advanced_renderer_ui(l.renderer()) {}
 
     template<class T>
     void attribute_combo(ObjectId attr_id);
@@ -260,8 +259,9 @@ struct LayerUI {
     void show_attribute_parameters(TrianglesLayer &l);
     void show_attribute_parameters(HexahedraLayer &l);
 
-    private:
+    protected:
     Layer &l;
-    RendererUI renderer_ui;
+    BasicParametersRendererUI basic_renderer_ui;
+    AdvancedParametersRendererUI advanced_renderer_ui;
 
 };

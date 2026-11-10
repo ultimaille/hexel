@@ -2,15 +2,15 @@
 #include <layers/basic_layers.h>
 #include <layers/basic_renderers.h>
 
-void RendererUI::show_basic_parameters() {
+void RendererUI::show_parameters() {
     // Note: for now just dispatch using dynamic cast but visitor 
     // can be used instead for cleaner version
     if (PointRenderer *pr = dynamic_cast<PointRenderer*>(&r)) {
-        show_basic_parameters(*pr);
+        show_parameters(*pr);
     } else if (TriangleRenderer *tr = dynamic_cast<TriangleRenderer*>(&r)) {
-        show_basic_parameters(*tr);
+        show_parameters(*tr);
     } else if (SegmentRenderer *sr = dynamic_cast<SegmentRenderer*>(&r)) {
-        show_basic_parameters(*sr);
+        show_parameters(*sr);
     } else {
         Log::error("Renderer isn't supported by RendererUI");
     }
@@ -58,32 +58,26 @@ bool RendererUI::radius_input(PointRenderer &r) {
     return ImGui::InputInt("##point_size", &r.radius_in_pixel);
 }
 
-void RendererUI::show_basic_parameters(PointRenderer &r) {
+void BasicParametersRendererUI::show_parameters(PointRenderer &r) {
     PropertyTable("point_table_basic_parameter", {
         {"Style", [&] {
             color_picker();
             ImGui::PushItemWidth(80);
             radius_input(r);
             ImGui::PopItemWidth();
-        }},
-        {"Ambient", [&] {
-            ambiant_slider();
-        }},
+        }}
     });
 }
 
-void RendererUI::show_basic_parameters(TriangleRenderer &r) {
+void BasicParametersRendererUI::show_parameters(TriangleRenderer &r) {
     PropertyTable("tri_table_basic_parameter", {
         {"Style", [&] {
             color_picker();
-        }},
-        {"Ambient", [&] {
-            ambiant_slider();
-        }},
+        }}
     });
 }
 
-void RendererUI::show_basic_parameters(SegmentRenderer &r) {
+void BasicParametersRendererUI::show_parameters(SegmentRenderer &r) {
     PropertyTable("tri_table_basic_parameter", {
         {"Style", [&]() {
             color_picker();
@@ -94,7 +88,28 @@ void RendererUI::show_basic_parameters(SegmentRenderer &r) {
             ImGui::PopItemWidth();
             ImGui::SameLine();
             ImGui::SliderFloat("##slider_scale", &r.origin_scale, 0.4f, 1.0f, "%.3f", 0);
+        }}
+    });
+}
+
+void AdvancedParametersRendererUI::show_parameters(PointRenderer &r) {
+    PropertyTable("point_table_basic_parameter", {
+        {"Ambient", [&] {
+            ambiant_slider();
         }},
+    });
+}
+
+void AdvancedParametersRendererUI::show_parameters(TriangleRenderer &r) {
+    PropertyTable("tri_table_basic_parameter", {
+        {"Ambient", [&] {
+            ambiant_slider();
+        }},
+    });
+}
+
+void AdvancedParametersRendererUI::show_parameters(SegmentRenderer &r) {
+    PropertyTable("tri_table_basic_parameter", {
         {"Ambient", [&]() {
             ambiant_slider();
         }},
@@ -141,7 +156,7 @@ bool LayerUI::render_type_combo(std::vector<std::tuple<std::string, int>> items)
 
 void LayerUI::show_basic_parameters() {
 
-    renderer_ui.show_basic_parameters();
+    basic_renderer_ui.show_parameters();
 
     if (PointSetLayer *pl = dynamic_cast<PointSetLayer*>(&l)) {
         show_basic_parameters(*pl);
@@ -157,6 +172,8 @@ void LayerUI::show_basic_parameters() {
 }
 
 void LayerUI::show_advanced_parameters() {
+
+    advanced_renderer_ui.show_parameters();
 
     if (PointSetLayer *pl = dynamic_cast<PointSetLayer*>(&l)) {
         show_advanced_parameters(*pl);
@@ -260,15 +277,15 @@ void LayerUI::show_attribute_parameters(PointSetLayer &l) {
             }
         }},
         {"Colormap", [&] {
-            renderer_ui.colormap_combo();
+            basic_renderer_ui.colormap_combo();
         }},
-        {"Data range", [&] { renderer_ui.data_range_input(); }},
+        {"Data range", [&] { basic_renderer_ui.data_range_input(); }},
         {"Show range", [&] { 
-            renderer_ui.show_range_input(); 
+            basic_renderer_ui.show_range_input(); 
             ImGui::SameLine();
-            renderer_ui.auto_range_checkbox();
+            basic_renderer_ui.auto_range_checkbox();
         }},
-        {"Texture repeat", [&] { renderer_ui.texture_repeat_input(); }}
+        {"Texture repeat", [&] { basic_renderer_ui.texture_repeat_input(); }}
     });
 }
 
@@ -298,15 +315,15 @@ void LayerUI::show_attribute_parameters(PolyLineLayer &l) {
             }
         }},
         {"Colormap", [&] {
-            renderer_ui.colormap_combo();
+            basic_renderer_ui.colormap_combo();
         }},
-        {"Data range", [&] { renderer_ui.data_range_input(); }},
+        {"Data range", [&] { basic_renderer_ui.data_range_input(); }},
         {"Show range", [&] { 
-            renderer_ui.show_range_input(); 
+            basic_renderer_ui.show_range_input(); 
             ImGui::SameLine();
-            renderer_ui.auto_range_checkbox();
+            basic_renderer_ui.auto_range_checkbox();
         }},
-        {"Texture repeat", [&] { renderer_ui.texture_repeat_input(); }}
+        {"Texture repeat", [&] { basic_renderer_ui.texture_repeat_input(); }}
     });
 }
 
@@ -340,15 +357,15 @@ void LayerUI::show_attribute_parameters(TrianglesLayer &l) {
             }
         }},
         {"Colormap", [&] {
-            renderer_ui.colormap_combo();
+            basic_renderer_ui.colormap_combo();
         }},
-        {"Data range", [&] { renderer_ui.data_range_input(); }},
+        {"Data range", [&] { basic_renderer_ui.data_range_input(); }},
         {"Show range", [&] { 
-            renderer_ui.show_range_input(); 
+            basic_renderer_ui.show_range_input(); 
             ImGui::SameLine();
-            renderer_ui.auto_range_checkbox();
+            basic_renderer_ui.auto_range_checkbox();
         }},
-        {"Texture repeat", [&] { renderer_ui.texture_repeat_input(); }}
+        {"Texture repeat", [&] { basic_renderer_ui.texture_repeat_input(); }}
     });
 }
 
@@ -381,17 +398,17 @@ void LayerUI::show_attribute_parameters(HexahedraLayer &l) {
             }
         }},
         {"Colormap", [&] {
-            renderer_ui.colormap_combo();
+            basic_renderer_ui.colormap_combo();
         }},
-        {"Data range", [&] { renderer_ui.data_range_input(); }},
+        {"Data range", [&] { basic_renderer_ui.data_range_input(); }},
         {"Show range", [&] { 
-            renderer_ui.show_range_input(); 
+            basic_renderer_ui.show_range_input(); 
             ImGui::SameLine();
-            renderer_ui.auto_range_checkbox();
+            basic_renderer_ui.auto_range_checkbox();
             ImGui::SameLine();
             
         }},
-        {"Texture repeat", [&] { renderer_ui.texture_repeat_input(); }}
+        {"Texture repeat", [&] { basic_renderer_ui.texture_repeat_input(); }}
     });
 }
 

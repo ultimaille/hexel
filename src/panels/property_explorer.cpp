@@ -20,10 +20,10 @@ void PropertyExplorer::generate_gui(){
             LayerUI layer_ui(layer);
             // Basic parameters
             layer_ui.show_basic_parameters();
-            
+
             // Advanced parameters
             if (ImGui::CollapsingHeader("Advanced")) {
-                layer_ui.show_attribute_parameters();
+                layer_ui.show_advanced_parameters();
             }
             // Attribute parameters
             if (ImGui::CollapsingHeader("Attributes")) {
