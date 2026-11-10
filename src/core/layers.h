@@ -1,13 +1,17 @@
 #pragma once
 #include <optional>
 #include <core/event.h>
-
+#include <layers/basic_renderers.h> // BEUR ! TODO need move renderer to core !
 struct Layer {
     Layer();
     virtual ~Layer() = default;
     virtual void reset();
     virtual void generate_gui(std::string name) {};
     virtual void set_default_values() {}
+
+    virtual int render_type() { return 0; }
+    virtual void render_type(int v) {}
+    virtual Renderer& renderer() {}
 
     virtual void render() = 0;
     virtual void render_primitive_id();

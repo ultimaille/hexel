@@ -30,69 +30,10 @@ int TrianglesLayer::primitive_type(){
 
 void TrianglesLayer::generate_gui(std::string name) {
 
-    Renderer& renderer = (rt == RenderType::POINT_SPHERE)
-        ? static_cast<Renderer&>(point_renderer)
-        : static_cast<Renderer&>(tri_renderer);
-
     ImGui::PushID(name.c_str());
 
-    // renderer.generate_gui(name);
-    LayerUI::generate(renderer);
-
-    if (ImGui::CollapsingHeader(label("Attributes", name))) {
-
-        int prev = renderer.texture_id;
-        ColormapCombo("Colormap", renderer.texture_id);
-        if (renderer.texture_id != prev) {
-            glDeleteTextures(1, &renderer.colormap);
-            load_colormap(renderer.texture_id, renderer.colormap);
-        }
-
-        auto new_attr_id = AttributeCombo(mesh.names[0], mesh.names[1], mesh, attr_id);
-        if (new_attr_id.path != ObjectType::NA) bind_attribute(new_attr_id);
-
-        AttributeRange(renderer.value_range, renderer.texture_range, renderer.texture_repeat, renderer.auto_range);
-
-        if (attr_active() && attr_primitive() == "points"){
-            bool tmp = (rt==RenderType::POINT_SPHERE);
-                ImGui::Checkbox(label("Show vertices ", ""), &tmp);
-            if ((rt == RenderType::POINT_SPHERE) != tmp) {
-                if (tmp) rt = RenderType::POINT_SPHERE;
-                else  rt = RenderType::POINT;
-                reset();
-            }
-        }
-
-        if (attr_active() && attr_primitive() == "corners") {
-            bool tmp = (rt == RenderType::CORNER_GLYPH);
-            
-            ImGui::Checkbox(label("render_corners_as_glyphs ", ""), &tmp);
-            
-            if ((rt == RenderType::CORNER_GLYPH) != tmp){
-                if (tmp) rt = RenderType::CORNER_GLYPH;
-                else rt = RenderType::CORNER;
-                reset();
-            }
-
-            bool is_halfedge_glyphs = (rt == RenderType::HALFEDGE_GLYPH);
-
-            ImGui::Checkbox(label("render_corners_as_halfedge_glyphs ", ""), &is_halfedge_glyphs);
-
-            if ((rt == RenderType::HALFEDGE_GLYPH) != is_halfedge_glyphs) {
-                rt = is_halfedge_glyphs ? RenderType::HALFEDGE_GLYPH : RenderType::CORNER;
-                reset();
-            }
-
-        }
-
-        if (rt == RenderType::CORNER_GLYPH) {
-            float tmp_shrink = shrink;
-            float tmp_corner_size = corner_size;
-            ImGui::SliderFloat(label("shrink", name), &shrink, 0.0f, .9f, "%.2f", 0);
-            ImGui::SliderFloat(label("corner_size", name), &corner_size, 0.1f, 1.f, "%.2f", 0);
-            if (tmp_shrink != shrink || tmp_corner_size != corner_size) reset();
-        }
-    }
+    LayerUI layer_ui(*this);
+    layer_ui.show();
 
     ImGui::PopID();
 }
@@ -259,78 +200,6 @@ void TrianglesLayer::update_data_for_scalar_corner_glyph_attribute() {
     }
 
     tri_renderer.update(tri_glyph, visible_glyph, value_glyph, primitive_id);
-}
-
-template<class T>
-void TrianglesLayer::update_data_for_scalar_halfedge_glyph_attribute() {
-    Triangles &tri = mesh;
-    SurfaceAttributes& attr = mesh;
-
-    FacetAttribute<bool> visible_tri("visible", attr, tri, true);
-    CornerAttribute<T> value(attr_name(), attr, tri);
-
-    // Note: need mesh to be connected
-    Triangles tri_glyph;
-    tri_glyph.points.create_points(tri.ncorners() * 6); // 4 point for deinfe a rect by halfedge
-    tri_glyph.create_facets(tri.ncorners() * 2);
-    
-    FacetAttribute<bool> visible_glyph(tri_glyph);
-    CornerAttribute<float> value_glyph(tri_glyph);
-    FacetAttribute<int> primitive_id(tri_glyph);
-
-    // for (auto &f : tri.iter_facets()) {
-    //     for (int lv = 0; lv < 3; ++lv) {
-    //         auto from = f.vertex(lv);
-    //         auto to = f.vertex((lv + 1) % 3);
-    //         auto h = f.halfedge(lv);
-    //     }
-    // }
-
-    // for (auto &h : tri.iter_halfedges()) {
-    //     auto from = h.from();
-    //     auto to = h.to();
-    // }
-
-    for (auto &h : tri.iter_halfedges()) {
-        auto v0 = h.from();
-        auto v1 = h.to();
-        vec3 p0 = v0;
-        vec3 p1 = v1;
-        vec3 d = (p1 - p0).normalized();
-        vec3 perp{-d.y, d.x};
-
-        p0 += d * 0.005;
-        p1 -= d * 0.005;
-
-        int f0 = h * 2;
-        int f1 = h * 2 + 1;
-
-
-        // Create rect
-        tri_glyph.points[h * 6] = p0 + perp * 0.01;
-        tri_glyph.points[h * 6 + 1] = p0 - perp * 0.01;
-        tri_glyph.points[h * 6 + 2] = p1 - perp * 0.01;
-        tri_glyph.vert(h * 2, 0) = h * 6;
-        tri_glyph.vert(h * 2, 1) = h * 6 + 1;
-        tri_glyph.vert(h * 2, 2) = h * 6 + 2;
-
-        tri_glyph.points[h * 6 + 3] = p1 - perp * 0.01;
-        tri_glyph.points[h * 6 + 4] = p1 + perp * 0.01;
-        tri_glyph.points[h * 6 + 5] = p0 + perp * 0.01;
-        tri_glyph.vert(h * 2 + 1, 0) = h * 6 + 3;
-        tri_glyph.vert(h * 2 + 1, 1) = h * 6 + 4;
-        tri_glyph.vert(h * 2 + 1, 2) = h * 6 + 5;
-
-        visible_glyph[f0] = visible_tri[h.facet()];
-        visible_glyph[f1] = visible_tri[h.facet()];
-        float val = static_cast<float>(value[h]);
-        for (int i = 0; i < 6; ++i)
-            value_glyph[h * 6 + i] = val;
-        
-    }
-
-    tri_renderer.update(tri_glyph, visible_glyph, value_glyph, primitive_id);
-
 }
 
 template<class T> 

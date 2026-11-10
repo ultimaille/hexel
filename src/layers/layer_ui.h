@@ -1,8 +1,10 @@
 #pragma once
 #include <imgui.h>
 #include <ultimaille/all.h>
+
 #include <core/objectid.h>
 #include <core/event.h>
+#include <core/layers.h>
 #include <misc/purgatory.h>
 
 using namespace UM;
@@ -35,7 +37,7 @@ static bool ColoredButton(const char* label, std::string type) {
     return clicked;
 }
 
-void AttributeRange(float value_range[2], float texture_range[2], int &texture_repeat, bool &auto_range) {
+static void AttributeRange(float value_range[2], float texture_range[2], int &texture_repeat, bool &auto_range) {
 
     ImGui::InputFloat2("Data range##input_data_range", value_range, "%.2f", ImGuiInputTextFlags_ReadOnly);
     ImGui::InputFloat2("Show range##input_show_range", texture_range);
@@ -131,41 +133,52 @@ static ObjectId AttributeCombo(std::string mm_name, std::string mesh_name, Surfa
     return sel_attr_id;
 }
 
-// // Create UI bloc for attribute management
-// static void AttributeBloc(Layer &layer) {
-//     auto &r = layer.current_renderer();
-//     int prev = r.texture_id;
-//     ColormapCombo("Colormap", r.texture_id);
-//     if (r.texture_id != prev) {
-//         glDeleteTextures(1, &r.colormap);
-//         load_colormap(r.texture_id, r.colormap);
-//     }
+#include <layers/basic_layers.h>
+struct RendererUI {
 
-//     auto new_attr_id = AttributeCombo(layer.mesh.names[0], layer.mesh.names[1], layer.mesh, layer.attr_id);
-//     if (new_attr_id.path != ObjectType::NA) layer.bind_attribute(new_attr_id);
+    RendererUI(Renderer &r) : r(r) {}
 
-//     AttributeRange(r.value_range, r.texture_range, r.texture_repeat, r.auto_range);
-// }
+    void show_basic_parameters();
+
+    bool ambiant_slider();
+
+    bool color_picker();
+
+    bool color_texture_slider();
+
+    bool colormap_combo();
+
+    void attribute_range();
+
+    protected:
+
+    bool radius_input(PointRenderer &r);
+
+    void show_basic_parameters(PointRenderer &r);
+
+    void show_basic_parameters(TriangleRenderer &r);
+
+    private:
+    Renderer &r;
+};
+
 
 struct LayerUI {
 
-    static void generate(Renderer &r) {
-        ImGui::PushItemWidth(120);
-        ImGui::SliderFloat("ambient_M##slider", &r.ambient_prop, 0.0f, 1.0f, "%.3f", 0);
-        
-        ImGui::ColorEdit3("ConstColor##color", (float*)&r.color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
-        ImGui::SameLine();
-        ImGui::SliderFloat("color/texture##slider", &r.color_map_prop, 0.0f, 1.0f, "%.3f", 0);
+    LayerUI(Layer &l) : l(l), renderer_ui(l.renderer()) {}
 
-        ImGui::PopItemWidth();
-    }
+    void attribute_combo(ObjectId attr_id);
+    bool render_type_combo(std::vector<std::tuple<std::string, int>> items);
 
-    static void generate(PointRenderer& r) {
-        generate(static_cast<Renderer&>(r));
+    void show();
+    void show_basic_parameters();
+    void show_basic_parameters(TrianglesLayer &l);
+    void show_basic_parameters(HexahedraLayer &l);
+    void show_attribute_parameters();
+    void show_attribute_parameters(TrianglesLayer &l);
+    void show_attribute_parameters(HexahedraLayer &l);
 
-        ImGui::PushItemWidth(80);
-        ImGui::InputInt("point size##point_size", &r.radius_in_pixel);
-        ImGui::PopItemWidth();
-    }
-
+    private:
+    Layer &l;
+    RendererUI renderer_ui;
 };
