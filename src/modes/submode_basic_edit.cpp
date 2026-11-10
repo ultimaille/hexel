@@ -10,8 +10,9 @@ void MouseReactKillHex::on_click(int button, vec2 p) {
         auto result = d.at(p);
         int picked_cell = result.filtered_primitive_id(mode.hex_id(), 1);
         if (picked_cell != -1){
-            Hexahedra& hex = mode.hex_id();
-            CellAttribute<int> block_id("block_id", mode.hex_id(), hex);
+            Hexahedra& hex = *(Hexahedra *)mode.hex_id();
+            VolumeAttributes& attr = *(VolumeAttributes *)mode.hex_id();
+            CellAttribute<int> block_id("block_id", attr, hex);
             int block2kill = block_id[picked_cell];
             std::vector<bool> to_kill(hex.ncells());
             for (auto c : hex.iter_cells()) to_kill[c] = block_id[c] == block2kill;
@@ -151,7 +152,7 @@ void MouseReactCreateHex::generate_gui(){
 
 
 BasicEditMode::BasicEditMode(HexModelerMode& mode) 
-    : HexModelerMode::SubMode(mode), interactor_kill_kex(*this), interactor_create_hex(*this){
+    : HexModelerMode::SubMode(mode), interactor_kill_kex(*this), interactor_create_hex(*this), interactor_layer_selection(mode){
     interactor_kill_kex.ctrl_must_be_up = true;
     interactor_create_hex.ctrl_must_be_up = true;
     interactor_camera.ctrl_must_be_down = true;

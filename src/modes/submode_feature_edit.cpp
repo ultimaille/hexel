@@ -1,7 +1,7 @@
 #include <modes/submode_feature_edit.h>
 #include <algo/shuffle_for_colormap.h>
 
-void MouseReactSplitAddFeature::init(ObjectId p_pl, ObjectId p_pts) {
+void MouseReactSplitAddFeature::init(MeshPath p_pl, MeshPath p_pts) {
     pl_id = p_pl; pts_id = p_pts; org_vertex= -1;
 }
 

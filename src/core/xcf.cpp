@@ -186,7 +186,7 @@ void XCF::kill_mesh(MeshPath obj) {
 
 void XCF::kill_multimesh(const std::string& mm_name) {
     MultiMesh& mm = (*this)[mm_name];
-    auto mmpath = path().xcf[mm_name];
+    auto mmpath = root().xcf[mm_name];
 
     std::vector<std::string> to_kill;
     for (auto& [name, obj] : mm.polylines)  to_kill.push_back(name);
@@ -209,7 +209,7 @@ void XCF::kill_multimesh(const std::string& mm_name) {
 
 
 MultiMesh& XCF::add(std::string str) {
-    path().xcf[str].broadcast(CREATED);
+    root().xcf[str].broadcast(CREATED);
     return std::map<std::string, MultiMesh>::operator[](str);
 }
 

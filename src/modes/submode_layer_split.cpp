@@ -41,8 +41,8 @@
         }
 
         // consume mouse react "return values"
-        Hexahedra& hex = hex_id();
-        PolyLine& pl = pl_id();
+        Hexahedra& hex = *(Hexahedra *)hex_id();
+        PolyLine& pl = *(PolyLine *)pl_id();
 
         if (multi_selector_react_left.done){//==> split a layer
             Log::add("CONSUME multi_selector_react");

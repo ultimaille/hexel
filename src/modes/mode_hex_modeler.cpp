@@ -18,12 +18,12 @@
 
 
 // access to xcf bjects
-ObjectId HexModelerMode::hex_id(){ return ObjectId(ObjectType::HEXAHEDRA, std::vector<std::string>{ "mesh", ""}); }
-ObjectId HexModelerMode::pl_id(){ return ObjectId(ObjectType::POLYLINES, std::vector<std::string>{ "mesh", ""}); };
-ObjectId HexModelerMode::pts_id(){ return ObjectId(ObjectType::POINTSET, std::vector<std::string>{ "mesh"}); };
-ObjectId HexModelerMode::geom_tri_id(){ return ObjectId(ObjectType::TRIANGLES, std::vector<std::string>{ "geom", ""}); }
-ObjectId HexModelerMode::geom_edge_id(){ return ObjectId(ObjectType::POLYLINES, std::vector<std::string>{ "geom", ""}); }
-ObjectId HexModelerMode::geom_pts_id(){ return ObjectId(ObjectType::POINTSET, std::vector<std::string>{ "geom"}); }
+MeshPath HexModelerMode::hex_id(){ return root().xcf["mesh"].hexahedra[""]; }
+MeshPath HexModelerMode::pl_id(){ return  root().xcf["mesh"].polylines[""]; };
+PointSetPath HexModelerMode::pts_id(){ return root().xcf["mesh"].pointset; };
+MeshPath HexModelerMode::geom_tri_id(){ return  root().xcf["geom"].triangles[""]; }
+MeshPath HexModelerMode::geom_edge_id(){ return  root().xcf["geom"].polylines[""]; }
+PointSetPath HexModelerMode::geom_pts_id(){ return  root().xcf["geom"].pointset; }
 
 
 // update coherence constraints
@@ -165,7 +165,7 @@ void HexModelerMode::load_project(std::string directory){
     generate_edge_graph(hex, pl, edge2halfedge);
 
     reset_layers_options();
-    layer_selection_react.init(hex_id(), pl_id(), pts_id());
+    //layer_selection_react.init(hex_id(), pl_id(), pts_id());
 
     set_active_mode("BasicEditMode");
 }
@@ -329,7 +329,7 @@ void HexModelerMode::handle(Event event) {
 
 
 
-HexModelerMode::HexModelerMode(){
+HexModelerMode::HexModelerMode():layer_selection_react(*this){
     working_directory = WORKING_DIR;
     project_directory = WORKING_DIR;
     CAD_file = std::string(TEST_INPUT_DIR) + "B1.geogram";

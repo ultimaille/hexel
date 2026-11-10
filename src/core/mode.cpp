@@ -55,7 +55,8 @@ void Mode::handle(Event event){
     }
 
     static vec2 pos_on_press[3];
-    if (event.who == events::MOUSE && !ImGui::GetIO().WantCaptureMouse) {
+
+    if (event.who == (ObjectId)root().mouse && !ImGui::GetIO().WantCaptureMouse) {
         const double wheel = God::mouse.wheel_speed;
         if (wheel != 0) for (auto& it : interactors) it->on_wheel(wheel);
         vec2 a = { God::mouse.previous.x, God::mouse.previous.y };

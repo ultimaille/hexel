@@ -2,51 +2,17 @@
 #include <core/all.h>
 #include <algo/raster_iterator.h>
 
+struct HexModelerMode;
+
 struct MouseReactLayerSelection : public MouseReact {
-    MouseReactLayerSelection() {}
-    void init(ObjectId p_hex, ObjectId p_pl, ObjectId p_pts) { hex_id = p_hex; pl_id = p_pl; pts_id = p_pts; }
-    ObjectId hex_id;
-    ObjectId pl_id;
-    ObjectId pts_id;
+    MouseReactLayerSelection(HexModelerMode& mode):hexmode(mode) {}
+    //void init(MeshPath p_hex, MeshPath p_pl, MeshPath p_pts) { hex_id = p_hex; pl_id = p_pl; pts_id = p_pts; }
+    //MeshPath hex_id;
+    //MeshPath pl_id;
+    //MeshPath pts_id;
+    HexModelerMode &hexmode;
 
-    inline void on_click(int button, vec2 p) {
-        if (button != 0) return;
-        Picker picker;
-        Picker::Result pr = picker.at(p);
-        int prim = pr.filtered_primitive_id(hex_id, 2);
-        if (prim != -1){
-            Hexahedra& hex = hex_id;
-            CellFacetAttribute<int> layer_id(hex);
-            compute_hex_layer_id(hex, layer_id);
-
-            VolumeAttributes& hex_attr = hex_id;
-            CellAttribute<bool> visible_cell("visible", hex_attr, hex);
-            visible_cell.fill(false);
-            for (auto f : hex.iter_facets()) if (layer_id[f] == layer_id[prim])
-                visible_cell[f.cell()] = true;
-            //hex_id.broadcast(EventType::UPDATED);
-
-
-            PointSetAttributes& pts_attr = pts_id;
-            PointSet& pts = pts_id;
-            PointAttribute<bool> visible_pts("visible", pts_attr, pts);
-            visible_pts.fill(false);
-            for (auto c : hex.iter_cells()) if (visible_cell[c])
-                FOR(lv, 8)visible_pts[c.vertex(lv)] = true;
-
-
-            PolyLineAttributes& pl_attr = pl_id;
-            PolyLine& pl = pl_id;
-            EdgeAttribute<bool> visible_edge("visible", pl_attr, pl);
-            visible_edge.fill(false);
-            for (auto e : pl.iter_edges()) if (visible_pts[e.from()] && visible_pts[e.to()])
-                visible_edge[e] = true;
-
-            hex_id.broadcast(EventType::UPDATED);
-            pl_id.broadcast(EventType::UPDATED);
-            pts_id.broadcast(EventType::UPDATED);
-        }
-    }
+    void on_click(int button, vec2 p);
 };
 
 struct MouseReactMultiSelector : public MouseReact {
@@ -63,7 +29,7 @@ struct MouseReactMultiSelector : public MouseReact {
     }
 
     // filter the primitives
-    inline std::vector<std::pair<int, vec3> > primitives(ObjectId mesh_id, int primitive_type){
+    inline std::vector<std::pair<int, vec3> > primitives(MeshPath mesh_id, int primitive_type){
         std::vector <std::pair<int, vec3>> res;
         for (auto pr : picked) {
             int prim = pr.filtered_primitive_id(mesh_id, primitive_type);
@@ -73,6 +39,7 @@ struct MouseReactMultiSelector : public MouseReact {
     }
 
     inline void on_click(int button, vec2 p) {
+        if (!key_state_is_OK()) return;
         if (button != active_button) return;
         Picker::Result pr = picker.at(p);
         picked.push_back(pr);
@@ -80,6 +47,7 @@ struct MouseReactMultiSelector : public MouseReact {
     }
 
     inline void on_press(int button, vec2 p){
+        if (!key_state_is_OK()) return;
         if (button != active_button) return;
         picker.reset();
         reset();
@@ -87,11 +55,13 @@ struct MouseReactMultiSelector : public MouseReact {
     }
 
     inline void on_drag(int button, vec2 a, vec2 b){
+        if (!key_state_is_OK()) return;
         if (button != active_button) return;
         path.push_back(b);
     }
 
     inline void on_release(int button, vec2 p){
+        if (!key_state_is_OK()) return;
         if (button != active_button) return;
         path.push_back(p);
         if (path.size() < 2) return;
@@ -106,6 +76,7 @@ struct MouseReactMultiSelector : public MouseReact {
     }
 
     inline void feed_back_gui(){
+        if (!key_state_is_OK()) return;
         std::vector<ImVec2> pts;
         for (auto v : path)pts.push_back(ImVec2(v.x, v.y));
         auto col = IM_COL32(127, 255, 255, 255);
