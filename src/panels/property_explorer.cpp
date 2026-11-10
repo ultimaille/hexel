@@ -1,6 +1,7 @@
 #include <core/all.h>
 #include <layers/layer_ui.h>
 #include "property_explorer.h"
+
 void PropertyExplorer::generate_gui(){
         ImGui::Begin("Properties", nullptr);
 

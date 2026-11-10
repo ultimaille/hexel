@@ -1,7 +1,9 @@
 #pragma once
 #include <optional>
 #include <core/event.h>
-#include <layers/basic_renderers.h> // BEUR ! TODO need move renderer to core !
+
+struct Renderer;
+
 struct Layer {
     Layer();
     virtual ~Layer() = default;
