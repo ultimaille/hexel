@@ -85,7 +85,7 @@ vec3 Picker::Result::point() {
 int Picker::Result::filtered_primitive_id(MeshPath requested_mesh, int requested_primitive_type){
     FOR(l, God::layers.size()) {
         if (God::layers[l].id != layer_id)                    continue;
-        if (God::layers[l].mesh != (ObjectId)requested_mesh)            continue;
+        if (God::layers[l].mesh != requested_mesh)            continue;
         // we directly have the right primitive
         int picked_type = God::layers[l].primitive_type();
         if (picked_type == requested_primitive_type)   return  raw_primitive_id;

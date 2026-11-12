@@ -61,7 +61,7 @@
         Hexahedra& hex = mesh;
         VolumeAttributes& attr = mesh;
         CellAttribute<bool> visible_hex("visible", attr, hex, true);
-        CellAttribute<T> value_hex(attr_name(), attr, hex);
+        CellAttribute<T> value_hex(attr_id.name(), attr, hex);
         prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
         for (auto h : tri.iter_halfedges()) value_tri[h] = value_hex[h / 36];
         tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
@@ -75,7 +75,7 @@
         Hexahedra& hex = mesh;
         VolumeAttributes& attr = mesh;
         CellAttribute<bool> visible_hex("visible", attr, hex, true);
-        CellFacetAttribute<T> value_hex(attr_name(), attr, hex);
+        CellFacetAttribute<T> value_hex(attr_id.name(), attr, hex);
         prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
         for (auto h : tri.iter_halfedges()) value_tri[h] =  value_hex[h / 6];
         tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
@@ -89,7 +89,7 @@
         Hexahedra& hex = mesh;
         VolumeAttributes& attr = mesh;
         CellAttribute<bool> visible_hex("visible", attr, hex, true);
-        CellCornerAttribute<T> value_hex(attr_name(), attr, hex);
+        CellCornerAttribute<T> value_hex(attr_id.name(), attr, hex);
         prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
         int map[2][3] = { {0,1,2},{2,3,0} };
         for (auto f : hex.iter_facets())
@@ -106,7 +106,7 @@
         VolumeAttributes& attr = mesh;
         CellAttribute<bool> visible_hex("visible", attr, hex, true);
 
-        CellCornerAttribute<T> value_hex(attr_name(), attr, hex);
+        CellCornerAttribute<T> value_hex(attr_id.name(), attr, hex);
 
         tri.points.create_points(3*hex.nhalfedges());
         tri.create_facets(hex.nhalfedges());
@@ -140,7 +140,7 @@
         CellAttribute<bool> visible_hex("visible", attr, hex, true);
 
         Log::add("::update_data_for_scalar_point_attribute(");
-        PointAttribute<T> value_hex(attr_name(), attr, hex);
+        PointAttribute<T> value_hex(attr_id.name(), attr, hex);
         prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
         int map[2][3] = { {0,1,2},{2,3,0} };
         for (auto f : hex.iter_facets())
@@ -152,7 +152,7 @@
         Hexahedra& hex = mesh;
         VolumeAttributes& attr = mesh;
         CellAttribute<bool> visible_hex("visible", attr, hex, true);
-        PointAttribute<T> value(attr_name(), attr, hex);
+        PointAttribute<T> value(attr_id.name(), attr, hex);
         PointAttribute<float> value_float(hex);
         PointAttribute<bool> visible_pts(hex,false);
         FOR(v, hex.nverts()) value_float[v] = value[v];
@@ -175,8 +175,11 @@
 
 
 
-    template<class T>
-    void HexahedraLayer::update_typed(){
+    template<class T> bool HexahedraLayer::update_typed() {
+            auto ptr = dynamic_cast<const AttributeContainer<T>*>((ContainerBase *)attr_id);
+            if (ptr == nullptr)
+                return false;
+
         switch (rt) {
             case POINT_SPHERE: {
                 update_data_for_scalar_point_attribute_as_sphere<T>();
@@ -203,23 +206,26 @@
                 break;
             }
         }
+        return true;
     }
 
     void HexahedraLayer::update(){
-        if (!attr_active() || rt == PLAIN) update_data_for_plain();
-        else if (attr_type() == "bool") update_typed<bool>();
-        else if (attr_type() == "char") update_typed<char>();
-        else if (attr_type() == "int") update_typed<int>();
-        else if (attr_type() == "float") update_typed<float>();
-        else if (attr_type() == "double") update_typed<double>();
-        else {
-            Log::add("Display attribute of type " + attr_type() + " isn't currently supported by HexahedraLayer");
+        if (!attr_active() || rt == PLAIN) {
+            update_data_for_plain();
+        } else {
+            bool success =
+                update_typed<bool>()  ||
+                update_typed<char>()  ||
+                update_typed<int>()   ||
+                update_typed<float>() ||
+                update_typed<double>();
+            if (!success)
+                Log::add("Display attribute of type that isn't currently supported by HexahedraLayer");
         }
     }
 
 
     void HexahedraLayer::reset() {
-        um_assert(mesh.ref() != std::nullopt);
         Hexahedra& hex = mesh;
         VolumeAttributes& attr = mesh;
 
@@ -238,7 +244,7 @@
         update();
     }
 
-    void HexahedraLayer::init(ObjectId obj){
+    void HexahedraLayer::init(MeshPath obj){
         mesh = obj;
         tri_renderer.init();
         point_renderer.init();
@@ -259,20 +265,19 @@
         point_renderer.destroy();
     }
 
-    void HexahedraLayer::bind_attribute(ObjectId p_attr_id) {
+    void HexahedraLayer::bind_attribute(AttributePath p_attr_id) {
         attr_id = p_attr_id;
 
         VolumeAttributes& attr = mesh;
 
         if (attr_active()) {
-            if (attr_primitive() == "cells")
+            if (attr_id.kind() == AttributeBase::CELLS)
                 rt = RenderType::CELL;
-            else if (attr_primitive() == "facets")
+            else if (attr_id.kind() == AttributeBase::CELLFACETS)
                 rt = RenderType::FACET;
-            else if (attr_primitive() == "corners") {
+            else if (attr_id.kind() == AttributeBase::CELLCORNERS) {
                 if (rt!= RenderType::CORNER_GLYPH) rt = RenderType::CORNER;
-            }
-            else if (attr_primitive() == "points")
+            } else if (attr_id.kind() == AttributeBase::POINTS)
                 rt = RenderType::POINT;
         } else {
             rt = PLAIN;

@@ -135,10 +135,10 @@
         }
 
         inline bool has_prefix(const Path& other) const {
-            return path.size() >= other.path.size() &&
+            return size() >= other.size() &&
                 std::ranges::equal(
                         other.path.begin(), other.path.end(),
-                        path.begin(), path.begin() + other.path.size()
+                        path.begin(), path.begin() + other.size()
                         );
         }
 
@@ -194,6 +194,8 @@
         operator Pyramids*() const;
         operator VolumeAttributes*() const;
 
+        operator ContainerBase*() const;
+
         operator MultiMesh&() const;
         operator PointSet&() const;
         operator PointSetAttributes&() const;
@@ -228,20 +230,28 @@
 
     struct MeshPath : Path {
         MultiMeshPath parent() const;
+        const std::string &name() const { return path.back(); }
     };
 
-    struct AttributePath : Path {};
+struct AttributePath : Path {
+    MeshPath parent() const;
+    AttributeBase::TYPE kind() const;
+    const std::string &name() const { return path.back(); }
+    const std::string &collection() const { return path[size()-2]; }
+};
 
-    struct MultiMeshPath : Path {
-        struct AttributeCollection : Path {
-            AttributePath operator[](std::string s) const {
-                return { concat(path, s) };
-            }
-        };
+struct MultiMeshPath : Path {
+    const std::string &name() const { return path.back(); }
 
-        struct PointSet : MeshPath {
-            AttributeCollection attr_points = { concat(path, "attr_points") };
-        } pointset = { concat(path, "pointset") };
+    struct AttributeCollection : Path {
+        AttributePath operator[](std::string s) const {
+            return { concat(path, s) };
+        }
+    };
+
+    struct PointSet : MeshPath {
+        AttributeCollection attr_points = { concat(path, "attr_points") };
+    } pointset = { concat(path, "pointset") };
 
     struct PolyLines : Path {
         struct PolyLine : MeshPath {
@@ -354,10 +364,16 @@ inline Path::operator ObjectId() const {
 }
 
 inline MultiMeshPath MeshPath::parent() const {
-    um_assert(path.size() == 4);
-    um_assert(has_prefix(root().xcf));
+    um_assert(size() == 4 && has_prefix(root().xcf));
     return MultiMeshPath{
-        std::vector<std::string>{path[0], path[1]}
+        std::vector<std::string>(path.begin(), path.end() - 2)
+    };
+}
+
+inline MeshPath AttributePath::parent() const {
+    um_assert(size() == 6 && has_prefix(root().xcf));
+    return MeshPath{
+        std::vector<std::string>(path.begin(), path.end() - 2)
     };
 }
 

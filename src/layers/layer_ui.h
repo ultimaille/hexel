@@ -42,17 +42,23 @@ static ButtonPalette GetPalette(std::string type) {
 
 
 struct AttrItem {
-    ObjectId id;
+    AttributePath id;
     std::string key;    // unique: section + name
     std::string label;  // display text
     ImVec4 color;
 };
 
 template <typename C>
-static ObjectId MeshAttrId(const std::string &mm_name, const std::string &mesh_name,
+static AttributePath MeshAttrId(const std::string &mm_name, const std::string &mesh_name,
                            C &container, const char *section) {
-    ObjectId id{ObjectType::TRIANGLES_ATTR,
+    
+    AttributePath id{ObjectType::TRIANGLES_ATTR,
                 {mm_name, mesh_name, attribute_type(&*container.ptr), section, container.name}};
+
+    RootPath root;
+    auto x = root.xcf[""].hexahedra[""].attr_facets[""];
+    
+
     return id;
 }
 
@@ -69,9 +75,22 @@ static void AddItems(std::vector<AttrItem> &items, Containers &containers,
     }
 }
 
-static ObjectId DrawAttributeCombo(const std::vector<AttrItem> &items, ObjectId &current_id) {
+template <typename Containers>
+static void AddItems(std::vector<AttrItem> &items, Containers &containers,
+                     const char *section, MultiMeshPath::AttributeCollection attributes_path) {
+    for (auto &container : containers) {
+        items.push_back({
+            attributes_path[container.name],
+            std::string(section) + "/" + container.name,
+            std::string(section) + ": " + container.name,
+            GetPalette(section).base   // same color key ColoredButton uses
+        });
+    }
+}
+
+static std::optional<AttributePath> DrawAttributeCombo(const std::vector<AttrItem> &items, AttributePath &current_id) {
     static ImGuiTextFilter filter;
-    ObjectId sel_attr_id;
+    std::optional<AttributePath> sel_attr_id;
 
     const AttrItem *current = nullptr;
     for (const auto &it : items)
@@ -118,45 +137,58 @@ static ObjectId DrawAttributeCombo(const std::vector<AttrItem> &items, ObjectId 
     return sel_attr_id;
 }
 
-static ObjectId AttributeCombo(std::string mm_name, std::string mesh_name,
-                               SurfaceAttributes &attr, ObjectId &current_id) {
-    auto make = [&](auto &c, const char *sec) { return MeshAttrId(mm_name, mesh_name, c, sec); };
+static std::optional<AttributePath> AttributeCombo(std::string mm_name, std::string mesh_name,
+                               SurfaceAttributes &attr, AttributePath &current_id) {
+
+    RootPath root;
+    auto point_path = root.xcf[mm_name].triangles[mesh_name].attr_points;
+    auto corner_path = root.xcf[mm_name].triangles[mesh_name].attr_corners;
+    auto facet_path = root.xcf[mm_name].triangles[mesh_name].attr_facets;
+
     std::vector<AttrItem> items;
-    AddItems(items, attr.points,  "points",  make);
-    AddItems(items, attr.corners, "corners", make);
-    AddItems(items, attr.facets,  "facets",  make);
+    AddItems(items, attr.points,  "points",  point_path);
+    AddItems(items, attr.corners, "corners", corner_path);
+    AddItems(items, attr.facets,  "facets",  facet_path);
     return DrawAttributeCombo(items, current_id);
 }
 
-static ObjectId AttributeCombo(std::string mm_name, std::string mesh_name,
-                               VolumeAttributes &attr, ObjectId &current_id) {
-    auto make = [&](auto &c, const char *sec) { return MeshAttrId(mm_name, mesh_name, c, sec); };
+static std::optional<AttributePath> AttributeCombo(std::string mm_name, std::string mesh_name,
+                               VolumeAttributes &attr, AttributePath &current_id) {
+    
+    RootPath root;
+    auto point_path = root.xcf[mm_name].hexahedra[mesh_name].attr_points;
+    auto corner_path = root.xcf[mm_name].hexahedra[mesh_name].attr_corners;
+    auto facet_path = root.xcf[mm_name].hexahedra[mesh_name].attr_facets;
+    auto cell_path = root.xcf[mm_name].hexahedra[mesh_name].attr_cells;
+
     std::vector<AttrItem> items;
-    AddItems(items, attr.points,       "points",  make);
-    AddItems(items, attr.cell_corners, "corners", make);
-    AddItems(items, attr.cell_facets,  "facets",  make);
-    AddItems(items, attr.cells,        "cells",   make);
+    AddItems(items, attr.points,       "points",  point_path);
+    AddItems(items, attr.cell_corners, "corners", corner_path);
+    AddItems(items, attr.cell_facets,  "facets",  facet_path);
+    AddItems(items, attr.cells,        "cells",   cell_path);
     return DrawAttributeCombo(items, current_id);
 }
 
-static ObjectId AttributeCombo(std::string mm_name, std::string mesh_name,
-                               PolyLineAttributes &attr, ObjectId &current_id) {
-    auto make = [&](auto &c, const char *sec) { return MeshAttrId(mm_name, mesh_name, c, sec); };
+static std::optional<AttributePath> AttributeCombo(std::string mm_name, std::string mesh_name,
+                               PolyLineAttributes &attr, AttributePath &current_id) {
+
+    RootPath root;
+    auto point_path = root.xcf[mm_name].polylines[mesh_name].attr_points;
+    auto edge_path = root.xcf[mm_name].polylines[mesh_name].attr_edges;
+
     std::vector<AttrItem> items;
-    AddItems(items, attr.points, "points", make);
-    AddItems(items, attr.edges,  "edges",  make);
+    AddItems(items, attr.points, "points", point_path);
+    AddItems(items, attr.edges,  "edges",  edge_path);
     return DrawAttributeCombo(items, current_id);
 }
 
-static ObjectId AttributeCombo(std::string mm_name, std::string mesh_name,
-                               PointSetAttributes &attr, ObjectId &current_id) {
-    auto make = [&](auto &c, const char *sec) {
-        ObjectId id{ObjectType::POINTSET_ATTR,
-                    {mm_name, attribute_type(&*c.ptr), sec, c.name}};
-        return id;
-    };
+static std::optional<AttributePath> AttributeCombo(std::string mm_name, std::string mesh_name,
+                               PointSetAttributes &attr, AttributePath &current_id) {
+    RootPath root;
+    auto point_path = root.xcf[mm_name].polylines[mesh_name].attr_points;
+
     std::vector<AttrItem> items;
-    AddItems(items, attr.points, "points", make);
+    AddItems(items, attr.points, "points", point_path);
     return DrawAttributeCombo(items, current_id);
 }
 
@@ -229,7 +261,7 @@ struct LayerUI {
     enum LayerUIMode { BASIC, ADVANCED, ATTRIBUTE };
 
     template<class T>
-    ObjectId attribute_combo(std::string mm_name, std::string mesh_name, ObjectId attr_id, T attr);
+    std::optional<AttributePath> attribute_combo(std::string mm_name, std::string mesh_name, AttributePath attr_id, T attr);
     int render_type_combo(std::vector<std::tuple<std::string, int>> items, int cur_render_type);
 
     virtual void show_parameters(LayerUIMode mode) = 0;

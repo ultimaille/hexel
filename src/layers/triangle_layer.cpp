@@ -29,7 +29,7 @@ int TrianglesLayer::primitive_type(){
 
 
 // Note: same as HexahedraLayer
-void TrianglesLayer::init(ObjectId obj){
+void TrianglesLayer::init(MeshPath obj){
     mesh = obj;
     tri_renderer.init();
     point_renderer.init();
@@ -37,7 +37,6 @@ void TrianglesLayer::init(ObjectId obj){
 }
 
 void TrianglesLayer::reset() {
-    um_assert(mesh.ref() != std::nullopt);
     Triangles& tri = mesh;
     SurfaceAttributes& attr = mesh;
 
@@ -57,19 +56,26 @@ void TrianglesLayer::reset() {
 }
 
 void TrianglesLayer::update(){
-    if (!attr_active() || rt == PLAIN) update_data_for_plain();
-    else if (attr_type() == "bool") update_typed<bool>();
-    else if (attr_type() == "char") update_typed<char>();
-    else if (attr_type() == "int") update_typed<int>();
-    else if (attr_type() == "float") update_typed<float>();
-    else if (attr_type() == "double") update_typed<double>();
-    else {
-        Log::add("Display attribute of type " + attr_type() + " isn't currently supported by TrianglesLayer");
-    }
+        if (!attr_active() || rt == PLAIN) {
+            update_data_for_plain();
+        } else {
+            bool success =
+                update_typed<bool>()  ||
+                update_typed<char>()  ||
+                update_typed<int>()   ||
+                update_typed<float>() ||
+                update_typed<double>();
+            if (!success)
+                Log::add("Display attribute of type that isn't currently supported by TrianglesLayer");
+        }
 }
 
 template<class T>
-void TrianglesLayer::update_typed(){
+bool TrianglesLayer::update_typed(){
+            auto ptr = dynamic_cast<const AttributeContainer<T>*>((ContainerBase *)attr_id);
+            if (ptr == nullptr)
+                return false;
+
     switch (rt) {
         case POINT_SPHERE: {
             update_data_for_scalar_point_attribute_as_sphere<T>();
@@ -97,6 +103,7 @@ void TrianglesLayer::update_typed(){
             break;
         }
     }
+    return true;
 }
 
 void TrianglesLayer::update_data_for_plain() {
@@ -116,7 +123,7 @@ void TrianglesLayer::update_data_for_scalar_facet_attribute() {
     FacetAttribute<bool> visible_tri("visible", attr, tri, true);
     FacetAttribute<int> primitive_id(tri, 0);
     CornerAttribute<float> value_tri(tri, 0);
-    FacetAttribute<T> value(attr_name(), attr, tri);
+    FacetAttribute<T> value(attr_id.name(), attr, tri);
     prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
     for (auto h : tri.iter_halfedges()) value_tri[h] =  static_cast<float>(value[h / 3]);
     tri_renderer.update(tri, visible_tri, value_tri, primitive_id);
@@ -130,7 +137,7 @@ void TrianglesLayer::update_data_for_scalar_corner_attribute() {
     FacetAttribute<bool> visible_tri("visible", attr, tri, true);
     FacetAttribute<int> primitive_id(tri, 0);
     CornerAttribute<float> value_tri(tri, 0);
-    CornerAttribute<T> value(attr_name(), attr, tri);
+    CornerAttribute<T> value(attr_id.name(), attr, tri);
 
     prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
 
@@ -145,7 +152,7 @@ void TrianglesLayer::update_data_for_scalar_corner_glyph_attribute() {
     SurfaceAttributes& attr = mesh;
 
     FacetAttribute<bool> visible_tri("visible", attr, tri, true);
-    CornerAttribute<T> value(attr_name(), attr, tri);
+    CornerAttribute<T> value(attr_id.name(), attr, tri);
 
     Triangles tri_glyph;
     tri_glyph.points.create_points(tri.ncorners() * 3);
@@ -200,7 +207,7 @@ void TrianglesLayer::update_data_for_scalar_point_attribute() {
     FacetAttribute<bool> visible_tri("visible", attr, tri, true);
     FacetAttribute<int> primitive_id(tri, 0);
     CornerAttribute<float> value_tri(tri, 0);
-    PointAttribute<T> value(attr_name(), attr, tri);
+    PointAttribute<T> value(attr_id.name(), attr, tri);
 
     prepare_data_without_attribute(tri, visible_tri, value_tri, primitive_id);
 
@@ -223,7 +230,7 @@ template<class T> void TrianglesLayer::update_data_for_scalar_point_attribute_as
     SurfaceAttributes& attr = mesh;
 
     FacetAttribute<bool> visible_tri("visible", attr, tri, true);
-    PointAttribute<T> value(attr_name(), attr, tri);
+    PointAttribute<T> value(attr_id.name(), attr, tri);
 
     PointAttribute<bool> visible_pts(tri,false);
     PointAttribute<float> value_float(tri);
@@ -262,18 +269,18 @@ void TrianglesLayer::destroy() {
 }
 
 // Note: almost the same as HexahedraLayer
-void TrianglesLayer::bind_attribute(ObjectId p_attr_id){
+void TrianglesLayer::bind_attribute(AttributePath p_attr_id){
     attr_id = p_attr_id;
 
     SurfaceAttributes& attr = mesh;
 
     if (attr_active()) {
-        if (attr_primitive() == "facets")
+        if (attr_id.kind() == AttributeBase::FACETS)
             rt = RenderType::FACET;
-        else if (attr_primitive() == "corners") {
+        else if (attr_id.kind() == AttributeBase::CORNERS) {
             if (rt!= RenderType::CORNER_GLYPH && rt != RenderType::HALFEDGE_GLYPH) 
                 rt = RenderType::CORNER;
-        } else if (attr_primitive() == "points")
+        } else if (attr_id.kind() == AttributeBase::POINTS)
             rt = RenderType::POINT;
     } else {
         rt = PLAIN;

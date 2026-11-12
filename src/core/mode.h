@@ -34,7 +34,7 @@ struct Mode{
     virtual void activate(){}
     virtual void desactivate(){}
     virtual void define_gui() {}
-    void handle(Event event);
+    virtual void handle(Event event);
     void draw_data_gui();
     void generate_interactor_gui();
 };

@@ -112,9 +112,8 @@ void SegmentRendererUI::show_parameters(RendererUIMode mode) {
 }
 
 template<class T>
-ObjectId LayerUI::attribute_combo(std::string mm_name, std::string mesh_name, ObjectId attr_id, T attr) {
-    auto new_attr_id = AttributeCombo(mm_name, mesh_name, attr, attr_id);
-    return new_attr_id;
+std::optional<AttributePath> LayerUI::attribute_combo(std::string mm_name, std::string mesh_name, AttributePath attr_id, T attr) {
+    return AttributeCombo(mm_name, mesh_name, attr, attr_id);
 }
 
 int LayerUI::render_type_combo(std::vector<std::tuple<std::string, int>> items, int cur_render_type) {
@@ -164,19 +163,20 @@ void PointSetLayerUI::show_parameters(LayerUIMode mode) {
 
     if (mode == LayerUIMode::ATTRIBUTE) {
 
-        std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
-            {"points", {{"ATTRIBUTE_SPHERE", PointSetLayer::RenderType::ATTRIBUTE_SPHERE}}
+        std::map<AttributeBase::TYPE, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
+            {AttributeBase::TYPE::POINTS, {{"ATTRIBUTE_SPHERE", PointSetLayer::RenderType::ATTRIBUTE_SPHERE}}
         }};
 
         PropertyTable("pointset_layer_table_attribute", {
             {"Attribute", [&] {
-                auto new_attr_id = attribute_combo(l.mesh.names[0], l.mesh.names.size() > 1 ? l.mesh.names[1] : "", l.attr_id, static_cast<PointSetAttributes>(l.mesh));
-                if (new_attr_id.path != ObjectType::NA) l.bind_attribute(new_attr_id);
+                // std::string s = l.mesh.name();
+                // auto new_attr_path_opt = attribute_combo(l.mesh.parent().name(), l.mesh.name(), l.attr_id, static_cast<PointSetAttributes>(l.mesh));
+                // if (new_attr_path_opt.has_value()) l.bind_attribute(new_attr_path_opt.value());
             }},
             {"Render type", [&] {
                 if (l.rt != PointSetLayer::RenderType::PLAIN) {
                     int last_rt = static_cast<int>(l.rt);
-                    int new_rt = render_type_combo(render_types_by_attr_type[l.attr_primitive()], static_cast<int>(l.rt));
+                    int new_rt = render_type_combo(render_types_by_attr_type[l.attr_id.kind()], static_cast<int>(l.rt));
                     if (new_rt != -1) {
                         l.rt = static_cast<PointSetLayer::RenderType>(new_rt);
                         if (l.rt != last_rt)
@@ -211,12 +211,12 @@ void PolyLineLayerUI::show_parameters(LayerUIMode mode) {
 
     if (mode == LayerUIMode::ATTRIBUTE) {
 
-        std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
-            {"points", {
+        std::map<AttributeBase::TYPE, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
+            {AttributeBase::TYPE::POINTS, {
                 {"POINT", PolyLineLayer::RenderType::POINT}, 
                 {"POINT_SPHERE", PolyLineLayer::RenderType::POINT_SPHERE}}
             },
-            {"edges", {
+            {AttributeBase::TYPE::EDGES, {
                 {"EDGE", PolyLineLayer::RenderType::EDGE}, 
                 {"EDGE_REPEAT", PolyLineLayer::RenderType::EDGE_REPEAT}}
             }
@@ -224,13 +224,13 @@ void PolyLineLayerUI::show_parameters(LayerUIMode mode) {
 
         PropertyTable("polyline_layer_table_attribute", {
             {"Attribute", [&] {
-                auto new_attr_id = attribute_combo(l.mesh.names[0], l.mesh.names.size() > 1 ? l.mesh.names[1] : "", l.attr_id, static_cast<PolyLineAttributes>(l.mesh));
-                if (new_attr_id.path != ObjectType::NA) l.bind_attribute(new_attr_id);
+                auto new_attr_path_opt = attribute_combo(l.mesh.parent().name(), l.mesh.name(), l.attr_id, static_cast<PolyLineAttributes>(l.mesh));
+                if (new_attr_path_opt.has_value()) l.bind_attribute(new_attr_path_opt.value());
             }},
             {"Render type", [&] {
                 if (l.rt != PolyLineLayer::RenderType::PLAIN) {
                     int last_rt = static_cast<int>(l.rt);
-                    int new_rt = render_type_combo(render_types_by_attr_type[l.attr_primitive()], static_cast<int>(l.rt));
+                    int new_rt = render_type_combo(render_types_by_attr_type[l.attr_id.kind()], static_cast<int>(l.rt));
                     if (new_rt != -1) {
                         l.rt = static_cast<PolyLineLayer::RenderType>(new_rt);
                         if (l.rt != last_rt)
@@ -279,30 +279,30 @@ void TrianglesLayerUI::show_parameters(LayerUIMode mode) {
     }
     if (mode == LayerUIMode::ATTRIBUTE) {
 
-        std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
-            {"points", {
+        std::map<AttributeBase::TYPE, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
+            {AttributeBase::TYPE::POINTS, {
                 {"POINT", TrianglesLayer::RenderType::POINT}, 
                 {"POINT_SPHERE", TrianglesLayer::RenderType::POINT_SPHERE}}
             },
-            {"corners", {
+            {AttributeBase::TYPE::CORNERS, {
                 {"CORNER", TrianglesLayer::RenderType::CORNER}, 
                 {"CORNER_GLYPH", TrianglesLayer::RenderType::CORNER_GLYPH}, 
                 {"HALFEDGE_GLYPH", TrianglesLayer::RenderType::HALFEDGE_GLYPH}}
             },
-            {"facets", {
+            {AttributeBase::TYPE::FACETS, {
                 {"FACET", TrianglesLayer::RenderType::FACET}}
             },
         };
 
         PropertyTable("triangle_layer_table_attribute", {
             {"Attribute", [&] {
-                auto new_attr_id = attribute_combo(l.mesh.names[0], l.mesh.names.size() > 1 ? l.mesh.names[1] : "", l.attr_id, static_cast<SurfaceAttributes>(l.mesh));
-                if (new_attr_id.path != ObjectType::NA) l.bind_attribute(new_attr_id);
+                auto new_attr_path_opt = attribute_combo(l.mesh.parent().name(), l.mesh.name(), l.attr_id, static_cast<SurfaceAttributes>(l.mesh));
+                if (new_attr_path_opt.has_value()) l.bind_attribute(new_attr_path_opt.value());
             }},
             {"Render type", [&] {
                 if (l.rt != TrianglesLayer::RenderType::PLAIN) {
                     int last_rt = l.rt;
-                    int new_rt = render_type_combo(render_types_by_attr_type[l.attr_primitive()], static_cast<int>(l.rt));
+                    int new_rt = render_type_combo(render_types_by_attr_type[l.attr_id.kind()], static_cast<int>(l.rt));
                     if (new_rt != -1) {
                         l.rt = static_cast<TrianglesLayer::RenderType>(new_rt);
                         if (l.rt != last_rt)
@@ -344,28 +344,28 @@ void HexahedraLayerUI::show_parameters(LayerUIMode mode) {
     }
     if (mode == LayerUIMode::ATTRIBUTE) {
 
-        std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
-            {"points", {
+        std::map<AttributeBase::TYPE, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
+            {AttributeBase::TYPE::POINTS, {
                 {"POINT", HexahedraLayer::RenderType::POINT}, 
                 {"POINT_SPHERE", HexahedraLayer::RenderType::POINT_SPHERE}}
             },
-            {"corners", {
+            {AttributeBase::TYPE::CELLCORNERS, {
                 {"CORNER", HexahedraLayer::RenderType::CORNER}, 
                 {"CORNER_GLYPH", HexahedraLayer::RenderType::CORNER_GLYPH}}
             },
-            {"facets", {{"FACET", HexahedraLayer::RenderType::FACET}}},
-            {"cells", {{"CELL", HexahedraLayer::RenderType::CELL}}}
+            {AttributeBase::TYPE::CELLFACETS, {{"FACET", HexahedraLayer::RenderType::FACET}}},
+            {AttributeBase::TYPE::CELLS, {{"CELL", HexahedraLayer::RenderType::CELL}}}
         };
 
         PropertyTable("hexahedra_layer_table_attribute", {
             {"Attribute", [&] {
-                auto new_attr_id = attribute_combo(l.mesh.names[0], l.mesh.names.size() > 1 ? l.mesh.names[1] : "", l.attr_id, static_cast<VolumeAttributes>(l.mesh));
-                if (new_attr_id.path != ObjectType::NA) l.bind_attribute(new_attr_id);
+                auto new_attr_path_opt = attribute_combo(l.mesh.parent().name(), l.mesh.name(), l.attr_id, static_cast<VolumeAttributes>(l.mesh));
+                if (new_attr_path_opt.has_value()) l.bind_attribute(new_attr_path_opt.value());
             }},
             {"Render type", [&] {
                 if (l.rt != HexahedraLayer::RenderType::PLAIN) {
                     int last_rt = static_cast<int>(l.rt);
-                    int new_rt = render_type_combo(render_types_by_attr_type[l.attr_primitive()], static_cast<int>(l.rt));
+                    int new_rt = render_type_combo(render_types_by_attr_type[l.attr_id.kind()], static_cast<int>(l.rt));
                     if (new_rt != -1) {
                         l.rt = static_cast<HexahedraLayer::RenderType>(new_rt);
                         if (l.rt != last_rt)

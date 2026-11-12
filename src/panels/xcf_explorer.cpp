@@ -163,7 +163,7 @@ void XCFExplorer::generate_gui() {
                         auto group_opt = God::layers.find_group(mm_name);
                         int group_id = group_opt ? group_opt.value().id : God::layers.add_group(mm_name);
                         auto &layer = God::layers.add<PointSetLayer>(tmp, group_id);
-                        layer.init(mesh_id);
+                        layer.init(static_cast<MeshPath>((Path)mesh_id));
                         layer.set_default_values();
                         ImGui::CloseCurrentPopup();
                     }
@@ -215,7 +215,7 @@ void XCFExplorer::generate_gui() {
                             auto group_opt = God::layers.find_group(mm_name);
                             int group_id = group_opt ? group_opt.value().id : God::layers.add_group(mm_name);
                             auto &layer = God::layers.add<PolyLineLayer>(tmp, group_id);
-                            layer.init(mesh_id);
+                            layer.init(static_cast<MeshPath>((Path)mesh_id));
                             layer.set_default_values();
                             ImGui::CloseCurrentPopup();
                         }
@@ -262,7 +262,7 @@ void XCFExplorer::generate_gui() {
                             auto group_opt = God::layers.find_group(mm_name);
                             int group_id = group_opt ? group_opt.value().id : God::layers.add_group(mm_name);
                             auto &layer = God::layers.add<TrianglesLayer>(tmp, group_id);
-                            layer.init(mesh_id);
+                            layer.init(static_cast<MeshPath>((Path)mesh_id));
                             ImGui::CloseCurrentPopup();
                         }
 
@@ -360,7 +360,7 @@ void XCFExplorer::generate_gui() {
                             auto group_opt = God::layers.find_group(mm_name);
                             int group_id = group_opt ? group_opt.value().id : God::layers.add_group(mm_name);
                             auto &layer = God::layers.add<HexahedraLayer>(tmp, group_id);
-                            layer.init(mesh_id);
+                            layer.init(static_cast<MeshPath>((Path)mesh_id));
                             ImGui::CloseCurrentPopup();
                         }
 
@@ -412,7 +412,7 @@ void XCFExplorer::add_mesh_layers(ObjectIdSet& selected, ObjectId mesh_id, std::
     auto mm_name = mesh_id.names[0];
     
     for (int i = 0; i < God::layers.size(); i++)
-        if (God::layers[i].mesh==mesh_id){
+        if (God::layers[i].mesh== static_cast<MeshPath>((Path)mesh_id)){
             ObjectId layer_id(LAYER, God::layers.ith_name(i));
 
             bool open_layer;
@@ -427,7 +427,7 @@ void XCFExplorer::add_mesh_layers(ObjectIdSet& selected, ObjectId mesh_id, std::
                 if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("OBJECTID")) {
                     attr_id = **(const ObjectId**)payload->Data;
                     Layer& layer = layer_id;
-                    layer.bind_attribute(attr_id);
+                    layer.bind_attribute(static_cast<AttributePath>((Path)attr_id));
                 }
                 ImGui::EndDragDropTarget();
             }

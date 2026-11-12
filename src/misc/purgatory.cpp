@@ -8,6 +8,17 @@ ObjectId grad_and_drop_objectid;
 
 
 
+void ImGui_help(const char* desc){
+    ImGui::SameLine();
+    ImGui::TextDisabled("(?)");
+    if (ImGui::BeginItemTooltip())
+    {
+        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+        ImGui::TextUnformatted(desc);
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+    }
+}
 bool FilePopup(const char* id, std::string in, std::string& out, std::vector<const char*> extensions) {
     static std::filesystem::path path, sel;
     static bool init = false;
@@ -68,20 +79,20 @@ void load_mm_with_default_layers(std::string path) {
 
     {// point set
         PointSetLayer& layer = God::layers.add<PointSetLayer>(mm_name + "Pts", group);
-        layer.init(ObjectId(POINTSET, mm_name));
+        layer.init(root().xcf[mm_name].pointset);
         layer.set_default_values();
     }
     for (auto& elt : God::xcf[mm_name].polylines) {
         PolyLineLayer& layer = God::layers.add<PolyLineLayer>(mm_name + "Edges", group);
-        layer.init(ObjectId(POLYLINES, { mm_name, elt.first }));
+        layer.init(root().xcf[mm_name].polylines[elt.first]);
         layer.set_default_values();
     }
     for (auto& elt : God::xcf[mm_name].triangles) {
         TrianglesLayer& layer = God::layers.add<TrianglesLayer>(mm_name + "Tri", group);
-        layer.init(ObjectId(TRIANGLES, { mm_name, elt.first }));
+        layer.init(root().xcf[mm_name].triangles[elt.first]);
     }
     for (auto& elt : God::xcf[mm_name].hexahedra) {
         HexahedraLayer& layer = God::layers.add<HexahedraLayer>(mm_name + "Hex", group);
-        layer.init(ObjectId(HEXAHEDRA, { mm_name, elt.first }));
+        layer.init(root().xcf[mm_name].hexahedra[elt.first]);
     }
 }
