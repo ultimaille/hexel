@@ -155,9 +155,6 @@ bool LayerUI::render_type_combo(std::vector<std::tuple<std::string, int>> items)
 }
 
 void LayerUI::show_basic_parameters() {
-
-    basic_renderer_ui.show_parameters();
-
     if (PointSetLayer *pl = dynamic_cast<PointSetLayer*>(&l)) {
         show_basic_parameters(*pl);
     } else if (PolyLineLayer *pl = dynamic_cast<PolyLineLayer*>(&l)) {
@@ -171,24 +168,17 @@ void LayerUI::show_basic_parameters() {
     }
 }
 
-void LayerUI::show_advanced_parameters() {
-
-    advanced_renderer_ui.show_parameters();
-
-    if (PointSetLayer *pl = dynamic_cast<PointSetLayer*>(&l)) {
-        show_advanced_parameters(*pl);
-    } else if (PolyLineLayer *pl = dynamic_cast<PolyLineLayer*>(&l)) {
-        show_advanced_parameters(*pl);
-    } else if (TrianglesLayer *tl = dynamic_cast<TrianglesLayer*>(&l)) {
-        show_advanced_parameters(*tl);
-    } else if (HexahedraLayer *hl = dynamic_cast<HexahedraLayer*>(&l)) {
-        show_advanced_parameters(*hl);
-    } else {
-        Log::error("Layer isn't supported by LayerUI");
-    }
+void BasicLayerUI::show_basic_parameters() {
+    renderer_ui.show_parameters();
+    LayerUI::show_basic_parameters();
 }
 
-void LayerUI::show_basic_parameters(PointSetLayer &l) {
+void AdvancedLayerUI::show_basic_parameters() {
+    renderer_ui.show_parameters();
+    LayerUI::show_basic_parameters();
+}
+
+void BasicLayerUI::show_basic_parameters(PointSetLayer &l) {
     PropertyTable("point_set_layer_table_basic_parameter", {
         {"Mask value", [&] {
             if (ImGui::Checkbox("##cb_mask_value", &l.mask)) l.update();
@@ -198,11 +188,11 @@ void LayerUI::show_basic_parameters(PointSetLayer &l) {
     });
 }
 
-void LayerUI::show_basic_parameters(PolyLineLayer &l) {
+void BasicLayerUI::show_basic_parameters(PolyLineLayer &l) {
 
 }
 
-void LayerUI::show_basic_parameters(TrianglesLayer &l) {
+void BasicLayerUI::show_basic_parameters(TrianglesLayer &l) {
     switch (static_cast<TrianglesLayer::RenderType>(l.render_type())) {
         case TrianglesLayer::RenderType::CORNER_GLYPH: {
             PropertyTable("point_set_layer_table_basic_parameter", {
@@ -218,7 +208,7 @@ void LayerUI::show_basic_parameters(TrianglesLayer &l) {
     }
 }
 
-void LayerUI::show_basic_parameters(HexahedraLayer &l) {
+void BasicLayerUI::show_basic_parameters(HexahedraLayer &l) {
     PropertyTable("hexahedra_layer_table_basic_parameter", {
         {"Shrink", [&] {
             float prev_shrink = l.shrink;
@@ -228,37 +218,23 @@ void LayerUI::show_basic_parameters(HexahedraLayer &l) {
     });
 }
 
-void LayerUI::show_advanced_parameters(PointSetLayer &l) {
+void AdvancedLayerUI::show_basic_parameters(PointSetLayer &l) {
 
 }
 
-void LayerUI::show_advanced_parameters(PolyLineLayer &l) {
+void AdvancedLayerUI::show_basic_parameters(PolyLineLayer &l) {
     
 }
 
-void LayerUI::show_advanced_parameters(TrianglesLayer &l) {
+void AdvancedLayerUI::show_basic_parameters(TrianglesLayer &l) {
 
 }
 
-void LayerUI::show_advanced_parameters(HexahedraLayer &l) {
+void AdvancedLayerUI::show_basic_parameters(HexahedraLayer &l) {
     
 }
 
-void LayerUI::show_attribute_parameters() {
-    if (PointSetLayer *pl = dynamic_cast<PointSetLayer*>(&l)) {
-        show_attribute_parameters(*pl);
-    } else if (PolyLineLayer *pl = dynamic_cast<PolyLineLayer*>(&l)) {
-        show_attribute_parameters(*pl);
-    } else if (TrianglesLayer *tl = dynamic_cast<TrianglesLayer*>(&l)) {
-        show_attribute_parameters(*tl);
-    } else if (HexahedraLayer *hl = dynamic_cast<HexahedraLayer*>(&l)) {
-        show_attribute_parameters(*hl);
-    } else {
-        Log::error("Layer isn't supported by LayerUI");
-    }
-}
-
-void LayerUI::show_attribute_parameters(PointSetLayer &l) {
+void AttributeLayerUI::show_basic_parameters(PointSetLayer &l) {
     std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
         {"points", {{"ATTRIBUTE_SPHERE", PointSetLayer::RenderType::ATTRIBUTE_SPHERE}}
     }};
@@ -277,19 +253,19 @@ void LayerUI::show_attribute_parameters(PointSetLayer &l) {
             }
         }},
         {"Colormap", [&] {
-            basic_renderer_ui.colormap_combo();
+            renderer_ui.colormap_combo();
         }},
-        {"Data range", [&] { basic_renderer_ui.data_range_input(); }},
+        {"Data range", [&] { renderer_ui.data_range_input(); }},
         {"Show range", [&] { 
-            basic_renderer_ui.show_range_input(); 
+            renderer_ui.show_range_input(); 
             ImGui::SameLine();
-            basic_renderer_ui.auto_range_checkbox();
+            renderer_ui.auto_range_checkbox();
         }},
-        {"Texture repeat", [&] { basic_renderer_ui.texture_repeat_input(); }}
+        {"Texture repeat", [&] { renderer_ui.texture_repeat_input(); }}
     });
 }
 
-void LayerUI::show_attribute_parameters(PolyLineLayer &l) {
+void AttributeLayerUI::show_basic_parameters(PolyLineLayer &l) {
     std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
         {"points", {
             {"POINT", PolyLineLayer::RenderType::POINT}, 
@@ -315,19 +291,19 @@ void LayerUI::show_attribute_parameters(PolyLineLayer &l) {
             }
         }},
         {"Colormap", [&] {
-            basic_renderer_ui.colormap_combo();
+            renderer_ui.colormap_combo();
         }},
-        {"Data range", [&] { basic_renderer_ui.data_range_input(); }},
+        {"Data range", [&] { renderer_ui.data_range_input(); }},
         {"Show range", [&] { 
-            basic_renderer_ui.show_range_input(); 
+            renderer_ui.show_range_input(); 
             ImGui::SameLine();
-            basic_renderer_ui.auto_range_checkbox();
+            renderer_ui.auto_range_checkbox();
         }},
-        {"Texture repeat", [&] { basic_renderer_ui.texture_repeat_input(); }}
+        {"Texture repeat", [&] { renderer_ui.texture_repeat_input(); }}
     });
 }
 
-void LayerUI::show_attribute_parameters(TrianglesLayer &l) {
+void AttributeLayerUI::show_basic_parameters(TrianglesLayer &l) {
     std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
         {"points", {
             {"POINT", TrianglesLayer::RenderType::POINT}, 
@@ -357,19 +333,19 @@ void LayerUI::show_attribute_parameters(TrianglesLayer &l) {
             }
         }},
         {"Colormap", [&] {
-            basic_renderer_ui.colormap_combo();
+            renderer_ui.colormap_combo();
         }},
-        {"Data range", [&] { basic_renderer_ui.data_range_input(); }},
+        {"Data range", [&] { renderer_ui.data_range_input(); }},
         {"Show range", [&] { 
-            basic_renderer_ui.show_range_input(); 
+            renderer_ui.show_range_input(); 
             ImGui::SameLine();
-            basic_renderer_ui.auto_range_checkbox();
+            renderer_ui.auto_range_checkbox();
         }},
-        {"Texture repeat", [&] { basic_renderer_ui.texture_repeat_input(); }}
+        {"Texture repeat", [&] { renderer_ui.texture_repeat_input(); }}
     });
 }
 
-void LayerUI::show_attribute_parameters(HexahedraLayer &l) {
+void AttributeLayerUI::show_basic_parameters(HexahedraLayer &l) {
 
     std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
         {"points", {
@@ -398,17 +374,17 @@ void LayerUI::show_attribute_parameters(HexahedraLayer &l) {
             }
         }},
         {"Colormap", [&] {
-            basic_renderer_ui.colormap_combo();
+            renderer_ui.colormap_combo();
         }},
-        {"Data range", [&] { basic_renderer_ui.data_range_input(); }},
+        {"Data range", [&] { renderer_ui.data_range_input(); }},
         {"Show range", [&] { 
-            basic_renderer_ui.show_range_input(); 
+            renderer_ui.show_range_input(); 
             ImGui::SameLine();
-            basic_renderer_ui.auto_range_checkbox();
+            renderer_ui.auto_range_checkbox();
             ImGui::SameLine();
             
         }},
-        {"Texture repeat", [&] { basic_renderer_ui.texture_repeat_input(); }}
+        {"Texture repeat", [&] { renderer_ui.texture_repeat_input(); }}
     });
 }
 

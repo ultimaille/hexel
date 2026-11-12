@@ -17,17 +17,19 @@ void PropertyExplorer::generate_gui(){
             ImGui::SameLine();
             ImGui::TextUnformatted(layer_name.c_str());
 
-            LayerUI layer_ui(layer);
+            BasicLayerUI basic_layer_ui(layer);
+            AdvancedLayerUI advanced_layer_ui(layer);
+            AttributeLayerUI attribute_layer_ui(layer);
             // Basic parameters
-            layer_ui.show_basic_parameters();
+            basic_layer_ui.show_basic_parameters();
 
             // Advanced parameters
             if (ImGui::CollapsingHeader("Advanced")) {
-                layer_ui.show_advanced_parameters();
+                advanced_layer_ui.show_basic_parameters();
             }
             // Attribute parameters
             if (ImGui::CollapsingHeader("Attributes")) {
-                layer_ui.show_attribute_parameters();
+                attribute_layer_ui.show_basic_parameters();
             }
             ImGui::PopID();
         }
