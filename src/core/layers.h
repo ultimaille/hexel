@@ -10,10 +10,6 @@ struct Layer {
     virtual void reset();
     virtual void set_default_values() {}
 
-    virtual int render_type() { return 0; }
-    virtual void render_type(int v) {}
-    virtual std::optional<std::reference_wrapper<Renderer>> renderer() { return std::nullopt; }
-
     virtual void render() = 0;
     virtual void render_primitive_id();
     virtual void render_constant_color(int layerid);

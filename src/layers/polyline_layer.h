@@ -25,13 +25,6 @@ struct PolyLineLayer : public Layer {
     PointRenderer point_renderer;
 
     PolyLineLayer();
-    virtual int render_type() { return static_cast<int>(rt); }
-    virtual void render_type(int v) { rt = static_cast<RenderType>(v); }
-    std::optional<std::reference_wrapper<Renderer>> renderer() override {
-        return rt == RenderType::POINT_SPHERE
-            ? static_cast<Renderer&>(point_renderer)
-            : static_cast<Renderer&>(edge_renderer);
-    }
     void set_default_values() override;
     void reset();
     void init(ObjectId obj);

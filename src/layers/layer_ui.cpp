@@ -126,7 +126,7 @@ ObjectId LayerUI::attribute_combo(std::string mm_name, std::string mesh_name, Ob
 }
 
 int LayerUI::render_type_combo(std::vector<std::tuple<std::string, int>> items, int cur_render_type) {
-    bool has_selected = -1;
+    int has_selected = -1;
     int current_item = cur_render_type;
 
     std::string label = "";
@@ -273,7 +273,7 @@ void TrianglesLayerUI::show_parameters(LayerUIMode mode) {
     renderer_ui->show_parameters(static_cast<RendererUI::RendererUIMode>(mode));
 
     if (mode == LayerUIMode::BASIC) {
-        switch (static_cast<TrianglesLayer::RenderType>(l.render_type())) {
+        switch (l.rt) {
             case TrianglesLayer::RenderType::CORNER_GLYPH: {
                 PropertyTable("point_set_layer_table_basic_parameter", {
                     {"Shrink", [&] {
@@ -311,7 +311,7 @@ void TrianglesLayerUI::show_parameters(LayerUIMode mode) {
             }},
             {"Render type", [&] {
                 if (l.rt != TrianglesLayer::RenderType::PLAIN) {
-                    int last_rt = static_cast<int>(l.rt);
+                    int last_rt = l.rt;
                     int new_rt = render_type_combo(render_types_by_attr_type[l.attr_primitive()], static_cast<int>(l.rt));
                     if (new_rt != -1) {
                         l.rt = static_cast<TrianglesLayer::RenderType>(new_rt);
