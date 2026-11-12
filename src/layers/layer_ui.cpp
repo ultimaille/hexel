@@ -120,16 +120,14 @@ void RendererUI::show_parameters(SegmentRenderer &r, RendererUIMode mode) {
 }
 
 template<class T>
-void LayerUI::attribute_combo(ObjectId attr_id) {
-    std::string mm_name = l.mesh.names[0];
-    std::string mesh_name = l.mesh.names.size() > 1 ? l.mesh.names[1] : "";
-    auto new_attr_id = AttributeCombo(mm_name, mesh_name, static_cast<T&>(l.mesh), attr_id);
-    if (new_attr_id.path != ObjectType::NA) l.bind_attribute(new_attr_id);
+ObjectId LayerUI::attribute_combo(std::string mm_name, std::string mesh_name, ObjectId attr_id, T attr) {
+    auto new_attr_id = AttributeCombo(mm_name, mesh_name, attr, attr_id);
+    return new_attr_id;
 }
 
-bool LayerUI::render_type_combo(std::vector<std::tuple<std::string, int>> items) {
-    bool has_selected = false;
-    int current_item = l.render_type();
+int LayerUI::render_type_combo(std::vector<std::tuple<std::string, int>> items, int cur_render_type) {
+    bool has_selected = -1;
+    int current_item = cur_render_type;
 
     std::string label = "";
     for (auto &[l, i] : items) {
@@ -139,14 +137,14 @@ bool LayerUI::render_type_combo(std::vector<std::tuple<std::string, int>> items)
         }
     }
 
+
     if (ImGui::BeginCombo("RenderType", label.c_str())) {
         for (int n = 0; n < (int)items.size(); n++) {
             auto [name, rt] = items[n];
             bool is_selected = (current_item == rt);
 
             if (ImGui::Selectable(name.c_str(), is_selected)) {
-                l.render_type(rt);
-                has_selected = true;
+                has_selected = rt;
             }
             if (is_selected)
                 ImGui::SetItemDefaultFocus();
@@ -157,23 +155,11 @@ bool LayerUI::render_type_combo(std::vector<std::tuple<std::string, int>> items)
     return has_selected;
 }
 
-void LayerUI::show_parameters(LayerUIMode mode) {
+void PointSetLayerUI::show_parameters(LayerUIMode mode) {
+
+    RendererUI renderer_ui(l.point_renderer);
     renderer_ui.show_parameters(static_cast<RendererUI::RendererUIMode>(mode));
 
-    if (PointSetLayer *pl = dynamic_cast<PointSetLayer*>(&l)) {
-        show_parameters(*pl, mode);
-    } else if (PolyLineLayer *pl = dynamic_cast<PolyLineLayer*>(&l)) {
-        show_parameters(*pl, mode);
-    } else if (TrianglesLayer *tl = dynamic_cast<TrianglesLayer*>(&l)) {
-        show_parameters(*tl, mode);
-    } else if (HexahedraLayer *hl = dynamic_cast<HexahedraLayer*>(&l)) {
-        show_parameters(*hl, mode);
-    } else {
-        Log::error("Layer isn't supported by LayerUI");
-    }
-}
-
-void LayerUI::show_parameters(PointSetLayer &l, LayerUIMode mode) {
     if (mode == LayerUIMode::BASIC) {
         PropertyTable("point_set_layer_table_basic_parameter", {
             {"Mask value", [&] {
@@ -185,18 +171,24 @@ void LayerUI::show_parameters(PointSetLayer &l, LayerUIMode mode) {
     }
 
     if (mode == LayerUIMode::ATTRIBUTE) {
+
+        RendererUI renderer_ui(static_cast<Renderer&>(l.point_renderer));
+
         std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
             {"points", {{"ATTRIBUTE_SPHERE", PointSetLayer::RenderType::ATTRIBUTE_SPHERE}}
         }};
 
         PropertyTable("pointset_layer_table_attribute", {
             {"Attribute", [&] {
-                attribute_combo<PointSetAttributes>(l.attr_id);
+                auto new_attr_id = attribute_combo(l.mesh.names[0], l.mesh.names.size() > 1 ? l.mesh.names[1] : "", l.attr_id, static_cast<PointSetAttributes>(l.mesh));
+                if (new_attr_id.path != ObjectType::NA) l.bind_attribute(new_attr_id);
             }},
             {"Render type", [&] {
                 if (l.rt != PointSetLayer::RenderType::PLAIN) {
                     int last_rt = static_cast<int>(l.rt);
-                    if (render_type_combo(render_types_by_attr_type[l.attr_primitive()])) {
+                    int new_rt = render_type_combo(render_types_by_attr_type[l.attr_primitive()], static_cast<int>(l.rt));
+                    if (new_rt != -1) {
+                        l.rt = static_cast<PointSetLayer::RenderType>(new_rt);
                         if (l.rt != last_rt)
                             l.reset();
                     }
@@ -216,8 +208,19 @@ void LayerUI::show_parameters(PointSetLayer &l, LayerUIMode mode) {
     }
 }
 
-void LayerUI::show_parameters(PolyLineLayer &l, LayerUIMode mode) {
+void PolyLineLayerUI::show_parameters(LayerUIMode mode) {
+
+    std::unique_ptr<RendererUI> renderer_ui;
+    if (l.rt == PolyLineLayer::RenderType::POINT)
+        renderer_ui = std::make_unique<RendererUI>(l.point_renderer);
+    else 
+        renderer_ui = std::make_unique<RendererUI>(l.edge_renderer);
+
+    renderer_ui->show_parameters(static_cast<RendererUI::RendererUIMode>(mode));
+
+
     if (mode == LayerUIMode::ATTRIBUTE) {
+
         std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
             {"points", {
                 {"POINT", PolyLineLayer::RenderType::POINT}, 
@@ -231,32 +234,43 @@ void LayerUI::show_parameters(PolyLineLayer &l, LayerUIMode mode) {
 
         PropertyTable("polyline_layer_table_attribute", {
             {"Attribute", [&] {
-                attribute_combo<PolyLineAttributes>(l.attr_id);
+                auto new_attr_id = attribute_combo(l.mesh.names[0], l.mesh.names.size() > 1 ? l.mesh.names[1] : "", l.attr_id, static_cast<PolyLineAttributes>(l.mesh));
+                if (new_attr_id.path != ObjectType::NA) l.bind_attribute(new_attr_id);
             }},
             {"Render type", [&] {
                 if (l.rt != PolyLineLayer::RenderType::PLAIN) {
                     int last_rt = static_cast<int>(l.rt);
-                    if (render_type_combo(render_types_by_attr_type[l.attr_primitive()])) {
+                    int new_rt = render_type_combo(render_types_by_attr_type[l.attr_primitive()], static_cast<int>(l.rt));
+                    if (new_rt != -1) {
+                        l.rt = static_cast<PolyLineLayer::RenderType>(new_rt);
                         if (l.rt != last_rt)
                             l.reset();
                     }
                 }
             }},
             {"Colormap", [&] {
-                renderer_ui.colormap_combo();
+                renderer_ui->colormap_combo();
             }},
-            {"Data range", [&] { renderer_ui.data_range_input(); }},
+            {"Data range", [&] { renderer_ui->data_range_input(); }},
             {"Show range", [&] { 
-                renderer_ui.show_range_input(); 
+                renderer_ui->show_range_input(); 
                 ImGui::SameLine();
-                renderer_ui.auto_range_checkbox();
+                renderer_ui->auto_range_checkbox();
             }},
-            {"Texture repeat", [&] { renderer_ui.texture_repeat_input(); }}
+            {"Texture repeat", [&] { renderer_ui->texture_repeat_input(); }}
         });
     }
 }
 
-void LayerUI::show_parameters(TrianglesLayer &l, LayerUIMode mode) {
+void TrianglesLayerUI::show_parameters(LayerUIMode mode) {
+
+    std::unique_ptr<RendererUI> renderer_ui;
+    if (l.rt == TrianglesLayer::RenderType::POINT_SPHERE)
+        renderer_ui = std::make_unique<RendererUI>(l.point_renderer);
+    else 
+        renderer_ui = std::make_unique<RendererUI>(l.tri_renderer);
+
+    renderer_ui->show_parameters(static_cast<RendererUI::RendererUIMode>(mode));
 
     if (mode == LayerUIMode::BASIC) {
         switch (static_cast<TrianglesLayer::RenderType>(l.render_type())) {
@@ -274,6 +288,7 @@ void LayerUI::show_parameters(TrianglesLayer &l, LayerUIMode mode) {
         }
     }
     if (mode == LayerUIMode::ATTRIBUTE) {
+
         std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
             {"points", {
                 {"POINT", TrianglesLayer::RenderType::POINT}, 
@@ -291,32 +306,42 @@ void LayerUI::show_parameters(TrianglesLayer &l, LayerUIMode mode) {
 
         PropertyTable("triangle_layer_table_attribute", {
             {"Attribute", [&] {
-                attribute_combo<SurfaceAttributes>(l.attr_id);
+                auto new_attr_id = attribute_combo(l.mesh.names[0], l.mesh.names.size() > 1 ? l.mesh.names[1] : "", l.attr_id, static_cast<SurfaceAttributes>(l.mesh));
+                if (new_attr_id.path != ObjectType::NA) l.bind_attribute(new_attr_id);
             }},
             {"Render type", [&] {
                 if (l.rt != TrianglesLayer::RenderType::PLAIN) {
                     int last_rt = static_cast<int>(l.rt);
-                    if (render_type_combo(render_types_by_attr_type[l.attr_primitive()])) {
+                    int new_rt = render_type_combo(render_types_by_attr_type[l.attr_primitive()], static_cast<int>(l.rt));
+                    if (new_rt != -1) {
+                        l.rt = static_cast<TrianglesLayer::RenderType>(new_rt);
                         if (l.rt != last_rt)
                             l.reset();
                     }
                 }
             }},
             {"Colormap", [&] {
-                renderer_ui.colormap_combo();
+                renderer_ui->colormap_combo();
             }},
-            {"Data range", [&] { renderer_ui.data_range_input(); }},
+            {"Data range", [&] { renderer_ui->data_range_input(); }},
             {"Show range", [&] { 
-                renderer_ui.show_range_input(); 
+                renderer_ui->show_range_input(); 
                 ImGui::SameLine();
-                renderer_ui.auto_range_checkbox();
+                renderer_ui->auto_range_checkbox();
             }},
-            {"Texture repeat", [&] { renderer_ui.texture_repeat_input(); }}
+            {"Texture repeat", [&] { renderer_ui->texture_repeat_input(); }}
         });
     }
 }
 
-void LayerUI::show_parameters(HexahedraLayer &l, LayerUIMode mode) {
+void HexahedraLayerUI::show_parameters(LayerUIMode mode) {
+    std::unique_ptr<RendererUI> renderer_ui;
+    if (l.rt == HexahedraLayer::RenderType::POINT_SPHERE)
+        renderer_ui = std::make_unique<RendererUI>(l.point_renderer);
+    else 
+        renderer_ui = std::make_unique<RendererUI>(l.tri_renderer);
+
+    renderer_ui->show_parameters(static_cast<RendererUI::RendererUIMode>(mode));
 
     if (mode == LayerUIMode::BASIC) {
         PropertyTable("hexahedra_layer_table_basic_parameter", {
@@ -328,6 +353,7 @@ void LayerUI::show_parameters(HexahedraLayer &l, LayerUIMode mode) {
         });
     }
     if (mode == LayerUIMode::ATTRIBUTE) {
+
         std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
             {"points", {
                 {"POINT", HexahedraLayer::RenderType::POINT}, 
@@ -343,29 +369,32 @@ void LayerUI::show_parameters(HexahedraLayer &l, LayerUIMode mode) {
 
         PropertyTable("hexahedra_layer_table_attribute", {
             {"Attribute", [&] {
-                attribute_combo<VolumeAttributes>(l.attr_id);
+                auto new_attr_id = attribute_combo(l.mesh.names[0], l.mesh.names.size() > 1 ? l.mesh.names[1] : "", l.attr_id, static_cast<VolumeAttributes>(l.mesh));
+                if (new_attr_id.path != ObjectType::NA) l.bind_attribute(new_attr_id);
             }},
             {"Render type", [&] {
                 if (l.rt != HexahedraLayer::RenderType::PLAIN) {
                     int last_rt = static_cast<int>(l.rt);
-                    if (render_type_combo(render_types_by_attr_type[l.attr_primitive()])) {
+                    int new_rt = render_type_combo(render_types_by_attr_type[l.attr_primitive()], static_cast<int>(l.rt));
+                    if (new_rt != -1) {
+                        l.rt = static_cast<HexahedraLayer::RenderType>(new_rt);
                         if (l.rt != last_rt)
                             l.reset();
                     }
                 }
             }},
             {"Colormap", [&] {
-                renderer_ui.colormap_combo();
+                renderer_ui->colormap_combo();
             }},
-            {"Data range", [&] { renderer_ui.data_range_input(); }},
+            {"Data range", [&] { renderer_ui->data_range_input(); }},
             {"Show range", [&] { 
-                renderer_ui.show_range_input(); 
+                renderer_ui->show_range_input(); 
                 ImGui::SameLine();
-                renderer_ui.auto_range_checkbox();
+                renderer_ui->auto_range_checkbox();
                 ImGui::SameLine();
                 
             }},
-            {"Texture repeat", [&] { renderer_ui.texture_repeat_input(); }}
+            {"Texture repeat", [&] { renderer_ui->texture_repeat_input(); }}
         });
     }
 }

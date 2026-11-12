@@ -12,7 +12,7 @@ struct Layer {
 
     virtual int render_type() { return 0; }
     virtual void render_type(int v) {}
-    virtual Renderer& renderer() { throw std::runtime_error("Not supported"); };
+    virtual std::optional<std::reference_wrapper<Renderer>> renderer() { return std::nullopt; }
 
     virtual void render() = 0;
     virtual void render_primitive_id();

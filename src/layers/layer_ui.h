@@ -215,26 +215,66 @@ struct RendererUI {
 };
 
 
+
+
 struct LayerUI {
 
     enum LayerUIMode { BASIC, ADVANCED, ATTRIBUTE };
 
-    LayerUI(Layer &l) : l(l), renderer_ui(l.renderer()) {}
-
     template<class T>
-    void attribute_combo(ObjectId attr_id);
-    bool render_type_combo(std::vector<std::tuple<std::string, int>> items);
+    ObjectId attribute_combo(std::string mm_name, std::string mesh_name, ObjectId attr_id, T attr);
+    int render_type_combo(std::vector<std::tuple<std::string, int>> items, int cur_render_type);
 
-    virtual void show_parameters(LayerUIMode mode);
 
-    protected:
-    void show_parameters(PointSetLayer &l, LayerUIMode mode);
-    void show_parameters(PolyLineLayer &l, LayerUIMode mode);
-    void show_parameters(TrianglesLayer &l, LayerUIMode mode);
-    void show_parameters(HexahedraLayer &l, LayerUIMode mode);
-
-    protected:
-    Layer &l;
-    private:
-    RendererUI renderer_ui;
+    virtual void show_parameters(LayerUIMode mode) = 0;
 };
+
+struct PointSetLayerUI : public LayerUI {
+    PointSetLayerUI(PointSetLayer &l) : l(l) {}
+
+    void show_parameters(LayerUIMode mode) override;
+
+    private:
+    PointSetLayer &l;
+};
+
+struct PolyLineLayerUI : public LayerUI {
+    PolyLineLayerUI(PolyLineLayer &l) : l(l) {}
+
+    void show_parameters(LayerUIMode mode) override;
+
+    private:
+    PolyLineLayer &l;
+};
+
+struct TrianglesLayerUI : public LayerUI {
+    TrianglesLayerUI(TrianglesLayer &l) : l(l) {}
+
+    void show_parameters(LayerUIMode mode) override;
+
+    private:
+    TrianglesLayer &l;
+};
+
+struct HexahedraLayerUI : public LayerUI {
+    HexahedraLayerUI(HexahedraLayer &l) : l(l) {}
+
+    void show_parameters(LayerUIMode mode) override;
+
+    private:
+    HexahedraLayer &l;
+};
+
+// static LayerUI make_layer(Layer &l) {
+//     if (PointSetLayer *pl = dynamic_cast<PointSetLayer*>(&l)) {
+//         return PointSetLayerUI(*pl);
+//     } else if (PolyLineLayer *pl = dynamic_cast<PolyLineLayer*>(&l)) {
+//         return PolyLineLayerUI(*pl);
+//     } else if (TrianglesLayer *tl = dynamic_cast<TrianglesLayer*>(&l)) {
+//         return TrianglesLayerUI(*tl);
+//     } else if (HexahedraLayer *hl = dynamic_cast<HexahedraLayer*>(&l)) {
+//         return HexahedraLayerUI(*hl);
+//     } else {
+//         throw std::runtime_error("Layer isn't supported by LayerUI");
+//     }
+// }
