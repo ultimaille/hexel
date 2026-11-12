@@ -2,15 +2,15 @@
 #include <layers/basic_layers.h>
 #include <layers/basic_renderers.h>
 
-void RendererUI::show_parameters() {
+void RendererUI::show_parameters(RendererUIMode mode) {
     // Note: for now just dispatch using dynamic cast but visitor 
     // can be used instead for cleaner version
     if (PointRenderer *pr = dynamic_cast<PointRenderer*>(&r)) {
-        show_parameters(*pr);
+        show_parameters(*pr, mode);
     } else if (TriangleRenderer *tr = dynamic_cast<TriangleRenderer*>(&r)) {
-        show_parameters(*tr);
+        show_parameters(*tr, mode);
     } else if (SegmentRenderer *sr = dynamic_cast<SegmentRenderer*>(&r)) {
-        show_parameters(*sr);
+        show_parameters(*sr, mode);
     } else {
         Log::error("Renderer isn't supported by RendererUI");
     }
@@ -58,62 +58,65 @@ bool RendererUI::radius_input(PointRenderer &r) {
     return ImGui::InputInt("##point_size", &r.radius_in_pixel);
 }
 
-void BasicParametersRendererUI::show_parameters(PointRenderer &r) {
-    PropertyTable("point_table_basic_parameter", {
-        {"Style", [&] {
-            color_picker();
-            ImGui::PushItemWidth(80);
-            radius_input(r);
-            ImGui::PopItemWidth();
-        }}
-    });
+void RendererUI::show_parameters(PointRenderer &r, RendererUIMode mode) {
+    if (mode == RendererUIMode::BASIC) {
+        PropertyTable("point_table_basic_parameter", {
+            {"Style", [&] {
+                color_picker();
+                ImGui::PushItemWidth(80);
+                radius_input(r);
+                ImGui::PopItemWidth();
+            }}
+        });
+    }
+    if (mode == RendererUIMode::ADVANCED) {
+        PropertyTable("point_table_basic_parameter", {
+            {"Ambient", [&] {
+                ambiant_slider();
+            }},
+        });
+    }
 }
 
-void BasicParametersRendererUI::show_parameters(TriangleRenderer &r) {
-    PropertyTable("tri_table_basic_parameter", {
-        {"Style", [&] {
-            color_picker();
-        }}
-    });
+void RendererUI::show_parameters(TriangleRenderer &r, RendererUIMode mode) {
+    if (mode == RendererUIMode::BASIC) {
+        PropertyTable("tri_table_basic_parameter", {
+            {"Style", [&] {
+                color_picker();
+            }}
+        });
+    }
+    if (mode == RendererUIMode::ADVANCED) {
+        PropertyTable("tri_table_basic_parameter", {
+            {"Ambient", [&] {
+                ambiant_slider();
+            }},
+        });
+    }
 }
 
-void BasicParametersRendererUI::show_parameters(SegmentRenderer &r) {
-    PropertyTable("tri_table_basic_parameter", {
-        {"Style", [&]() {
-            color_picker();
-            ImGui::SameLine();
-            ImGui::PushItemWidth(80);
-            ImGui::InputInt("##input_width", &r.line_width);
-            r.line_width = std::clamp(r.line_width, int(r.width_range[0]), int(r.width_range[1]));
-            ImGui::PopItemWidth();
-            ImGui::SameLine();
-            ImGui::SliderFloat("##slider_scale", &r.origin_scale, 0.4f, 1.0f, "%.3f", 0);
-        }}
-    });
-}
-
-void AdvancedParametersRendererUI::show_parameters(PointRenderer &r) {
-    PropertyTable("point_table_basic_parameter", {
-        {"Ambient", [&] {
-            ambiant_slider();
-        }},
-    });
-}
-
-void AdvancedParametersRendererUI::show_parameters(TriangleRenderer &r) {
-    PropertyTable("tri_table_basic_parameter", {
-        {"Ambient", [&] {
-            ambiant_slider();
-        }},
-    });
-}
-
-void AdvancedParametersRendererUI::show_parameters(SegmentRenderer &r) {
-    PropertyTable("tri_table_basic_parameter", {
-        {"Ambient", [&]() {
-            ambiant_slider();
-        }},
-    });
+void RendererUI::show_parameters(SegmentRenderer &r, RendererUIMode mode) {
+    if (mode == RendererUIMode::BASIC) {
+        PropertyTable("tri_table_basic_parameter", {
+            {"Style", [&]() {
+                color_picker();
+                ImGui::SameLine();
+                ImGui::PushItemWidth(80);
+                ImGui::InputInt("##input_width", &r.line_width);
+                r.line_width = std::clamp(r.line_width, int(r.width_range[0]), int(r.width_range[1]));
+                ImGui::PopItemWidth();
+                ImGui::SameLine();
+                ImGui::SliderFloat("##slider_scale", &r.origin_scale, 0.4f, 1.0f, "%.3f", 0);
+            }}
+        });
+    }
+    if (mode == RendererUIMode::ADVANCED) {
+        PropertyTable("tri_table_basic_parameter", {
+            {"Ambient", [&]() {
+                ambiant_slider();
+            }},
+        });
+    }
 }
 
 template<class T>
@@ -169,12 +172,12 @@ void LayerUI::show_basic_parameters() {
 }
 
 void BasicLayerUI::show_basic_parameters() {
-    renderer_ui.show_parameters();
+    renderer_ui.show_parameters(RendererUI::BASIC);
     LayerUI::show_basic_parameters();
 }
 
 void AdvancedLayerUI::show_basic_parameters() {
-    renderer_ui.show_parameters();
+    renderer_ui.show_parameters(RendererUI::ADVANCED);
     LayerUI::show_basic_parameters();
 }
 

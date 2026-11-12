@@ -188,9 +188,11 @@ static void PropertyTable(std::string name, std::vector<std::pair<std::string, s
 #include <layers/basic_layers.h>
 struct RendererUI {
 
+    enum RendererUIMode { BASIC, ADVANCED };
+
     RendererUI(Renderer &r) : r(r) {}
 
-    void show_parameters();
+    void show_parameters(RendererUIMode mode);
 
     bool ambiant_slider();
     bool color_picker();
@@ -204,30 +206,12 @@ struct RendererUI {
 
     bool radius_input(PointRenderer &r);
 
-    virtual void show_parameters(PointRenderer &r) = 0;
-    virtual void show_parameters(TriangleRenderer &r) = 0;
-    virtual void show_parameters(SegmentRenderer &r) = 0;
+    void show_parameters(PointRenderer &r, RendererUIMode mode);
+    void show_parameters(TriangleRenderer &r, RendererUIMode mode);
+    void show_parameters(SegmentRenderer &r, RendererUIMode mode);
 
     private:
     Renderer &r;
-};
-
-struct BasicParametersRendererUI : public RendererUI {
-    using RendererUI::RendererUI;
-    using RendererUI::show_parameters;
-    protected:
-    void show_parameters(PointRenderer &r) override;
-    void show_parameters(TriangleRenderer &r) override;
-    void show_parameters(SegmentRenderer &r) override;
-};
-
-struct AdvancedParametersRendererUI : public RendererUI {
-    using RendererUI::RendererUI;
-    using RendererUI::show_parameters;
-    protected:
-    void show_parameters(PointRenderer &r) override;
-    void show_parameters(TriangleRenderer &r) override;
-    void show_parameters(SegmentRenderer &r) override;
 };
 
 
@@ -261,7 +245,7 @@ struct BasicLayerUI : public LayerUI {
     void show_basic_parameters(TrianglesLayer &l) override;
     void show_basic_parameters(HexahedraLayer &l) override;
     private:
-    BasicParametersRendererUI renderer_ui;
+    RendererUI renderer_ui;
 };
 
 struct AdvancedLayerUI : public LayerUI {
@@ -272,7 +256,7 @@ struct AdvancedLayerUI : public LayerUI {
     void show_basic_parameters(PolyLineLayer &l) override;
     void show_basic_parameters(TrianglesLayer &l) override;
     void show_basic_parameters(HexahedraLayer &l) override;
-    AdvancedParametersRendererUI renderer_ui;
+    RendererUI renderer_ui;
 };
 
 struct AttributeLayerUI : public LayerUI {
@@ -284,5 +268,5 @@ struct AttributeLayerUI : public LayerUI {
     void show_basic_parameters(TrianglesLayer &l) override;
     void show_basic_parameters(HexahedraLayer &l) override;
     
-    BasicParametersRendererUI renderer_ui;
+    RendererUI renderer_ui;
 };
