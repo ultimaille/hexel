@@ -190,9 +190,8 @@ struct RendererUI {
 
     enum RendererUIMode { BASIC, ADVANCED };
 
-    RendererUI(Renderer &r) : r(r) {}
-
-    void show_parameters(RendererUIMode mode);
+    virtual Renderer& renderer() = 0;
+    virtual void show_parameters(RendererUIMode mode) = 0;
 
     bool ambiant_slider();
     bool color_picker();
@@ -201,21 +200,36 @@ struct RendererUI {
     void show_range_input();
     void auto_range_checkbox();
     void texture_repeat_input();
-
-    protected:
-
-    bool radius_input(PointRenderer &r);
-
-    void show_parameters(PointRenderer &r, RendererUIMode mode);
-    void show_parameters(TriangleRenderer &r, RendererUIMode mode);
-    void show_parameters(SegmentRenderer &r, RendererUIMode mode);
-
-    private:
-    Renderer &r;
 };
 
+struct PointRendererUI : RendererUI {
+    PointRendererUI(PointRenderer &r) : r(r) {}
 
+    bool radius_input(PointRenderer &r);
+    
+    void show_parameters(RendererUIMode mode) override;
+    Renderer& renderer() override { return static_cast<Renderer&>(r); }
 
+    PointRenderer &r;
+};
+
+struct SegmentRendererUI : RendererUI {
+    SegmentRendererUI(SegmentRenderer &r) : r(r) {}
+
+    void show_parameters(RendererUIMode mode) override;
+    Renderer& renderer() override { return static_cast<Renderer&>(r); }
+
+    SegmentRenderer &r;
+};
+
+struct TriangleRendererUI : RendererUI {
+    TriangleRendererUI(TriangleRenderer &r) : r(r) {}
+
+    void show_parameters(RendererUIMode mode) override;
+    Renderer& renderer() override { return static_cast<Renderer&>(r); }
+
+    TriangleRenderer &r;
+};
 
 struct LayerUI {
 
@@ -224,7 +238,6 @@ struct LayerUI {
     template<class T>
     ObjectId attribute_combo(std::string mm_name, std::string mesh_name, ObjectId attr_id, T attr);
     int render_type_combo(std::vector<std::tuple<std::string, int>> items, int cur_render_type);
-
 
     virtual void show_parameters(LayerUIMode mode) = 0;
 };
@@ -264,17 +277,3 @@ struct HexahedraLayerUI : public LayerUI {
     private:
     HexahedraLayer &l;
 };
-
-// static LayerUI make_layer(Layer &l) {
-//     if (PointSetLayer *pl = dynamic_cast<PointSetLayer*>(&l)) {
-//         return PointSetLayerUI(*pl);
-//     } else if (PolyLineLayer *pl = dynamic_cast<PolyLineLayer*>(&l)) {
-//         return PolyLineLayerUI(*pl);
-//     } else if (TrianglesLayer *tl = dynamic_cast<TrianglesLayer*>(&l)) {
-//         return TrianglesLayerUI(*tl);
-//     } else if (HexahedraLayer *hl = dynamic_cast<HexahedraLayer*>(&l)) {
-//         return HexahedraLayerUI(*hl);
-//     } else {
-//         throw std::runtime_error("Layer isn't supported by LayerUI");
-//     }
-// }

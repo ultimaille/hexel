@@ -2,63 +2,49 @@
 #include <layers/basic_layers.h>
 #include <layers/basic_renderers.h>
 
-void RendererUI::show_parameters(RendererUIMode mode) {
-    // Note: for now just dispatch using dynamic cast but visitor 
-    // can be used instead for cleaner version
-    if (PointRenderer *pr = dynamic_cast<PointRenderer*>(&r)) {
-        show_parameters(*pr, mode);
-    } else if (TriangleRenderer *tr = dynamic_cast<TriangleRenderer*>(&r)) {
-        show_parameters(*tr, mode);
-    } else if (SegmentRenderer *sr = dynamic_cast<SegmentRenderer*>(&r)) {
-        show_parameters(*sr, mode);
-    } else {
-        Log::error("Renderer isn't supported by RendererUI");
-    }
-}
-
 bool RendererUI::ambiant_slider() {
-    return ImGui::SliderFloat("##slider_ambiant", &r.ambient_prop, 0.0f, 1.0f, "%.3f", 0);
+    return ImGui::SliderFloat("##slider_ambiant", &renderer().ambient_prop, 0.0f, 1.0f, "%.3f", 0);
 }
 
 bool RendererUI::color_picker() {
-    return ImGui::ColorEdit3("##picker_color", (float*)&r.color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+    return ImGui::ColorEdit3("##picker_color", (float*)&renderer().color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
 }
 
 bool RendererUI::colormap_combo() {
-    int prev = r.texture_id;
-    bool used = ColormapCombo("##combo_colormap", r.texture_id);
-    if (r.texture_id != prev) {
-        glDeleteTextures(1, &r.colormap);
-        load_colormap(r.texture_id, r.colormap);
+    int prev = renderer().texture_id;
+    bool used = ColormapCombo("##combo_colormap", renderer().texture_id);
+    if (renderer().texture_id != prev) {
+        glDeleteTextures(1, &renderer().colormap);
+        load_colormap(renderer().texture_id, renderer().colormap);
     }
     return used;
 }
 
 void RendererUI::data_range_input() {
-    ImGui::InputFloat2("##input_data_range", r.value_range, "%.2f", ImGuiInputTextFlags_ReadOnly);
+    ImGui::InputFloat2("##input_data_range", renderer().value_range, "%.2f", ImGuiInputTextFlags_ReadOnly);
 }
 
 void RendererUI::show_range_input() {
-    ImGui::InputFloat2("##input_show_range", r.texture_range);
+    ImGui::InputFloat2("##input_show_range", renderer().texture_range);
 }
 
 void RendererUI::auto_range_checkbox() {
-    if (ImGui::Checkbox("##autorange", &r.auto_range)){
-        r.texture_range[0] = r.value_range[0];
-        r.texture_range[1] = r.value_range[1];
+    if (ImGui::Checkbox("##autorange", &renderer().auto_range)){
+        renderer().texture_range[0] = renderer().value_range[0];
+        renderer().texture_range[1] = renderer().value_range[1];
     }
 }
 
 void RendererUI::texture_repeat_input() {
-    if (ImGui::InputInt("##texture_repeat", &r.texture_repeat))
-        r.texture_repeat = std::clamp(r.texture_repeat, 0, 1000000);
+    if (ImGui::InputInt("##texture_repeat", &renderer().texture_repeat))
+        renderer().texture_repeat = std::clamp(renderer().texture_repeat, 0, 1000000);
 }
 
-bool RendererUI::radius_input(PointRenderer &r) {
+bool PointRendererUI::radius_input(PointRenderer &r) {
     return ImGui::InputInt("##point_size", &r.radius_in_pixel);
 }
 
-void RendererUI::show_parameters(PointRenderer &r, RendererUIMode mode) {
+void PointRendererUI::show_parameters(RendererUIMode mode) {
     if (mode == RendererUIMode::BASIC) {
         PropertyTable("point_table_basic_parameter", {
             {"Style", [&] {
@@ -78,7 +64,7 @@ void RendererUI::show_parameters(PointRenderer &r, RendererUIMode mode) {
     }
 }
 
-void RendererUI::show_parameters(TriangleRenderer &r, RendererUIMode mode) {
+void TriangleRendererUI::show_parameters(RendererUIMode mode) {
     if (mode == RendererUIMode::BASIC) {
         PropertyTable("tri_table_basic_parameter", {
             {"Style", [&] {
@@ -95,7 +81,7 @@ void RendererUI::show_parameters(TriangleRenderer &r, RendererUIMode mode) {
     }
 }
 
-void RendererUI::show_parameters(SegmentRenderer &r, RendererUIMode mode) {
+void SegmentRendererUI::show_parameters(RendererUIMode mode) {
     if (mode == RendererUIMode::BASIC) {
         PropertyTable("tri_table_basic_parameter", {
             {"Style", [&]() {
@@ -157,7 +143,7 @@ int LayerUI::render_type_combo(std::vector<std::tuple<std::string, int>> items, 
 
 void PointSetLayerUI::show_parameters(LayerUIMode mode) {
 
-    RendererUI renderer_ui(l.point_renderer);
+    PointRendererUI renderer_ui(l.point_renderer);
     renderer_ui.show_parameters(static_cast<RendererUI::RendererUIMode>(mode));
 
     if (mode == LayerUIMode::BASIC) {
@@ -171,8 +157,6 @@ void PointSetLayerUI::show_parameters(LayerUIMode mode) {
     }
 
     if (mode == LayerUIMode::ATTRIBUTE) {
-
-        RendererUI renderer_ui(static_cast<Renderer&>(l.point_renderer));
 
         std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
             {"points", {{"ATTRIBUTE_SPHERE", PointSetLayer::RenderType::ATTRIBUTE_SPHERE}}
@@ -212,9 +196,9 @@ void PolyLineLayerUI::show_parameters(LayerUIMode mode) {
 
     std::unique_ptr<RendererUI> renderer_ui;
     if (l.rt == PolyLineLayer::RenderType::POINT)
-        renderer_ui = std::make_unique<RendererUI>(l.point_renderer);
+        renderer_ui = std::make_unique<PointRendererUI>(l.point_renderer);
     else 
-        renderer_ui = std::make_unique<RendererUI>(l.edge_renderer);
+        renderer_ui = std::make_unique<SegmentRendererUI>(l.edge_renderer);
 
     renderer_ui->show_parameters(static_cast<RendererUI::RendererUIMode>(mode));
 
@@ -266,9 +250,9 @@ void TrianglesLayerUI::show_parameters(LayerUIMode mode) {
 
     std::unique_ptr<RendererUI> renderer_ui;
     if (l.rt == TrianglesLayer::RenderType::POINT_SPHERE)
-        renderer_ui = std::make_unique<RendererUI>(l.point_renderer);
+        renderer_ui = std::make_unique<PointRendererUI>(l.point_renderer);
     else 
-        renderer_ui = std::make_unique<RendererUI>(l.tri_renderer);
+        renderer_ui = std::make_unique<TriangleRendererUI>(l.tri_renderer);
 
     renderer_ui->show_parameters(static_cast<RendererUI::RendererUIMode>(mode));
 
@@ -337,9 +321,9 @@ void TrianglesLayerUI::show_parameters(LayerUIMode mode) {
 void HexahedraLayerUI::show_parameters(LayerUIMode mode) {
     std::unique_ptr<RendererUI> renderer_ui;
     if (l.rt == HexahedraLayer::RenderType::POINT_SPHERE)
-        renderer_ui = std::make_unique<RendererUI>(l.point_renderer);
+        renderer_ui = std::make_unique<PointRendererUI>(l.point_renderer);
     else 
-        renderer_ui = std::make_unique<RendererUI>(l.tri_renderer);
+        renderer_ui = std::make_unique<TriangleRendererUI>(l.tri_renderer);
 
     renderer_ui->show_parameters(static_cast<RendererUI::RendererUIMode>(mode));
 
