@@ -11,8 +11,7 @@ using namespace UM;
 
 struct ButtonPalette { ImVec4 base, hovered, active; };
 
-static ButtonPalette GetPalette(std::string type)
-{
+static ButtonPalette GetPalette(std::string type) {
     if (type == "points") 
         return { ImVec4(0.20f, 0.45f, 0.90f, 1.0f),
             ImVec4(0.30f, 0.55f, 1.00f, 1.0f),
@@ -40,15 +39,7 @@ static ButtonPalette GetPalette(std::string type)
     return {};
 }
 
-// static bool ColoredButton(const char* label, std::string type) {
-//     ButtonPalette p = GetPalette(type);
-//     ImGui::PushStyleColor(ImGuiCol_Button,        p.base);
-//     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, p.hovered);
-//     ImGui::PushStyleColor(ImGuiCol_ButtonActive,  p.active);
-//     bool clicked = ImGui::Button(label, ImVec2(-FLT_MIN, 0.0f));
-//     ImGui::PopStyleColor(3);
-//     return clicked;
-// }
+
 
 struct AttrItem {
     ObjectId id;
@@ -205,8 +196,8 @@ struct RendererUI {
 struct PointRendererUI : RendererUI {
     PointRendererUI(PointRenderer &r) : r(r) {}
 
-    bool radius_input(PointRenderer &r);
-    
+    bool radius_input();
+
     void show_parameters(RendererUIMode mode) override;
     Renderer& renderer() override { return static_cast<Renderer&>(r); }
 
@@ -215,6 +206,8 @@ struct PointRendererUI : RendererUI {
 
 struct SegmentRendererUI : RendererUI {
     SegmentRendererUI(SegmentRenderer &r) : r(r) {}
+
+    bool line_width_input();
 
     void show_parameters(RendererUIMode mode) override;
     Renderer& renderer() override { return static_cast<Renderer&>(r); }

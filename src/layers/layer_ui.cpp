@@ -40,7 +40,7 @@ void RendererUI::texture_repeat_input() {
         renderer().texture_repeat = std::clamp(renderer().texture_repeat, 0, 1000000);
 }
 
-bool PointRendererUI::radius_input(PointRenderer &r) {
+bool PointRendererUI::radius_input() {
     return ImGui::InputInt("##point_size", &r.radius_in_pixel);
 }
 
@@ -49,8 +49,9 @@ void PointRendererUI::show_parameters(RendererUIMode mode) {
         PropertyTable("point_table_basic_parameter", {
             {"Style", [&] {
                 color_picker();
+                ImGui::SameLine();
                 ImGui::PushItemWidth(80);
-                radius_input(r);
+                radius_input();
                 ImGui::PopItemWidth();
             }}
         });
@@ -81,6 +82,12 @@ void TriangleRendererUI::show_parameters(RendererUIMode mode) {
     }
 }
 
+bool SegmentRendererUI::line_width_input() {
+    bool selected = ImGui::InputInt("##input_line_width", &r.line_width);
+    r.line_width = std::clamp(r.line_width, int(r.width_range[0]), int(r.width_range[1]));
+    return selected;
+}
+
 void SegmentRendererUI::show_parameters(RendererUIMode mode) {
     if (mode == RendererUIMode::BASIC) {
         PropertyTable("tri_table_basic_parameter", {
@@ -88,8 +95,7 @@ void SegmentRendererUI::show_parameters(RendererUIMode mode) {
                 color_picker();
                 ImGui::SameLine();
                 ImGui::PushItemWidth(80);
-                ImGui::InputInt("##input_width", &r.line_width);
-                r.line_width = std::clamp(r.line_width, int(r.width_range[0]), int(r.width_range[1]));
+                line_width_input();
                 ImGui::PopItemWidth();
                 ImGui::SameLine();
                 ImGui::SliderFloat("##slider_scale", &r.origin_scale, 0.4f, 1.0f, "%.3f", 0);
