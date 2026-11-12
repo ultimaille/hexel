@@ -157,237 +157,216 @@ bool LayerUI::render_type_combo(std::vector<std::tuple<std::string, int>> items)
     return has_selected;
 }
 
-void LayerUI::show_basic_parameters() {
+void LayerUI::show_parameters(LayerUIMode mode) {
+    renderer_ui.show_parameters(static_cast<RendererUI::RendererUIMode>(mode));
+
     if (PointSetLayer *pl = dynamic_cast<PointSetLayer*>(&l)) {
-        show_basic_parameters(*pl);
+        show_parameters(*pl, mode);
     } else if (PolyLineLayer *pl = dynamic_cast<PolyLineLayer*>(&l)) {
-        show_basic_parameters(*pl);
+        show_parameters(*pl, mode);
     } else if (TrianglesLayer *tl = dynamic_cast<TrianglesLayer*>(&l)) {
-        show_basic_parameters(*tl);
+        show_parameters(*tl, mode);
     } else if (HexahedraLayer *hl = dynamic_cast<HexahedraLayer*>(&l)) {
-        show_basic_parameters(*hl);
+        show_parameters(*hl, mode);
     } else {
         Log::error("Layer isn't supported by LayerUI");
     }
 }
 
-void BasicLayerUI::show_basic_parameters() {
-    renderer_ui.show_parameters(RendererUI::BASIC);
-    LayerUI::show_basic_parameters();
-}
+void LayerUI::show_parameters(PointSetLayer &l, LayerUIMode mode) {
+    if (mode == LayerUIMode::BASIC) {
+        PropertyTable("point_set_layer_table_basic_parameter", {
+            {"Mask value", [&] {
+                if (ImGui::Checkbox("##cb_mask_value", &l.mask)) l.update();
+                ImGui::SameLine();
+                if (l.mask) if (ImGui::InputInt("##input_mask_value", &l.skip_value)) { l.update(); }
+            }},
+        });
+    }
 
-void AdvancedLayerUI::show_basic_parameters() {
-    renderer_ui.show_parameters(RendererUI::ADVANCED);
-    LayerUI::show_basic_parameters();
-}
+    if (mode == LayerUIMode::ATTRIBUTE) {
+        std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
+            {"points", {{"ATTRIBUTE_SPHERE", PointSetLayer::RenderType::ATTRIBUTE_SPHERE}}
+        }};
 
-void BasicLayerUI::show_basic_parameters(PointSetLayer &l) {
-    PropertyTable("point_set_layer_table_basic_parameter", {
-        {"Mask value", [&] {
-            if (ImGui::Checkbox("##cb_mask_value", &l.mask)) l.update();
-            ImGui::SameLine();
-            if (l.mask) if (ImGui::InputInt("##input_mask_value", &l.skip_value)) { l.update(); }
-        }},
-    });
-}
-
-void BasicLayerUI::show_basic_parameters(PolyLineLayer &l) {
-
-}
-
-void BasicLayerUI::show_basic_parameters(TrianglesLayer &l) {
-    switch (static_cast<TrianglesLayer::RenderType>(l.render_type())) {
-        case TrianglesLayer::RenderType::CORNER_GLYPH: {
-            PropertyTable("point_set_layer_table_basic_parameter", {
-                {"Shrink", [&] {
-                    if (ImGui::SliderFloat("##slider_shrink", &l.shrink, 0.0f, .9f, "%.2f", 0)) l.reset();
-                }},
-                {"Corner size", [&] {
-                    if (ImGui::SliderFloat("##slider_corner_size", &l.corner_size, 0.1f, 1.f, "%.2f", 0)) l.reset();
-                }},
-            });
-            break;
-        }
+        PropertyTable("pointset_layer_table_attribute", {
+            {"Attribute", [&] {
+                attribute_combo<PointSetAttributes>(l.attr_id);
+            }},
+            {"Render type", [&] {
+                if (l.rt != PointSetLayer::RenderType::PLAIN) {
+                    int last_rt = static_cast<int>(l.rt);
+                    if (render_type_combo(render_types_by_attr_type[l.attr_primitive()])) {
+                        if (l.rt != last_rt)
+                            l.reset();
+                    }
+                }
+            }},
+            {"Colormap", [&] {
+                renderer_ui.colormap_combo();
+            }},
+            {"Data range", [&] { renderer_ui.data_range_input(); }},
+            {"Show range", [&] { 
+                renderer_ui.show_range_input(); 
+                ImGui::SameLine();
+                renderer_ui.auto_range_checkbox();
+            }},
+            {"Texture repeat", [&] { renderer_ui.texture_repeat_input(); }}
+        });
     }
 }
 
-void BasicLayerUI::show_basic_parameters(HexahedraLayer &l) {
-    PropertyTable("hexahedra_layer_table_basic_parameter", {
-        {"Shrink", [&] {
-            float prev_shrink = l.shrink;
-            ImGui::SliderFloat("##slider_shrink", &l.shrink, 0.0f, .9f, "%.2f", 0);
-            if (prev_shrink != l.shrink) l.reset();
-        }},
-    });
-}
-
-void AdvancedLayerUI::show_basic_parameters(PointSetLayer &l) {
-
-}
-
-void AdvancedLayerUI::show_basic_parameters(PolyLineLayer &l) {
-    
-}
-
-void AdvancedLayerUI::show_basic_parameters(TrianglesLayer &l) {
-
-}
-
-void AdvancedLayerUI::show_basic_parameters(HexahedraLayer &l) {
-    
-}
-
-void AttributeLayerUI::show_basic_parameters(PointSetLayer &l) {
-    std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
-        {"points", {{"ATTRIBUTE_SPHERE", PointSetLayer::RenderType::ATTRIBUTE_SPHERE}}
-    }};
-
-    PropertyTable("pointset_layer_table_attribute", {
-        {"Attribute", [&] {
-            attribute_combo<PointSetAttributes>(l.attr_id);
-        }},
-        {"Render type", [&] {
-            if (l.rt != PointSetLayer::RenderType::PLAIN) {
-                int last_rt = static_cast<int>(l.rt);
-                if (render_type_combo(render_types_by_attr_type[l.attr_primitive()])) {
-                    if (l.rt != last_rt)
-                        l.reset();
-                }
+void LayerUI::show_parameters(PolyLineLayer &l, LayerUIMode mode) {
+    if (mode == LayerUIMode::ATTRIBUTE) {
+        std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
+            {"points", {
+                {"POINT", PolyLineLayer::RenderType::POINT}, 
+                {"POINT_SPHERE", PolyLineLayer::RenderType::POINT_SPHERE}}
+            },
+            {"edges", {
+                {"EDGE", PolyLineLayer::RenderType::EDGE}, 
+                {"EDGE_REPEAT", PolyLineLayer::RenderType::EDGE_REPEAT}}
             }
-        }},
-        {"Colormap", [&] {
-            renderer_ui.colormap_combo();
-        }},
-        {"Data range", [&] { renderer_ui.data_range_input(); }},
-        {"Show range", [&] { 
-            renderer_ui.show_range_input(); 
-            ImGui::SameLine();
-            renderer_ui.auto_range_checkbox();
-        }},
-        {"Texture repeat", [&] { renderer_ui.texture_repeat_input(); }}
-    });
+        };
+
+        PropertyTable("polyline_layer_table_attribute", {
+            {"Attribute", [&] {
+                attribute_combo<PolyLineAttributes>(l.attr_id);
+            }},
+            {"Render type", [&] {
+                if (l.rt != PolyLineLayer::RenderType::PLAIN) {
+                    int last_rt = static_cast<int>(l.rt);
+                    if (render_type_combo(render_types_by_attr_type[l.attr_primitive()])) {
+                        if (l.rt != last_rt)
+                            l.reset();
+                    }
+                }
+            }},
+            {"Colormap", [&] {
+                renderer_ui.colormap_combo();
+            }},
+            {"Data range", [&] { renderer_ui.data_range_input(); }},
+            {"Show range", [&] { 
+                renderer_ui.show_range_input(); 
+                ImGui::SameLine();
+                renderer_ui.auto_range_checkbox();
+            }},
+            {"Texture repeat", [&] { renderer_ui.texture_repeat_input(); }}
+        });
+    }
 }
 
-void AttributeLayerUI::show_basic_parameters(PolyLineLayer &l) {
-    std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
-        {"points", {
-            {"POINT", PolyLineLayer::RenderType::POINT}, 
-            {"POINT_SPHERE", PolyLineLayer::RenderType::POINT_SPHERE}}
-        },
-        {"edges", {
-            {"EDGE", PolyLineLayer::RenderType::EDGE}, 
-            {"EDGE_REPEAT", PolyLineLayer::RenderType::EDGE_REPEAT}}
+void LayerUI::show_parameters(TrianglesLayer &l, LayerUIMode mode) {
+
+    if (mode == LayerUIMode::BASIC) {
+        switch (static_cast<TrianglesLayer::RenderType>(l.render_type())) {
+            case TrianglesLayer::RenderType::CORNER_GLYPH: {
+                PropertyTable("point_set_layer_table_basic_parameter", {
+                    {"Shrink", [&] {
+                        if (ImGui::SliderFloat("##slider_shrink", &l.shrink, 0.0f, .9f, "%.2f", 0)) l.reset();
+                    }},
+                    {"Corner size", [&] {
+                        if (ImGui::SliderFloat("##slider_corner_size", &l.corner_size, 0.1f, 1.f, "%.2f", 0)) l.reset();
+                    }},
+                });
+                break;
+            }
         }
-    };
+    }
+    if (mode == LayerUIMode::ATTRIBUTE) {
+        std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
+            {"points", {
+                {"POINT", TrianglesLayer::RenderType::POINT}, 
+                {"POINT_SPHERE", TrianglesLayer::RenderType::POINT_SPHERE}}
+            },
+            {"corners", {
+                {"CORNER", TrianglesLayer::RenderType::CORNER}, 
+                {"CORNER_GLYPH", TrianglesLayer::RenderType::CORNER_GLYPH}, 
+                {"HALFEDGE_GLYPH", TrianglesLayer::RenderType::HALFEDGE_GLYPH}}
+            },
+            {"facets", {
+                {"FACET", TrianglesLayer::RenderType::FACET}}
+            },
+        };
 
-    PropertyTable("polyline_layer_table_attribute", {
-        {"Attribute", [&] {
-            attribute_combo<PolyLineAttributes>(l.attr_id);
-        }},
-        {"Render type", [&] {
-            if (l.rt != PolyLineLayer::RenderType::PLAIN) {
-                int last_rt = static_cast<int>(l.rt);
-                if (render_type_combo(render_types_by_attr_type[l.attr_primitive()])) {
-                    if (l.rt != last_rt)
-                        l.reset();
+        PropertyTable("triangle_layer_table_attribute", {
+            {"Attribute", [&] {
+                attribute_combo<SurfaceAttributes>(l.attr_id);
+            }},
+            {"Render type", [&] {
+                if (l.rt != TrianglesLayer::RenderType::PLAIN) {
+                    int last_rt = static_cast<int>(l.rt);
+                    if (render_type_combo(render_types_by_attr_type[l.attr_primitive()])) {
+                        if (l.rt != last_rt)
+                            l.reset();
+                    }
                 }
-            }
-        }},
-        {"Colormap", [&] {
-            renderer_ui.colormap_combo();
-        }},
-        {"Data range", [&] { renderer_ui.data_range_input(); }},
-        {"Show range", [&] { 
-            renderer_ui.show_range_input(); 
-            ImGui::SameLine();
-            renderer_ui.auto_range_checkbox();
-        }},
-        {"Texture repeat", [&] { renderer_ui.texture_repeat_input(); }}
-    });
+            }},
+            {"Colormap", [&] {
+                renderer_ui.colormap_combo();
+            }},
+            {"Data range", [&] { renderer_ui.data_range_input(); }},
+            {"Show range", [&] { 
+                renderer_ui.show_range_input(); 
+                ImGui::SameLine();
+                renderer_ui.auto_range_checkbox();
+            }},
+            {"Texture repeat", [&] { renderer_ui.texture_repeat_input(); }}
+        });
+    }
 }
 
-void AttributeLayerUI::show_basic_parameters(TrianglesLayer &l) {
-    std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
-        {"points", {
-            {"POINT", TrianglesLayer::RenderType::POINT}, 
-            {"POINT_SPHERE", TrianglesLayer::RenderType::POINT_SPHERE}}
-        },
-        {"corners", {
-            {"CORNER", TrianglesLayer::RenderType::CORNER}, 
-            {"CORNER_GLYPH", TrianglesLayer::RenderType::CORNER_GLYPH}, 
-            {"HALFEDGE_GLYPH", TrianglesLayer::RenderType::HALFEDGE_GLYPH}}
-        },
-        {"facets", {
-            {"FACET", TrianglesLayer::RenderType::FACET}}
-        },
-    };
+void LayerUI::show_parameters(HexahedraLayer &l, LayerUIMode mode) {
 
-    PropertyTable("triangle_layer_table_attribute", {
-        {"Attribute", [&] {
-            attribute_combo<SurfaceAttributes>(l.attr_id);
-        }},
-        {"Render type", [&] {
-            if (l.rt != TrianglesLayer::RenderType::PLAIN) {
-                int last_rt = static_cast<int>(l.rt);
-                if (render_type_combo(render_types_by_attr_type[l.attr_primitive()])) {
-                    if (l.rt != last_rt)
-                        l.reset();
+    if (mode == LayerUIMode::BASIC) {
+        PropertyTable("hexahedra_layer_table_basic_parameter", {
+            {"Shrink", [&] {
+                float prev_shrink = l.shrink;
+                ImGui::SliderFloat("##slider_shrink", &l.shrink, 0.0f, .9f, "%.2f", 0);
+                if (prev_shrink != l.shrink) l.reset();
+            }},
+        });
+    }
+    if (mode == LayerUIMode::ATTRIBUTE) {
+        std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
+            {"points", {
+                {"POINT", HexahedraLayer::RenderType::POINT}, 
+                {"POINT_SPHERE", HexahedraLayer::RenderType::POINT_SPHERE}}
+            },
+            {"corners", {
+                {"CORNER", HexahedraLayer::RenderType::CORNER}, 
+                {"CORNER_GLYPH", HexahedraLayer::RenderType::CORNER_GLYPH}}
+            },
+            {"facets", {{"FACET", HexahedraLayer::RenderType::FACET}}},
+            {"cells", {{"CELL", HexahedraLayer::RenderType::CELL}}}
+        };
+
+        PropertyTable("hexahedra_layer_table_attribute", {
+            {"Attribute", [&] {
+                attribute_combo<VolumeAttributes>(l.attr_id);
+            }},
+            {"Render type", [&] {
+                if (l.rt != HexahedraLayer::RenderType::PLAIN) {
+                    int last_rt = static_cast<int>(l.rt);
+                    if (render_type_combo(render_types_by_attr_type[l.attr_primitive()])) {
+                        if (l.rt != last_rt)
+                            l.reset();
+                    }
                 }
-            }
-        }},
-        {"Colormap", [&] {
-            renderer_ui.colormap_combo();
-        }},
-        {"Data range", [&] { renderer_ui.data_range_input(); }},
-        {"Show range", [&] { 
-            renderer_ui.show_range_input(); 
-            ImGui::SameLine();
-            renderer_ui.auto_range_checkbox();
-        }},
-        {"Texture repeat", [&] { renderer_ui.texture_repeat_input(); }}
-    });
-}
-
-void AttributeLayerUI::show_basic_parameters(HexahedraLayer &l) {
-
-    std::map<std::string, std::vector<std::tuple<std::string, int>>> render_types_by_attr_type {
-        {"points", {
-            {"POINT", HexahedraLayer::RenderType::POINT}, 
-            {"POINT_SPHERE", HexahedraLayer::RenderType::POINT_SPHERE}}
-        },
-        {"corners", {
-            {"CORNER", HexahedraLayer::RenderType::CORNER}, 
-            {"CORNER_GLYPH", HexahedraLayer::RenderType::CORNER_GLYPH}}
-        },
-        {"facets", {{"FACET", HexahedraLayer::RenderType::FACET}}},
-        {"cells", {{"CELL", HexahedraLayer::RenderType::CELL}}}
-    };
-
-    PropertyTable("hexahedra_layer_table_attribute", {
-        {"Attribute", [&] {
-            attribute_combo<VolumeAttributes>(l.attr_id);
-        }},
-        {"Render type", [&] {
-            if (l.rt != HexahedraLayer::RenderType::PLAIN) {
-                int last_rt = static_cast<int>(l.rt);
-                if (render_type_combo(render_types_by_attr_type[l.attr_primitive()])) {
-                    if (l.rt != last_rt)
-                        l.reset();
-                }
-            }
-        }},
-        {"Colormap", [&] {
-            renderer_ui.colormap_combo();
-        }},
-        {"Data range", [&] { renderer_ui.data_range_input(); }},
-        {"Show range", [&] { 
-            renderer_ui.show_range_input(); 
-            ImGui::SameLine();
-            renderer_ui.auto_range_checkbox();
-            ImGui::SameLine();
-            
-        }},
-        {"Texture repeat", [&] { renderer_ui.texture_repeat_input(); }}
-    });
+            }},
+            {"Colormap", [&] {
+                renderer_ui.colormap_combo();
+            }},
+            {"Data range", [&] { renderer_ui.data_range_input(); }},
+            {"Show range", [&] { 
+                renderer_ui.show_range_input(); 
+                ImGui::SameLine();
+                renderer_ui.auto_range_checkbox();
+                ImGui::SameLine();
+                
+            }},
+            {"Texture repeat", [&] { renderer_ui.texture_repeat_input(); }}
+        });
+    }
 }
 

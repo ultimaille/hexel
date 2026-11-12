@@ -217,56 +217,24 @@ struct RendererUI {
 
 struct LayerUI {
 
-    LayerUI(Layer &l) : l(l) {}
+    enum LayerUIMode { BASIC, ADVANCED, ATTRIBUTE };
+
+    LayerUI(Layer &l) : l(l), renderer_ui(l.renderer()) {}
 
     template<class T>
     void attribute_combo(ObjectId attr_id);
     bool render_type_combo(std::vector<std::tuple<std::string, int>> items);
 
-    virtual void show_basic_parameters();
+    virtual void show_parameters(LayerUIMode mode);
 
     protected:
-    virtual void show_basic_parameters(PointSetLayer &l) = 0;
-    virtual void show_basic_parameters(PolyLineLayer &l) = 0;
-    virtual void show_basic_parameters(TrianglesLayer &l) = 0;
-    virtual void show_basic_parameters(HexahedraLayer &l) = 0;
+    void show_parameters(PointSetLayer &l, LayerUIMode mode);
+    void show_parameters(PolyLineLayer &l, LayerUIMode mode);
+    void show_parameters(TrianglesLayer &l, LayerUIMode mode);
+    void show_parameters(HexahedraLayer &l, LayerUIMode mode);
 
     protected:
     Layer &l;
-};
-
-struct BasicLayerUI : public LayerUI {
-
-    BasicLayerUI(Layer &l) : LayerUI(l), renderer_ui(l.renderer()) {}
-    void show_basic_parameters() override;
-    protected:
-    void show_basic_parameters(PointSetLayer &l) override;
-    void show_basic_parameters(PolyLineLayer &l) override;
-    void show_basic_parameters(TrianglesLayer &l) override;
-    void show_basic_parameters(HexahedraLayer &l) override;
     private:
-    RendererUI renderer_ui;
-};
-
-struct AdvancedLayerUI : public LayerUI {
-    AdvancedLayerUI(Layer &l) : LayerUI(l), renderer_ui(l.renderer()) {}
-    void show_basic_parameters() override;
-    protected:
-    void show_basic_parameters(PointSetLayer &l) override;
-    void show_basic_parameters(PolyLineLayer &l) override;
-    void show_basic_parameters(TrianglesLayer &l) override;
-    void show_basic_parameters(HexahedraLayer &l) override;
-    RendererUI renderer_ui;
-};
-
-struct AttributeLayerUI : public LayerUI {
-    AttributeLayerUI(Layer &l) : LayerUI(l), renderer_ui(l.renderer()) {}
-    using LayerUI::show_basic_parameters;
-    protected:
-    void show_basic_parameters(PointSetLayer &l) override;
-    void show_basic_parameters(PolyLineLayer &l) override;
-    void show_basic_parameters(TrianglesLayer &l) override;
-    void show_basic_parameters(HexahedraLayer &l) override;
-    
     RendererUI renderer_ui;
 };
