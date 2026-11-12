@@ -2,15 +2,11 @@
 #include <core/all.h>
 #include <algo/raster_iterator.h>
 
-struct HexModelerMode;
+struct HexModelerSubMode;
 
 struct MouseReactLayerSelection : public MouseReact {
-    MouseReactLayerSelection(HexModelerMode& mode):hexmode(mode) {}
-    //void init(MeshPath p_hex, MeshPath p_pl, MeshPath p_pts) { hex_id = p_hex; pl_id = p_pl; pts_id = p_pts; }
-    //MeshPath hex_id;
-    //MeshPath pl_id;
-    //MeshPath pts_id;
-    HexModelerMode &hexmode;
+    MouseReactLayerSelection(HexModelerSubMode& mode):hexmode(mode) {}
+    HexModelerSubMode &hexmode;
 
     void on_click(int button, vec2 p);
 };

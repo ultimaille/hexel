@@ -1,6 +1,18 @@
 #pragma once
 #include <ultimaille/all.h>
 
+// just to plop paths for debug 
+inline std::ostream& operator<<(std::ostream& os,const std::vector<std::string>& vec){
+    os << "[";
+    for (size_t i = 0; i < vec.size(); ++i){
+        if (i > 0)os << ", ";
+        os << vec[i];
+    }
+    os << "]";
+    return os;
+}
+
+
 #define FOR(i, n) for(int i = 0; i < (int) n; i++)
 #define plop(x) {std::cerr << "|plop|=>"<<" line:"<< __LINE__ <<"  "<< #x <<" : " <<x<< "     in  "<< __FILE__ <<std::endl;}
 

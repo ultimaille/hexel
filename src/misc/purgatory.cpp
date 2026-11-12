@@ -8,6 +8,17 @@ ObjectId grad_and_drop_objectid;
 
 
 
+void ImGui_help(const char* desc){
+    ImGui::SameLine();
+    ImGui::TextDisabled("(?)");
+    if (ImGui::BeginItemTooltip())
+    {
+        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+        ImGui::TextUnformatted(desc);
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+    }
+}
 bool FilePopup(const char* id, std::string in, std::string& out, std::vector<const char*> extensions) {
     static std::filesystem::path path, sel;
     static bool init = false;

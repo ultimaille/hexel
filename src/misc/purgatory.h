@@ -59,6 +59,8 @@ inline void show_object_id(ObjectId obj){
 }
 
 bool FilePopup(const char* id, std::string in, std::string& out, std::vector<const char*> extensions);
+void ImGui_help(const char* desc);
 using namespace events;
 void look_at_pointset(PointSet& ps);
 void load_mm_with_default_layers(std::string path);
+

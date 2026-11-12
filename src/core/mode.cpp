@@ -57,7 +57,9 @@ void Mode::handle(Event event){
     static vec2 pos_on_press[3];
 
     if (event.who == (ObjectId)root().mouse && !ImGui::GetIO().WantCaptureMouse) {
+        static int npixels_tolerance_to_detect_click = 5;
         const double wheel = God::mouse.wheel_speed;
+
         if (wheel != 0) for (auto& it : interactors) it->on_wheel(wheel);
         vec2 a = { God::mouse.previous.x, God::mouse.previous.y };
         vec2 b = { God::mouse.current.x,  God::mouse.current.y };
@@ -74,9 +76,8 @@ void Mode::handle(Event event){
         // send released and clicked event
         FOR(button, 3) if (!God::mouse.current.buttons[button] && God::mouse.previous.buttons[button]) {
             for (auto& it : interactors) it->on_release(button, b);
-            if ((b - pos_on_press[button]).norm2() == 0) {
+            if ((b - pos_on_press[button]).norm2() < npixels_tolerance_to_detect_click * npixels_tolerance_to_detect_click)
                 for (auto& it : interactors) it->on_click(button, b);
-            }
         }
     }
 
