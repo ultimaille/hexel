@@ -135,10 +135,10 @@
         }
 
         inline bool has_prefix(const Path& other) const {
-            return path.size() >= other.path.size() &&
+            return size() >= other.size() &&
                 std::ranges::equal(
                         other.path.begin(), other.path.end(),
-                        path.begin(), path.begin() + other.path.size()
+                        path.begin(), path.begin() + other.size()
                         );
         }
 
@@ -230,7 +230,9 @@
         MultiMeshPath parent() const;
     };
 
-    struct AttributePath : Path {};
+struct AttributePath : Path {
+    MeshPath parent() const;
+};
 
     struct MultiMeshPath : Path {
         struct AttributeCollection : Path {
@@ -354,10 +356,16 @@ inline Path::operator ObjectId() const {
 }
 
 inline MultiMeshPath MeshPath::parent() const {
-    um_assert(path.size() == 4);
-    um_assert(has_prefix(root().xcf));
+    um_assert(size() == 4 && has_prefix(root().xcf));
     return MultiMeshPath{
-        std::vector<std::string>{path[0], path[1]}
+        std::vector<std::string>(path.begin(), path.end() - 2)
+    };
+}
+
+inline MeshPath AttributePath::parent() const {
+    um_assert(size() == 6 && has_prefix(root().xcf));
+    return MeshPath{
+        std::vector<std::string>(path.begin(), path.end() - 2)
     };
 }
 
