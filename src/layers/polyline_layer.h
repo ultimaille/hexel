@@ -4,7 +4,7 @@
 
 
 struct PolyLineLayer : public Layer {
-    ObjectId attr_id;
+    AttributePath attr_id;
     enum RenderType {
         PLAIN,
         EDGE, EDGE_REPEAT,
@@ -16,11 +16,8 @@ struct PolyLineLayer : public Layer {
     int primitive_type();
 
     //attr_id.names = 0->mm_name, 1->hex_name, 2->attribute_type, 3->attribute_primitive, 4->attribute_name
-    inline bool attr_active()           { return attr_id.names.size() == 5; }// deso pour le jeu de mot
-    inline std::string attr_name()      { um_assert(attr_active()); return attr_id.names[4]; }
-    inline std::string attr_primitive() { um_assert(attr_active()); return attr_id.names[3]; }
-    inline std::string attr_type()      { um_assert(attr_active()); return attr_id.names[2]; }
-
+    inline bool attr_active()           { return (ContainerBase *)attr_id != nullptr; }// deso pour le jeu de mot
+ 
     SegmentRenderer edge_renderer;
     PointRenderer point_renderer;
 
@@ -28,13 +25,13 @@ struct PolyLineLayer : public Layer {
     void generate_gui(std::string name);
     void set_default_values() override;
     void reset();
-    void init(ObjectId obj);
+    void init(MeshPath obj);
     void render();
     void destroy();
-    void bind_attribute(ObjectId attr_id);
+    void bind_attribute(AttributePath attr_id);
 
 
-    template<class T>void update_typed();
+    template<class T> bool update_typed();
     void update();
 
     void prepare_data_without_attribute(PolyLine& pl, EdgeAttribute<bool>& visible_pl, PointAttribute<float>& value_pl, EdgeAttribute<int>& primitive_id);

@@ -227,6 +227,54 @@ template<class Collection> Path::ObjectPtr find_attribute_ptr(Collection& attrib
     return std::monostate{};
 }
 
+
+struct AttributeResolution {
+    AttributeBase::TYPE kind = AttributeBase::GENERIC;
+    Path::ObjectPtr ptr = std::monostate{};
+};
+
+template<class Attributes, class MeshAttrPath> AttributeResolution resolve_attribute(const Path& attribute_path, Attributes& attributes, const MeshAttrPath& mesh_path, const std::string& name) {
+    using TYPE = AttributeBase::TYPE;
+
+    if (attribute_path.has_prefix(mesh_path.attr_points))
+        return {TYPE::POINTS, find_attribute_ptr(attributes.points, name)};
+
+    if constexpr (requires { mesh_path.attr_edges; attributes.edges; }) {
+        if (attribute_path.has_prefix(mesh_path.attr_edges))
+            return {TYPE::EDGES, find_attribute_ptr(attributes.edges, name)};
+    }
+
+    if constexpr (requires { mesh_path.attr_cells; attributes.cells; }) {
+        if (attribute_path.has_prefix(mesh_path.attr_cells))
+            return {TYPE::CELLS, find_attribute_ptr(attributes.cells, name)};
+    }
+
+    if constexpr (requires { mesh_path.attr_facets; }) {
+        if (attribute_path.has_prefix(mesh_path.attr_facets)) {
+            if constexpr (requires { attributes.cell_facets; })
+                return {TYPE::CELLFACETS,
+                    find_attribute_ptr(attributes.cell_facets, name)};
+            else if constexpr (requires { attributes.facets; })
+                return {TYPE::FACETS,
+                    find_attribute_ptr(attributes.facets, name)};
+        }
+    }
+
+    if constexpr (requires { mesh_path.attr_corners; }) {
+        if (attribute_path.has_prefix(mesh_path.attr_corners)) {
+            if constexpr (requires { attributes.cell_corners; })
+                return {TYPE::CELLCORNERS,
+                    find_attribute_ptr(attributes.cell_corners, name)};
+            else if constexpr (requires { attributes.corners; })
+                return {TYPE::CORNERS,
+                    find_attribute_ptr(attributes.corners, name)};
+        }
+    }
+
+    return {};
+}
+
+
 Path::ObjectPtr Path::ptr() const {
     const RootPath r = root();
 
@@ -263,14 +311,9 @@ Path::ObjectPtr Path::ptr() const {
     if (*this == mm_path)
         return &mm;
 
-    // Pointset path and pointset attribute path:
     // xcf/<mm>/pointset
-    // xcf/<mm>/pointset/attr_points/<attribute>
     if (size() == 3 && *this == mm_path.pointset)
         return &mm; // TODO: no meshattr for pointsets, so I am forced to return multimesh instead
-
-    if (size() == 5 && has_prefix(mm_path.pointset.attr_points))
-        return find_attribute_ptr(mm.pointset_attributes.points, path[4]);
 
     // mesh paths:
     // xcf/<mm>/<mesh collection>/<mesh name>
@@ -295,6 +338,10 @@ Path::ObjectPtr Path::ptr() const {
         return std::monostate{};
     }
 
+    // xcf/<mm>/pointset/attr_points/<attribute>
+    if (size() == 5)
+        return resolve_attribute(*this, mm.pointset_attributes, mm_path.pointset, path[4]).ptr;
+
     // mesh attribute paths:
     // xcf/<mm>/<collection>/<mesh>/<attribute collection>/<attribute name>
     if (size() != 6)
@@ -305,55 +352,26 @@ Path::ObjectPtr Path::ptr() const {
         std::vector<std::string>(path.begin(), path.begin() + 4)
     };
     auto mesh_ptr = mesh_path.ptr();
-    const auto& mesh_name = path[3];
+    const auto& mesh_name = mesh_path.name();
 
-    if (auto slot = std::get_if<MultiMesh::MeshAttr<PolyLine, PolyLineAttributes>*>(&mesh_ptr)) {
-        auto& attributes = (*slot)->attributes;
-        const auto attr_path = mm_path.polylines[mesh_name];
-        if (has_prefix(attr_path.attr_points))
-            return find_attribute_ptr(attributes.points, path[5]);
-        if (has_prefix(attr_path.attr_edges))
-            return find_attribute_ptr(attributes.edges, path[5]);
-        return std::monostate{};
-    }
-
-    const auto resolve_surface_attribute = [&](SurfaceAttributes& attributes, const MultiMeshPath::Surfaces::Surface& mesh_attr_path) -> ObjectPtr {
-        if (has_prefix(mesh_attr_path.attr_points))
-            return find_attribute_ptr(attributes.points, path[5]);
-        if (has_prefix(mesh_attr_path.attr_facets))
-            return find_attribute_ptr(attributes.facets, path[5]);
-        if (has_prefix(mesh_attr_path.attr_corners))
-            return find_attribute_ptr(attributes.corners, path[5]);
-        return std::monostate{};
-    };
+    if (auto slot = std::get_if<MultiMesh::MeshAttr<PolyLine, PolyLineAttributes>*>(&mesh_ptr))
+        return resolve_attribute(*this, (*slot)->attributes, mm_path.polylines[mesh_name], path[5]).ptr;
 
     if (auto slot = std::get_if<MultiMesh::MeshAttr<Triangles, SurfaceAttributes>*>(&mesh_ptr))
-        return resolve_surface_attribute((*slot)->attributes, mm_path.triangles[mesh_name]);
+        return resolve_attribute(*this, (*slot)->attributes, mm_path.triangles[mesh_name], path[5]).ptr;
     if (auto slot = std::get_if<MultiMesh::MeshAttr<Quads, SurfaceAttributes>*>(&mesh_ptr))
-        return resolve_surface_attribute((*slot)->attributes, mm_path.quads[mesh_name]);
+        return resolve_attribute(*this, (*slot)->attributes, mm_path.triangles[mesh_name], path[5]).ptr;
     if (auto slot = std::get_if<MultiMesh::MeshAttr<Polygons, SurfaceAttributes>*>(&mesh_ptr))
-        return resolve_surface_attribute((*slot)->attributes, mm_path.polygons[mesh_name]);
-
-    const auto resolve_volume_attribute = [&](VolumeAttributes& attributes, const MultiMeshPath::Volumes::Volume& mesh_attr_path) -> ObjectPtr {
-        if (has_prefix(mesh_attr_path.attr_points))
-            return find_attribute_ptr(attributes.points, path[5]);
-        if (has_prefix(mesh_attr_path.attr_cells))
-            return find_attribute_ptr(attributes.cells, path[5]);
-        if (has_prefix(mesh_attr_path.attr_facets))
-            return find_attribute_ptr(attributes.cell_facets, path[5]);
-        if (has_prefix(mesh_attr_path.attr_corners))
-            return find_attribute_ptr(attributes.cell_corners, path[5]);
-        return std::monostate{};
-    };
+        return resolve_attribute(*this, (*slot)->attributes, mm_path.triangles[mesh_name], path[5]).ptr;
 
     if (auto slot = std::get_if<MultiMesh::MeshAttr<Tetrahedra, VolumeAttributes>*>(&mesh_ptr))
-        return resolve_volume_attribute((*slot)->attributes, mm_path.tetrahedra[mesh_name]);
+        return resolve_attribute(*this, (*slot)->attributes, mm_path.triangles[mesh_name], path[5]).ptr;
     if (auto slot = std::get_if<MultiMesh::MeshAttr<Hexahedra, VolumeAttributes>*>(&mesh_ptr))
-        return resolve_volume_attribute((*slot)->attributes, mm_path.hexahedra[mesh_name]);
+        return resolve_attribute(*this, (*slot)->attributes, mm_path.triangles[mesh_name], path[5]).ptr;
     if (auto slot = std::get_if<MultiMesh::MeshAttr<Wedges, VolumeAttributes>*>(&mesh_ptr))
-        return resolve_volume_attribute((*slot)->attributes, mm_path.wedges[mesh_name]);
+        return resolve_attribute(*this, (*slot)->attributes, mm_path.triangles[mesh_name], path[5]).ptr;
     if (auto slot = std::get_if<MultiMesh::MeshAttr<Pyramids, VolumeAttributes>*>(&mesh_ptr))
-        return resolve_volume_attribute((*slot)->attributes, mm_path.pyramids[mesh_name]);
+        return resolve_attribute(*this, (*slot)->attributes, mm_path.triangles[mesh_name], path[5]).ptr;
 
     return std::monostate{};
 }
@@ -481,6 +499,10 @@ Path::operator VolumeAttributes*() const {
     return nullptr;
 }
 
+Path::operator ContainerBase*() const {
+    return as<ContainerBase>();
+}
+
 Path::operator PointSet&() const {
     PointSet *ptr = *this;
     um_assert(ptr != nullptr);
@@ -513,6 +535,12 @@ Path::operator PolyLineAttributes&() const {
     return *attr;
 }
 
+Path::operator SurfaceAttributes&() const {
+    SurfaceAttributes *attr = *this;
+    um_assert(attr != nullptr);
+    return *attr;
+}
+
 Path::operator VolumeAttributes&() const {
     VolumeAttributes *attr = *this;
     um_assert(attr != nullptr);
@@ -523,5 +551,41 @@ Path::operator Hexahedra&() const {
     Hexahedra *ptr = *this;
     um_assert(ptr != nullptr);
     return *ptr;
+}
+
+
+AttributeBase::TYPE AttributePath::kind() const {
+    using TYPE = AttributeBase::TYPE;
+
+    if (size() != 5 || size() != 6)
+        return TYPE::GENERIC;
+
+    const MeshPath mesh = parent();
+    auto mesh_ptr = mesh.ptr();
+    const MultiMeshPath multimesh = mesh.parent();
+
+    if (size() == 5)
+        return resolve_attribute(*this, God::xcf[multimesh.name()].pointset_attributes, multimesh.pointset, name()).kind;
+
+    if (auto slot = std::get_if<MultiMesh::MeshAttr<PolyLine, PolyLineAttributes>*>(&mesh_ptr))
+        return resolve_attribute(*this, (*slot)->attributes, multimesh.polylines[mesh.name()], name()).kind;
+
+    if (auto slot = std::get_if<MultiMesh::MeshAttr<Triangles, SurfaceAttributes>*>(&mesh_ptr))
+        return resolve_attribute(*this, (*slot)->attributes, multimesh.triangles[mesh.name()], name()).kind;
+    if (auto slot = std::get_if<MultiMesh::MeshAttr<Quads, SurfaceAttributes>*>(&mesh_ptr))
+        return resolve_attribute(*this, (*slot)->attributes, multimesh.quads[mesh.name()], name()).kind;
+    if (auto slot = std::get_if<MultiMesh::MeshAttr<Polygons, SurfaceAttributes>*>(&mesh_ptr))
+        return resolve_attribute(*this, (*slot)->attributes, multimesh.polygons[mesh.name()], name()).kind;
+
+    if (auto slot = std::get_if<MultiMesh::MeshAttr<Tetrahedra, VolumeAttributes>*>(&mesh_ptr))
+        return resolve_attribute(*this, (*slot)->attributes, multimesh.tetrahedra[mesh.name()], name()).kind;
+    if (auto slot = std::get_if<MultiMesh::MeshAttr<Hexahedra, VolumeAttributes>*>(&mesh_ptr))
+        return resolve_attribute(*this, (*slot)->attributes, multimesh.hexahedra[mesh.name()], name()).kind;
+    if (auto slot = std::get_if<MultiMesh::MeshAttr<Wedges, VolumeAttributes>*>(&mesh_ptr))
+        return resolve_attribute(*this, (*slot)->attributes, multimesh.wedges[mesh.name()], name()).kind;
+    if (auto slot = std::get_if<MultiMesh::MeshAttr<Pyramids, VolumeAttributes>*>(&mesh_ptr))
+        return resolve_attribute(*this, (*slot)->attributes, multimesh.pyramids[mesh.name()], name()).kind;
+
+    return TYPE::GENERIC;
 }
 

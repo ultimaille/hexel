@@ -79,20 +79,20 @@ void load_mm_with_default_layers(std::string path) {
 
     {// point set
         PointSetLayer& layer = God::layers.add<PointSetLayer>(mm_name + "Pts", group);
-        layer.init(ObjectId(POINTSET, mm_name));
+        layer.init(root().xcf[mm_name].pointset);
         layer.set_default_values();
     }
     for (auto& elt : God::xcf[mm_name].polylines) {
         PolyLineLayer& layer = God::layers.add<PolyLineLayer>(mm_name + "Edges", group);
-        layer.init(ObjectId(POLYLINES, { mm_name, elt.first }));
+        layer.init(root().xcf[mm_name].polylines[elt.first]);
         layer.set_default_values();
     }
     for (auto& elt : God::xcf[mm_name].triangles) {
         TrianglesLayer& layer = God::layers.add<TrianglesLayer>(mm_name + "Tri", group);
-        layer.init(ObjectId(TRIANGLES, { mm_name, elt.first }));
+        layer.init(root().xcf[mm_name].triangles[elt.first]);
     }
     for (auto& elt : God::xcf[mm_name].hexahedra) {
         HexahedraLayer& layer = God::layers.add<HexahedraLayer>(mm_name + "Hex", group);
-        layer.init(ObjectId(HEXAHEDRA, { mm_name, elt.first }));
+        layer.init(root().xcf[mm_name].hexahedra[elt.first]);
     }
 }

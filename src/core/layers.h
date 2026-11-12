@@ -14,10 +14,10 @@ struct Layer {
     virtual void render_constant_color(int layerid);
     virtual void destroy();
 
-    virtual void bind_attribute(ObjectId attr_id){ Log::error("This layer does not support attribute binding."); }
+    virtual void bind_attribute(AttributePath attr_id){ Log::error("This layer does not support attribute binding."); }
 
     bool visible = true;
-    ObjectId mesh;
+    MeshPath mesh;
     virtual int primitive_type() { Log::error("This layer has no identified primtives"); return -1; } // number in the collections PointAttributes, PolyLineAttributes, SurfaceAttributes and VolumeAttributes
 
     static inline int max_id = 0;
