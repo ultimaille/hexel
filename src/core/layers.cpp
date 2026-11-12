@@ -39,13 +39,13 @@
         // manage lifecycle events (KILLED MESH)
         std::vector<std::string> to_kill;
         if (event.what_happened == events::KILLED) for (int i = 0; i < this->size(); i) {
-            if ((*this)[i].mesh==event.who)
+            if ((*this)[i].mesh==(Path)event.who)
                 kill(i);
             else i++;
         }
         if (event.what_happened == events::UPDATED)
             for (auto& shad : items)
-                if (shad.object->mesh==event.who)
+                if (shad.object->mesh==(Path)event.who)
                     shad.object->reset();
     }
 

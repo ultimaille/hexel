@@ -194,6 +194,8 @@
         operator Pyramids*() const;
         operator VolumeAttributes*() const;
 
+        operator ContainerBase*() const;
+
         operator MultiMesh&() const;
         operator PointSet&() const;
         operator PointSetAttributes&() const;
@@ -228,22 +230,28 @@
 
     struct MeshPath : Path {
         MultiMeshPath parent() const;
+        const std::string &name() const { return path.back(); }
     };
 
 struct AttributePath : Path {
     MeshPath parent() const;
+    AttributeBase::TYPE kind() const;
+    const std::string &name() const { return path.back(); }
+    const std::string &collection() const { return path[size()-2]; }
 };
 
-    struct MultiMeshPath : Path {
-        struct AttributeCollection : Path {
-            AttributePath operator[](std::string s) const {
-                return { concat(path, s) };
-            }
-        };
+struct MultiMeshPath : Path {
+    const std::string &name() const { return path.back(); }
 
-        struct PointSet : MeshPath {
-            AttributeCollection attr_points = { concat(path, "attr_points") };
-        } pointset = { concat(path, "pointset") };
+    struct AttributeCollection : Path {
+        AttributePath operator[](std::string s) const {
+            return { concat(path, s) };
+        }
+    };
+
+    struct PointSet : MeshPath {
+        AttributeCollection attr_points = { concat(path, "attr_points") };
+    } pointset = { concat(path, "pointset") };
 
     struct PolyLines : Path {
         struct PolyLine : MeshPath {

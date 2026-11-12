@@ -99,7 +99,7 @@ void HexModelerMode::reset_layers_options(){
         }
 
         PointAttribute<int> touch_lock("lock", God::xcf["geom"].pointset_attributes, God::xcf["geom"].pointset, 0);
-        God::layers["geomLock"].bind_attribute(ObjectId(ObjectType::POINTSET_ATTR, { "geom", "int","points","lock" }));
+        God::layers["geomLock"].bind_attribute(root().xcf["geom"].pointset.attr_points["lock"]);
         {
             auto& layer = static_cast<PointSetLayer&>(God::layers["geomLock"]);
             layer.point_renderer.radius_in_pixel = 7;
@@ -107,7 +107,7 @@ void HexModelerMode::reset_layers_options(){
             layer.mask = true;
         }
 
-        God::layers["geomEdges"].bind_attribute(ObjectId(ObjectType::POLYLINES_ATTR, { "geom", "","int","edges","feat_id" }));
+        God::layers["geomEdges"].bind_attribute(root().xcf["geom"].polylines[""].attr_edges["feat_id"]);
         auto& er = static_cast<PolyLineLayer&>(God::layers["geomEdges"]).edge_renderer;
     }
 
@@ -121,13 +121,13 @@ void HexModelerMode::reset_layers_options(){
         God::layers["meshEdges"].visible = true;
 
         PointAttribute<int> touch_lock("lock", God::xcf["mesh"].pointset_attributes, God::xcf["mesh"].pointset, 0);
-        God::layers["meshPts"].bind_attribute(ObjectId(ObjectType::POINTSET_ATTR, { "mesh", "int","points","lock" }));
+        God::layers["meshPts"].bind_attribute(root().xcf["mesh"].pointset.attr_points["lock"]);
         {
             auto& layer = static_cast<PointSetLayer&>(God::layers["meshPts"]);
             layer.point_renderer.radius_in_pixel = 10;
         }
 
-        God::layers["meshHex"].bind_attribute(ObjectId(ObjectType::HEXAHEDRA_ATTR, { "mesh", "","int","cells","block_id" }));
+        God::layers["meshHex"].bind_attribute(root().xcf["mesh"].hexahedra[""].attr_cells["block_id"]);
         //auto& pr = dynamic_cast<PolyLineLayer&> (God::layers["meshEdges"]).edge_renderer;        pr.color[0] = .5; pr.color[1] = .5; pr.color[2] = .7;
     }
 

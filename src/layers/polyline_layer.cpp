@@ -31,11 +31,11 @@ int PolyLineLayer::primitive_type(){
 
 void PolyLineLayer::generate_gui(std::string name){
     if (attr_active()){
-        std::string attrib_text = "ATTRIB: " + attr_primitive() + "." + attr_name() + " (" + attr_type() + ")";
+        std::string attrib_text = "ATTRIB: " + attr_id.collection() + "." + attr_id.name();// + " (" + attr_type() + ")";
         ImGui::TextUnformatted(attrib_text.c_str());
     }
 
-    if (attr_active() && attr_primitive() == "points"){
+    if (attr_active() && attr_id.kind() == AttributeBase::POINTS){
         bool tmp = (rt == RenderType::POINT_SPHERE);
         ImGui::Checkbox(label("Show vertices ", ""), &tmp);
         if ((rt == RenderType::POINT_SPHERE) != tmp) {
@@ -45,7 +45,7 @@ void PolyLineLayer::generate_gui(std::string name){
         }
     }
 
-    if (attr_active() && attr_primitive() == "edges"){
+    if (attr_active() && attr_id.kind() == AttributeBase::EDGES){
         bool tmp = (rt == RenderType::EDGE_REPEAT);
         ImGui::Checkbox(label("Show as repeat ", ""), &tmp);
         if ((rt == RenderType::EDGE_REPEAT) != tmp) {
@@ -77,7 +77,7 @@ template<class T>
 void PolyLineLayer::update_data_for_scalar_edge_attribute() {
     PolyLine& pl = mesh;
     PolyLineAttributes& attr = mesh;
-    EdgeAttribute<T> value_pl(attr_name(), attr, pl);
+    EdgeAttribute<T> value_pl(attr_id.name(), attr, pl);
     EdgeAttribute<bool> visible("visible", attr, pl, true);
     EdgeAttribute<int> primitive_id(pl);
     for (auto e : pl.iter_edges()) primitive_id[e] = e;
@@ -100,7 +100,7 @@ template<class T>
 void PolyLineLayer::update_data_for_scalar_edge_attribute_as_repeat() {
     PolyLine& pl = mesh;
     PolyLineAttributes& attr = mesh;
-    EdgeAttribute<T> value_pl(attr_name(), attr, pl);
+    EdgeAttribute<T> value_pl(attr_id.name(), attr, pl);
     EdgeAttribute<bool> visible("visible", attr, pl, true);
     EdgeAttribute<int> primitive_id(pl);
     for (auto e : pl.iter_edges()) primitive_id[e] = e;
@@ -127,7 +127,7 @@ void PolyLineLayer::update_data_for_scalar_point_attribute() {
 
     EdgeAttribute<bool> visible("visible", attr, pl, true);
     EdgeAttribute<int> primitive_id(pl);
-    PointAttribute<T> value(attr_name(), attr, pl);
+    PointAttribute<T> value(attr_id.name(), attr, pl);
     PointAttribute<float> value_float(pl);
     FOR(v, pl.nverts()) value_float[v] = value[v];
     for (auto e : pl.iter_edges())
@@ -139,7 +139,7 @@ template<class T> void PolyLineLayer::update_data_for_scalar_point_attribute_as_
     PolyLine& pl = mesh;
     PolyLineAttributes& attr = mesh;
     EdgeAttribute<bool> visible_pl("visible", attr, pl, true);
-    PointAttribute<T> value(attr_name(), attr, pl);
+    PointAttribute<T> value(attr_id.name(), attr, pl);
     PointAttribute<float> value_float(pl);
     FOR(v, pl.nverts()) value_float[v] = value[v];
     PointAttribute<bool> visible_pts(pl, false);
@@ -170,7 +170,11 @@ void PolyLineLayer::update_data_for_plain() {
 
 
 template<class T>
-void PolyLineLayer::update_typed(){
+bool PolyLineLayer::update_typed(){
+            auto ptr = dynamic_cast<const AttributeContainer<T>*>((ContainerBase *)attr_id);
+            if (ptr == nullptr)
+                return false;
+
     switch (rt) {
     case EDGE: {
         update_data_for_scalar_edge_attribute<T>();
@@ -189,23 +193,27 @@ void PolyLineLayer::update_typed(){
         break;
     }
     }
+    return true;
 }
 
 void PolyLineLayer::update(){
-    if (!attr_active() || rt == PLAIN) update_data_for_plain();
-    else if (attr_type() == "bool") update_typed<bool>();
-    else if (attr_type() == "char") update_typed<char>();
-    else if (attr_type() == "int") update_typed<int>();
-    else if (attr_type() == "float") update_typed<float>();
-    else if (attr_type() == "double") update_typed<double>();
-    else {
-        Log::add("Display attribute of type " + attr_type() + " isn't currently supported by PolyLineLayer");
-    }
+
+        if (!attr_active() || rt == PLAIN) {
+            update_data_for_plain();
+        } else {
+            bool success =
+                update_typed<bool>()  ||
+                update_typed<char>()  ||
+                update_typed<int>()   ||
+                update_typed<float>() ||
+                update_typed<double>();
+            if (!success)
+                Log::add("Display attribute of type that isn't currently supported by PolyLineLayer");
+        }
 }
 
 
 void PolyLineLayer::reset() {
-    um_assert(mesh.ref() != std::nullopt);
     PolyLine& pl = mesh;
     PolyLineAttributes& attr = mesh;
 
@@ -225,7 +233,7 @@ void PolyLineLayer::reset() {
     update();
 }
 
-void PolyLineLayer::init(ObjectId obj){
+void PolyLineLayer::init(MeshPath obj){
     mesh = obj;
     edge_renderer.init();
     point_renderer.init();
@@ -246,14 +254,14 @@ void PolyLineLayer::destroy() {
     point_renderer.destroy();
 }
 
-void PolyLineLayer::bind_attribute(ObjectId p_attr_id){
+void PolyLineLayer::bind_attribute(AttributePath p_attr_id){
     attr_id = p_attr_id;
     PolyLineAttributes& attr = mesh;
 
     if (attr_active()) {
-        if (attr_primitive() == "edges")
+        if (attr_id.kind() == AttributeBase::EDGES)
             rt = RenderType::EDGE;
-        else if (attr_primitive() == "points")
+        else if (attr_id.kind() == AttributeBase::POINTS)
             rt = RenderType::POINT;
     }
     else {

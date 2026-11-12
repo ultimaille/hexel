@@ -38,12 +38,12 @@ void InteractorFeedBack::activate(vec3 v){
 
     {// point set
         PointSetLayer& layer = God::layers.add<PointSetLayer>(mm_name + "Pts", group);
-        layer.init(ObjectId(POINTSET, mm_name));
+        layer.init(root().xcf[mm_name].pointset);
         layer.set_default_values();
     }
     for (auto& elt : God::xcf[mm_name].polylines) {
         PolyLineLayer& layer = God::layers.add<PolyLineLayer>(mm_name + "Edges", group);
-        layer.init(ObjectId(POLYLINES, { mm_name, elt.first }));
+        layer.init(root().xcf[mm_name].polylines[elt.first]);
         layer.set_default_values();
     }
 }

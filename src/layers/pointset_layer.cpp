@@ -39,14 +39,13 @@ void PointSetLayer::set_default_values() {
 
 int PointSetLayer::primitive_type(){ return 0; }
 
-void PointSetLayer::init(ObjectId obj){
+void PointSetLayer::init(MeshPath obj){
     mesh = obj;
     point_renderer.init();
     bind_attribute({});
 }
 
 void PointSetLayer::reset() {
-    um_assert(mesh.ref() != std::nullopt);
     PointSet& ps = mesh;
     PointSetAttributes& attr = mesh;
 
@@ -60,26 +59,34 @@ void PointSetLayer::reset() {
     update();
 }
 
-void PointSetLayer::update(){
-    if (!attr_active() || rt == PLAIN) update_data_for_plain();
-    else if (attr_type() == "bool") update_typed<bool>();
-    else if (attr_type() == "char") update_typed<char>();
-    else if (attr_type() == "int") update_typed<int>();
-    else if (attr_type() == "float") update_typed<float>();
-    else if (attr_type() == "double") update_typed<double>();
-    else {
-        Log::add("Display attribute of type " + attr_type() + " isn't currently supported by PointSetLayer");
+void PointSetLayer::update() {
+    if (!attr_active() || rt == PLAIN) {
+        update_data_for_plain();
+    } else {
+        bool success =
+            update_typed<bool>()  ||
+            update_typed<char>()  ||
+            update_typed<int>()   ||
+            update_typed<float>() ||
+            update_typed<double>();
+        if (!success)
+            Log::add("Display attribute of type that isn't currently supported by PointSetLayer");
     }
 }
 
 template<class T>
-void PointSetLayer::update_typed(){
+bool PointSetLayer::update_typed(){
+    auto ptr = dynamic_cast<const AttributeContainer<T>*>((ContainerBase *)attr_id);
+    if (ptr == nullptr)
+        return false;
+
     switch (rt) {
         case ATTRIBUTE_SPHERE: {
             update_data_for_scalar_point_attribute_as_sphere<T>();
             break;
         }
     }
+    return true;
 }
 
 void PointSetLayer::update_data_for_plain() {
@@ -105,7 +112,7 @@ void PointSetLayer::update_data_for_scalar_point_attribute_as_sphere() {
     PointSetAttributes &attr = mesh;
     PointAttribute<bool> visible_pts("visible", attr, ps, true);
     PointAttribute<int> primitive_id(ps, 0);
-    PointAttribute<T> value_pts(attr_name(), attr, ps);
+    PointAttribute<T> value_pts(attr_id.name(), attr, ps);
     PointAttribute<float> value_float(ps, 0);
 
     for (int v = 0; v < ps.size(); ++v) {
@@ -122,11 +129,11 @@ void PointSetLayer::update_data_for_scalar_point_attribute_as_sphere() {
 }
 
 // Note: partially the same as HexahedraLayer
-void PointSetLayer::bind_attribute(ObjectId p_attr_id){
+void PointSetLayer::bind_attribute(AttributePath p_attr_id){
     attr_id = p_attr_id;
 
     if (attr_active()) {
-        if (attr_primitive() == "points")
+        if (attr_id.kind() == AttributeBase::POINTS)
             rt = RenderType::ATTRIBUTE_SPHERE;
     } else {
         rt = PLAIN;
