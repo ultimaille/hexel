@@ -1,15 +1,14 @@
 #ifndef __OBJECTID_H__
 #define __OBJECTID_H__
 
-#include <optional>
+#include <ranges>
 #include <string>
+#include <type_traits>
 #include <variant>
 #include <vector>
-#include <algorithm>
-#include <ranges>
-#include <type_traits>
 
 #include "xcf.h"
+#include "event_type.h"
 #include <ultimaille/all.h>
 
 using namespace UM;
@@ -23,15 +22,9 @@ struct Layer;
 struct Path;
 struct Mode;
 
-namespace events {
-    enum EventType {
-        CREATED, KILLED, UPDATED
-    };
-}
-
 struct Path {
     std::vector<std::string> path;
-    void broadcast(events::EventType e) const;
+    void broadcast(EventTypes::EventType e) const;
 
     inline bool has_prefix(const Path& other) const {
         return size() >= other.size() &&
@@ -64,18 +57,8 @@ struct Path {
 
     operator PointSet*() const;
     operator PointSetAttributes*() const;
-
-//  operator PolyLine*() const;
     operator PolyLineAttributes*() const;
-//  operator Triangles*() const;
-//  operator Quads*() const;
-//  operator Polygons*() const;
     operator SurfaceAttributes*() const;
-
-//  operator Tetrahedra*() const;
-//  operator Hexahedra*() const;
-//  operator Wedges*() const;
-//  operator Pyramids*() const;
     operator VolumeAttributes*() const;
 
     template<typename T>
@@ -140,10 +123,12 @@ struct Path {
 
     int size() const { return static_cast<int>(path.size()); }
 
-    ObjectPtr ptr() const; // TODO move to protected?
     bool valid() const;
 
     protected:
+    friend struct AttributePath;
+
+    ObjectPtr ptr() const;
 
     template<typename T> T* as() const {
         ObjectPtr p = ptr();

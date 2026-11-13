@@ -1,6 +1,7 @@
 #include <ultimaille/all.h>
 #include "xcf.h"
 #include "core.h"
+#include "events.h"
 #include "camera.h"
 #include "picker.h"
 #include "render_target.h"
@@ -146,8 +147,6 @@ void MultiMesh::save_to_path(std::string filename, bool geogram_compatible){
 }
 
 
-using namespace events;
-
 void XCF::kill_mesh(MeshPath obj) {
     um_assert(obj.valid()); 
 
@@ -173,7 +172,7 @@ void XCF::kill_mesh(MeshPath obj) {
     }  else {
         um_assert(!"Something is missing");
     }
-    obj.broadcast(KILLED);
+    obj.broadcast(Event::KILLED);
 }
 
 void XCF::kill_multimesh(const std::string& mm_name) {
@@ -194,14 +193,14 @@ void XCF::kill_multimesh(const std::string& mm_name) {
     to_kill.clear();
 
     std::map<std::string, MultiMesh>::erase(mm_name);
-    mmpath.broadcast(KILLED);
-    mmpath.pointset.broadcast(KILLED);
+    mmpath.broadcast(Event::KILLED);
+    mmpath.pointset.broadcast(Event::KILLED);
 }
 
 
 
 MultiMesh& XCF::add(std::string str) {
-    root.xcf[str].broadcast(CREATED);
+    root.xcf[str].broadcast(Event::CREATED);
     return std::map<std::string, MultiMesh>::operator[](str);
 }
 
@@ -238,42 +237,42 @@ void XCF::add_mesh(MeshPath obj) {
     if (obj.has_prefix(mmpath.polylines)) {
         if (!mm.polylines.contains(mesh))
             mm.polylines.try_emplace(mesh); 
-        obj.broadcast(CREATED); 
+        obj.broadcast(Event::CREATED); 
         return;
     }  else if (obj.has_prefix(mmpath.triangles)) {
         if (!mm.triangles.contains(mesh))
             mm.triangles.try_emplace(mesh); 
-        obj.broadcast(CREATED); 
+        obj.broadcast(Event::CREATED); 
         return;
     }  else if (obj.has_prefix(mmpath.quads)) {
         if (!mm.quads.contains(mesh))
             mm.quads.try_emplace(mesh); 
-        obj.broadcast(CREATED); 
+        obj.broadcast(Event::CREATED); 
         return;
     }  else if (obj.has_prefix(mmpath.polygons)) {
         if (!mm.polygons.contains(mesh))
             mm.polygons.try_emplace(mesh); 
-        obj.broadcast(CREATED); 
+        obj.broadcast(Event::CREATED); 
         return;
     }  else if (obj.has_prefix(mmpath.tetrahedra)) {
         if (!mm.tetrahedra.contains(mesh))
             mm.tetrahedra.try_emplace(mesh); 
-        obj.broadcast(CREATED); 
+        obj.broadcast(Event::CREATED); 
         return;
     }  else if (obj.has_prefix(mmpath.hexahedra)) {
         if (!mm.hexahedra.contains(mesh))
             mm.hexahedra.try_emplace(mesh); 
-        obj.broadcast(CREATED); 
+        obj.broadcast(Event::CREATED); 
         return;
     }  else if (obj.has_prefix(mmpath.wedges)) {
         if (!mm.wedges.contains(mesh))
             mm.wedges.try_emplace(mesh); 
-        obj.broadcast(CREATED); 
+        obj.broadcast(Event::CREATED); 
         return;
     }  else if (obj.has_prefix(mmpath.pyramids)) {
         if (!mm.pyramids.contains(mesh))
             mm.pyramids.try_emplace(mesh); 
-        obj.broadcast(CREATED); 
+        obj.broadcast(Event::CREATED); 
         return;
     }  else {
         um_assert(!"Something is missing");

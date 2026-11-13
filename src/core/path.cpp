@@ -1,6 +1,6 @@
-#include "objectid.h"
+#include "path.h"
 
-#include "event.h"
+#include "events.h"
 #include "core.h"
 #include "camera.h"
 #include "picker.h"
@@ -12,9 +12,7 @@
 #include "shaders.h"
 #include "mode.h"
 
-using namespace events;
-
-void Path::broadcast(EventType e) const {
+void Path::broadcast(EventTypes::EventType e) const {
     God::events.queue.emplace_back(Event(*this, e));
 }
 
@@ -275,11 +273,10 @@ AttributeBase::TYPE AttributePath::kind() const {
     return TYPE::GENERIC;
 }
 
-
 MultiMeshPath MeshPath::parent() const {
     um_assert((size() == 3 || size() == 4) && has_prefix(root.xcf));
     return MultiMeshPath{
-        std::vector<std::string>(path.begin(), path.end() - 2 + (4-size())) // TODO 4-size() to account for pointset attributes?
+        std::vector<std::string>(path.begin(), path.begin() + 2)
     };
 }
 

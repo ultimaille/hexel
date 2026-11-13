@@ -1,4 +1,4 @@
-#include "event.h"
+#include "events.h"
 #include "core.h"
 #include "camera.h"
 #include "picker.h"
@@ -9,8 +9,6 @@
 #include "layers.h"
 #include "shaders.h"
 #include "mode.h"
-
-using namespace events;
 
 void EventManager::dispatch() {
     while (!queue.empty()) {

@@ -62,9 +62,9 @@ void HexModelerSubMode::update_hex(){
         visible_edge[e] = true;
 
 
-    hex_id().broadcast(EventType::UPDATED);
-    pl_id().broadcast(EventType::UPDATED);
-    pts_id().broadcast(EventType::UPDATED);
+    hex_id().broadcast(Event::UPDATED);
+    pl_id().broadcast(Event::UPDATED);
+    pts_id().broadcast(Event::UPDATED);
 }
 
 // manage camera + layer selection

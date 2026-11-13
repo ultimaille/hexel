@@ -19,8 +19,6 @@
 #include "layers/basic_layers.h"
 #include "layers/ssao.h"
 
-#include "core/objectid.h"
-
 #ifdef HAS_CONFIG
     #include "myconfig.h"
 #endif

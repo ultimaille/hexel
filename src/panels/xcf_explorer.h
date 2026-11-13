@@ -4,8 +4,6 @@
 #include <set>
 #include <core/panels.h>
 
-using namespace events;
-
 struct XCFExplorer : public Panel {
     typedef std::set<Path, std::function<bool(Path, Path)>> PathSet;
 
