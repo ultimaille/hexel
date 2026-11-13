@@ -364,14 +364,14 @@ inline Path::operator ObjectId() const {
 }
 
 inline MultiMeshPath MeshPath::parent() const {
-    um_assert(size() == 4 && has_prefix(root().xcf));
+    um_assert((size() == 3 || size() == 4) && has_prefix(root().xcf));
     return MultiMeshPath{
-        std::vector<std::string>(path.begin(), path.end() - 2)
+        std::vector<std::string>(path.begin(), path.end() - 2+(4-size()))
     };
 }
 
 inline MeshPath AttributePath::parent() const {
-    um_assert(size() == 6 && has_prefix(root().xcf));
+    um_assert((size() == 5 || size() == 6) && has_prefix(root().xcf));
     return MeshPath{
         std::vector<std::string>(path.begin(), path.end() - 2)
     };
