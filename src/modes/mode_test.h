@@ -141,8 +141,8 @@ struct HexEdit : public Mode{
                 CellFacetAttribute<int> flag("flag", attr, hex);
                 for (auto f : hex.iter_facets()) flag[f] = f%2;
 
-                MeshPath hex_id = root().xcf["hexski"].hexahedra[""];
-                AttributePath flag_id = root().xcf["hexski"].hexahedra[""].attr_facets["flag"];
+                MeshPath hex_id = root.xcf["hexski"].hexahedra[""];
+                AttributePath flag_id = root.xcf["hexski"].hexahedra[""].attr_facets["flag"];
 
 
                 // bind the attribute to the paint mouse action

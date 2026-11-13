@@ -14,7 +14,7 @@ struct LayerManager;
 struct PanelManager;
 struct WindowContext;
 struct ShaderManager;
-
+struct RootPath;
 
 
 namespace God {
@@ -30,3 +30,5 @@ namespace God {
     extern ShaderManager shaders;
 };
 
+
+extern RootPath root;

@@ -14,211 +14,9 @@
 
 using namespace events;
 
-void ObjectId::broadcast(EventType e) {
+void Path::broadcast(EventType e) const {
     God::events.queue.emplace_back(Event(*this, e));
 }
-
-std::optional<ObjectId::ObjectRef> ObjectId::ref() {
-    switch (path) {
-        case KEYBOARD:
-            return std::ref(God::keys);
-
-        case MOUSE:
-            return std::ref(God::mouse);
-
-        case CAMERA:
-            return std::ref(God::camera);
-
-        case PANEL:
-            if (names.size() != 1) return std::nullopt;
-            if (!God::panels.contains(names[0])) return std::nullopt;
-            return std::ref(God::panels[names[0]]);
-
-        case LAYER:
-            if (names.size() != 1) return std::nullopt;
-            if (!God::layers.contains(names[0])) return std::nullopt;
-            return std::ref(God::layers[names[0]]);
-
-        case MULTIMESH:
-        case POINTSET: {
-            if (names.size() != 1) return std::nullopt;
-            std::string mm = names[0];
-            if (!God::xcf.contains(mm)) return std::nullopt;
-            return std::ref(God::xcf[mm]);
-        }
-
-        case POLYLINES:
-        case TRIANGLES:
-        case QUADS:
-        case POLYGONS:
-        case TETRAHEDRA:
-        case HEXAHEDRA:
-        case WEDGES:
-        case PYRAMIDS: {
-            if (names.size() != 2) return std::nullopt;
-            std::string mm = names[0];
-            std::string m  = names[1];
-            if (!God::xcf.contains(mm)) return std::nullopt;
-
-            auto& multimesh = God::xcf[mm];
-
-            switch (path) {
-                case POLYLINES:
-                    if (!multimesh.polylines.contains(m)) return std::nullopt;
-                    return std::ref(multimesh.polylines[m]);
-                case TRIANGLES:
-                    if (!multimesh.triangles.contains(m)) return std::nullopt;
-                    return std::ref(multimesh.triangles[m]);
-                case QUADS:
-                    if (!multimesh.quads.contains(m)) return std::nullopt;
-                    return std::ref(multimesh.quads[m]);
-                case POLYGONS:
-                    if (!multimesh.polygons.contains(m)) return std::nullopt;
-                    return std::ref(multimesh.polygons[m]);
-                case TETRAHEDRA:
-                    if (!multimesh.tetrahedra.contains(m)) return std::nullopt;
-                    return std::ref(multimesh.tetrahedra[m]);
-                case HEXAHEDRA:
-                    if (!multimesh.hexahedra.contains(m)) return std::nullopt;
-                    return std::ref(multimesh.hexahedra[m]);
-                case WEDGES:
-                    if (!multimesh.wedges.contains(m)) return std::nullopt;
-                    return std::ref(multimesh.wedges[m]);
-                case PYRAMIDS:
-                    if (!multimesh.pyramids.contains(m)) return std::nullopt;
-                    return std::ref(multimesh.pyramids[m]);
-                default:
-                    um_assert(!"Something is missing here");
-            }
-        }
-
-        default:
-            return std::nullopt;
-    }
-    return std::nullopt;
-}
-
-
-/*
-ObjectId::operator KeyboardState& () {
-    return as<KeyboardState>();
-}
-
-ObjectId::operator MouseState& () {
-    return as<MouseState>();
-}
-
-ObjectId::operator TrackBallCamera& () {
-    return as<TrackBallCamera>();
-}
-*/
-
-ObjectId::operator Panel& () {
-    return as<Panel>();
-}
-
-ObjectId::operator Layer& () {
-    return as<Layer>();
-}
-
-ObjectId::operator MultiMesh&() {
-    return as<MultiMesh>();
-}
-
-ObjectId::operator PointSet&() {
-    return as<MultiMesh>().pointset;
-}
-
-ObjectId::operator PointSetAttributes&() {
-    return as<MultiMesh>().pointset_attributes;
-}
-
-ObjectId::operator PolyLine&() {
-    auto &ma = as<MultiMesh::MeshAttr<PolyLine, PolyLineAttributes>>();
-    return ma.mesh;
-}
-
-ObjectId::operator PolyLineAttributes&() {
-    auto &ma = as<MultiMesh::MeshAttr<PolyLine, PolyLineAttributes>>();
-    return ma.attributes;
-}
-
-ObjectId::operator Triangles&() {
-    auto &ma = as<MultiMesh::MeshAttr<Triangles, SurfaceAttributes>>();
-    return ma.mesh;
-}
-
-ObjectId::operator Quads&() {
-    auto &ma = as<MultiMesh::MeshAttr<Quads, SurfaceAttributes>>();
-    return ma.mesh;
-}
-
-ObjectId::operator Polygons&() {
-    auto &ma = as<MultiMesh::MeshAttr<Polygons, SurfaceAttributes>>();
-    return ma.mesh;
-}
-
-ObjectId::operator SurfaceAttributes&() {
-    switch (path) {
-        case TRIANGLES: return as<MultiMesh::MeshAttr<Triangles, SurfaceAttributes>>().attributes;
-        case QUADS:     return as<MultiMesh::MeshAttr<Quads,     SurfaceAttributes>>().attributes;
-        case POLYGONS:  return as<MultiMesh::MeshAttr<Polygons,  SurfaceAttributes>>().attributes;
-        default: um_assert(!"invalid cast");
-    }
-    static SurfaceAttributes dummy = {};
-    return dummy;
-}
-
-ObjectId::operator Tetrahedra&() {
-    auto &ma = as<MultiMesh::MeshAttr<Tetrahedra, VolumeAttributes>>();
-    return ma.mesh;
-}
-
-ObjectId::operator Hexahedra&() {
-    auto &ma = as<MultiMesh::MeshAttr<Hexahedra, VolumeAttributes>>();
-    return ma.mesh;
-}
-
-ObjectId::operator Wedges&() {
-    auto &ma = as<MultiMesh::MeshAttr<Wedges, VolumeAttributes>>();
-    return ma.mesh;
-}
-
-ObjectId::operator Pyramids&() {
-    auto &ma = as<MultiMesh::MeshAttr<Pyramids, VolumeAttributes>>();
-    return ma.mesh;
-}
-
-ObjectId::operator VolumeAttributes&() {
-    switch (path) {
-        case TETRAHEDRA: return as<MultiMesh::MeshAttr<Tetrahedra, VolumeAttributes>>().attributes;
-        case HEXAHEDRA:  return as<MultiMesh::MeshAttr<Hexahedra,  VolumeAttributes>>().attributes;
-        case WEDGES:     return as<MultiMesh::MeshAttr<Wedges,     VolumeAttributes>>().attributes;
-        case PYRAMIDS:   return as<MultiMesh::MeshAttr<Pyramids,   VolumeAttributes>>().attributes;
-        default: um_assert(!"invalid cast");
-    }
-    static VolumeAttributes dummy = {};
-    return dummy;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 template<class Collection> Path::ObjectPtr find_attribute_ptr(Collection& attributes, const std::string& name) {
     for (auto& attribute : attributes)
@@ -226,7 +24,6 @@ template<class Collection> Path::ObjectPtr find_attribute_ptr(Collection& attrib
             return static_cast<ContainerBase*>(&*attribute.ptr);
     return std::monostate{};
 }
-
 
 struct AttributeResolution {
     AttributeBase::TYPE kind = AttributeBase::GENERIC;
@@ -274,9 +71,8 @@ template<class Attributes, class MeshAttrPath> AttributeResolution resolve_attri
     return {};
 }
 
-
 Path::ObjectPtr Path::ptr() const {
-    const RootPath r = root();
+    const RootPath r = root; // TODO clean this
 
     // exact match for single-segment root paths
     if (*this == r.keys)    return &God::keys;
@@ -376,6 +172,16 @@ Path::ObjectPtr Path::ptr() const {
     return std::monostate{};
 }
 
+bool Path::valid() const {
+    return std::visit(
+        [](const auto val) -> bool {
+            if constexpr (std::is_same_v<std::decay_t<decltype(val)>, std::monostate>)
+                return false; // it is monostate
+            else
+                return val != nullptr; // check if the held pointer is non-null
+            }, ptr()
+            );
+}
 
 Path::operator KeyboardState*() const {
     return as<KeyboardState>();
@@ -503,12 +309,23 @@ Path::operator ContainerBase*() const {
     return as<ContainerBase>();
 }
 
+Path::operator Panel&() const {
+    Panel *ptr = *this;
+    um_assert(ptr != nullptr);
+    return *ptr;
+}
+
+Path::operator Layer&() const {
+    Layer *ptr = *this;
+    um_assert(ptr != nullptr);
+    return *ptr;
+}
+
 Path::operator PointSet&() const {
     PointSet *ptr = *this;
     um_assert(ptr != nullptr);
     return *ptr;
 }
-
 
 Path::operator PolyLine&() const {
     PolyLine *ptr = *this;
@@ -547,12 +364,17 @@ Path::operator VolumeAttributes&() const {
     return *attr;
 }
 
+Path::operator MultiMesh&() const {
+    MultiMesh *ptr = *this;
+    um_assert(ptr != nullptr);
+    return *ptr;
+}
+
 Path::operator Hexahedra&() const {
     Hexahedra *ptr = *this;
     um_assert(ptr != nullptr);
     return *ptr;
 }
-
 
 AttributeBase::TYPE AttributePath::kind() const {
     using TYPE = AttributeBase::TYPE;
@@ -587,5 +409,20 @@ AttributeBase::TYPE AttributePath::kind() const {
         return resolve_attribute(*this, (*slot)->attributes, multimesh.pyramids[mesh.name()], name()).kind;
 
     return TYPE::GENERIC;
+}
+
+
+MultiMeshPath MeshPath::parent() const {
+    um_assert((size() == 3 || size() == 4) && has_prefix(root.xcf));
+    return MultiMeshPath{
+        std::vector<std::string>(path.begin(), path.end() - 2 + (4-size())) // TODO 4-size() to account for pointset attributes?
+    };
+}
+
+MeshPath AttributePath::parent() const {
+    um_assert((size() == 5 || size() == 6) && has_prefix(root.xcf));
+    return MeshPath{
+        std::vector<std::string>(path.begin(), path.end() - 2)
+    };
 }
 

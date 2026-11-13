@@ -20,12 +20,12 @@
 HexModelerSubMode::HexModelerSubMode(HexModelerMode& mode) :layer_selection_react(*this), mode(mode){}
 
 // access to xcf objects
-MeshPath HexModelerSubMode::hex_id(){ return root().xcf["mesh"].hexahedra[""]; }
-MeshPath HexModelerSubMode::pl_id(){ return  root().xcf["mesh"].polylines[""]; };
-PointSetPath HexModelerSubMode::pts_id(){ return root().xcf["mesh"].pointset; };
-MeshPath HexModelerSubMode::geom_tri_id(){ return  root().xcf["geom"].triangles[""]; }
-MeshPath HexModelerSubMode::geom_edge_id(){ return  root().xcf["geom"].polylines[""]; }
-PointSetPath HexModelerSubMode::geom_pts_id(){ return  root().xcf["geom"].pointset; }
+MeshPath HexModelerSubMode::hex_id(){ return root.xcf["mesh"].hexahedra[""]; }
+MeshPath HexModelerSubMode::pl_id(){ return  root.xcf["mesh"].polylines[""]; };
+PointSetPath HexModelerSubMode::pts_id(){ return root.xcf["mesh"].pointset; };
+MeshPath HexModelerSubMode::geom_tri_id(){ return  root.xcf["geom"].triangles[""]; }
+MeshPath HexModelerSubMode::geom_edge_id(){ return  root.xcf["geom"].polylines[""]; }
+PointSetPath HexModelerSubMode::geom_pts_id(){ return  root.xcf["geom"].pointset; }
 
 
 // update coherence constraints
@@ -133,7 +133,7 @@ void HexModelerSubMode::reset_layers_options(){
 
         {// geom features are rendered by ids 
             God::layers["geomEdges"].visible = true;
-            God::layers["geomEdges"].bind_attribute(root().xcf["geom"].polylines[""].attr_edges["feat_id"]);
+            God::layers["geomEdges"].bind_attribute(root.xcf["geom"].polylines[""].attr_edges["feat_id"]);
             auto& er = static_cast<PolyLineLayer&>(God::layers["geomEdges"]).edge_renderer;
         }
 
@@ -145,7 +145,7 @@ void HexModelerSubMode::reset_layers_options(){
             }
 
             PointAttribute<int> touch_lock("lock", God::xcf["geom"].pointset_attributes, God::xcf["geom"].pointset, 0);
-            God::layers["geomLock"].bind_attribute(root().xcf["geom"].pointset.attr_points["lock"]);
+            God::layers["geomLock"].bind_attribute(root.xcf["geom"].pointset.attr_points["lock"]);
 
             {
                 auto& layer = static_cast<PointSetLayer&>(God::layers["geomLock"]);
@@ -161,7 +161,7 @@ void HexModelerSubMode::reset_layers_options(){
         {// hex points are shown with their lock attribute
             God::layers["meshPts"].visible = true;
             PointAttribute<int> touch_lock("lock", God::xcf["mesh"].pointset_attributes, God::xcf["mesh"].pointset, 0);
-            God::layers["meshPts"].bind_attribute(root().xcf["mesh"].pointset.attr_points["lock"]);
+            God::layers["meshPts"].bind_attribute(root.xcf["mesh"].pointset.attr_points["lock"]);
             {
                 auto& layer = static_cast<PointSetLayer&>(God::layers["meshPts"]);
                 layer.point_renderer.radius_in_pixel = 10;
@@ -170,7 +170,7 @@ void HexModelerSubMode::reset_layers_options(){
 
         {// hexahedra arr shown with their block id
             God::layers["meshHex"].visible = true;
-            God::layers["meshHex"].bind_attribute(root().xcf["mesh"].hexahedra[""].attr_cells["block_id"]);
+            God::layers["meshHex"].bind_attribute(root.xcf["mesh"].hexahedra[""].attr_cells["block_id"]);
         }
 
         {// mesh edges are rendered with plain style
@@ -193,11 +193,10 @@ void HexModelerSubMode::reset_xcf(){
     God::events.dispatch();
 }
 void HexModelerSubMode::save_project(std::string directory){
-    MultiMesh& geommm = ObjectId(MULTIMESH, "geom");
+    MultiMesh& geommm = root.xcf["geom"];
     geommm.save_to_path(directory + "geom", true);
-    MultiMesh& meshmm = ObjectId(MULTIMESH, "mesh");
+    MultiMesh& meshmm = root.xcf["mesh"];
     meshmm.save_to_path(directory + "mesh", true);
-
 }
 
 void HexModelerSubMode::load_project(std::string directory){

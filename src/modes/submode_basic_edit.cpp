@@ -103,18 +103,18 @@ void InteractorFeedBack::activate(vec3 v){
 
     {// point set
         PointSetLayer& layer = God::layers.add<PointSetLayer>(mm_name + "Pts", group);
-        layer.init(root().xcf[mm_name].pointset);
+        layer.init(root.xcf[mm_name].pointset);
         layer.set_default_values();
     }
     for (auto& elt : God::xcf[mm_name].polylines) {
         PolyLineLayer& layer = God::layers.add<PolyLineLayer>(mm_name + "Edges", group);
-        layer.init(root().xcf[mm_name].polylines[elt.first]);
+        layer.init(root.xcf[mm_name].polylines[elt.first]);
         layer.set_default_values();
     }
 }
 void InteractorFeedBack::add_point(vec3 v){
-    ObjectId mm_id(events::MULTIMESH, "feedback");
-    if (!mm_id.ref().has_value()) activate(v);
+    MultiMeshPath mm_id = root.xcf["feedback"];
+    if (!mm_id.valid()) activate(v);
     MultiMesh& mm = God::xcf["feedback"];
     int nv = mm.pointset.create_points(1);
     mm.pointset[nv] = v;
@@ -126,21 +126,21 @@ void InteractorFeedBack::add_point(vec3 v){
         pl.connect();
     }
     
-    ObjectId(events::POINTSET, "feedback").broadcast(UPDATED);
-    ObjectId(events::POLYLINES, std::vector<std::string>{ "feedback",""}).broadcast(UPDATED);
+    root.xcf["feedback"].pointset.broadcast(UPDATED);
+    root.xcf["feedback"].polylines[""].broadcast(UPDATED);
 }
 
 void InteractorFeedBack::pop_point(){
-    ObjectId mm_id(events::MULTIMESH, "feedback");
-    if (!mm_id.ref().has_value()) return;
-    MultiMesh& mm = God::xcf["feedback"];
+    MultiMeshPath mm_id = root.xcf["feedback"];
+    if (!mm_id.valid()) return;  
+    MultiMesh& mm = mm_id;
     {
         PolyLine& pl = mm.polylines[""].mesh;
         if (pl.nedges() != 0){
             std::vector<bool> to_kill(pl.nedges(), false);
             to_kill[pl.nedges() - 1] = true;
             pl.delete_edges(to_kill);
-            ObjectId(events::POLYLINES, std::vector<std::string>{ "feedback", ""}).broadcast(UPDATED);
+            mm_id.polylines[""].broadcast(UPDATED);
         }
     }
     {
@@ -149,7 +149,7 @@ void InteractorFeedBack::pop_point(){
             std::vector<bool> to_kill(pts.size(), false);
             to_kill[pts.size() - 1] = true;
             pts.delete_points(to_kill);
-            ObjectId(events::POINTSET, "feedback").broadcast(UPDATED);
+            mm_id.pointset.broadcast(UPDATED);
         }
     }
 }
@@ -174,7 +174,7 @@ void InteractorCreateHex::reset(){
 }
 void InteractorCreateHex::handle(Event event){
     if (!key_state_is_OK()) return;
-    if (Path(event.who) == root().xcf["mesh"].hexahedra[""] && event.what_happened == events::UPDATED) reset();
+    if (event.who == root.xcf["mesh"].hexahedra[""] && event.what_happened == events::UPDATED) reset();
     Interactor::handle(event);
 }
 void InteractorCreateHex::on_click(int button, vec2 p) {
@@ -211,7 +211,7 @@ void InteractorCreateHex::on_click(int button, vec2 p) {
         }
     }
 
-    MultiMesh &mm =ObjectId(events::MULTIMESH, "mesh");
+    MultiMesh &mm = God::xcf["mesh"];
     CellAttribute<int> block_id("block_id", mm.hexahedra[""].attributes, mm.hexahedra[""].mesh);
 
 

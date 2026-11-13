@@ -4,7 +4,7 @@
 #include <string>
 #include <core/all.h>
 #include <layers/basic_layers.h>
-ObjectId grad_and_drop_objectid;
+Path grad_and_drop_objectid;
 
 
 
@@ -73,26 +73,26 @@ void load_mm_with_default_layers(std::string path) {
     // TODO rename to mm_name
     auto mm_name = God::xcf.load_multimesh(path, true);
 
-    look_at_pointset(ObjectId(POINTSET, mm_name));
+    look_at_pointset(root.xcf[mm_name].pointset);
 
     int group = God::layers.add_group(mm_name);
 
     {// point set
         PointSetLayer& layer = God::layers.add<PointSetLayer>(mm_name + "Pts", group);
-        layer.init(root().xcf[mm_name].pointset);
+        layer.init(root.xcf[mm_name].pointset);
         layer.set_default_values();
     }
     for (auto& elt : God::xcf[mm_name].polylines) {
         PolyLineLayer& layer = God::layers.add<PolyLineLayer>(mm_name + "Edges", group);
-        layer.init(root().xcf[mm_name].polylines[elt.first]);
+        layer.init(root.xcf[mm_name].polylines[elt.first]);
         layer.set_default_values();
     }
     for (auto& elt : God::xcf[mm_name].triangles) {
         TrianglesLayer& layer = God::layers.add<TrianglesLayer>(mm_name + "Tri", group);
-        layer.init(root().xcf[mm_name].triangles[elt.first]);
+        layer.init(root.xcf[mm_name].triangles[elt.first]);
     }
     for (auto& elt : God::xcf[mm_name].hexahedra) {
         HexahedraLayer& layer = God::layers.add<HexahedraLayer>(mm_name + "Hex", group);
-        layer.init(root().xcf[mm_name].hexahedra[elt.first]);
+        layer.init(root.xcf[mm_name].hexahedra[elt.first]);
     }
 }
