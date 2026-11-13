@@ -62,51 +62,81 @@ struct Path {
         ContainerBase*
             >;
 
-
-    operator KeyboardState*() const;
-    operator MouseState*() const;
-    operator TrackBallCamera*() const;
-    operator WindowContext*() const;
-    operator Mode*() const;
-    operator Panel*() const;
-    operator Layer*() const;
-
-    operator MultiMesh*() const;
     operator PointSet*() const;
     operator PointSetAttributes*() const;
 
-    operator PolyLine*() const;
+//  operator PolyLine*() const;
     operator PolyLineAttributes*() const;
-    operator Triangles*() const;
-    operator Quads*() const;
-    operator Polygons*() const;
+//  operator Triangles*() const;
+//  operator Quads*() const;
+//  operator Polygons*() const;
     operator SurfaceAttributes*() const;
 
-    operator Tetrahedra*() const;
-    operator Hexahedra*() const;
-    operator Wedges*() const;
-    operator Pyramids*() const;
+//  operator Tetrahedra*() const;
+//  operator Hexahedra*() const;
+//  operator Wedges*() const;
+//  operator Pyramids*() const;
     operator VolumeAttributes*() const;
 
-    operator ContainerBase*() const;
+    template<typename T>
+        requires (
+                std::is_same_v<T, PolyLine> ||
+                std::is_same_v<T, Triangles> ||
+                std::is_same_v<T, Quads> ||
+                std::is_same_v<T, Polygons> ||
+                std::is_same_v<T, Tetrahedra> ||
+                std::is_same_v<T, Hexahedra> ||
+                std::is_same_v<T, Wedges> ||
+                std::is_same_v<T, Pyramids>
+                )
+        operator T*() const {
+            using Attributes = decltype(empty_attr(std::declval<const T&>()));
+            auto* attr = as<MultiMesh::MeshAttr<T, Attributes>>();
+            return attr ? &attr->mesh : nullptr;
+        }
 
-    operator Panel&() const;
-    operator Layer&() const;
+    template<typename T>
+        requires (
+                std::is_same_v<T, KeyboardState> ||
+                std::is_same_v<T, MouseState> ||
+                std::is_same_v<T, TrackBallCamera> ||
+                std::is_same_v<T, WindowContext> ||
+                std::is_same_v<T, Mode> ||
+                std::is_same_v<T, Panel> ||
+                std::is_same_v<T, Layer> ||
+                std::is_same_v<T, MultiMesh> ||
+                std::is_same_v<T, ContainerBase>
+                )
+        operator T*() const {
+            return as<T>();
+        }
 
-    operator MultiMesh&() const;
-    operator PointSet&() const;
-    operator PointSetAttributes&() const;
-    operator PolyLine&() const;
-    operator PolyLineAttributes&() const;
-    operator Triangles&() const;
-    operator Quads&() const;
-    operator Polygons&() const;
-    operator SurfaceAttributes&() const;
-    operator Tetrahedra&() const;
-    operator Hexahedra&() const;
-    operator Wedges&() const;
-    operator Pyramids&() const;
-    operator VolumeAttributes&() const;
+    template<typename T>
+        requires (
+                std::is_same_v<T, WindowContext> ||
+                std::is_same_v<T, Mode> ||
+                std::is_same_v<T, Panel> ||
+                std::is_same_v<T, Layer> ||
+                std::is_same_v<T, MultiMesh> ||
+                std::is_same_v<T, PointSet> ||
+                std::is_same_v<T, PointSetAttributes> ||
+                std::is_same_v<T, PolyLine> ||
+                std::is_same_v<T, PolyLineAttributes> ||
+                std::is_same_v<T, Triangles> ||
+                std::is_same_v<T, Quads> ||
+                std::is_same_v<T, Polygons> ||
+                std::is_same_v<T, SurfaceAttributes> ||
+                std::is_same_v<T, Tetrahedra> ||
+                std::is_same_v<T, Hexahedra> ||
+                std::is_same_v<T, Wedges> ||
+                std::is_same_v<T, Pyramids> ||
+                std::is_same_v<T, VolumeAttributes>
+                )
+        operator T&() const {
+            T* object = *this;
+            um_assert(object != nullptr);
+            return *object;
+        }
 
     int size() const { return static_cast<int>(path.size()); }
 

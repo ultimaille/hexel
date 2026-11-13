@@ -183,31 +183,6 @@ bool Path::valid() const {
             );
 }
 
-Path::operator KeyboardState*() const {
-    return as<KeyboardState>();
-}
-
-
-Path::operator MouseState*() const {
-    return as<MouseState>();
-}
-
-Path::operator TrackBallCamera*() const {
-    return as<TrackBallCamera>();
-}
-
-Path::operator Panel*() const {
-    return as<Panel>();
-}
-
-Path::operator Layer*() const {
-    return as<Layer>();
-}
-
-Path::operator MultiMesh*() const {
-    return as<MultiMesh>();
-}
-
 Path::operator PointSet*() const {
     auto* mm = as<MultiMesh>();
     return mm ? &mm->pointset : nullptr;
@@ -218,29 +193,9 @@ Path::operator PointSetAttributes*() const {
     return mm ? &mm->pointset_attributes : nullptr;
 }
 
-Path::operator PolyLine*() const {
-    auto* attr = as<MultiMesh::MeshAttr<PolyLine, PolyLineAttributes>>();
-    return attr ? &attr->mesh : nullptr;
-}
-
 Path::operator PolyLineAttributes*() const {
     auto* attr = as<MultiMesh::MeshAttr<PolyLine, PolyLineAttributes>>();
     return attr ? &attr->attributes : nullptr;
-}
-
-Path::operator Triangles*() const {
-    auto* attr = as<MultiMesh::MeshAttr<Triangles, SurfaceAttributes>>();
-    return attr ? &attr->mesh : nullptr;
-}
-
-Path::operator Quads*() const {
-    auto* attr = as<MultiMesh::MeshAttr<Quads, SurfaceAttributes>>();
-    return attr ? &attr->mesh : nullptr;
-}
-
-Path::operator Polygons*() const {
-    auto* attr = as<MultiMesh::MeshAttr<Polygons, SurfaceAttributes>>();
-    return attr ? &attr->mesh : nullptr;
 }
 
 Path::operator SurfaceAttributes*() const {
@@ -260,26 +215,6 @@ Path::operator SurfaceAttributes*() const {
     }
 
     return nullptr;
-}
-
-Path::operator Tetrahedra*() const {
-    auto* attr = as<MultiMesh::MeshAttr<Tetrahedra, VolumeAttributes>>();
-    return attr ? &attr->mesh : nullptr;
-}
-
-Path::operator Hexahedra*() const {
-    auto* attr = as<MultiMesh::MeshAttr<Hexahedra, VolumeAttributes>>();
-    return attr ? &attr->mesh : nullptr;
-}
-
-Path::operator Wedges*() const {
-    auto* attr = as<MultiMesh::MeshAttr<Wedges, VolumeAttributes>>();
-    return attr ? &attr->mesh : nullptr;
-}
-
-Path::operator Pyramids*() const {
-    auto* attr = as<MultiMesh::MeshAttr<Pyramids, VolumeAttributes>>();
-    return attr ? &attr->mesh : nullptr;
 }
 
 Path::operator VolumeAttributes*() const {
@@ -303,77 +238,6 @@ Path::operator VolumeAttributes*() const {
     }
 
     return nullptr;
-}
-
-Path::operator ContainerBase*() const {
-    return as<ContainerBase>();
-}
-
-Path::operator Panel&() const {
-    Panel *ptr = *this;
-    um_assert(ptr != nullptr);
-    return *ptr;
-}
-
-Path::operator Layer&() const {
-    Layer *ptr = *this;
-    um_assert(ptr != nullptr);
-    return *ptr;
-}
-
-Path::operator PointSet&() const {
-    PointSet *ptr = *this;
-    um_assert(ptr != nullptr);
-    return *ptr;
-}
-
-Path::operator PolyLine&() const {
-    PolyLine *ptr = *this;
-    um_assert(ptr != nullptr);
-    return *ptr;
-}
-
-Path::operator Triangles&() const {
-    Triangles *ptr = *this;
-    um_assert(ptr != nullptr);
-    return *ptr;
-}
-
-Path::operator PointSetAttributes&() const {
-    PointSetAttributes *attr = *this;
-    um_assert(attr != nullptr);
-    return *attr;
-}
-
-
-Path::operator PolyLineAttributes&() const {
-    PolyLineAttributes *attr = *this;
-    um_assert(attr != nullptr);
-    return *attr;
-}
-
-Path::operator SurfaceAttributes&() const {
-    SurfaceAttributes *attr = *this;
-    um_assert(attr != nullptr);
-    return *attr;
-}
-
-Path::operator VolumeAttributes&() const {
-    VolumeAttributes *attr = *this;
-    um_assert(attr != nullptr);
-    return *attr;
-}
-
-Path::operator MultiMesh&() const {
-    MultiMesh *ptr = *this;
-    um_assert(ptr != nullptr);
-    return *ptr;
-}
-
-Path::operator Hexahedra&() const {
-    Hexahedra *ptr = *this;
-    um_assert(ptr != nullptr);
-    return *ptr;
 }
 
 AttributeBase::TYPE AttributePath::kind() const {
