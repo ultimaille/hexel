@@ -34,11 +34,22 @@ Volume::Halfedge HexModelerSubMode::hex_halfedge_from_edge(int e){
     Hexahedra& hex = hex_id();
     return hex.halfedge(edge2halfedge[e]);
 }
-void HexModelerSubMode::update_hex(){
+
+
+bool topo_is_valid(Hexahedra& hex){
+    // no duplicated vertice on a cell
+    FOR(c, hex.ncells()) FOR(lv0, 8) for (int lv1 = lv0 + 1; lv1 < 8; lv1++)
+        if (hex.vert(c, lv0) == hex.vert(c, lv1)){
+            Log::error("Duplicated vertices on a cell");
+            return false;
+        }
+    return true;
+}
+
+bool HexModelerSubMode::update_hex(){
     Hexahedra& hex = hex_id();
-    plop(hex.nverts());
     EdgeAttribute<int> edge2halfedge("hex_halfedge", God::xcf["mesh"].polylines[""].attributes, God::xcf["mesh"].polylines[""].mesh);
-    generate_edge_graph(hex_id(), pl_id(), edge2halfedge,false);
+    generate_edge_graph(hex_id(), pl_id(), edge2halfedge);
 
     VolumeAttributes& hex_attr = hex_id();
     CellAttribute<bool> visible_cell("visible", hex_attr, hex);
@@ -53,7 +64,6 @@ void HexModelerSubMode::update_hex(){
     for (auto c : hex.iter_cells()) if (visible_cell[c])
         FOR(lv, 8)visible_pts[c.vertex(lv)] = true;
 
-
     PolyLineAttributes& pl_attr = pl_id();
     PolyLine& pl = pl_id();
     EdgeAttribute<bool> visible_edge("visible", pl_attr, pl);
@@ -61,10 +71,12 @@ void HexModelerSubMode::update_hex(){
     for (auto e : pl.iter_edges()) if (visible_pts[e.from()] && visible_pts[e.to()])
         visible_edge[e] = true;
 
+    if (!topo_is_valid(hex)) return false;
 
     hex_id().broadcast(EventType::UPDATED);
     pl_id().broadcast(EventType::UPDATED);
     pts_id().broadcast(EventType::UPDATED);
+    return true;
 }
 
 // manage camera + layer selection
@@ -181,7 +193,9 @@ void HexModelerSubMode::reset_layers_options(){
             God::layers["meshEdges"].visible = true;
         }
     }
-
+    for (auto& group : God::layers.groups) 
+        if (group.name == "mesh")
+            group.blend_op = Group::BlendOp::AVERAGE;
 }
 
 
@@ -193,9 +207,9 @@ void HexModelerSubMode::reset_xcf(){
     God::events.dispatch();
 }
 void HexModelerSubMode::save_project(std::string directory){
-    MultiMesh& geommm = root.xcf["geom"];
+    MultiMesh& geommm = God::xcf["geom"];
     geommm.save_to_path(directory + "geom", true);
-    MultiMesh& meshmm = root.xcf["mesh"];
+    MultiMesh& meshmm = God::xcf["mesh"];
     meshmm.save_to_path(directory + "mesh", true);
 }
 

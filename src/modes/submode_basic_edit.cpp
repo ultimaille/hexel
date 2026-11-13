@@ -9,6 +9,7 @@ InteractorMoveVertex::InteractorMoveVertex(BasicEditMode& mode) :mode(mode){ mov
 void InteractorMoveVertex::on_press(int button, vec2 p) {
     if (!key_state_is_OK()) return;
     if (button != 0) return;
+    if (mode.interactor_create_hex.in_progess()) return;
     picker.reset();
     for (auto& d : picker.data) {
         auto result = d.at(p);
@@ -29,6 +30,10 @@ void InteractorMoveVertex::on_release(int button, vec2 p) {
     }
     if (target_vertex != -1) {
         Log::add("need to merge vertices");
+        mode.backup();
+        if (mode.merge_vertices(moving_vertex, target_vertex))
+            mode.hex_id().broadcast(UPDATED);
+        else mode.undo();
         reset();
         return;
     }
@@ -37,10 +42,32 @@ void InteractorMoveVertex::on_release(int button, vec2 p) {
         auto result = d.at(p);
         int picked_triangle = result.filtered_primitive_id(mode.geom_tri_id(), 1);
         if (picked_triangle != -1){
-            Log::add("need to move vertex");
+            Log::add("need to move vertex to picked triangle");
+            PointSet& pts = God::xcf["mesh"].pointset;
+            pts[moving_vertex] = result.point();
             reset();
+            mode.update_hex();
+            mode.hex_id().broadcast(UPDATED);
             return;
         }
+    }
+
+    {
+        Log::add("need to move vertex in 3D");
+        PointSet& pts = God::xcf["mesh"].pointset;
+        vec3 P = pts[moving_vertex];
+        vec3 view_dir = God::camera.pose.forward();
+
+        auto [width, height] = God::context.screen_size();
+        vec4 clip_space{ (2.f * p.x) / width - 1.0f, 1.0f - (2.f * p.y) / height, 0, 1.0f };
+        vec4 view_space = God::camera.projection_matrix().invert() * clip_space;
+        mat4x4 inv_view = God::camera.view_matrix().invert();
+        vec4 world_space = inv_view * (view_space / view_space.data[3]);
+
+        pts[moving_vertex] = world_space.xyz() + (view_dir * (P - world_space.xyz())) * view_dir;
+        reset();
+        mode.update_hex();
+        mode.hex_id().broadcast(UPDATED);
     }
 }
 
@@ -93,7 +120,7 @@ void InteractorKillHex::on_click(int button, vec2 p) {
 
 
 
-void InteractorFeedBack::activate(vec3 v){
+void InteractorFeedBack::activate(){
     std::string mm_name = "feedback";
     God::xcf.add("feedback");
     int group = God::layers.add_group(mm_name);
@@ -112,9 +139,9 @@ void InteractorFeedBack::activate(vec3 v){
         layer.set_default_values();
     }
 }
-void InteractorFeedBack::add_point(vec3 v){
+void InteractorCreateHex::FeedBack::add_point(vec3 v){
     MultiMeshPath mm_id = root.xcf["feedback"];
-    if (!mm_id.valid()) activate(v);
+    if (!mm_id.valid()) activate();
     MultiMesh& mm = God::xcf["feedback"];
     int nv = mm.pointset.create_points(1);
     mm.pointset[nv] = v;
@@ -130,17 +157,19 @@ void InteractorFeedBack::add_point(vec3 v){
     root.xcf["feedback"].polylines[""].broadcast(UPDATED);
 }
 
-void InteractorFeedBack::pop_point(){
+void InteractorCreateHex::FeedBack::pop_point(){
     MultiMeshPath mm_id = root.xcf["feedback"];
-    if (!mm_id.valid()) return;  
-    MultiMesh& mm = mm_id;
+    if (!mm_id.valid()) plop(mm_id.path);
+    //if (!mm_id.valid()) return;  
+    //MultiMesh& mm = mm_id;
+    MultiMesh& mm = God::xcf["feedback"];
     {
         PolyLine& pl = mm.polylines[""].mesh;
         if (pl.nedges() != 0){
             std::vector<bool> to_kill(pl.nedges(), false);
             to_kill[pl.nedges() - 1] = true;
             pl.delete_edges(to_kill);
-            mm_id.polylines[""].broadcast(UPDATED);
+            root.xcf["feedback"].polylines[""].broadcast(UPDATED);
         }
     }
     {
@@ -149,7 +178,7 @@ void InteractorFeedBack::pop_point(){
             std::vector<bool> to_kill(pts.size(), false);
             to_kill[pts.size() - 1] = true;
             pts.delete_points(to_kill);
-            mm_id.pointset.broadcast(UPDATED);
+            root.xcf["feedback"].pointset.broadcast(UPDATED);
         }
     }
 }
@@ -184,8 +213,8 @@ void InteractorCreateHex::on_click(int button, vec2 p) {
         if (!pts.empty()){
             pts.pop_back();
             feedback.pop_point();
-            return;
         }
+        return;
     }
     Picker picker;
     bool picked_a_mesh_vertex = false;
@@ -217,10 +246,11 @@ void InteractorCreateHex::on_click(int button, vec2 p) {
 
     
         if (pts.size() == 4){
+            Quad3 quad(pts[0], pts[1], pts[2], pts[3]);
+            vec3 decal = -.2*std::sqrt(quad.unsigned_area())*quad.normal();
             Hexahedra& hex = mode.hex_id();
             int offset = hex.points.create_points(8);
             FOR(lv, 4) hex.points[offset + lv] = pts[lv];
-
             int c = hex.create_cells(1);
             block_id[c] = c;
             hex.vert(c, 0) = offset+0;
@@ -228,9 +258,10 @@ void InteractorCreateHex::on_click(int button, vec2 p) {
             hex.vert(c, 2) = offset + 3;
             hex.vert(c, 3) = offset + 2;
             FOR(lv, 4) hex.vert(c, 4 + lv) = offset +4+ lv;
-            FOR(lv, 4) hex.points[offset +4+ lv] = hex.points[hex.vert(c, lv)];
+            FOR(lv, 4) hex.points[offset +4+ lv] = hex.points[hex.vert(c, lv)]+decal;
             mode.update_hex();
             mode.hex_id().broadcast(UPDATED);
+            reset();
         }
 
 }
@@ -239,7 +270,6 @@ void InteractorCreateHex::generate_gui(){
     if (pts.empty()) return;
     std::string msg = "InteractorCreateHex\nSelected vertices:\n";
     for (auto v : pts) msg += "(" + std::to_string(v.x) + "," + std::to_string(v.y) + "," + std::to_string(v.z) + ")\n";
-    //ImGui::Text(msg.c_str());
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), msg.c_str());
 }
 
@@ -275,5 +305,11 @@ void BasicEditMode::define_gui() {
     mode.header_gui_for_submodes();
     generate_interactor_gui();
     ImGui::End();
+}
+
+bool BasicEditMode::merge_vertices(int v0, int v1){
+    Hexahedra& hex = hex_id();
+    FOR(c, hex.ncells())FOR(lv, 8) if (hex.vert(c, lv) == v0)hex.vert(c, lv) = v1;
+    return update_hex();
 }
 
