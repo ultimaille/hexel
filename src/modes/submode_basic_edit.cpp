@@ -5,9 +5,63 @@
 
 
 
+InteractorMoveVertex::InteractorMoveVertex(BasicEditMode& mode) :mode(mode){ moving_vertex = -1; }
+void InteractorMoveVertex::on_press(int button, vec2 p) {
+    if (!key_state_is_OK()) return;
+    if (button != 0) return;
+    picker.reset();
+    for (auto& d : picker.data) {
+        auto result = d.at(p);
+        int picked_vert = result.filtered_primitive_id(mode.pts_id(), 0);
+        if (picked_vert != -1) moving_vertex = picked_vert;
+    }
+}
+void InteractorMoveVertex::on_release(int button, vec2 p) {
+    if (!key_state_is_OK()) return;
+    if (button != 0) return;
+    if (moving_vertex == -1) return;
+    picker.reset();
+    int target_vertex = -1;
+    for (auto& d : picker.data) {
+        auto result = d.at(p);
+        int picked_vert = result.filtered_primitive_id(mode.pts_id(), 0);
+        if (picked_vert != -1) target_vertex = picked_vert;
+    }
+    if (target_vertex != -1) {
+        Log::add("need to merge vertices");
+        reset();
+        return;
+    }
 
-MouseReactKillHex::MouseReactKillHex(BasicEditMode& mode) :mode(mode){}
-void MouseReactKillHex::on_click(int button, vec2 p) {
+    for (auto& d : picker.data) {
+        auto result = d.at(p);
+        int picked_triangle = result.filtered_primitive_id(mode.geom_tri_id(), 1);
+        if (picked_triangle != -1){
+            Log::add("need to move vertex");
+            reset();
+            return;
+        }
+    }
+}
+
+void InteractorMoveVertex::generate_gui(){
+    if (moving_vertex == -1) return;
+    std::string msg = "InteractorMoveVertex #" + std::to_string(moving_vertex);
+    ImGui::Text(msg.c_str());
+}
+
+void InteractorMoveVertex::reset(){ 
+    moving_vertex = -1; 
+}
+
+
+
+
+
+
+
+InteractorKillHex::InteractorKillHex(BasicEditMode& mode) :mode(mode){}
+void InteractorKillHex::on_click(int button, vec2 p) {
     if (!key_state_is_OK()) return;
     if (button != 1) return;
     Picker picker;
@@ -15,8 +69,8 @@ void MouseReactKillHex::on_click(int button, vec2 p) {
         auto result = d.at(p);
         int picked_cell = result.filtered_primitive_id(mode.hex_id(), 1);
         if (picked_cell != -1){
-            Hexahedra& hex = *(Hexahedra *)mode.hex_id();
-            VolumeAttributes& attr = *(VolumeAttributes *)mode.hex_id();
+            Hexahedra& hex = *(Hexahedra*)mode.hex_id();
+            VolumeAttributes& attr = *(VolumeAttributes*)mode.hex_id();
             CellAttribute<int> block_id("block_id", attr, hex);
             int block2kill = block_id[picked_cell];
             std::vector<bool> to_kill(hex.ncells());
@@ -28,6 +82,7 @@ void MouseReactKillHex::on_click(int button, vec2 p) {
         }
     }
 }
+
 
 
 
@@ -111,19 +166,18 @@ void InteractorFeedBack::desactivate(){
 
 
 
-MouseReactCreateHex::MouseReactCreateHex(BasicEditMode& mode) :mode(mode){}
-void MouseReactCreateHex::reset(){
+InteractorCreateHex::InteractorCreateHex(BasicEditMode& mode) :mode(mode){}
+void InteractorCreateHex::reset(){
     if (pts.empty()) return;
     pts.clear();
     feedback.desactivate();
 }
-void MouseReactCreateHex::handle(Event event){
+void InteractorCreateHex::handle(Event event){
     if (!key_state_is_OK()) return;
-    plop(root.xcf["mesh"].hexahedra[""].path);
     if (event.who == root.xcf["mesh"].hexahedra[""] && event.what_happened == events::UPDATED) reset();
-    MouseReact::handle(event);
+    Interactor::handle(event);
 }
-void MouseReactCreateHex::on_click(int button, vec2 p) {
+void InteractorCreateHex::on_click(int button, vec2 p) {
     if (!key_state_is_OK()) return;
     
     if (button != 0) {
@@ -157,7 +211,7 @@ void MouseReactCreateHex::on_click(int button, vec2 p) {
         }
     }
 
-    MultiMesh &mm = root.xcf["mesh"];
+    MultiMesh &mm = God::xcf["mesh"];
     CellAttribute<int> block_id("block_id", mm.hexahedra[""].attributes, mm.hexahedra[""].mesh);
 
 
@@ -181,25 +235,34 @@ void MouseReactCreateHex::on_click(int button, vec2 p) {
 
 }
 
-void MouseReactCreateHex::generate_gui(){
-    if (!key_state_is_OK()) return;
-    std::string msg = "MouseReactCreateHex\nSelected vertices:\n";
+void InteractorCreateHex::generate_gui(){
+    if (pts.empty()) return;
+    std::string msg = "InteractorCreateHex\nSelected vertices:\n";
     for (auto v : pts) msg += "(" + std::to_string(v.x) + "," + std::to_string(v.y) + "," + std::to_string(v.z) + ")\n";
-    ImGui::Text(msg.c_str());
+    //ImGui::Text(msg.c_str());
+    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), msg.c_str());
 }
 
 
 
 BasicEditMode::BasicEditMode(HexModelerMode& mode) 
-    : HexModelerSubMode(mode), interactor_kill_kex(*this), interactor_create_hex(*this), interactor_layer_selection(*this){
+    : HexModelerSubMode(mode), 
+    interactor_kill_kex(*this), 
+    interactor_create_hex(*this), 
+    interactor_layer_selection(*this), 
+    interactor_move_vertex(*this){
+
     interactor_kill_kex.ctrl_must_be_up = true;
     interactor_create_hex.ctrl_must_be_up = true;
     interactor_camera.ctrl_must_be_down = true;
     interactor_layer_selection.ctrl_must_be_down = true;
+    interactor_move_vertex.ctrl_must_be_up = true;
+
     interactors.push_back(&interactor_kill_kex);
     interactors.push_back(&interactor_create_hex);
     interactors.push_back(&interactor_camera);
     interactors.push_back(&interactor_layer_selection);
+    interactors.push_back(&interactor_move_vertex);
 }
 
 
@@ -210,7 +273,7 @@ void BasicEditMode::handle(Event event) {
 void BasicEditMode::define_gui() {
     ImGui::Begin("HexModelerMode", nullptr);
     mode.header_gui_for_submodes();
-    mode.generate_interactor_gui();
+    generate_interactor_gui();
     ImGui::End();
 }
 

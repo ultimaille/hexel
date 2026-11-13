@@ -3,8 +3,8 @@
 #include <layers/ssao.h>
 #include "algo.h"
 
-struct MouseReactPickerTest2 : public MouseReact {
-    MouseReactPickerTest2() {  }
+struct InteractorPickerTest2 : public Interactor {
+    InteractorPickerTest2() {  }
 
     void init(ObjectId p_attr_id, ObjectId p_mesh) {
         attr_id = p_attr_id;
@@ -48,8 +48,8 @@ struct MouseReactPickerTest2 : public MouseReact {
 
 struct BenjiMode : public Mode{
 
-    MouseReactTrackBallCamera camera_react;
-    MouseReactPickerTest2 pick_react;
+    InteractorTrackBallCamera camera_react;
+    InteractorPickerTest2 pick_react;
 
     BenjiMode(){}
 

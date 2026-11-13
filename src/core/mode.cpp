@@ -10,7 +10,7 @@
 #include "shaders.h"
 
 
-bool MouseReact::key_state_is_OK(){
+bool Interactor::key_state_is_OK(){
     if (ctrl_must_be_down && !God::keys.pressed(GLFW_KEY_LEFT_CONTROL)) return false;
     if (shift_must_be_down && !God::keys.pressed(GLFW_KEY_LEFT_SHIFT)) return false;
     if (ctrl_must_be_up && God::keys.pressed(GLFW_KEY_LEFT_CONTROL)) return false;
@@ -23,11 +23,11 @@ bool MouseReact::key_state_is_OK(){
 
 
 
-void MouseReactTrackBallCamera::on_wheel(double v){
+void InteractorTrackBallCamera::on_wheel(double v){
     if (!key_state_is_OK()) return;
     God::camera.zoom(-v);
 }
-void MouseReactTrackBallCamera::on_drag(int button, vec2 a, vec2 b){
+void InteractorTrackBallCamera::on_drag(int button, vec2 a, vec2 b){
     if (!key_state_is_OK()) return;
     auto [width, height] = God::context.screen_size();
     vec2 viewport (width,height);

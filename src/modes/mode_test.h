@@ -7,8 +7,8 @@
 
 
 
-struct MouseReactPickerTest : public MouseReact {
-    MouseReactPickerTest() {  }
+struct InteractorPickerTest : public Interactor {
+    InteractorPickerTest() {  }
 
     void init(AttributePath p_attr_id, MeshPath p_mesh) {
         attr_id = p_attr_id;
@@ -41,8 +41,8 @@ struct MouseReactPickerTest : public MouseReact {
 };
 
 
-struct MouseReactLayerSelectionTest : public MouseReact {
-    MouseReactLayerSelectionTest() {}
+struct InteractorLayerSelectionTest : public Interactor {
+    InteractorLayerSelectionTest() {}
 
     void init(MeshPath p_mesh) {
         mesh_id = p_mesh;
@@ -76,9 +76,9 @@ struct MouseReactLayerSelectionTest : public MouseReact {
 
 struct HexEdit : public Mode{
 
-    MouseReactTrackBallCamera camera_react;
-    MouseReactPickerTest pick_react;
-    MouseReactLayerSelectionTest layer_selection_react;
+    InteractorTrackBallCamera camera_react;
+    InteractorPickerTest pick_react;
+    InteractorLayerSelectionTest layer_selection_react;
 
     HexEdit(){}
     void handle(Event event) { 

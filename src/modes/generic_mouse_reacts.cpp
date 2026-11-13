@@ -3,7 +3,7 @@
 #include <algo/raster_iterator.h>
 #include <modes/mode_hex_modeler.h>
 
-void MouseReactLayerSelection::on_click(int button, vec2 p) {
+void InteractorLayerSelection::on_click(int button, vec2 p) {
         if (!key_state_is_OK()) return;
         if (button != 0) return;
         Picker picker;

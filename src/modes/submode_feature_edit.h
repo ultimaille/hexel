@@ -2,7 +2,7 @@
 
 
 //
-//struct MouseReactSplitAddFeature : public MouseReact {
+//struct InteractorSplitAddFeature : public Interactor {
 //    MeshPath pl_id;
 //    MeshPath pts_id;
 //    int org_vertex;
@@ -15,9 +15,9 @@
 //
 //struct FeatureEditMode : public HexModelerMode::SubMode{
 //
-//    MouseReactMultiSelector multi_selector_react_left;
-//    MouseReactMultiSelector multi_selector_react_right;
-//    MouseReactSplitAddFeature split_add_react;
+//    InteractorMultiSelector multi_selector_react_left;
+//    InteractorMultiSelector multi_selector_react_right;
+//    InteractorSplitAddFeature split_add_react;
 //
 //    FeatureEditMode(HexModelerMode& mode);
 //    void activate();

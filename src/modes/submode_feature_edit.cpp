@@ -1,11 +1,11 @@
 //#include <modes/submode_feature_edit.h>
 //#include <algo/shuffle_for_colormap.h>
 //
-//void MouseReactSplitAddFeature::init(MeshPath p_pl, MeshPath p_pts) {
+//void InteractorSplitAddFeature::init(MeshPath p_pl, MeshPath p_pts) {
 //    pl_id = p_pl; pts_id = p_pts; org_vertex= -1;
 //}
 //
-//void MouseReactSplitAddFeature::define_gui() {
+//void InteractorSplitAddFeature::define_gui() {
 //    if (org_vertex != -1){
 //        std::string msg = "Origin vertex " + std::to_string(org_vertex) + " selected";
 //        ImGui::Text(msg.c_str());
@@ -75,7 +75,7 @@
 //    pl.connect();
 //}
 //
-//void MouseReactSplitAddFeature::on_click(int button, vec2 p) {
+//void InteractorSplitAddFeature::on_click(int button, vec2 p) {
 //    if (button == 1 && org_vertex != -1) {
 //        org_vertex = -1;
 //        return;
