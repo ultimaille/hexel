@@ -360,18 +360,18 @@ Path::ObjectPtr Path::ptr() const {
     if (auto slot = std::get_if<MultiMesh::MeshAttr<Triangles, SurfaceAttributes>*>(&mesh_ptr))
         return resolve_attribute(*this, (*slot)->attributes, mm_path.triangles[mesh_name], path[5]).ptr;
     if (auto slot = std::get_if<MultiMesh::MeshAttr<Quads, SurfaceAttributes>*>(&mesh_ptr))
-        return resolve_attribute(*this, (*slot)->attributes, mm_path.triangles[mesh_name], path[5]).ptr;
+        return resolve_attribute(*this, (*slot)->attributes, mm_path.quads[mesh_name], path[5]).ptr;
     if (auto slot = std::get_if<MultiMesh::MeshAttr<Polygons, SurfaceAttributes>*>(&mesh_ptr))
-        return resolve_attribute(*this, (*slot)->attributes, mm_path.triangles[mesh_name], path[5]).ptr;
+        return resolve_attribute(*this, (*slot)->attributes, mm_path.polygons[mesh_name], path[5]).ptr;
 
     if (auto slot = std::get_if<MultiMesh::MeshAttr<Tetrahedra, VolumeAttributes>*>(&mesh_ptr))
-        return resolve_attribute(*this, (*slot)->attributes, mm_path.triangles[mesh_name], path[5]).ptr;
+        return resolve_attribute(*this, (*slot)->attributes, mm_path.tetrahedra[mesh_name], path[5]).ptr;
     if (auto slot = std::get_if<MultiMesh::MeshAttr<Hexahedra, VolumeAttributes>*>(&mesh_ptr))
-        return resolve_attribute(*this, (*slot)->attributes, mm_path.triangles[mesh_name], path[5]).ptr;
+        return resolve_attribute(*this, (*slot)->attributes, mm_path.hexahedra[mesh_name], path[5]).ptr;
     if (auto slot = std::get_if<MultiMesh::MeshAttr<Wedges, VolumeAttributes>*>(&mesh_ptr))
-        return resolve_attribute(*this, (*slot)->attributes, mm_path.triangles[mesh_name], path[5]).ptr;
+        return resolve_attribute(*this, (*slot)->attributes, mm_path.wedges[mesh_name], path[5]).ptr;
     if (auto slot = std::get_if<MultiMesh::MeshAttr<Pyramids, VolumeAttributes>*>(&mesh_ptr))
-        return resolve_attribute(*this, (*slot)->attributes, mm_path.triangles[mesh_name], path[5]).ptr;
+        return resolve_attribute(*this, (*slot)->attributes, mm_path.pyramids[mesh_name], path[5]).ptr;
 
     return std::monostate{};
 }
@@ -557,7 +557,7 @@ Path::operator Hexahedra&() const {
 AttributeBase::TYPE AttributePath::kind() const {
     using TYPE = AttributeBase::TYPE;
 
-    if (size() != 5 || size() != 6)
+    if (size() != 5 && size() != 6)
         return TYPE::GENERIC;
 
     const MeshPath mesh = parent();
