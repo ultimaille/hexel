@@ -4,15 +4,15 @@
 
 struct HexModelerSubMode;
 
-struct MouseReactLayerSelection : public MouseReact {
-    MouseReactLayerSelection(HexModelerSubMode& mode):hexmode(mode) {}
+struct InteractorLayerSelection : public Interactor {
+    InteractorLayerSelection(HexModelerSubMode& mode):hexmode(mode) {}
     HexModelerSubMode &hexmode;
 
     void on_click(int button, vec2 p);
 };
 
-struct MouseReactMultiSelector : public MouseReact {
-    MouseReactMultiSelector() {}
+struct InteractorMultiSelector : public Interactor {
+    InteractorMultiSelector() {}
 
     inline void init(int button){
         active_button = button;

@@ -37,8 +37,8 @@ struct HexModelerSubMode : public Mode{
     void update_hex();
 
     // manage camera + layer selection
-    MouseReactTrackBallCamera camera_react;
-    MouseReactLayerSelection layer_selection_react;
+    InteractorTrackBallCamera camera_react;
+    InteractorLayerSelection layer_selection_react;
     void handle_camera_and_layerselect(Event event);
 
     // manage import/load/write of project

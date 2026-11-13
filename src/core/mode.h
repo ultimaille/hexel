@@ -3,7 +3,7 @@
 #include <iostream>
 #include <set>
 
-struct MouseReact{
+struct Interactor{
 
     // high level events
     virtual void on_wheel(double v) {}
@@ -30,7 +30,7 @@ struct MouseReact{
 };
 
 struct Mode{
-    std::vector<MouseReact*> interactors;
+    std::vector<Interactor*> interactors;
     virtual void activate(){}
     virtual void desactivate(){}
     virtual void define_gui() {}
@@ -43,14 +43,14 @@ struct Mode{
 
 
 
-struct MouseReactTrackBallCamera : public MouseReact{
+struct InteractorTrackBallCamera : public Interactor{
     void on_wheel(double v);
     void on_drag(int button, vec2 a, vec2 b);
 };
 
 
 struct DefaultMode : public  Mode{
-    MouseReactTrackBallCamera interactor_camera;
+    InteractorTrackBallCamera interactor_camera;
     DefaultMode();
 };
 
