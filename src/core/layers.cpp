@@ -33,17 +33,17 @@
     }
 
     void LayerManager::handle(Event event) {
-        // if (event.who == events::MOUSE) return;
+        // if (event.who == Event::MOUSE) return;
 
 
         // manage lifecycle events (KILLED MESH)
         std::vector<std::string> to_kill;
-        if (event.what_happened == events::KILLED) for (int i = 0; i < this->size(); i) {
+        if (event.what_happened == Event::KILLED) for (int i = 0; i < this->size(); i) {
             if ((*this)[i].mesh==(Path)event.who)
                 kill(i);
             else i++;
         }
-        if (event.what_happened == events::UPDATED)
+        if (event.what_happened == Event::UPDATED)
             for (auto& shad : items)
                 if (shad.object->mesh==(Path)event.who)
                     shad.object->reset();
@@ -74,7 +74,7 @@
             God::layers.remove_group(group_id);
 
         // Broadcast event
-        root.layers[layer_name].broadcast(events::KILLED);
+        root.layers[layer_name].broadcast(Event::KILLED);
     }
 
     void LayerManager::kill(std::string layer_name){

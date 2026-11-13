@@ -73,9 +73,9 @@ bool HexModelerSubMode::update_hex(){
 
     if (!topo_is_valid(hex)) return false;
 
-    hex_id().broadcast(EventType::UPDATED);
-    pl_id().broadcast(EventType::UPDATED);
-    pts_id().broadcast(EventType::UPDATED);
+    hex_id().broadcast(Event::UPDATED);
+    pl_id().broadcast(Event::UPDATED);
+    pts_id().broadcast(Event::UPDATED);
     return true;
 }
 

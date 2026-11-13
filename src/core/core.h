@@ -16,7 +16,6 @@ struct WindowContext;
 struct ShaderManager;
 struct RootPath;
 
-
 namespace God {
     extern ModeManager modes; 
     extern UM::XCF xcf;
@@ -30,5 +29,5 @@ namespace God {
     extern ShaderManager shaders;
 };
 
-
 extern RootPath root;
+

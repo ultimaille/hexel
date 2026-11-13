@@ -1,15 +1,14 @@
-#ifndef __OBJECTID_H__
-#define __OBJECTID_H__
+#ifndef __PATH_H__
+#define __PATH_H__
 
-#include <optional>
+#include <ranges>
 #include <string>
+#include <type_traits>
 #include <variant>
 #include <vector>
-#include <algorithm>
-#include <ranges>
-#include <type_traits>
 
 #include "xcf.h"
+#include "event_type.h"
 #include <ultimaille/all.h>
 
 using namespace UM;
@@ -23,23 +22,53 @@ struct Layer;
 struct Path;
 struct Mode;
 
-namespace events {
-    enum EventType {
-        CREATED, KILLED, UPDATED
-    };
-}
+template<typename T> concept PathMeshType =
+    std::is_same_v<T, PolyLine> ||
+    std::is_same_v<T, Triangles> ||
+    std::is_same_v<T, Quads> ||
+    std::is_same_v<T, Polygons> ||
+    std::is_same_v<T, Tetrahedra> ||
+    std::is_same_v<T, Hexahedra> ||
+    std::is_same_v<T, Wedges> ||
+    std::is_same_v<T, Pyramids>;
+
+template<typename T> concept PathObjectType =
+    std::is_same_v<T, KeyboardState> ||
+    std::is_same_v<T, MouseState> ||
+    std::is_same_v<T, TrackBallCamera> ||
+    std::is_same_v<T, WindowContext> ||
+    std::is_same_v<T, Mode> ||
+    std::is_same_v<T, Panel> ||
+    std::is_same_v<T, Layer> ||
+    std::is_same_v<T, MultiMesh> ||
+    std::is_same_v<T, ContainerBase>;
+
+template<typename T> concept PathReferenceType =
+    PathMeshType<T> ||
+    PathObjectType<T> ||
+    std::is_same_v<T, PointSet> ||
+    std::is_same_v<T, PointSetAttributes> ||
+    std::is_same_v<T, PolyLineAttributes> ||
+    std::is_same_v<T, SurfaceAttributes> ||
+    std::is_same_v<T, VolumeAttributes>;    
 
 struct Path {
     std::vector<std::string> path;
-    void broadcast(events::EventType e) const;
 
-    inline bool has_prefix(const Path& other) const {
-        return size() >= other.size() &&
-            std::ranges::equal(
-                    other.path.begin(), other.path.end(),
-                    path.begin(), path.begin() + other.size()
-                    );
-    }
+    void broadcast(EventTypes::EventType e) const;
+    bool has_prefix(const Path& other) const;
+    int size() const;
+    bool valid() const;
+
+    operator PointSet*()           const;
+    operator PointSetAttributes*() const;
+    operator PolyLineAttributes*() const;
+    operator SurfaceAttributes*()  const;
+    operator VolumeAttributes*()   const;
+
+    template<PathMeshType      T> operator T*() const;
+    template<PathObjectType    T> operator T*() const;
+    template<PathReferenceType T> operator T&() const;
 
     using ObjectPtr = std::variant<
         std::monostate, // unresolved path
@@ -62,58 +91,10 @@ struct Path {
         ContainerBase*
             >;
 
-
-    operator KeyboardState*() const;
-    operator MouseState*() const;
-    operator TrackBallCamera*() const;
-    operator WindowContext*() const;
-    operator Mode*() const;
-    operator Panel*() const;
-    operator Layer*() const;
-
-    operator MultiMesh*() const;
-    operator PointSet*() const;
-    operator PointSetAttributes*() const;
-
-    operator PolyLine*() const;
-    operator PolyLineAttributes*() const;
-    operator Triangles*() const;
-    operator Quads*() const;
-    operator Polygons*() const;
-    operator SurfaceAttributes*() const;
-
-    operator Tetrahedra*() const;
-    operator Hexahedra*() const;
-    operator Wedges*() const;
-    operator Pyramids*() const;
-    operator VolumeAttributes*() const;
-
-    operator ContainerBase*() const;
-
-    operator Panel&() const;
-    operator Layer&() const;
-
-    operator MultiMesh&() const;
-    operator PointSet&() const;
-    operator PointSetAttributes&() const;
-    operator PolyLine&() const;
-    operator PolyLineAttributes&() const;
-    operator Triangles&() const;
-    operator Quads&() const;
-    operator Polygons&() const;
-    operator SurfaceAttributes&() const;
-    operator Tetrahedra&() const;
-    operator Hexahedra&() const;
-    operator Wedges&() const;
-    operator Pyramids&() const;
-    operator VolumeAttributes&() const;
-
-    int size() const { return static_cast<int>(path.size()); }
-
-    ObjectPtr ptr() const; // TODO move to protected?
-    bool valid() const;
-
     protected:
+    friend struct AttributePath;
+
+    ObjectPtr ptr() const;
 
     template<typename T> T* as() const {
         ObjectPtr p = ptr();
@@ -126,6 +107,22 @@ struct Path {
         return path;
     }
 };
+
+template<PathMeshType T> inline Path::operator T*() const {
+    using Attributes = decltype(empty_attr(std::declval<const T&>()));
+    auto* attr = as<MultiMesh::MeshAttr<T, Attributes>>();
+    return attr ? &attr->mesh : nullptr;
+}
+
+template<PathObjectType T> inline Path::operator T*() const {
+    return as<T>();
+}
+
+template<PathReferenceType T> inline Path::operator T&() const {
+    T* object = *this;
+    um_assert(object != nullptr);
+    return *object;
+}
 
 struct MultiMeshPath;
 
@@ -211,9 +208,9 @@ struct RootPath : Path {
         }
     };
 
-    PathCollection modes   = {{{ "modes"   }}};
-    PathCollection layers  = {{{ "layers"  }}};
-    PathCollection panels  = {{{ "panels"  }}};
+    PathCollection modes   = {{{ "modes"  }}};
+    PathCollection layers  = {{{ "layers" }}};
+    PathCollection panels  = {{{ "panels" }}};
 
     struct XCF : Path {
         MultiMeshPath operator[](std::string s) const {
@@ -226,5 +223,5 @@ inline bool operator==(const Path& a, const Path& b) {
     return a.path == b.path;
 }
 
-#endif //__OBJECTID_H__
+#endif //__PATH_H__
 

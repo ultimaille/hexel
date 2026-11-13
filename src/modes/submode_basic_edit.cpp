@@ -32,7 +32,7 @@ void InteractorMoveVertex::on_release(int button, vec2 p) {
         Log::add("need to merge vertices");
         mode.backup();
         if (mode.merge_vertices(moving_vertex, target_vertex))
-            mode.hex_id().broadcast(UPDATED);
+            mode.hex_id().broadcast(Event::UPDATED);
         else mode.undo();
         reset();
         return;
@@ -47,7 +47,7 @@ void InteractorMoveVertex::on_release(int button, vec2 p) {
             pts[moving_vertex] = result.point();
             reset();
             mode.update_hex();
-            mode.hex_id().broadcast(UPDATED);
+            mode.hex_id().broadcast(Event::UPDATED);
             return;
         }
     }
@@ -67,7 +67,7 @@ void InteractorMoveVertex::on_release(int button, vec2 p) {
         pts[moving_vertex] = world_space.xyz() + (view_dir * (P - world_space.xyz())) * view_dir;
         reset();
         mode.update_hex();
-        mode.hex_id().broadcast(UPDATED);
+        mode.hex_id().broadcast(Event::UPDATED);
     }
 }
 
@@ -105,7 +105,7 @@ void InteractorKillHex::on_click(int button, vec2 p) {
             hex.delete_cells(to_kill);
             hex.connect();
             mode.update_hex();
-            mode.hex_id().broadcast(UPDATED);
+            mode.hex_id().broadcast(Event::UPDATED);
         }
     }
 }
@@ -153,8 +153,8 @@ void InteractorCreateHex::FeedBack::add_point(vec3 v){
         pl.connect();
     }
     
-    root.xcf["feedback"].pointset.broadcast(UPDATED);
-    root.xcf["feedback"].polylines[""].broadcast(UPDATED);
+    root.xcf["feedback"].pointset.broadcast(Event::UPDATED);
+    root.xcf["feedback"].polylines[""].broadcast(Event::UPDATED);
 }
 
 void InteractorCreateHex::FeedBack::pop_point(){
@@ -169,7 +169,7 @@ void InteractorCreateHex::FeedBack::pop_point(){
             std::vector<bool> to_kill(pl.nedges(), false);
             to_kill[pl.nedges() - 1] = true;
             pl.delete_edges(to_kill);
-            root.xcf["feedback"].polylines[""].broadcast(UPDATED);
+            root.xcf["feedback"].polylines[""].broadcast(Event::UPDATED);
         }
     }
     {
@@ -178,7 +178,7 @@ void InteractorCreateHex::FeedBack::pop_point(){
             std::vector<bool> to_kill(pts.size(), false);
             to_kill[pts.size() - 1] = true;
             pts.delete_points(to_kill);
-            root.xcf["feedback"].pointset.broadcast(UPDATED);
+            root.xcf["feedback"].pointset.broadcast(Event::UPDATED);
         }
     }
 }
@@ -203,7 +203,7 @@ void InteractorCreateHex::reset(){
 }
 void InteractorCreateHex::handle(Event event){
     if (!key_state_is_OK()) return;
-    if (event.who == root.xcf["mesh"].hexahedra[""] && event.what_happened == events::UPDATED) reset();
+    if (event.who == root.xcf["mesh"].hexahedra[""] && event.what_happened == Event::UPDATED) reset();
     Interactor::handle(event);
 }
 void InteractorCreateHex::on_click(int button, vec2 p) {
@@ -260,7 +260,7 @@ void InteractorCreateHex::on_click(int button, vec2 p) {
             FOR(lv, 4) hex.vert(c, 4 + lv) = offset +4+ lv;
             FOR(lv, 4) hex.points[offset +4+ lv] = hex.points[hex.vert(c, lv)]+decal;
             mode.update_hex();
-            mode.hex_id().broadcast(UPDATED);
+            mode.hex_id().broadcast(Event::UPDATED);
             reset();
         }
 

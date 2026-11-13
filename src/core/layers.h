@@ -1,6 +1,7 @@
 #pragma once
 #include <optional>
-#include <core/event.h>
+#include "events.h"
+#include "registry.h"
 
 struct Layer {
     Layer();

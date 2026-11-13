@@ -60,7 +60,6 @@ bool FilePopup(const char* id, std::string in, std::string& out, std::vector<con
 
 
 
-using namespace events;
 void look_at_pointset(PointSet& ps) {
     if (ps.size() == 0) return;
     BBox3 box;

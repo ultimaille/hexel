@@ -1,11 +1,9 @@
 #include "layer_explorer.h"
 #include "property_explorer.h"
 #include <core/layers.h>
-#include <core/event.h>
+#include <core/events.h>
 
 #include <layers/ssao.h>
-
-using namespace events;
 
 // sync pressed with the property windows
 void LayerExplorer::sync_layer_from_property() {

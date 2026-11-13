@@ -32,7 +32,7 @@ struct InteractorPickerTest : public Interactor {
         if (prim != -1){
             if (button == 0) flag[pr.raw_primitive_id]++;
             if (button == 1) flag[pr.raw_primitive_id]--;
-            mesh_id.broadcast(EventType::UPDATED);
+            mesh_id.broadcast(Event::UPDATED);
         }
     }
     void on_press(int button, vec2 p)           { Log::add("press " + std::to_string(button)); }
@@ -65,7 +65,7 @@ struct InteractorLayerSelectionTest : public Interactor {
             visible.fill(false);
             for (auto f : hex->iter_facets()) if (layer_id[f] == layer_id[prim])
                 visible[f.cell()] = true;
-            mesh_id.broadcast(EventType::UPDATED);
+            mesh_id.broadcast(Event::UPDATED);
         }
     }
     void on_press(int button, vec2 p)           { Log::add("press " + std::to_string(button)); }

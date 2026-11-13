@@ -19,7 +19,7 @@ void InteractorLayerSelection::on_click(int button, vec2 p) {
             visible_cell.fill(false);
             for (auto f : hex.iter_facets()) if (layer_id[f] == layer_id[prim])
                 visible_cell[f.cell()] = true;
-            //hex_id.broadcast(EventType::UPDATED);
+            //hex_id.broadcast(Event::UPDATED);
 
 
             PointSetAttributes& pts_attr = *(PointSetAttributes *)hexmode.pts_id();
@@ -37,9 +37,9 @@ void InteractorLayerSelection::on_click(int button, vec2 p) {
             for (auto e : pl.iter_edges()) if (visible_pts[e.from()] && visible_pts[e.to()])
                 visible_edge[e] = true;
 
-            hexmode.hex_id().broadcast(EventType::UPDATED);
-            hexmode.pl_id().broadcast(EventType::UPDATED);
-            hexmode.pts_id().broadcast(EventType::UPDATED);
+            hexmode.hex_id().broadcast(Event::UPDATED);
+            hexmode.pl_id().broadcast(Event::UPDATED);
+            hexmode.pts_id().broadcast(Event::UPDATED);
         }
     }
 
