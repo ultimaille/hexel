@@ -11,27 +11,27 @@ using namespace events;
 void LayerExplorer::sync_layer_from_property() {
     layer_pressed = std::vector<bool>(God::layers.size(), false);
 
-    ObjectId id(ObjectType::PANEL, "property_window");
+    Path id = root.panels["property_window"];
     
-    if (id.ref() == std::nullopt) {
+    if (!id.valid()) {
         Log::add("Property_window not found");
         return;
     }
 
     PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(id));
     for (auto id : pan.layers)
-        if (God::layers.contains(id.names.back()))
-            layer_pressed[God::layers.find(id.names.back())] = true;
+        if (God::layers.contains(id.path.back()))
+            layer_pressed[God::layers.find(id.path.back())] = true;
 }
 
 void LayerExplorer::sync_property_from_layer() {
-    ObjectId id(PANEL, "property_window");
+    Path id = root.panels["property_window"];
     PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(id));
 
     pan.layers.clear();
     for (int i = 0; i < God::layers.size(); ++i){
         if (layer_pressed[i])
-            pan.layers.push_back(ObjectId(LAYER, God::layers.ith_name(i)));
+            pan.layers.push_back(root.layers[God::layers.ith_name(i)]);
     }
 }
 

@@ -48,7 +48,7 @@ void Mode::generate_interactor_gui(){
 void Mode::handle(Event event){
 
     for (auto& it : interactors){
-        if (event.who.path != events::MOUSE) {
+        if (event.who == root.mouse) {
             it->handle(event);
             continue;
         }
@@ -56,7 +56,7 @@ void Mode::handle(Event event){
 
     static vec2 pos_on_press[3];
 
-    if (event.who == (ObjectId)root().mouse && !ImGui::GetIO().WantCaptureMouse) {
+    if (event.who == root.mouse && !ImGui::GetIO().WantCaptureMouse) {
         static int npixels_tolerance_to_detect_click = 5;
         const double wheel = God::mouse.wheel_speed;
 

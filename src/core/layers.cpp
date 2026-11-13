@@ -74,7 +74,7 @@
             God::layers.remove_group(group_id);
 
         // Broadcast event
-        root().layers[layer_name].broadcast(events::KILLED);
+        root.layers[layer_name].broadcast(events::KILLED);
     }
 
     void LayerManager::kill(std::string layer_name){

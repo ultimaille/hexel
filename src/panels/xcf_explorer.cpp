@@ -8,36 +8,39 @@
 #include <layers/hexahedra_layer.h> 
 #include <layers/ssao.h>
 
-void XCFExplorer::object_id_drag_source(ObjectId id, std::string name) {
+void XCFExplorer::object_id_drag_source(Path id, std::string name) {
     if (ImGui::BeginDragDropSource()) {
         grad_and_drop_objectid = id;
-        ObjectId* ptr = &grad_and_drop_objectid;
-        ImGui::SetDragDropPayload("OBJECTID", &ptr, sizeof(ObjectId*));
+        Path* ptr = &grad_and_drop_objectid;
+        ImGui::SetDragDropPayload("OBJECTID", &ptr, sizeof(Path*));
         ImGui::Text("Moving %s", name.c_str());
         ImGui::EndDragDropSource();
     }
-};
+}
 
-bool XCFExplorer::open_mesh(ObjectIdSet& selected, ObjectId mesh_id, std::string gna){
-    auto mm_name = mesh_id.names[0];
-    auto mesh_name = mesh_id.names.size() > 1 ? mesh_id.names[1] : "";
-    //ImGui::Separator();
-    bool open_mesh;
+bool XCFExplorer::open_mesh(PathSet& selected, MeshPath mesh, std::string category) {
+    const bool is_pointset = mesh ==mesh.parent().pointset;
+    const std::string display =
+        is_pointset ? category : category + "." + mesh.name();
+
+    bool open;
     {
         NodeColor ncol(1);
-        open_mesh = ImGui::TreeNodeEx(label(gna + "." + mesh_name, mm_name), flag(selected.contains(mesh_id), false));
+        open = ImGui::TreeNodeEx(
+            label(display, mesh.parent().name()),
+            flag(selected.contains(mesh), false));
     }
 
-    if (ImGui::IsItemClicked()) switch_selection(selected, mesh_id);
-    object_id_drag_source(mesh_id, mm_name + "." + mesh_name);
-    return open_mesh;
-};
+    if (ImGui::IsItemClicked()) switch_selection(selected, mesh);
+    object_id_drag_source(mesh, display);
+    return open;
+}
 
-void XCFExplorer::add_attribute(ObjectIdSet& selected, ObjectId mesh_id, ObjectId attr_id, std::string name){
+void XCFExplorer::add_attribute(PathSet& selected, MeshPath mesh_id, AttributePath attr_id, std::string name){
     bool open_attr;
     {
         NodeColor ncol(3);
-        open_attr = ImGui::TreeNodeEx(label(name, mesh_id.names[0]), flag(selected.contains(mesh_id), true));
+        open_attr = ImGui::TreeNodeEx(label(name, mesh_id.parent().name()), flag(selected.contains(mesh_id), true));
         object_id_drag_source(attr_id, name);
     }
     if (open_attr){
@@ -47,12 +50,12 @@ void XCFExplorer::add_attribute(ObjectIdSet& selected, ObjectId mesh_id, ObjectI
 };
 
 void XCFExplorer::generate_gui() {
-    static ObjectIdSet selected([&](const ObjectId& a, const ObjectId& b) { if (a.path != b.path) return a.path < b.path; return a.names < b.names; });
+    static PathSet selected([&](const Path& a, const Path& b) { return a.path < b.path; });
 
     {// sync with property panel
-        PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(ObjectId(root().panels["property_window"])));
-        std::vector<ObjectId> to_kill;
-        for (auto sel : selected) if (sel.names.size() == 1 && sel.path == LAYER) to_kill.push_back(sel);
+        PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(root.panels["property_window"]));
+        std::vector<Path> to_kill;
+        for (auto sel : selected) if (sel.has_prefix(root.layers)) to_kill.push_back(sel);
         for (auto id : to_kill)selected.erase(id);
         for (auto id : pan.layers)
             if (!selected.contains(id))
@@ -98,7 +101,7 @@ void XCFExplorer::generate_gui() {
 
         ImGui::Separator();
         static bool closable_mm_group = true;
-        ObjectId mm_id(MULTIMESH, mm_name);
+        MultiMeshPath mm_id = root.xcf[mm_name];
         bool open_mm;
         {
             NodeColor ncol(0);
@@ -119,11 +122,11 @@ void XCFExplorer::generate_gui() {
                 ImGui::InputText(label("", "gloglo"), tmp, 1024);
 
                 if (ImGui::MenuItem(label("Polyline", mm_name))){
-                    God::xcf.add_mesh(root().xcf[mm_name].polylines[tmp]);
+                    God::xcf.add_mesh(root.xcf[mm_name].polylines[tmp]);
                     ImGui::CloseCurrentPopup();
                 }
                 if (ImGui::MenuItem(label("Triangles", mm_name))){
-                    God::xcf.add_mesh(root().xcf[mm_name].triangles[tmp]);
+                    God::xcf.add_mesh(root.xcf[mm_name].triangles[tmp]);
                     ImGui::CloseCurrentPopup();
                 }
                 // TODO: uncomment when layers implemented !
@@ -136,7 +139,7 @@ void XCFExplorer::generate_gui() {
                     // ImGui::CloseCurrentPopup();
                 // }
                 if (ImGui::MenuItem(label("Hexahedra", mm_name))){
-                    God::xcf.add_mesh(root().xcf[mm_name].hexahedra[tmp]);
+                    God::xcf.add_mesh(root.xcf[mm_name].hexahedra[tmp]);
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::EndMenu();
@@ -147,9 +150,9 @@ void XCFExplorer::generate_gui() {
 
         if (open_mm){
             // ==> pointset
-            ObjectId mesh_id(POINTSET, mm_name);
+            MeshPath mesh_id = root.xcf[mm_name].pointset;
 
-            bool open_pointset = open_mesh(selected, {POINTSET, { mm_name }}, "pointset");
+            bool open_pointset = open_mesh(selected, mesh_id, "pointset");
 
             if (ImGui::BeginPopupContextItem(label("pointset_context", mm_name + "pointset"))) {
 
@@ -179,11 +182,12 @@ void XCFExplorer::generate_gui() {
                     add_attribute(
                         selected, 
                         mesh_id, 
-                        ObjectId(ObjectType::POINTSET_ATTR, { mm_name, attribute_type(&*it.ptr), "points", it.name }), 
+//                      ObjectId(ObjectType::POINTSET_ATTR, { mm_name, attribute_type(&*it.ptr), "points", it.name }), 
+                        root.xcf[mm_name].pointset.attr_points[it.name],
                         "points." + it.name
                     );
                 }
-                add_mesh_layers(selected, {POINTSET, { mm_name }}, "pointset");
+                add_mesh_layers(selected, root.xcf[mm_name].pointset, "pointset");
                 ImGui::TreePop();
             }
 
@@ -195,7 +199,7 @@ void XCFExplorer::generate_gui() {
             // ==> polylines
             std::vector<std::string> polyline2kill;
             for (auto& [mesh_name, obj] : mm.polylines) {
-                ObjectId mesh_id{POLYLINES, { mm_name, mesh_name }};
+                MeshPath mesh_id = root.xcf[mm_name].polylines[mesh_name];
 
                 bool open = open_mesh(selected, mesh_id, "polylines");
 
@@ -228,13 +232,15 @@ void XCFExplorer::generate_gui() {
                 if (!open) continue;
 
                 for (auto& it : obj.attributes.points) add_attribute(selected, mesh_id,
-                    ObjectId(ObjectType::POLYLINES_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"points",it.name }),
+                        root.xcf[mm_name].polylines[mesh_name].attr_points[it.name],
+//                  ObjectId(ObjectType::POLYLINES_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"points",it.name }),
                     "points." + it.name);
                 for (auto& it : obj.attributes.edges) add_attribute(selected, mesh_id,
-                    ObjectId(ObjectType::POLYLINES_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"edges",it.name }),
+                        root.xcf[mm_name].polylines[mesh_name].attr_edges[it.name],
+//                  ObjectId(ObjectType::POLYLINES_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"edges",it.name }),
                     "edges." + it.name);
 
-                add_mesh_layers(selected, {POLYLINES, { mm_name, mesh_name }}, "polylines");
+                add_mesh_layers(selected, root.xcf[mm_name].polylines[mesh_name], "polylines");
                 ImGui::TreePop();
             }
 
@@ -244,7 +250,7 @@ void XCFExplorer::generate_gui() {
             std::vector<std::string> tri2kill;
             for (auto& [mesh_name, obj] : mm.triangles) {
 
-                ObjectId mesh_id{TRIANGLES, { mm_name, mesh_name }};
+                MeshPath mesh_id = root.xcf[mm_name].triangles[mesh_name];
 
                 bool open = open_mesh(selected, mesh_id, "triangles");
                 if (ImGui::BeginPopupContextItem(label("killtripopup", mm_name + mesh_name))) {
@@ -273,15 +279,15 @@ void XCFExplorer::generate_gui() {
 
                 if (!open) continue;
                 for (auto& it : obj.attributes.points) add_attribute(selected, mesh_id,
-                    ObjectId(ObjectType::TRIANGLES_ATTR, { mm_name, mesh_name, attribute_type(&*it.ptr),"points", it.name}),
+                        root.xcf[mm_name].triangles[mesh_name].attr_points[it.name],
                     "points." + it.name);
                 for (auto& it : obj.attributes.corners) add_attribute(selected, mesh_id,
-                    ObjectId(ObjectType::TRIANGLES_ATTR, { mm_name, mesh_name, attribute_type(&*it.ptr),"corners", it.name}),
+                        root.xcf[mm_name].triangles[mesh_name].attr_corners[it.name],
                     "corners." + it.name);
                 for (auto& it : obj.attributes.facets) add_attribute(selected, mesh_id,
-                    ObjectId(ObjectType::TRIANGLES_ATTR, { mm_name, mesh_name, attribute_type(&*it.ptr),"facets", it.name}),
+                        root.xcf[mm_name].triangles[mesh_name].attr_facets[it.name],
                     "facets." + it.name);
-                add_mesh_layers(selected, {TRIANGLES, { mm_name, mesh_name }}, "triangles");
+                add_mesh_layers(selected, root.xcf[mm_name].triangles[mesh_name], "triangles");
                 ImGui::TreePop();
 
             }
@@ -343,7 +349,7 @@ void XCFExplorer::generate_gui() {
             // ==> hexahedra
             std::vector<std::string> hex2kill;
             for (auto& [mesh_name, obj] : mm.hexahedra) {
-                ObjectId mesh_id = {HEXAHEDRA, { mm_name, mesh_name }};
+                MeshPath mesh_id = root.xcf[mm_name].hexahedra[mesh_name];
                 bool open = open_mesh(selected, mesh_id, "hexahedra");
                 if (ImGui::BeginPopupContextItem(label("killhexpopup", mm_name + mesh_name))){
                     if (ImGui::Button("Delete")){
@@ -370,27 +376,27 @@ void XCFExplorer::generate_gui() {
                 }
                 if (!open) continue;
                 for (auto& it : obj.attributes.points) add_attribute(selected, mesh_id,
-                    ObjectId(ObjectType::HEXAHEDRA_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"points",it.name }),
+                        root.xcf[mm_name].hexahedra[mesh_name].attr_points[it.name],
                     "points." + it.name);
                 for (auto& it : obj.attributes.cell_corners) add_attribute(selected, mesh_id,
-                    ObjectId(ObjectType::HEXAHEDRA_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"corners",it.name }),
+                        root.xcf[mm_name].hexahedra[mesh_name].attr_corners[it.name],
                     "corners." + it.name);
                 for (auto& it : obj.attributes.cell_facets) add_attribute(selected, mesh_id,
-                    ObjectId(ObjectType::HEXAHEDRA_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"facets",it.name }),
+                        root.xcf[mm_name].hexahedra[mesh_name].attr_facets[it.name],
                     "facets." + it.name);
                 for (auto& it : obj.attributes.cells) add_attribute(selected, mesh_id,
-                    ObjectId(ObjectType::HEXAHEDRA_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"cells",it.name}),
+                        root.xcf[mm_name].hexahedra[mesh_name].attr_cells[it.name],
                     "cells." + it.name);
-                add_mesh_layers(selected, {HEXAHEDRA, { mm_name, mesh_name }}, "hexahedra");
+                add_mesh_layers(selected, root.xcf[mm_name].hexahedra[mesh_name], "hexahedra");
                 ImGui::TreePop();
             }
 
 
-            for (auto n : polyline2kill) God::xcf.kill_mesh(root().xcf[mm_name].polylines[n]);
-            for (auto n : tri2kill) God::xcf.kill_mesh(root().xcf[mm_name].triangles[n]);
+            for (auto n : polyline2kill) God::xcf.kill_mesh(root.xcf[mm_name].polylines[n]);
+            for (auto n : tri2kill) God::xcf.kill_mesh(root.xcf[mm_name].triangles[n]);
             // for (auto n : quad2kill) God::xcf.kill_mesh(ObjectId(ObjectType::QUADS, {mm_name, n}));
             // for (auto n : tet2kill) God::xcf.kill_mesh(ObjectId(ObjectType::TETRAHEDRA, {mm_name, n}));
-            for (auto n : hex2kill) God::xcf.kill_mesh(root().xcf[mm_name].hexahedra[n]);
+            for (auto n : hex2kill) God::xcf.kill_mesh(root.xcf[mm_name].hexahedra[n]);
             ImGui::TreePop();
 
         }
@@ -398,9 +404,9 @@ void XCFExplorer::generate_gui() {
     for (auto n : mm2kill) God::xcf.kill_multimesh(n);
 
     {// sync with property panel
-        PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(ObjectId(root().panels["property_window"])));
+        PropertyExplorer& pan = dynamic_cast<PropertyExplorer&> (static_cast<Panel&>(root.panels["property_window"]));
         pan.layers.clear();
-        for (auto sel : selected)if (sel.path == LAYER) pan.layers.push_back(sel);
+        for (auto sel : selected)if (sel.has_prefix(root.layers)) pan.layers.push_back(sel);
     }
 
 
@@ -408,12 +414,12 @@ void XCFExplorer::generate_gui() {
     ImGui::End();
 }
 
-void XCFExplorer::add_mesh_layers(ObjectIdSet& selected, ObjectId mesh_id, std::string gna){
-    auto mm_name = mesh_id.names[0];
+void XCFExplorer::add_mesh_layers(PathSet& selected, MeshPath mesh_id, std::string gna){
+    auto mm_name = mesh_id.parent().name();
     
     for (int i = 0; i < God::layers.size(); i++)
-        if (God::layers[i].mesh== static_cast<MeshPath>((Path)mesh_id)){
-            ObjectId layer_id(LAYER, God::layers.ith_name(i));
+        if (God::layers[i].mesh== mesh_id){
+            Path layer_id = root.layers[God::layers.ith_name(i)];
 
             bool open_layer;
             {
@@ -422,10 +428,10 @@ void XCFExplorer::add_mesh_layers(ObjectIdSet& selected, ObjectId mesh_id, std::
                 NodeColor ncol(colorid);
                 open_layer = ImGui::TreeNodeEx(label(God::layers.ith_name(i), mm_name), flag(selected.contains(layer_id), true));
             }
-            ObjectId attr_id;
+            AttributePath attr_id;
             if (ImGui::BeginDragDropTarget()) {
                 if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("OBJECTID")) {
-                    attr_id = **(const ObjectId**)payload->Data;
+                    attr_id = **(const AttributePath**)payload->Data;
                     Layer& layer = layer_id;
                     layer.bind_attribute(static_cast<AttributePath>((Path)attr_id));
                 }

@@ -5,7 +5,7 @@
 using namespace UM;
 
 struct Event {
-    ObjectId who;
+    Path who;
     events::EventType what_happened;
 };
 

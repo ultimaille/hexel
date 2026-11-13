@@ -7,7 +7,7 @@
 using namespace events;
 
 struct XCFExplorer : public Panel {
-    typedef std::set<ObjectId, std::function<bool(ObjectId, ObjectId)>> ObjectIdSet;
+    typedef std::set<Path, std::function<bool(Path, Path)>> PathSet;
 
     int flag(bool is_selected, bool leaf = false) {
         return ImGuiTreeNodeFlags_OpenOnArrow |
@@ -20,17 +20,18 @@ struct XCFExplorer : public Panel {
             (leaf ? ImGuiTreeNodeFlags_Leaf : 0);
     };
 
-    void object_id_drag_source(ObjectId id, std::string name);
+    void object_id_drag_source(Path id, std::string name);
 
-    void switch_selection(ObjectIdSet& selected, ObjectId object_id){
+    void switch_selection(PathSet& selected, Path object_id){
         if (selected.contains(object_id)) selected.erase(object_id);
         else selected.insert(object_id);
     };
 
-    bool open_mesh(ObjectIdSet& selected, ObjectId mesh_id, std::string gna);
-    void add_mesh_layers(ObjectIdSet& selected, ObjectId mesh_id, std::string gna);
+    bool open_mesh(PathSet& selected, MeshPath mesh, std::string category);
 
-    void add_attribute(ObjectIdSet& selected, ObjectId mesh_id, ObjectId attr_id, std::string name);
+    void add_mesh_layers(PathSet& selected, MeshPath mesh_id, std::string gna);
+
+    void add_attribute(PathSet& selected, MeshPath mesh_id, AttributePath attr_id, std::string name);
     void generate_gui();
 
     struct NodeColor{
