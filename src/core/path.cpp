@@ -16,6 +16,18 @@ void Path::broadcast(EventTypes::EventType e) const {
     God::events.queue.emplace_back(Event(*this, e));
 }
 
+int Path::size() const {
+    return static_cast<int>(path.size());
+}
+
+bool Path::has_prefix(const Path& other) const {
+    return size() >= other.size() &&
+        std::ranges::equal(
+                other.path.begin(), other.path.end(),
+                path.begin(), path.begin() + other.size()
+                );
+}
+
 template<class Collection> Path::ObjectPtr find_attribute_ptr(Collection& attributes, const std::string& name) {
     for (auto& attribute : attributes)
         if (attribute.name == name && attribute.ptr)

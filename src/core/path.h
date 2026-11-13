@@ -22,17 +22,53 @@ struct Layer;
 struct Path;
 struct Mode;
 
+template<typename T> concept PathMeshType =
+    std::is_same_v<T, PolyLine> ||
+    std::is_same_v<T, Triangles> ||
+    std::is_same_v<T, Quads> ||
+    std::is_same_v<T, Polygons> ||
+    std::is_same_v<T, Tetrahedra> ||
+    std::is_same_v<T, Hexahedra> ||
+    std::is_same_v<T, Wedges> ||
+    std::is_same_v<T, Pyramids>;
+
+template<typename T> concept PathObjectType =
+    std::is_same_v<T, KeyboardState> ||
+    std::is_same_v<T, MouseState> ||
+    std::is_same_v<T, TrackBallCamera> ||
+    std::is_same_v<T, WindowContext> ||
+    std::is_same_v<T, Mode> ||
+    std::is_same_v<T, Panel> ||
+    std::is_same_v<T, Layer> ||
+    std::is_same_v<T, MultiMesh> ||
+    std::is_same_v<T, ContainerBase>;
+
+template<typename T> concept PathReferenceType =
+    PathMeshType<T> ||
+    PathObjectType<T> ||
+    std::is_same_v<T, PointSet> ||
+    std::is_same_v<T, PointSetAttributes> ||
+    std::is_same_v<T, PolyLineAttributes> ||
+    std::is_same_v<T, SurfaceAttributes> ||
+    std::is_same_v<T, VolumeAttributes>;    
+
 struct Path {
     std::vector<std::string> path;
-    void broadcast(EventTypes::EventType e) const;
 
-    inline bool has_prefix(const Path& other) const {
-        return size() >= other.size() &&
-            std::ranges::equal(
-                    other.path.begin(), other.path.end(),
-                    path.begin(), path.begin() + other.size()
-                    );
-    }
+    void broadcast(EventTypes::EventType e) const;
+    bool has_prefix(const Path& other) const;
+    int size() const;
+    bool valid() const;
+
+    operator PointSet*() const;
+    operator PointSetAttributes*() const;
+    operator PolyLineAttributes*() const;
+    operator SurfaceAttributes*() const;
+    operator VolumeAttributes*() const;
+
+    template<PathMeshType      T> operator T*() const;
+    template<PathObjectType    T> operator T*() const;
+    template<PathReferenceType T> operator T&() const;
 
     using ObjectPtr = std::variant<
         std::monostate, // unresolved path
@@ -55,76 +91,6 @@ struct Path {
         ContainerBase*
             >;
 
-    operator PointSet*() const;
-    operator PointSetAttributes*() const;
-    operator PolyLineAttributes*() const;
-    operator SurfaceAttributes*() const;
-    operator VolumeAttributes*() const;
-
-    template<typename T>
-        requires (
-                std::is_same_v<T, PolyLine> ||
-                std::is_same_v<T, Triangles> ||
-                std::is_same_v<T, Quads> ||
-                std::is_same_v<T, Polygons> ||
-                std::is_same_v<T, Tetrahedra> ||
-                std::is_same_v<T, Hexahedra> ||
-                std::is_same_v<T, Wedges> ||
-                std::is_same_v<T, Pyramids>
-                )
-        operator T*() const {
-            using Attributes = decltype(empty_attr(std::declval<const T&>()));
-            auto* attr = as<MultiMesh::MeshAttr<T, Attributes>>();
-            return attr ? &attr->mesh : nullptr;
-        }
-
-    template<typename T>
-        requires (
-                std::is_same_v<T, KeyboardState> ||
-                std::is_same_v<T, MouseState> ||
-                std::is_same_v<T, TrackBallCamera> ||
-                std::is_same_v<T, WindowContext> ||
-                std::is_same_v<T, Mode> ||
-                std::is_same_v<T, Panel> ||
-                std::is_same_v<T, Layer> ||
-                std::is_same_v<T, MultiMesh> ||
-                std::is_same_v<T, ContainerBase>
-                )
-        operator T*() const {
-            return as<T>();
-        }
-
-    template<typename T>
-        requires (
-                std::is_same_v<T, WindowContext> ||
-                std::is_same_v<T, Mode> ||
-                std::is_same_v<T, Panel> ||
-                std::is_same_v<T, Layer> ||
-                std::is_same_v<T, MultiMesh> ||
-                std::is_same_v<T, PointSet> ||
-                std::is_same_v<T, PointSetAttributes> ||
-                std::is_same_v<T, PolyLine> ||
-                std::is_same_v<T, PolyLineAttributes> ||
-                std::is_same_v<T, Triangles> ||
-                std::is_same_v<T, Quads> ||
-                std::is_same_v<T, Polygons> ||
-                std::is_same_v<T, SurfaceAttributes> ||
-                std::is_same_v<T, Tetrahedra> ||
-                std::is_same_v<T, Hexahedra> ||
-                std::is_same_v<T, Wedges> ||
-                std::is_same_v<T, Pyramids> ||
-                std::is_same_v<T, VolumeAttributes>
-                )
-        operator T&() const {
-            T* object = *this;
-            um_assert(object != nullptr);
-            return *object;
-        }
-
-    int size() const { return static_cast<int>(path.size()); }
-
-    bool valid() const;
-
     protected:
     friend struct AttributePath;
 
@@ -141,6 +107,24 @@ struct Path {
         return path;
     }
 };
+
+template<PathMeshType T> inline Path::operator T*() const {
+    using Attributes = decltype(empty_attr(std::declval<const T&>()));
+    auto* attr = as<MultiMesh::MeshAttr<T, Attributes>>();
+    return attr ? &attr->mesh : nullptr;
+}
+
+template<PathObjectType T>
+inline Path::operator T*() const {
+    return as<T>();
+}
+
+template<PathReferenceType T>
+inline Path::operator T&() const {
+    T* object = *this;
+    um_assert(object != nullptr);
+    return *object;
+}
 
 struct MultiMeshPath;
 
@@ -226,9 +210,9 @@ struct RootPath : Path {
         }
     };
 
-    PathCollection modes   = {{{ "modes"   }}};
-    PathCollection layers  = {{{ "layers"  }}};
-    PathCollection panels  = {{{ "panels"  }}};
+    PathCollection modes   = {{{ "modes"  }}};
+    PathCollection layers  = {{{ "layers" }}};
+    PathCollection panels  = {{{ "panels" }}};
 
     struct XCF : Path {
         MultiMeshPath operator[](std::string s) const {
