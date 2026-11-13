@@ -1,5 +1,6 @@
 #pragma once
 #include "events.h"
+#include "registry.h"
 #include <iostream>
 #include <set>
 

@@ -61,4 +61,3 @@ struct TrackBallCamera {
     void handle(Event event);
 };
 
-

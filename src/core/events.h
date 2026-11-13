@@ -1,5 +1,5 @@
 #pragma once
-#include <queue>
+#include <vector>
 #include "path.h"
 
 struct Event : EventTypes {

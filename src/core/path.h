@@ -1,5 +1,5 @@
-#ifndef __OBJECTID_H__
-#define __OBJECTID_H__
+#ifndef __PATH_H__
+#define __PATH_H__
 
 #include <ranges>
 #include <string>
@@ -60,11 +60,11 @@ struct Path {
     int size() const;
     bool valid() const;
 
-    operator PointSet*() const;
+    operator PointSet*()           const;
     operator PointSetAttributes*() const;
     operator PolyLineAttributes*() const;
-    operator SurfaceAttributes*() const;
-    operator VolumeAttributes*() const;
+    operator SurfaceAttributes*()  const;
+    operator VolumeAttributes*()   const;
 
     template<PathMeshType      T> operator T*() const;
     template<PathObjectType    T> operator T*() const;
@@ -114,13 +114,11 @@ template<PathMeshType T> inline Path::operator T*() const {
     return attr ? &attr->mesh : nullptr;
 }
 
-template<PathObjectType T>
-inline Path::operator T*() const {
+template<PathObjectType T> inline Path::operator T*() const {
     return as<T>();
 }
 
-template<PathReferenceType T>
-inline Path::operator T&() const {
+template<PathReferenceType T> inline Path::operator T&() const {
     T* object = *this;
     um_assert(object != nullptr);
     return *object;
@@ -225,5 +223,5 @@ inline bool operator==(const Path& a, const Path& b) {
     return a.path == b.path;
 }
 
-#endif //__OBJECTID_H__
+#endif //__PATH_H__
 
