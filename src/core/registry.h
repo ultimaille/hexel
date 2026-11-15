@@ -115,5 +115,5 @@ struct Registry {
     }
 };
 
-
 #endif //__REGISTRY_H__
+

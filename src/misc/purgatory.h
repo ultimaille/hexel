@@ -1,5 +1,6 @@
 #pragma once
 #include "core/events.h"
+#include "core/basic.h"
 
 // Horrible global variables
 extern Path grad_and_drop_objectid;

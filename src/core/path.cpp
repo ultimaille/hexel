@@ -1,3 +1,4 @@
+#include <ranges>
 #include "path.h"
 
 #include "events.h"

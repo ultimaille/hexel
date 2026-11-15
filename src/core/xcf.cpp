@@ -1,3 +1,5 @@
+#include <fstream>
+
 #include <ultimaille/all.h>
 #include "xcf.h"
 #include "core.h"

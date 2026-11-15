@@ -2,6 +2,7 @@
 #include <optional>
 #include "events.h"
 #include "registry.h"
+#include "basic.h"
 
 struct Layer {
     Layer();

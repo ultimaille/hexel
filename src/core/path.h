@@ -1,11 +1,11 @@
 #ifndef __PATH_H__
 #define __PATH_H__
 
-#include <ranges>
 #include <string>
 #include <type_traits>
 #include <variant>
 #include <vector>
+#include <ostream>
 
 #include "xcf.h"
 #include "event_type.h"
@@ -221,6 +221,15 @@ struct RootPath : Path {
 
 inline bool operator==(const Path& a, const Path& b) {
     return a.path == b.path;
+}
+
+inline std::ostream& operator<<(std::ostream& os, const Path& path) {
+    if (!path.size())
+        os << "/";
+    else
+        for (const auto& segment : path.path)
+            os << "/" << segment;
+    return os;
 }
 
 #endif //__PATH_H__

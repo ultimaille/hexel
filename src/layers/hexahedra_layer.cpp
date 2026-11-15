@@ -25,7 +25,7 @@
         case RenderType::POINT: return 2;
         case RenderType::POINT_SPHERE: return 0;
         };
-        Log::abort("Primitive type does not exist");
+        Log::error("Primitive type does not exist");
         return -1;
     }
 
