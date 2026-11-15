@@ -8,16 +8,6 @@
 #include <modes/generic_mouse_reacts.h>
 #include <core/mode.h>
 
-//struct HexModelerData{
-//    HexModelerData();
-//    std::string working_directory;
-//    std::string project_directory;
-//    std::string CAD_file;
-//    int undo_begin = -1;
-//    int undo_stack_size = 5;
-//    int undo_id = -1;
-//    int active_mode_id=0;
-//};
 struct HexModelerMode;
 
 struct HexModelerSubMode : public Mode{
@@ -34,7 +24,7 @@ struct HexModelerSubMode : public Mode{
 
     // update coherence constraints
     Volume::Halfedge hex_halfedge_from_edge(int e);
-    void update_hex();
+    bool update_hex();
 
     // manage camera + layer selection
     InteractorTrackBallCamera camera_react;
