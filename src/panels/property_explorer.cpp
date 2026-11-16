@@ -5,7 +5,9 @@
 void PropertyExplorer::generate_gui(){
         ImGui::Begin("Properties", nullptr);
 
-        
+        static std::unordered_map<std::string, bool> advanced_open;
+        static std::unordered_map<std::string, bool> attributes_open;
+
         for (Path& id : layers){
             if (!id.valid()) continue;
             Layer &layer = id;
@@ -36,13 +38,13 @@ void PropertyExplorer::generate_gui(){
             layer_ui->show_parameters(LayerUI::BASIC);
 
             // Advanced parameters
-            if (ImGui::CollapsingHeader("Advanced")) {
+            DrawThinSection2("advanced", "advanced", advanced_open[layer_name], [&layer_ui=layer_ui]() {
                 layer_ui->show_parameters(LayerUI::ADVANCED);
-            }
+            });
             // Attribute parameters
-            if (ImGui::CollapsingHeader("Attributes")) {
+            DrawThinSection2("attributes", "attributes", attributes_open[layer_name], [&layer_ui=layer_ui]() {
                 layer_ui->show_parameters(LayerUI::ATTRIBUTE);
-            }
+            });
 
             ImGui::PopID();
         }
