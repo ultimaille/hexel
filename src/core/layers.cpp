@@ -21,7 +21,7 @@
 
             Layer &layer = God::layers[l];
 
-            if (layer.group == group_id && group_opt.value().visible && layer.visible)
+            if (layer.group == group_id && group_opt.value().get().visible && layer.visible)
                 layer.render();
         }
     }
@@ -76,20 +76,21 @@
         kill(idx);
     }
 
-    std::optional<Group> LayerManager::find_group(const std::string& name) {
+    template <typename Pred>
+    std::optional<std::reference_wrapper<Group>> LayerManager::find_group(Pred &&pred) {
         for (auto &group : groups) {
-            if (group.name == name)
-                return group;
+            if (pred(group))
+                return std::ref(group);
         }
         return std::nullopt;
     }
 
-    std::optional<Group> LayerManager::find_group(int group_id) {
-        for (auto &group : groups) {
-            if (group.id == group_id)
-                return group;
-        }
-        return std::nullopt;
+    std::optional<std::reference_wrapper<Group>> LayerManager::find_group(const std::string name) {
+        return find_group([&name](const Group &g) { return g.name == name; });
+    }
+    
+    std::optional<std::reference_wrapper<Group>> LayerManager::find_group(int id) {
+        return find_group([&id](const Group &g) { return g.id == id; });
     }
 
     int LayerManager::add_group(const std::string& name) {
