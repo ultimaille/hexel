@@ -99,6 +99,14 @@ void HexModelerSubMode::backup(){
     std::filesystem::create_directory(dir);
     save_project(dir);
 }
+
+void HexModelerSubMode::forget_last_backup(){
+    if (mode.undo_id == mode.undo_begin) {
+        Log::add("Undo stack is empty, not able to forget");
+        return;
+    }
+    mode.undo_id--;
+}
 void HexModelerSubMode::undo(){
     if (mode.undo_id == mode.undo_begin) {
         Log::add("Undo stack is empty");

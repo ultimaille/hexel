@@ -2,6 +2,42 @@
 #include <modes/mode_hex_modeler.h>
 
 
+// low-level (at UM level), without guaranties
+namespace  AlgoRaw{
+    void merge_vertices(Hexahedra& hex,int source,int target){
+        FOR(c, hex.ncells())FOR(lv, 8) if (hex.vert(c, lv) == source)hex.vert(c, lv) = target;
+    }
+};
+
+// Algorithms assumed to preserve some properties (returns bool if it doesn't) 
+namespace AlgoMesh{
+    bool merge_vertices(Hexahedra& hex, int source, int target){
+        AlgoRaw::merge_vertices(hex,source, target);
+        FOR(c, hex.ncells())FOR(lv0, 8) FOR(lv, 8) if (hex.vert(c, lv) == source)hex.vert(c, lv) = target;
+        return true;
+    }
+};
+
+// algorithms that are ready to call from UI
+struct AlgoXCFLevel{
+    AlgoXCFLevel(HexModelerSubMode& mode) :mode(mode){}
+    HexModelerSubMode& mode;
+    bool merge_vertices(int source, int target){
+        mode.backup();
+        Hexahedra& hex = mode.hex_id();
+        if (!AlgoMesh::merge_vertices(hex,source, target)){
+            mode.undo();
+            return false;
+        }
+        if (!mode.update_hex()){
+            mode.undo();
+            return false;
+        }
+        mode.forget_last_backup();
+        mode.hex_id().broadcast(Event::UPDATED);
+        return true;
+    }
+};
 
 
 
@@ -30,10 +66,7 @@ void InteractorMoveVertex::on_release(int button, vec2 p) {
     }
     if (target_vertex != -1) {
         Log::add("need to merge vertices");
-        mode.backup();
-        if (mode.merge_vertices(moving_vertex, target_vertex))
-            mode.hex_id().broadcast(Event::UPDATED);
-        else mode.undo();
+        AlgoXCFLevel(mode).merge_vertices(moving_vertex, target_vertex);
         reset();
         return;
     }
@@ -70,21 +103,14 @@ void InteractorMoveVertex::on_release(int button, vec2 p) {
         mode.hex_id().broadcast(Event::UPDATED);
     }
 }
-
 void InteractorMoveVertex::generate_gui(){
     if (moving_vertex == -1) return;
     std::string msg = "InteractorMoveVertex #" + std::to_string(moving_vertex);
     ImGui::Text(msg.c_str());
 }
-
 void InteractorMoveVertex::reset(){ 
     moving_vertex = -1; 
 }
-
-
-
-
-
 
 
 InteractorKillHex::InteractorKillHex(BasicEditMode& mode) :mode(mode){}
@@ -107,25 +133,15 @@ void InteractorKillHex::on_click(int button, vec2 p) {
             mode.update_hex();
             mode.hex_id().broadcast(Event::UPDATED);
         }
-    }
+    }                                                                          
 }
-
-
-
-
-
-
-
-
-
-
 
 void InteractorFeedBack::activate(){
     std::string mm_name = "feedback";
     God::xcf.add("feedback");
     int group = God::layers.add_group(mm_name);
-    MultiMesh& mm = God::xcf["feedback"];
-    //MultiMesh& mm0 = root.xcf["feedback"];
+    //MultiMesh& mm = God::xcf["feedback"];
+    MultiMesh& mm = root.xcf["feedback"];
     mm.polylines.try_emplace("");
     mm.polylines[""].mesh.points = mm.pointset;
 
@@ -140,6 +156,10 @@ void InteractorFeedBack::activate(){
         layer.set_default_values();
     }
 }
+void InteractorFeedBack::desactivate(){
+    God::xcf.kill_multimesh("feedback");
+}
+
 void InteractorCreateHex::FeedBack::add_point(vec3 v){
     MultiMeshPath mm_id = root.xcf["feedback"];
     if (!mm_id.valid()) activate();
@@ -157,7 +177,6 @@ void InteractorCreateHex::FeedBack::add_point(vec3 v){
     root.xcf["feedback"].pointset.broadcast(Event::UPDATED);
     root.xcf["feedback"].polylines[""].broadcast(Event::UPDATED);
 }
-
 void InteractorCreateHex::FeedBack::pop_point(){
     MultiMeshPath mm_id = root.xcf["feedback"];
     //if (!mm_id.valid()) plop(mm_id.path);
@@ -183,17 +202,6 @@ void InteractorCreateHex::FeedBack::pop_point(){
         }
     }
 }
-
-void InteractorFeedBack::desactivate(){
-    God::xcf.kill_multimesh("feedback");
-}
-
-
-
-
-
-
-
 
 
 InteractorCreateHex::InteractorCreateHex(BasicEditMode& mode) :mode(mode){}
@@ -266,14 +274,12 @@ void InteractorCreateHex::on_click(int button, vec2 p) {
         }
 
 }
-
 void InteractorCreateHex::generate_gui(){
     if (pts.empty()) return;
     std::string msg = "InteractorCreateHex\nSelected vertices:\n";
     for (auto v : pts) msg += "(" + std::to_string(v.x) + "," + std::to_string(v.y) + "," + std::to_string(v.z) + ")\n";
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), msg.c_str());
 }
-
 
 
 BasicEditMode::BasicEditMode(HexModelerMode& mode) 
@@ -295,19 +301,15 @@ BasicEditMode::BasicEditMode(HexModelerMode& mode)
     interactors.push_back(&interactor_layer_selection);
     interactors.push_back(&interactor_move_vertex);
 }
-
-
 void BasicEditMode::handle(Event event) {
     Mode::handle(event);
 }
-
 void BasicEditMode::define_gui() {
     ImGui::Begin("HexModelerMode", nullptr);
     mode.header_gui_for_submodes();
     generate_interactor_gui();
     ImGui::End();
 }
-
 bool BasicEditMode::merge_vertices(int v0, int v1){
     Hexahedra& hex = hex_id();
     FOR(c, hex.ncells())FOR(lv, 8) if (hex.vert(c, lv) == v0)hex.vert(c, lv) = v1;

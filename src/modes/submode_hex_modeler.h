@@ -38,6 +38,7 @@ struct HexModelerSubMode : public Mode{
     
     // manage undo
     void backup();
+    void forget_last_backup();
     void undo();
 
     bool xcf_is_valid_for_editing();
