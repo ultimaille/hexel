@@ -159,7 +159,7 @@ void InteractorCreateHex::FeedBack::add_point(vec3 v){
 
 void InteractorCreateHex::FeedBack::pop_point(){
     MultiMeshPath mm_id = root.xcf["feedback"];
-    if (!mm_id.valid()) plop(mm_id.path);
+    //if (!mm_id.valid()) plop(mm_id.path);
     //if (!mm_id.valid()) return;  
     //MultiMesh& mm = mm_id;
     MultiMesh& mm = God::xcf["feedback"];

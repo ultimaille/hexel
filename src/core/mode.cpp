@@ -58,15 +58,18 @@ void Mode::handle(Event event){
 
     if (event.who == root.mouse && !ImGui::GetIO().WantCaptureMouse) {
         static int npixels_tolerance_to_detect_click = 5;
+        vec2 a = { God::mouse.previous.x, God::mouse.previous.y };
+        vec2 b = { God::mouse.current.x,  God::mouse.current.y };
+        bool in_click_zone[3];
+        FOR(button, 3)  in_click_zone[button] = (b - pos_on_press[button]).norm2() < npixels_tolerance_to_detect_click * npixels_tolerance_to_detect_click;
         const double wheel = God::mouse.wheel_speed;
 
         if (wheel != 0) for (auto& it : interactors) it->on_wheel(wheel);
-        vec2 a = { God::mouse.previous.x, God::mouse.previous.y };
-        vec2 b = { God::mouse.current.x,  God::mouse.current.y };
         // send drag event
         if ((a - b).norm2() > 0) {
             FOR(button, 3)
-                if (God::mouse.down(button)) for (auto& it : interactors) it->on_drag(button, a, b);
+                if (!in_click_zone[button])
+                    if (God::mouse.down(button)) for (auto& it : interactors) it->on_drag(button, a, b);
         }
         // send pressed event
         FOR(button, 3) if (God::mouse.current.buttons[button] && !God::mouse.previous.buttons[button]) {
@@ -76,7 +79,7 @@ void Mode::handle(Event event){
         // send released and clicked event
         FOR(button, 3) if (!God::mouse.current.buttons[button] && God::mouse.previous.buttons[button]) {
             for (auto& it : interactors) it->on_release(button, b);
-            if ((b - pos_on_press[button]).norm2() < npixels_tolerance_to_detect_click * npixels_tolerance_to_detect_click)
+            if (in_click_zone[button])
                 for (auto& it : interactors) it->on_click(button, b);
         }
     }
