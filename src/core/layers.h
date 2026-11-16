@@ -59,8 +59,11 @@ struct LayerManager: private Registry<Layer> {
         return layer; 
     }
 
-    std::optional<Group> find_group(const std::string& name);
-    std::optional<Group> find_group(int group_id);
+    template <typename Pred>
+    std::optional<std::reference_wrapper<Group>> find_group(Pred &&pred);
+    std::optional<std::reference_wrapper<Group>> find_group(const std::string name);
+    std::optional<std::reference_wrapper<Group>> find_group(int id);
+
     int add_group(const std::string& name);
     void remove_group(int group_id);
     bool is_group_empty(int group_id);
