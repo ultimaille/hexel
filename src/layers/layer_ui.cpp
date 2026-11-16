@@ -3,7 +3,9 @@
 #include <layers/basic_renderers.h>
 
 bool RendererUI::ambiant_slider() {
-    return ImGui::SliderFloat("##slider_ambiant", &renderer().ambient_prop, 0.0f, 1.0f, "%.3f", 0);
+    float val = ImGui::SliderFloat("##slider_ambiant", &renderer().ambient_prop, 0.0f, 1.0f, "%.3f", 0);
+    renderer().ambient_prop = std::clamp(renderer().ambient_prop, 0.f, 1.f);
+    return val;
 }
 
 bool RendererUI::color_picker() {
@@ -48,7 +50,7 @@ void PointRendererUI::show_parameters(RendererUIMode mode) {
     if (mode == RendererUIMode::BASIC) {
         PropertyTable("point_table_basic_parameter", {
             {"Style", [&] {
-                color_picker();
+                if (r.color_map_prop <= 0) color_picker();
                 ImGui::SameLine();
                 ImGui::PushItemWidth(80);
                 radius_input();
@@ -69,7 +71,7 @@ void TriangleRendererUI::show_parameters(RendererUIMode mode) {
     if (mode == RendererUIMode::BASIC) {
         PropertyTable("tri_table_basic_parameter", {
             {"Style", [&] {
-                color_picker();
+                if (r.color_map_prop <= 0) color_picker();
             }}
         });
     }
@@ -103,7 +105,7 @@ void SegmentRendererUI::show_parameters(RendererUIMode mode) {
     if (mode == RendererUIMode::BASIC) {
         PropertyTable("tri_table_basic_parameter", {
             {"Style", [&]() {
-                color_picker();
+                if (r.color_map_prop <= 0) color_picker();
                 ImGui::SameLine();
                 ImGui::PushItemWidth(80);
                 line_width_input();

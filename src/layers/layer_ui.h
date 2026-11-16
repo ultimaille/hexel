@@ -1,12 +1,88 @@
 #pragma once
 #include <imgui.h>
+#include <functional>
+
 #include <ultimaille/all.h>
 
 #include <core/path.h>
 #include <core/layers.h>
 #include <misc/purgatory.h>
 
+
 using namespace UM;
+
+// void DrawThinSection(const char *id, bool &section_open, void (*draw_content)()) {
+static void DrawThinSection(const char *id, bool &section_open, const std::function<void()> &draw_content) {
+    ImGui::PushID(id);
+
+    const float thickness = 3.0f;
+    const float hit_height = 10.0f;
+    const float width = ImGui::GetContentRegionAvail().x;
+
+    ImVec2 pos = ImGui::GetCursorScreenPos();
+    ImGui::InvisibleButton("##toggle", ImVec2(width, hit_height));
+
+    if (ImGui::IsItemClicked())
+        section_open = !section_open;
+
+    const bool hovered = ImGui::IsItemHovered();
+    const ImU32 col = ImGui::GetColorU32(hovered ? ImGuiCol_SeparatorHovered : ImGuiCol_Separator);
+
+    const float center_y = pos.y + hit_height * 0.5f;
+    ImGui::GetWindowDrawList()->AddRectFilled(
+        ImVec2(pos.x, center_y - thickness * 0.5f),
+        ImVec2(pos.x + width, center_y + thickness * 0.5f),
+        col);
+
+    if (section_open && draw_content)
+        draw_content();
+
+    ImGui::PopID();
+}
+
+static void DrawThinSection2(const char *id, const char *label, bool &section_open,
+                     const std::function<void()> &draw_content) {
+    ImGui::PushID(id);
+
+    const float thickness = 3.0f;
+    const float hit_height = 10.0f;
+    const float label_scale = 0.75f;
+    const float label_padding = 4.0f;
+    const float width = ImGui::GetContentRegionAvail().x;
+
+    ImVec2 pos = ImGui::GetCursorScreenPos();
+    ImGui::InvisibleButton("##toggle", ImVec2(width, hit_height));
+
+    if (ImGui::IsItemClicked())
+        section_open = !section_open;
+
+    const bool hovered = ImGui::IsItemHovered();
+    const ImU32 bar_col = ImGui::GetColorU32(hovered ? ImGuiCol_SeparatorHovered : ImGuiCol_Separator);
+    const float center_y = pos.y + hit_height * 0.5f;
+
+    ImDrawList *dl = ImGui::GetWindowDrawList();
+    dl->AddRectFilled(ImVec2(pos.x, center_y - thickness * 0.5f),
+                      ImVec2(pos.x + width, center_y + thickness * 0.5f),
+                      bar_col);
+
+    // Small label sitting on the bar, with a background so the bar doesn't show through.
+    ImFont *font = ImGui::GetFont();
+    const float font_size = ImGui::GetFontSize() * label_scale;
+    const ImVec2 text_size = font->CalcTextSizeA(font_size, FLT_MAX, 0.0f, label);
+    const ImVec2 text_pos(pos.x + label_padding, center_y - text_size.y * 0.5f);
+
+    const ImU32 bg_col = ImGui::GetColorU32(ImGuiCol_WindowBg);
+    const ImU32 text_col = ImGui::GetColorU32(ImGuiCol_Text);
+    dl->AddRectFilled(ImVec2(text_pos.x - label_padding * 0.5f, text_pos.y - 1.0f),
+                      ImVec2(text_pos.x + text_size.x + label_padding * 0.5f, text_pos.y + text_size.y + 1.0f),
+                      bg_col);
+    dl->AddText(font, font_size, text_pos, text_col, label);
+
+    if (section_open && draw_content)
+        draw_content();
+
+    ImGui::PopID();
+}
 
 struct ButtonPalette { ImVec4 base, hovered, active; };
 
