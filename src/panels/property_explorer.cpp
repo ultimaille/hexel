@@ -27,6 +27,9 @@ void PropertyExplorer::generate_gui(){
                 layer_ui = std::make_unique<TrianglesLayerUI>(*pl);
             } else if (HexahedraLayer *pl = dynamic_cast<HexahedraLayer*>(&layer)) {
                 layer_ui = std::make_unique<HexahedraLayerUI>(*pl);
+            } else {
+                ImGui::PopID();
+                continue;
             }
 
             // Basic parameters
