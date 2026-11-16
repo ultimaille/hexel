@@ -14,18 +14,18 @@
 
 PolyLineLayer::PolyLineLayer()  { point_renderer.layer_id = id; edge_renderer.layer_id = id; }
 
-int PolyLineLayer::primitive_type(){
+AttributeBase::TYPE PolyLineLayer::primitive_type(){
     switch (rt){
     case RenderType::PLAIN: 
     case RenderType::EDGE: 
     case RenderType::EDGE_REPEAT: 
     case RenderType::POINT: 
-        return 1;
+        return AttributeBase::TYPE::EDGES;
     case RenderType::POINT_SPHERE: 
-        return 0;
+        return AttributeBase::TYPE::POINTS;
     };
     Log::error("Primitive type does not exist");
-    return -1;
+    return AttributeBase::TYPE::GENERIC;
 }
 
 

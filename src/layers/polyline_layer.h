@@ -13,7 +13,7 @@ struct PolyLineLayer : public Layer {
 
     RenderType rt = PLAIN;
 
-    int primitive_type();
+    AttributeBase::TYPE primitive_type();
 
     //attr_id.names = 0->mm_name, 1->hex_name, 2->attribute_type, 3->attribute_primitive, 4->attribute_name
     inline bool attr_active()           { return (ContainerBase *)attr_id != nullptr; }// deso pour le jeu de mot

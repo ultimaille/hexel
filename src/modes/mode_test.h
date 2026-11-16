@@ -28,7 +28,7 @@ struct InteractorPickerTest : public Interactor {
         Log::add("click " + std::to_string(button));
         Picker picker;
         Picker::Result pr = picker.at(p);
-        int prim = pr.filtered_primitive_id(mesh_id, 2);
+        int prim = pr.filtered_primitive_id(mesh_id, AttributeBase::TYPE::CELLFACETS);
         if (prim != -1){
             if (button == 0) flag[pr.raw_primitive_id]++;
             if (button == 1) flag[pr.raw_primitive_id]--;
@@ -55,7 +55,7 @@ struct InteractorLayerSelectionTest : public Interactor {
         if (button != 0) return;
         Picker picker;
         Picker::Result pr = picker.at(p);
-        int prim = pr.filtered_primitive_id(mesh_id, 2);
+        int prim = pr.filtered_primitive_id(mesh_id, AttributeBase::TYPE::CELLFACETS);
         if (prim != -1){
             VolumeAttributes* attr = mesh_id;
             Hexahedra* hex = mesh_id;

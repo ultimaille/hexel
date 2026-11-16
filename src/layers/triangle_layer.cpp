@@ -17,14 +17,14 @@
 TrianglesLayer::TrianglesLayer() { point_renderer.layer_id = id; tri_renderer.layer_id = id; }
 
 
-int TrianglesLayer::primitive_type(){
+AttributeBase::TYPE TrianglesLayer::primitive_type(){
     switch (rt){
-    case RenderType::POINT_SPHERE: return 0;
+    case RenderType::POINT_SPHERE: return AttributeBase::TYPE::POINTS;
     case RenderType::CORNER_GLYPH:
     case RenderType::HALFEDGE_GLYPH: 
-        return 2;
+        return AttributeBase::TYPE::CORNERS;
     };
-    return 1;
+    return AttributeBase::TYPE::FACETS;
 }
 
 

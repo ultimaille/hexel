@@ -15,19 +15,28 @@
 
     HexahedraLayer::HexahedraLayer()  { point_renderer.layer_id = id; tri_renderer.layer_id = id;}
 
-    int HexahedraLayer::primitive_type(){
+    AttributeBase::TYPE HexahedraLayer::primitive_type(){
         switch (rt){
-        case RenderType::PLAIN: return 2;
-        case RenderType::CELL: return 2;
-        case RenderType::FACET: return 2;
-        case RenderType::CORNER: return 2;
-        case RenderType::CORNER_GLYPH: return 3;
-        case RenderType::POINT: return 2;
-        case RenderType::POINT_SPHERE: return 0;
+        case RenderType::PLAIN: return AttributeBase::TYPE::CELLFACETS;
+        case RenderType::CELL: return AttributeBase::TYPE::CELLFACETS;
+        case RenderType::FACET: return AttributeBase::TYPE::CELLFACETS;
+        case RenderType::CORNER: return AttributeBase::TYPE::CELLFACETS;
+        case RenderType::CORNER_GLYPH: return AttributeBase::TYPE::CELLCORNERS;
+        case RenderType::POINT: return AttributeBase::TYPE::CELLFACETS;
+        case RenderType::POINT_SPHERE: return AttributeBase::TYPE::POINTS;
         };
         Log::error("Primitive type does not exist");
-        return -1;
+        return AttributeBase::TYPE::GENERIC;
     }
+    int HexahedraLayer::convert_primitive_id(int raw_primitive_id, AttributeBase::TYPE requested_primitive_type){ 
+        AttributeBase::TYPE picked_type = primitive_type();
+        if (picked_type == AttributeBase::TYPE::CELLFACETS && requested_primitive_type == AttributeBase::TYPE::CELLS)
+            return  raw_primitive_id / 6;
+        if (picked_type == AttributeBase::TYPE::CELLCORNERS && requested_primitive_type == AttributeBase::TYPE::CELLS)
+            return  raw_primitive_id / 8;
+       return  Layer::convert_primitive_id(raw_primitive_id, requested_primitive_type);
+    }
+
 
 
     void HexahedraLayer::prepare_data_without_attribute(

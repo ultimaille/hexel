@@ -21,7 +21,9 @@ struct Layer {
 
     bool visible = true;
     MeshPath mesh;
-    virtual int primitive_type() { Log::error("This layer has no identified primtives"); return -1; } // number in the collections PointAttributes, PolyLineAttributes, SurfaceAttributes and VolumeAttributes
+    virtual AttributeBase::TYPE primitive_type() { Log::error("This layer has no identified primtives"); return AttributeBase::TYPE::GENERIC; } // number in the collections PointAttributes, PolyLineAttributes, SurfaceAttributes and VolumeAttributes
+    virtual int convert_primitive_id(int raw_primitive_id, AttributeBase::TYPE requested_primitive_type){ Log::error("Cannot convert into this primitive"); return -1; }
+
 
     static inline int max_id = 0;
     int id;

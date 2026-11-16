@@ -82,18 +82,16 @@ vec3 Picker::Result::point() {
 }
 
 //#include<misc/purgatory.h>
-int Picker::Result::filtered_primitive_id(MeshPath requested_mesh, int requested_primitive_type){
+int Picker::Result::filtered_primitive_id(MeshPath requested_mesh, AttributeBase::TYPE requested_primitive_type){
     FOR(l, God::layers.size()) {
         if (God::layers[l].id != layer_id)                    continue;
         if (God::layers[l].mesh != requested_mesh)            continue;
         // we directly have the right primitive
         int picked_type = God::layers[l].primitive_type();
         if (picked_type == requested_primitive_type)   return  raw_primitive_id;
-        // the requested primitive can be deduced from the picked primitive
-        if ((Hexahedra *)requested_mesh && picked_type == 2 && requested_primitive_type == 1)// convert face to cell
-            return  raw_primitive_id / 6;
-        if ((Hexahedra *)requested_mesh && picked_type == 3 && requested_primitive_type == 1)// convert corner to cell
-            return  raw_primitive_id / 8;
+
+        return God::layers[l].convert_primitive_id(raw_primitive_id,requested_primitive_type);
+
     }
     return -1;
 }

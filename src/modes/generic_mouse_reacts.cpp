@@ -8,7 +8,7 @@ void InteractorLayerSelection::on_click(int button, vec2 p) {
         if (button != 0) return;
         Picker picker;
         Picker::Result pr = picker.at(p);
-        int prim = pr.filtered_primitive_id(hexmode.hex_id(), 2);
+        int prim = pr.filtered_primitive_id(hexmode.hex_id(), AttributeBase::TYPE::CELLFACETS );
         if (prim != -1){
             Hexahedra& hex = *(Hexahedra *)hexmode.hex_id();
             CellFacetAttribute<int> layer_id(hex);

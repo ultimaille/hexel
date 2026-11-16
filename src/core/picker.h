@@ -2,6 +2,7 @@
 
 struct Picker{
 
+    
     struct Result {
         int x, y;
         int layer_id;
@@ -12,7 +13,7 @@ struct Picker{
         // get_attr_value
         vec3 point();
         // in most cases, we're interested to know if the picked point is on a specific primitive/mesh pair
-        int filtered_primitive_id(MeshPath requested_mesh, int requested_primitive_type);
+        int filtered_primitive_id(MeshPath requested_mesh, AttributeBase::TYPE requested_primitive_type);
     };
 
     struct BufferData {

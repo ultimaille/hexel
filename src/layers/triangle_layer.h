@@ -20,7 +20,8 @@ struct TrianglesLayer : public Layer{
     void update();
 
 
-    int primitive_type();
+    AttributeBase::TYPE primitive_type();
+
 
     void prepare_data_without_attribute(Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri, FacetAttribute<int>& primitive_id);
     template<class T> void update_data_for_scalar_facet_attribute();

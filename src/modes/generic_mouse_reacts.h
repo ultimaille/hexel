@@ -25,7 +25,7 @@ struct InteractorMultiSelector : public Interactor {
     }
 
     // filter the primitives
-    inline std::vector<std::pair<int, vec3> > primitives(MeshPath mesh_id, int primitive_type){
+    inline std::vector<std::pair<int, vec3> > primitives(MeshPath mesh_id, AttributeBase::TYPE primitive_type){
         std::vector <std::pair<int, vec3>> res;
         for (auto pr : picked) {
             int prim = pr.filtered_primitive_id(mesh_id, primitive_type);

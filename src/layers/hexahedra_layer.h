@@ -15,7 +15,9 @@ struct HexahedraLayer : public Layer {
 
     RenderType rt = PLAIN;
 
-    int primitive_type();
+    AttributeBase::TYPE primitive_type();
+    virtual int convert_primitive_id(int raw_primitive_id, AttributeBase::TYPE requested_primitive_type);
+
     float shrink = .1;
 
     //attr_id.names = 0->mm_name, 1->hex_name, 2->attribute_type, 3->attribute_primitive, 4->attribute_name

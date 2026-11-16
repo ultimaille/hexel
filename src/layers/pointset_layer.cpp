@@ -21,7 +21,7 @@ void PointSetLayer::set_default_values() {
 }
 
 
-int PointSetLayer::primitive_type(){ return 0; }
+AttributeBase::TYPE PointSetLayer::primitive_type(){ return AttributeBase::TYPE::POINTS; }
 
 void PointSetLayer::init(MeshPath obj){
     mesh = obj;

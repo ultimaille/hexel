@@ -6,7 +6,7 @@ struct PointSetLayer : public Layer{
 
     PointSetLayer();
 
-    int primitive_type();
+    AttributeBase::TYPE primitive_type();
     void set_default_values() override;
     void reset() override;
     void init(MeshPath obj);

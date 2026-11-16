@@ -13,7 +13,7 @@ void InteractorMoveVertex::on_press(int button, vec2 p) {
     picker.reset();
     for (auto& d : picker.data) {
         auto result = d.at(p);
-        int picked_vert = result.filtered_primitive_id(mode.pts_id(), 0);
+        int picked_vert = result.filtered_primitive_id(mode.pts_id(), AttributeBase::TYPE::POINTS);
         if (picked_vert != -1) moving_vertex = picked_vert;
     }
 }
@@ -25,7 +25,7 @@ void InteractorMoveVertex::on_release(int button, vec2 p) {
     int target_vertex = -1;
     for (auto& d : picker.data) {
         auto result = d.at(p);
-        int picked_vert = result.filtered_primitive_id(mode.pts_id(), 0);
+        int picked_vert = result.filtered_primitive_id(mode.pts_id(), AttributeBase::TYPE::POINTS);
         if (picked_vert != -1) target_vertex = picked_vert;
     }
     if (target_vertex != -1) {
@@ -40,7 +40,7 @@ void InteractorMoveVertex::on_release(int button, vec2 p) {
 
     for (auto& d : picker.data) {
         auto result = d.at(p);
-        int picked_triangle = result.filtered_primitive_id(mode.geom_tri_id(), 1);
+        int picked_triangle = result.filtered_primitive_id(mode.geom_tri_id(), AttributeBase::TYPE::FACETS);
         if (picked_triangle != -1){
             Log::add("need to move vertex to picked triangle");
             PointSet& pts = God::xcf["mesh"].pointset;
@@ -94,7 +94,7 @@ void InteractorKillHex::on_click(int button, vec2 p) {
     Picker picker;
     for (auto& d : picker.data) {
         auto result = d.at(p);
-        int picked_cell = result.filtered_primitive_id(mode.hex_id(), 1);
+        int picked_cell = result.filtered_primitive_id(mode.hex_id(), AttributeBase::TYPE::CELLS);
         if (picked_cell != -1){
             Hexahedra& hex = *(Hexahedra*)mode.hex_id();
             VolumeAttributes& attr = *(VolumeAttributes*)mode.hex_id();
@@ -125,6 +125,7 @@ void InteractorFeedBack::activate(){
     God::xcf.add("feedback");
     int group = God::layers.add_group(mm_name);
     MultiMesh& mm = God::xcf["feedback"];
+    //MultiMesh& mm0 = root.xcf["feedback"];
     mm.polylines.try_emplace("");
     mm.polylines[""].mesh.points = mm.pointset;
 
@@ -220,7 +221,7 @@ void InteractorCreateHex::on_click(int button, vec2 p) {
     bool picked_a_mesh_vertex = false;
     for (auto& d : picker.data) {
         auto result = d.at(p);
-        int picked_vert = result.filtered_primitive_id(mode.pts_id(), 0);
+        int picked_vert = result.filtered_primitive_id(mode.pts_id(), AttributeBase::TYPE::POINTS);
         if (picked_vert != -1){
             Hexahedra& hex = mode.hex_id();
             feedback.add_point(hex.points[picked_vert]);
@@ -230,7 +231,7 @@ void InteractorCreateHex::on_click(int button, vec2 p) {
     }
     if (!picked_a_mesh_vertex) for (auto& d : picker.data) {
             auto result = d.at(p);
-            int picked_triangle = result.filtered_primitive_id(mode.geom_tri_id(), 1);
+            int picked_triangle = result.filtered_primitive_id(mode.geom_tri_id(), AttributeBase::TYPE::FACETS);
         if (picked_triangle != -1){
             Hexahedra& hex = mode.hex_id();
             if (pts.size() != 4){
