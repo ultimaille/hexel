@@ -180,7 +180,7 @@ void PointSetLayerUI::show_parameters(LayerUIMode mode) {
 
         PropertyTable("pointset_layer_table_attribute", {
             {"Attribute", [&] {
-                auto new_attr_path_opt = attribute_combo(l.mesh.parent().name(), l.mesh.name(), l.attr_id, static_cast<PointSetAttributes>(l.mesh));
+                auto new_attr_path_opt = attribute_combo(l.mesh.parent().name(), l.mesh.name(), l.attr_id, static_cast<PointSetAttributes&>(l.mesh));
                 if (new_attr_path_opt.has_value()) 
                     l.bind_attribute(new_attr_path_opt.value());
             }},
@@ -235,7 +235,7 @@ void PolyLineLayerUI::show_parameters(LayerUIMode mode) {
 
         PropertyTable("polyline_layer_table_attribute", {
             {"Attribute", [&] {
-                auto new_attr_path_opt = attribute_combo(l.mesh.parent().name(), l.mesh.name(), l.attr_id, static_cast<PolyLineAttributes>(l.mesh));
+                auto new_attr_path_opt = attribute_combo(l.mesh.parent().name(), l.mesh.name(), l.attr_id, static_cast<PolyLineAttributes&>(l.mesh));
                 if (new_attr_path_opt.has_value()) l.bind_attribute(new_attr_path_opt.value());
             }},
             {"Render type", [&] {
@@ -307,7 +307,7 @@ void TrianglesLayerUI::show_parameters(LayerUIMode mode) {
 
         PropertyTable("triangle_layer_table_attribute", {
             {"Attribute", [&] {
-                auto new_attr_path_opt = attribute_combo(l.mesh.parent().name(), l.mesh.name(), l.attr_id, static_cast<SurfaceAttributes>(l.mesh));
+                auto new_attr_path_opt = attribute_combo(l.mesh.parent().name(), l.mesh.name(), l.attr_id, static_cast<SurfaceAttributes&>(l.mesh));
                 if (new_attr_path_opt.has_value()) l.bind_attribute(new_attr_path_opt.value());
             }},
             {"Render type", [&] {
@@ -370,7 +370,7 @@ void HexahedraLayerUI::show_parameters(LayerUIMode mode) {
 
         PropertyTable("hexahedra_layer_table_attribute", {
             {"Attribute", [&] {
-                auto new_attr_path_opt = attribute_combo(l.mesh.parent().name(), l.mesh.name(), l.attr_id, static_cast<VolumeAttributes>(l.mesh));
+                auto new_attr_path_opt = attribute_combo(l.mesh.parent().name(), l.mesh.name(), l.attr_id, static_cast<VolumeAttributes&>(l.mesh));
                 if (new_attr_path_opt.has_value()) l.bind_attribute(new_attr_path_opt.value());
             }},
             {"Render type", [&] {
