@@ -31,6 +31,16 @@ AttributeBase::TYPE TrianglesLayer::primitive_type(){
 // Note: same as HexahedraLayer
 void TrianglesLayer::init(MeshPath obj){
     mesh = obj;
+
+    rendering_type.emplace(PLAIN,        std::make_unique<PlainTrianglesBuilder>());
+    rendering_type.emplace(FACET,        std::make_unique<ScalarFacetTrianglesBuilder>());
+    rendering_type.emplace(CORNER,       std::make_unique<ScalarCornerAttrBuilder>());
+    rendering_type.emplace(CORNER_GLYPH, std::make_unique<ScalarCornerGlyphAttrBuilder>());
+    rendering_type.emplace(HALFEDGE_GLYPH, std::make_unique<ScalarCornerGlyphAttrBuilder>()); // TODO replace here
+    
+    rendering_type2.emplace(POINT, std::make_unique<ScalarPointAttrTrianglesBuilder>());
+    // rendering_type.emplace(POINT_SPHERE, std::make_unique<PointSphereBuilder>());
+    
     tri_renderer.init();
     point_renderer.init();
     bind_attribute({});
@@ -54,7 +64,15 @@ void TrianglesLayer::reset() {
         }
     }
 
-    update();
+    // update();
+
+    if (rendering_type.contains(rt)) {
+        auto &builder = rendering_type.at(rt);
+        build_and_update_tri_renderer(*builder);
+    } else if (rendering_type2.contains(rt)) {
+        auto &builder = rendering_type2.at(rt);
+        build_and_update_tri_renderer(*builder);
+    }
 }
 
 void TrianglesLayer::update(){
@@ -290,3 +308,65 @@ void TrianglesLayer::bind_attribute(AttributePath p_attr_id){
 
     reset();
 };
+
+void TrianglesLayer::facet_value_to_float(Triangles &m, FacetAttribute<float>& value_out) {
+
+    if (auto ptr = dynamic_cast<const AttributeContainer<bool>*>((ContainerBase *)attr_id)) {
+        for (auto &f : m.iter_facets()) value_out[f] = ptr->data[f] ? 1.f : 0.f;
+    } else if (auto ptr = dynamic_cast<const AttributeContainer<char>*>((ContainerBase *)attr_id)) {
+        for (auto &f : m.iter_facets()) value_out[f] = static_cast<float>(ptr->data[f]);
+    } else if (auto ptr = dynamic_cast<const AttributeContainer<int>*>((ContainerBase *)attr_id)) {
+        for (auto &f : m.iter_facets()) value_out[f] = static_cast<float>(ptr->data[f]);
+    } else if (auto ptr = dynamic_cast<const AttributeContainer<float>*>((ContainerBase *)attr_id)) {
+        for (auto &f : m.iter_facets()) value_out[f] = ptr->data[f];
+    } else if (auto ptr = dynamic_cast<const AttributeContainer<double>*>((ContainerBase *)attr_id)) {
+        for (auto &f : m.iter_facets()) value_out[f] = ptr->data[f];
+    }
+}
+
+void TrianglesLayer::point_value_to_float(Triangles &m, PointAttribute<float>& value_out) {
+
+    if (auto ptr = dynamic_cast<const AttributeContainer<bool>*>((ContainerBase *)attr_id)) {
+        for (auto &f : m.iter_vertices()) value_out[f] = ptr->data[f] ? 1.f : 0.f;
+    } else if (auto ptr = dynamic_cast<const AttributeContainer<char>*>((ContainerBase *)attr_id)) {
+        for (auto &f : m.iter_vertices()) value_out[f] = static_cast<float>(ptr->data[f]);
+    } else if (auto ptr = dynamic_cast<const AttributeContainer<int>*>((ContainerBase *)attr_id)) {
+        for (auto &f : m.iter_vertices()) value_out[f] = static_cast<float>(ptr->data[f]);
+    } else if (auto ptr = dynamic_cast<const AttributeContainer<float>*>((ContainerBase *)attr_id)) {
+        for (auto &f : m.iter_vertices()) value_out[f] = ptr->data[f];
+    } else if (auto ptr = dynamic_cast<const AttributeContainer<double>*>((ContainerBase *)attr_id)) {
+        for (auto &f : m.iter_vertices()) value_out[f] = ptr->data[f];
+    }
+}
+
+void TrianglesLayer::build_and_update_tri_renderer(TrianglesBuilder &builder) {
+    Triangles &tri = mesh;
+    SurfaceAttributes& attr = mesh;
+
+    FacetAttribute<bool> visible("visible", attr, tri, true);
+    FacetAttribute<float> value(tri, 0.f);
+    
+    if (attr_id.valid()) {
+        facet_value_to_float(tri, value);
+    }
+
+    builder.transform(tri, visible, value, [&](auto &m_out, auto &visible_out, auto &value_out, auto &primitive_id) {
+        tri_renderer.update(m_out, visible_out, value_out, primitive_id);
+    });
+}
+
+void TrianglesLayer::build_and_update_tri_renderer(TrianglesBuilder2 &builder) {
+    Triangles &tri = mesh;
+    SurfaceAttributes& attr = mesh;
+
+    PointAttribute<bool> visible("visible", attr, tri, true);
+    PointAttribute<float> value(tri, 0.f);
+    
+    if (attr_id.valid()) {
+        point_value_to_float(tri, value);
+    }
+
+    builder.transform(tri, visible, value, [&](auto &m_out, auto &visible_out, auto &value_out, auto &primitive_id) {
+        tri_renderer.update(m_out, visible_out, value_out, primitive_id);
+    });
+}

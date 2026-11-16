@@ -281,6 +281,17 @@ void TriangleRenderer::init(){
     um_assert(no_gl_error());
 }
 
+// void TriangleRenderer::build_and_update(Triangles &tri, SurfaceAttributes &attr, TrianglesBuilder &builder) {
+//     FacetAttribute<bool> visible("visible", attr, tri, true);
+//     FacetAttribute<float> value_t(attr_id.name(), attr, tri);
+//     FacetAttribute<float> value(tri);
+//     for (auto &f : tri.iter_facets()) value[f] = static_cast<float>(value_t[f]);
+
+//     builder.transform(tri, visible, value, [&](auto &m_out, auto &visible_out, auto &value_out, auto &primitive_id) {
+//         tri_renderer.update(m_out, visible_out, value_out, primitive_id);
+//     });
+// }
+
 void TriangleRenderer::update(Triangles& tri, FacetAttribute<bool>& visible, CornerAttribute<float>& value, FacetAttribute<int>& primitive_id) {
     compute_range(value.ptr->data, value_range);
     if (auto_range){

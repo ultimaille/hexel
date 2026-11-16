@@ -62,7 +62,7 @@ struct TriangleRenderer: public Renderer{
 	void generate_gui(std::string name);
 
 	void init();
-
+	// void build_and_update(Triangles &tri, SurfaceAttributes &attr, TrianglesBuilder &builder);
 	void update(Triangles& tri, FacetAttribute<bool>& visible, CornerAttribute<float>& value, FacetAttribute<int>& primitive_id);
 
 	void render();
