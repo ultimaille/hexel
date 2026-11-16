@@ -2,8 +2,7 @@
 #include <imgui.h>
 #include <ultimaille/all.h>
 
-#include <core/objectid.h>
-#include <core/event.h>
+#include <core/path.h>
 #include <core/layers.h>
 #include <misc/purgatory.h>
 
@@ -47,20 +46,6 @@ struct AttrItem {
     std::string label;  // display text
     ImVec4 color;
 };
-
-template <typename C>
-static AttributePath MeshAttrId(const std::string &mm_name, const std::string &mesh_name,
-                           C &container, const char *section) {
-    
-    AttributePath id{ObjectType::TRIANGLES_ATTR,
-                {mm_name, mesh_name, attribute_type(&*container.ptr), section, container.name}};
-
-    RootPath root;
-    auto x = root.xcf[""].hexahedra[""].attr_facets[""];
-    
-
-    return id;
-}
 
 template <typename Containers, typename MakeId>
 static void AddItems(std::vector<AttrItem> &items, Containers &containers,
@@ -185,7 +170,7 @@ static std::optional<AttributePath> AttributeCombo(std::string mm_name, std::str
 static std::optional<AttributePath> AttributeCombo(std::string mm_name, std::string mesh_name,
                                PointSetAttributes &attr, AttributePath &current_id) {
     RootPath root;
-    auto point_path = root.xcf[mm_name].polylines[mesh_name].attr_points;
+    auto point_path = root.xcf[mm_name].pointset.attr_points;
 
     std::vector<AttrItem> items;
     AddItems(items, attr.points, "points", point_path);

@@ -4,8 +4,8 @@
 
 //struct LayerSplitMode : public HexModelerMode::SubMode{
 //
-//    MouseReactMultiSelector multi_selector_react_left;
-//    MouseReactMultiSelector multi_selector_react_right;
+//    InteractorMultiSelector multi_selector_react_left;
+//    InteractorMultiSelector multi_selector_react_right;
 //
 //    void activate(){}
 //

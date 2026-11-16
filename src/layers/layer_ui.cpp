@@ -169,9 +169,9 @@ void PointSetLayerUI::show_parameters(LayerUIMode mode) {
 
         PropertyTable("pointset_layer_table_attribute", {
             {"Attribute", [&] {
-                // std::string s = l.mesh.name();
-                // auto new_attr_path_opt = attribute_combo(l.mesh.parent().name(), l.mesh.name(), l.attr_id, static_cast<PointSetAttributes>(l.mesh));
-                // if (new_attr_path_opt.has_value()) l.bind_attribute(new_attr_path_opt.value());
+                auto new_attr_path_opt = attribute_combo(l.mesh.parent().name(), l.mesh.name(), l.attr_id, static_cast<PointSetAttributes>(l.mesh));
+                if (new_attr_path_opt.has_value()) 
+                    l.bind_attribute(new_attr_path_opt.value());
             }},
             {"Render type", [&] {
                 if (l.rt != PointSetLayer::RenderType::PLAIN) {

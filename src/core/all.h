@@ -7,3 +7,4 @@
 #include <core/layers.h>
 #include <core/shaders.h>
 #include <core/mode.h>
+#include <core/path.h>

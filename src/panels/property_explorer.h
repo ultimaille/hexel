@@ -1,5 +1,5 @@
-#include "core/event.h"
+#include "core/events.h"
 struct PropertyExplorer : public Panel {
-    std::vector<ObjectId> layers;
+    std::vector<Path> layers;
     void generate_gui();
 };

@@ -17,3 +17,5 @@ namespace God {
     PanelManager panels;
 }
 
+RootPath root;
+

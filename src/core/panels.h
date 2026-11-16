@@ -1,6 +1,7 @@
 #pragma once
 #include "imgui_internal.h"
 #include "core.h"
+#include "registry.h"
 
 struct Panel{
     virtual ~Panel() = default;

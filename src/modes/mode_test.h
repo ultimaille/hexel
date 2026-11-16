@@ -7,8 +7,8 @@
 
 
 
-struct MouseReactPickerTest : public MouseReact {
-    MouseReactPickerTest() {  }
+struct InteractorPickerTest : public Interactor {
+    InteractorPickerTest() {  }
 
     void init(AttributePath p_attr_id, MeshPath p_mesh) {
         attr_id = p_attr_id;
@@ -32,7 +32,7 @@ struct MouseReactPickerTest : public MouseReact {
         if (prim != -1){
             if (button == 0) flag[pr.raw_primitive_id]++;
             if (button == 1) flag[pr.raw_primitive_id]--;
-            mesh_id.broadcast(EventType::UPDATED);
+            mesh_id.broadcast(Event::UPDATED);
         }
     }
     void on_press(int button, vec2 p)           { Log::add("press " + std::to_string(button)); }
@@ -41,8 +41,8 @@ struct MouseReactPickerTest : public MouseReact {
 };
 
 
-struct MouseReactLayerSelectionTest : public MouseReact {
-    MouseReactLayerSelectionTest() {}
+struct InteractorLayerSelectionTest : public Interactor {
+    InteractorLayerSelectionTest() {}
 
     void init(MeshPath p_mesh) {
         mesh_id = p_mesh;
@@ -65,7 +65,7 @@ struct MouseReactLayerSelectionTest : public MouseReact {
             visible.fill(false);
             for (auto f : hex->iter_facets()) if (layer_id[f] == layer_id[prim])
                 visible[f.cell()] = true;
-            mesh_id.broadcast(EventType::UPDATED);
+            mesh_id.broadcast(Event::UPDATED);
         }
     }
     void on_press(int button, vec2 p)           { Log::add("press " + std::to_string(button)); }
@@ -76,9 +76,9 @@ struct MouseReactLayerSelectionTest : public MouseReact {
 
 struct HexEdit : public Mode{
 
-    MouseReactTrackBallCamera camera_react;
-    MouseReactPickerTest pick_react;
-    MouseReactLayerSelectionTest layer_selection_react;
+    InteractorTrackBallCamera camera_react;
+    InteractorPickerTest pick_react;
+    InteractorLayerSelectionTest layer_selection_react;
 
     HexEdit(){}
     void handle(Event event) { 
@@ -141,8 +141,8 @@ struct HexEdit : public Mode{
                 CellFacetAttribute<int> flag("flag", attr, hex);
                 for (auto f : hex.iter_facets()) flag[f] = f%2;
 
-                MeshPath hex_id = root().xcf["hexski"].hexahedra[""];
-                AttributePath flag_id = root().xcf["hexski"].hexahedra[""].attr_facets["flag"];
+                MeshPath hex_id = root.xcf["hexski"].hexahedra[""];
+                AttributePath flag_id = root.xcf["hexski"].hexahedra[""].attr_facets["flag"];
 
 
                 // bind the attribute to the paint mouse action

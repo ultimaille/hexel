@@ -6,10 +6,10 @@ void PropertyExplorer::generate_gui(){
         ImGui::Begin("Properties", nullptr);
 
         
-        for (ObjectId& id : layers){
-            if (!id.ref().has_value()) continue;
+        for (Path& id : layers){
+            if (!id.valid()) continue;
             Layer &layer = id;
-            auto layer_name = id.names.back();
+            auto layer_name = id.path.back(); // TODO maybe change that
             ImGui::PushID(layer_name.c_str());
 
             ImGui::Separator();
@@ -45,9 +45,9 @@ void PropertyExplorer::generate_gui(){
         }
 
         // Keep this for compatibility, i don't know its purpose
-        std::vector<ObjectId> nv_layers;
-        for (ObjectId& id : layers){
-            if (!id.ref().has_value()) continue;
+        std::vector<Path> nv_layers;
+        for (Path& id : layers){
+            if (!id.valid()) continue;
             nv_layers.push_back(id);
         }
 

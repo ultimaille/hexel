@@ -1,5 +1,5 @@
 #include "core.h"
-#include "event.h"
+#include "events.h"
 #include "camera.h"
 #include "picker.h"
 #include "xcf.h"

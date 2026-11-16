@@ -1,5 +1,5 @@
 #pragma once
-#include <core/event.h>
+#include <core/events.h>
 
 using namespace UM;
 
@@ -60,5 +60,4 @@ struct TrackBallCamera {
     float* inverse_projection_ptr() const;
     void handle(Event event);
 };
-
 

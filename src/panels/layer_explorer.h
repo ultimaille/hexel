@@ -1,7 +1,7 @@
 #pragma once
 #include <core/panels.h>
 #include <set>
-#include <core/event.h>
+#include <core/events.h>
 
 struct LayerExplorer : public Panel {
 

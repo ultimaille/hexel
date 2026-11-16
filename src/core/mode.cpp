@@ -10,7 +10,7 @@
 #include "shaders.h"
 
 
-bool MouseReact::key_state_is_OK(){
+bool Interactor::key_state_is_OK(){
     if (ctrl_must_be_down && !God::keys.pressed(GLFW_KEY_LEFT_CONTROL)) return false;
     if (shift_must_be_down && !God::keys.pressed(GLFW_KEY_LEFT_SHIFT)) return false;
     if (ctrl_must_be_up && God::keys.pressed(GLFW_KEY_LEFT_CONTROL)) return false;
@@ -23,11 +23,11 @@ bool MouseReact::key_state_is_OK(){
 
 
 
-void MouseReactTrackBallCamera::on_wheel(double v){
+void InteractorTrackBallCamera::on_wheel(double v){
     if (!key_state_is_OK()) return;
     God::camera.zoom(-v);
 }
-void MouseReactTrackBallCamera::on_drag(int button, vec2 a, vec2 b){
+void InteractorTrackBallCamera::on_drag(int button, vec2 a, vec2 b){
     if (!key_state_is_OK()) return;
     auto [width, height] = God::context.screen_size();
     vec2 viewport (width,height);
@@ -48,7 +48,7 @@ void Mode::generate_interactor_gui(){
 void Mode::handle(Event event){
 
     for (auto& it : interactors){
-        if (event.who.path != events::MOUSE) {
+        if (event.who == root.mouse) {
             it->handle(event);
             continue;
         }
@@ -56,7 +56,7 @@ void Mode::handle(Event event){
 
     static vec2 pos_on_press[3];
 
-    if (event.who == (ObjectId)root().mouse && !ImGui::GetIO().WantCaptureMouse) {
+    if (event.who == root.mouse && !ImGui::GetIO().WantCaptureMouse) {
         static int npixels_tolerance_to_detect_click = 5;
         const double wheel = God::mouse.wheel_speed;
 

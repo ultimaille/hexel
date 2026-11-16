@@ -19,13 +19,13 @@
 
 HexModelerSubMode::HexModelerSubMode(HexModelerMode& mode) :layer_selection_react(*this), mode(mode){}
 
-// access to xcf bjects
-MeshPath HexModelerSubMode::hex_id(){ return root().xcf["mesh"].hexahedra[""]; }
-MeshPath HexModelerSubMode::pl_id(){ return  root().xcf["mesh"].polylines[""]; };
-PointSetPath HexModelerSubMode::pts_id(){ return root().xcf["mesh"].pointset; };
-MeshPath HexModelerSubMode::geom_tri_id(){ return  root().xcf["geom"].triangles[""]; }
-MeshPath HexModelerSubMode::geom_edge_id(){ return  root().xcf["geom"].polylines[""]; }
-PointSetPath HexModelerSubMode::geom_pts_id(){ return  root().xcf["geom"].pointset; }
+// access to xcf objects
+MeshPath HexModelerSubMode::hex_id(){ return root.xcf["mesh"].hexahedra[""]; }
+MeshPath HexModelerSubMode::pl_id(){ return  root.xcf["mesh"].polylines[""]; };
+PointSetPath HexModelerSubMode::pts_id(){ return root.xcf["mesh"].pointset; };
+MeshPath HexModelerSubMode::geom_tri_id(){ return  root.xcf["geom"].triangles[""]; }
+MeshPath HexModelerSubMode::geom_edge_id(){ return  root.xcf["geom"].polylines[""]; }
+PointSetPath HexModelerSubMode::geom_pts_id(){ return  root.xcf["geom"].pointset; }
 
 
 // update coherence constraints
@@ -34,11 +34,22 @@ Volume::Halfedge HexModelerSubMode::hex_halfedge_from_edge(int e){
     Hexahedra& hex = hex_id();
     return hex.halfedge(edge2halfedge[e]);
 }
-void HexModelerSubMode::update_hex(){
+
+
+bool topo_is_valid(Hexahedra& hex){
+    // no duplicated vertice on a cell
+    FOR(c, hex.ncells()) FOR(lv0, 8) for (int lv1 = lv0 + 1; lv1 < 8; lv1++)
+        if (hex.vert(c, lv0) == hex.vert(c, lv1)){
+            Log::error("Duplicated vertices on a cell");
+            return false;
+        }
+    return true;
+}
+
+bool HexModelerSubMode::update_hex(){
     Hexahedra& hex = hex_id();
-    plop(hex.nverts());
     EdgeAttribute<int> edge2halfedge("hex_halfedge", God::xcf["mesh"].polylines[""].attributes, God::xcf["mesh"].polylines[""].mesh);
-    generate_edge_graph(hex_id(), pl_id(), edge2halfedge,false);
+    generate_edge_graph(hex_id(), pl_id(), edge2halfedge);
 
     VolumeAttributes& hex_attr = hex_id();
     CellAttribute<bool> visible_cell("visible", hex_attr, hex);
@@ -53,7 +64,6 @@ void HexModelerSubMode::update_hex(){
     for (auto c : hex.iter_cells()) if (visible_cell[c])
         FOR(lv, 8)visible_pts[c.vertex(lv)] = true;
 
-
     PolyLineAttributes& pl_attr = pl_id();
     PolyLine& pl = pl_id();
     EdgeAttribute<bool> visible_edge("visible", pl_attr, pl);
@@ -61,10 +71,12 @@ void HexModelerSubMode::update_hex(){
     for (auto e : pl.iter_edges()) if (visible_pts[e.from()] && visible_pts[e.to()])
         visible_edge[e] = true;
 
+    if (!topo_is_valid(hex)) return false;
 
-    hex_id().broadcast(EventType::UPDATED);
-    pl_id().broadcast(EventType::UPDATED);
-    pts_id().broadcast(EventType::UPDATED);
+    hex_id().broadcast(Event::UPDATED);
+    pl_id().broadcast(Event::UPDATED);
+    pts_id().broadcast(Event::UPDATED);
+    return true;
 }
 
 // manage camera + layer selection
@@ -122,59 +134,68 @@ void HexModelerSubMode::reset_layers_options(){
     if (!xcf_is_valid_for_editing()) return;
 
     {// rendering of the geom object
-        God::layers["geomPts"].visible = false;
-        God::layers["geomTri"].visible = true;
-        God::layers["geomEdges"].visible = true;
 
-
-        static_cast<PointSetLayer&>(God::layers["geomPts"]).point_renderer.radius_in_pixel = 5;
-
-        if (!God::layers.contains("geomLock")){
-            PointSetLayer& layer = God::layers.add<PointSetLayer>("geomLock", 1);
-            layer.group = 0;
-            layer.init(geom_pts_id());
+        {// geom points are invisible by default to make it easier to pick triangles
+            God::layers["geomPts"].visible = false;
+            static_cast<PointSetLayer&>(God::layers["geomPts"]).point_renderer.radius_in_pixel = 5;
+        }
+        {// geom triangles are rendered as plain
+            God::layers["geomTri"].visible = true;
         }
 
-        PointAttribute<int> touch_lock("lock", God::xcf["geom"].pointset_attributes, God::xcf["geom"].pointset, 0);
-        //God::layers["geomLock"].bind_attribute(ObjectId(ObjectType::POINTSET_ATTR, { "geom", "int","points","lock" }));
-        God::layers["geomLock"].bind_attribute(root().xcf["geom"].pointset.attr_points["lock"]);
-        //auto glo = root().xcf["geom"].pointset.attr_points["lock"];
-        //glo.kind() == AttributeBase::TYPE::POINTS;
-        
-        {
-            auto& layer = static_cast<PointSetLayer&>(God::layers["geomLock"]);
-            layer.point_renderer.radius_in_pixel = 7;
-            layer.skip_value = 0;
-            layer.mask = true;
+        {// geom features are rendered by ids 
+            God::layers["geomEdges"].visible = true;
+            God::layers["geomEdges"].bind_attribute(root.xcf["geom"].polylines[""].attr_edges["feat_id"]);
+            auto& er = static_cast<PolyLineLayer&>(God::layers["geomEdges"]).edge_renderer;
         }
 
-        God::layers["geomEdges"].bind_attribute(root().xcf["geom"].polylines[""].attr_edges["feat_id"]);
-            //ObjectId(ObjectType::POLYLINES_ATTR, { "geom", "","int","edges","feat_id" }));
-        auto& er = static_cast<PolyLineLayer&>(God::layers["geomEdges"]).edge_renderer;
+        {// geomLock is created if needed, bound to locked vertices, and masked to show only locked vertices 
+            if (!God::layers.contains("geomLock")){
+                PointSetLayer& layer = God::layers.add<PointSetLayer>("geomLock", 1);
+                layer.group = 0;
+                layer.init(geom_pts_id());
+            }
+
+            PointAttribute<int> touch_lock("lock", God::xcf["geom"].pointset_attributes, God::xcf["geom"].pointset, 0);
+            God::layers["geomLock"].bind_attribute(root.xcf["geom"].pointset.attr_points["lock"]);
+
+            {
+                auto& layer = static_cast<PointSetLayer&>(God::layers["geomLock"]);
+                layer.point_renderer.radius_in_pixel = 7;
+                layer.skip_value = 0;
+                layer.mask = true;
+                layer.update();
+            }
+        }
     }
 
     {// rendering of the hexahedral mesh
-        if (!God::layers.contains("meshEdges")){
-            PolyLineLayer& layer = God::layers.add<PolyLineLayer>("meshEdges", 1);
-            layer.init(pl_id());
-        }
-        God::layers["meshPts"].visible = true;
-        God::layers["meshHex"].visible = true;
-        God::layers["meshEdges"].visible = true;
-
-        PointAttribute<int> touch_lock("lock", God::xcf["mesh"].pointset_attributes, God::xcf["mesh"].pointset, 0);
-        God::layers["meshPts"].bind_attribute(root().xcf["mesh"].pointset.attr_points["lock"]); 
-        //ObjectId(ObjectType::POINTSET_ATTR, { "mesh", "int","points","lock" }));
-        {
-            auto& layer = static_cast<PointSetLayer&>(God::layers["meshPts"]);
-            layer.point_renderer.radius_in_pixel = 10;
+        {// hex points are shown with their lock attribute
+            God::layers["meshPts"].visible = true;
+            PointAttribute<int> touch_lock("lock", God::xcf["mesh"].pointset_attributes, God::xcf["mesh"].pointset, 0);
+            God::layers["meshPts"].bind_attribute(root.xcf["mesh"].pointset.attr_points["lock"]);
+            {
+                auto& layer = static_cast<PointSetLayer&>(God::layers["meshPts"]);
+                layer.point_renderer.radius_in_pixel = 10;
+            }
         }
 
-        God::layers["meshHex"].bind_attribute(root().xcf["mesh"].hexahedra[""].attr_cells["block_id"]); 
-        //ObjectId(ObjectType::HEXAHEDRA_ATTR, { "mesh", "","int","cells","block_id" }));
-        //auto& pr = dynamic_cast<PolyLineLayer&> (God::layers["meshEdges"]).edge_renderer;        pr.color[0] = .5; pr.color[1] = .5; pr.color[2] = .7;
+        {// hexahedra arr shown with their block id
+            God::layers["meshHex"].visible = true;
+            God::layers["meshHex"].bind_attribute(root.xcf["mesh"].hexahedra[""].attr_cells["block_id"]);
+        }
+
+        {// mesh edges are rendered with plain style
+            if (!God::layers.contains("meshEdges")){
+                PolyLineLayer& layer = God::layers.add<PolyLineLayer>("meshEdges", 1);
+                layer.init(pl_id());
+            }
+            God::layers["meshEdges"].visible = true;
+        }
     }
-
+    for (auto& group : God::layers.groups) 
+        if (group.name == "mesh")
+            group.blend_op = Group::BlendOp::AVERAGE;
 }
 
 
@@ -186,11 +207,10 @@ void HexModelerSubMode::reset_xcf(){
     God::events.dispatch();
 }
 void HexModelerSubMode::save_project(std::string directory){
-    MultiMesh& geommm = ObjectId(MULTIMESH, "geom");
+    MultiMesh& geommm = God::xcf["geom"];
     geommm.save_to_path(directory + "geom", true);
-    MultiMesh& meshmm = ObjectId(MULTIMESH, "mesh");
+    MultiMesh& meshmm = God::xcf["mesh"];
     meshmm.save_to_path(directory + "mesh", true);
-
 }
 
 void HexModelerSubMode::load_project(std::string directory){

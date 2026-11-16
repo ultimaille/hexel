@@ -3,15 +3,15 @@
 #include <layers/ssao.h>
 #include "algo.h"
 
-struct MouseReactPickerTest2 : public MouseReact {
-    MouseReactPickerTest2() {  }
+struct InteractorPickerTest2 : public Interactor {
+    InteractorPickerTest2() {  }
 
-    void init(ObjectId p_attr_id, ObjectId p_mesh) {
+    void init(AttributePath p_attr_id, MeshPath p_mesh) {
         attr_id = p_attr_id;
         mesh_id = p_mesh;
     }
-    ObjectId attr_id;
-    ObjectId mesh_id;
+    AttributePath attr_id;
+    MeshPath mesh_id;
     FacetAttribute<int> flag;
 
     
@@ -48,8 +48,8 @@ struct MouseReactPickerTest2 : public MouseReact {
 
 struct BenjiMode : public Mode{
 
-    MouseReactTrackBallCamera camera_react;
-    MouseReactPickerTest2 pick_react;
+    InteractorTrackBallCamera camera_react;
+    InteractorPickerTest2 pick_react;
 
     BenjiMode(){}
 
