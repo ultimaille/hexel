@@ -36,6 +36,7 @@ void PointSetLayer::reset() {
     God::shaders.create_if_needed(std::string(SHADERS_DIR), "point_as_sphere");
     PointAttribute<bool> visible_pts("visible", attr, ps, true);
 
+    point_renderer.color_map_prop = 0;
     if (attr_active()) {
         point_renderer.color_map_prop = 1;
     }

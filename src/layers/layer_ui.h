@@ -11,6 +11,11 @@ using namespace UM;
 struct ButtonPalette { ImVec4 base, hovered, active; };
 
 static ButtonPalette GetPalette(std::string type) {
+    if (type == "none") 
+        return { ImVec4(0.50f, 0.50f, 0.50f, 1.0f),
+            ImVec4(0.62f, 0.62f, 0.62f, 1.0f),
+            ImVec4(0.38f, 0.38f, 0.38f, 1.0f) }; // gray
+
     if (type == "points") 
         return { ImVec4(0.20f, 0.45f, 0.90f, 1.0f),
             ImVec4(0.30f, 0.55f, 1.00f, 1.0f),
@@ -46,19 +51,6 @@ struct AttrItem {
     std::string label;  // display text
     ImVec4 color;
 };
-
-template <typename Containers, typename MakeId>
-static void AddItems(std::vector<AttrItem> &items, Containers &containers,
-                     const char *section, MakeId make_id) {
-    for (auto &container : containers) {
-        items.push_back({
-            make_id(container, section),
-            std::string(section) + "/" + container.name,
-            std::string(section) + ": " + container.name,
-            GetPalette(section).base   // same color key ColoredButton uses
-        });
-    }
-}
 
 template <typename Containers>
 static void AddItems(std::vector<AttrItem> &items, Containers &containers,
@@ -131,6 +123,7 @@ static std::optional<AttributePath> AttributeCombo(std::string mm_name, std::str
     auto facet_path = root.xcf[mm_name].triangles[mesh_name].attr_facets;
 
     std::vector<AttrItem> items;
+    items.push_back({AttributePath{}, "none", "none", GetPalette("none").base});
     AddItems(items, attr.points,  "points",  point_path);
     AddItems(items, attr.corners, "corners", corner_path);
     AddItems(items, attr.facets,  "facets",  facet_path);
@@ -147,6 +140,7 @@ static std::optional<AttributePath> AttributeCombo(std::string mm_name, std::str
     auto cell_path = root.xcf[mm_name].hexahedra[mesh_name].attr_cells;
 
     std::vector<AttrItem> items;
+    items.push_back({AttributePath{}, "none", "none", GetPalette("none").base});
     AddItems(items, attr.points,       "points",  point_path);
     AddItems(items, attr.cell_corners, "corners", corner_path);
     AddItems(items, attr.cell_facets,  "facets",  facet_path);
@@ -162,6 +156,7 @@ static std::optional<AttributePath> AttributeCombo(std::string mm_name, std::str
     auto edge_path = root.xcf[mm_name].polylines[mesh_name].attr_edges;
 
     std::vector<AttrItem> items;
+    items.push_back({AttributePath{}, "none", "none", GetPalette("none").base});
     AddItems(items, attr.points, "points", point_path);
     AddItems(items, attr.edges,  "edges",  edge_path);
     return DrawAttributeCombo(items, current_id);
@@ -173,6 +168,7 @@ static std::optional<AttributePath> AttributeCombo(std::string mm_name, std::str
     auto point_path = root.xcf[mm_name].pointset.attr_points;
 
     std::vector<AttrItem> items;
+    items.push_back({AttributePath{}, "none", "none", GetPalette("none").base});
     AddItems(items, attr.points, "points", point_path);
     return DrawAttributeCombo(items, current_id);
 }

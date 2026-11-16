@@ -74,11 +74,22 @@ void TriangleRendererUI::show_parameters(RendererUIMode mode) {
         });
     }
     if (mode == RendererUIMode::ADVANCED) {
-        PropertyTable("tri_table_basic_parameter", {
+        PropertyTable("tri_table_advanced_parameter", {
             {"Ambient", [&] {
                 ambiant_slider();
             }},
         });
+
+        static const char* cull_modes[] = { "NONE","BACK","FRONT" };
+        const char* combo_preview_value = cull_modes[r.cull_mode];
+        if (ImGui::BeginCombo(label("CULL " + std::string(cull_modes[r.cull_mode])), combo_preview_value, ImGuiComboFlags_NoPreview)){
+            for (int n = 0; n < 3; n++){
+                const bool is_selected = (r.cull_mode == n);
+                if (ImGui::Selectable(cull_modes[n], is_selected)) r.cull_mode = n;
+                if (is_selected)ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
     }
 }
 

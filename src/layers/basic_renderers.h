@@ -18,7 +18,6 @@ struct PointRenderer: public Renderer{
 		int visible;
 		int primitive_id;
 	};
-	void generate_gui(std::string name);
 	void init();
 	void update(PointSet& ps, PointAttribute<bool>& visible, PointAttribute<float>& value, PointAttribute<int>& primitive_id);
 	void render();
