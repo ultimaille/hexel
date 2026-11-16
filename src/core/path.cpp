@@ -12,6 +12,7 @@
 #include "layers.h"
 #include "shaders.h"
 #include "mode.h"
+#include "log.h"
 
 void Path::broadcast(EventTypes::EventType e) const {
     God::events.queue.emplace_back(Event(*this, e));
@@ -100,7 +101,6 @@ Path::ObjectPtr Path::ptr() const {
             return &God::panels[name];
         if (has_prefix(r.modes) && God::modes.contains(name))
             return &God::modes[name];
-        return std::monostate{};
     }
 
     // xcf paths all begin with xcf/<multimesh>.
