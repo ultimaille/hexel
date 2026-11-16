@@ -20,10 +20,6 @@ struct SSAO : Layer {
         destroy();
     }
 
-    void generate_gui(std::string name) override {
-        Layer::generate_gui(name);
-    }
-
     void init() {
         God::shaders.create_if_needed(std::string(SHADERS_DIR), ao_name);
         God::shaders.create_if_needed(std::string(SHADERS_DIR), blur_name);

@@ -14,22 +14,6 @@
 
 PointSetLayer::PointSetLayer() { point_renderer.layer_id = id; }
 
-void PointSetLayer::generate_gui(std::string name){
-    point_renderer.generate_gui(name);
-
-    
-    if (ImGui::Checkbox(label("mask a value##autorange", name), &mask))update();
-    if (mask) if (ImGui::InputInt(label("mask value", name), &skip_value)){ plop(skip_value); update(); }
-    
-
-
-    
-    
-
-
-    Layer::generate_gui(name);
-}
-
 void PointSetLayer::set_default_values() {
     auto& r = point_renderer;
     r.color[0] = .5; r.color[1] = 1.; r.color[2] = .5;
@@ -52,6 +36,7 @@ void PointSetLayer::reset() {
     God::shaders.create_if_needed(std::string(SHADERS_DIR), "point_as_sphere");
     PointAttribute<bool> visible_pts("visible", attr, ps, true);
 
+    point_renderer.color_map_prop = 0;
     if (attr_active()) {
         point_renderer.color_map_prop = 1;
     }

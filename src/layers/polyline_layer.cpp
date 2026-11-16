@@ -29,44 +29,6 @@ int PolyLineLayer::primitive_type(){
 }
 
 
-void PolyLineLayer::generate_gui(std::string name){
-    if (attr_active()){
-        std::string attrib_text = "ATTRIB: " + attr_id.collection() + "." + attr_id.name();// + " (" + attr_type() + ")";
-        ImGui::TextUnformatted(attrib_text.c_str());
-    }
-
-    if (attr_active() && attr_id.kind() == AttributeBase::POINTS){
-        bool tmp = (rt == RenderType::POINT_SPHERE);
-        ImGui::Checkbox(label("Show vertices ", ""), &tmp);
-        if ((rt == RenderType::POINT_SPHERE) != tmp) {
-            if (tmp) rt = RenderType::POINT_SPHERE;
-            else  rt = RenderType::POINT;
-            reset();
-        }
-    }
-
-    if (attr_active() && attr_id.kind() == AttributeBase::EDGES){
-        bool tmp = (rt == RenderType::EDGE_REPEAT);
-        ImGui::Checkbox(label("Show as repeat ", ""), &tmp);
-        if ((rt == RenderType::EDGE_REPEAT) != tmp) {
-            if (tmp) {
-                rt = RenderType::EDGE_REPEAT;
-                edge_renderer.texture_repeat = 1;
-                edge_renderer.texture_range[0] = 0;
-                edge_renderer.texture_range[1] = 1;
-            }
-            else  rt = RenderType::EDGE;
-            reset();
-        }
-    }
-
-    if (rt == RenderType::POINT_SPHERE)
-        point_renderer.generate_gui(name);
-    else
-        edge_renderer.generate_gui(name);
-    Layer::generate_gui(name);
-}
-
 void PolyLineLayer::set_default_values() {
     auto& r = edge_renderer;
     r.color[0] = .5; r.color[1] = .5; r.color[2] = .7;
@@ -221,6 +183,8 @@ void PolyLineLayer::reset() {
     God::shaders.create_if_needed(std::string(SHADERS_DIR), "point_as_sphere");
     EdgeAttribute<bool> visible_pl("visible", attr, pl, true);
 
+    point_renderer.color_map_prop = 0;
+    edge_renderer.color_map_prop = 0;
     if (attr_active()) {
         if (rt == RenderType::POINT_SPHERE) {
             point_renderer.color_map_prop = 1;

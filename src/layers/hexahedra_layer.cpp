@@ -30,45 +30,6 @@
     }
 
 
-    void HexahedraLayer::generate_gui(std::string name){
-        if (attr_active()){
-            std::string attrib_text = "ATTRIB: " + attr_id.collection() + "." + attr_id.name();// + " (" + attr_type() + ")"; TODO type
-//            std::string attrib_text = "ATTRIB: " + attr_primitive() + "." + attr_name() + " (" + attr_type() + ")";
-            ImGui::TextUnformatted(attrib_text.c_str());
-        }
-        {
-            float tmp = shrink;
-            ImGui::SliderFloat(label("shrink", name), &shrink, 0.0f, .9f, "%.2f", 0);
-            if (tmp != shrink) reset();
-        }
-
-        if (attr_active() && attr_id.kind()==AttributeBase::POINTS){
-            bool tmp = (rt==RenderType::POINT_SPHERE);
-                ImGui::Checkbox(label("Show vertices ", ""), &tmp);
-            if ((rt == RenderType::POINT_SPHERE) != tmp) {
-                if (tmp) rt = RenderType::POINT_SPHERE;
-                else  rt = RenderType::POINT;
-                reset();
-            }
-        }
-
-        if (attr_active() && attr_id.kind() == AttributeBase::CORNERS){
-            bool tmp = (rt == RenderType::CORNER_GLYPH);
-            ImGui::Checkbox(label("render_corners_as_glyphs ", ""), &tmp);
-            if ((rt == RenderType::CORNER_GLYPH) != tmp){
-                if (tmp) rt = RenderType::CORNER_GLYPH;
-                else rt = RenderType::CORNER;
-                reset();
-            }
-        }
-
-        if (rt == RenderType::POINT_SPHERE)
-            point_renderer.generate_gui(name);
-        else 
-            tri_renderer.generate_gui(name);
-        Layer::generate_gui(name);
-    }
-
     void HexahedraLayer::prepare_data_without_attribute(
         Triangles& tri, FacetAttribute<bool>& visible_tri, CornerAttribute<float>& value_tri, FacetAttribute<int>& primitive_id
     ){
@@ -272,6 +233,8 @@
         God::shaders.create_if_needed(std::string(SHADERS_DIR), "point_as_sphere");
         CellAttribute<bool> visible_hex("visible", attr, hex, true);
 
+        point_renderer.color_map_prop = 0;
+        tri_renderer.color_map_prop = 0;
         if (attr_active()) {
             if (rt == RenderType::POINT_SPHERE) {
                 point_renderer.color_map_prop = 1;

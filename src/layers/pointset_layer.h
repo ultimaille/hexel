@@ -7,7 +7,6 @@ struct PointSetLayer : public Layer{
     PointSetLayer();
 
     int primitive_type();
-    void generate_gui(std::string name);
     void set_default_values() override;
     void reset() override;
     void init(MeshPath obj);

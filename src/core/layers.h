@@ -4,11 +4,12 @@
 #include "registry.h"
 #include "basic.h"
 
+struct Renderer;
+
 struct Layer {
     Layer();
     virtual ~Layer() = default;
     virtual void reset();
-    virtual void generate_gui(std::string name);
     virtual void set_default_values() {}
 
     virtual void render() = 0;

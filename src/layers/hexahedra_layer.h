@@ -25,7 +25,6 @@ struct HexahedraLayer : public Layer {
     PointRenderer point_renderer;
 
     HexahedraLayer();
-    void generate_gui(std::string name);
     void reset();
     void init(MeshPath obj);
     void render();

@@ -229,12 +229,10 @@ std::vector<Colormap> colormaps = {
 };
 
 bool ColormapCombo(const char* label, int& selected){
-
-
 	const int count = colormaps.size();
 	bool changed = false;
 
-	if (ImGui::BeginCombo("Colormap", colormaps[selected].name)) {
+	if (ImGui::BeginCombo(label, colormaps[selected].name)) {
 		const float preview_width = 140.0f;
 		const float preview_height = 10.0f;
 		const float right_padding = 8.0f;

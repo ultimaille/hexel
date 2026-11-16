@@ -22,7 +22,6 @@ struct PolyLineLayer : public Layer {
     PointRenderer point_renderer;
 
     PolyLineLayer();
-    void generate_gui(std::string name);
     void set_default_values() override;
     void reset();
     void init(MeshPath obj);

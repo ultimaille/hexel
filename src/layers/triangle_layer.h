@@ -10,7 +10,6 @@ struct TrianglesLayer : public Layer{
     inline bool attr_active()           { return (ContainerBase *)attr_id != nullptr; }// deso pour le jeu de mot
                                                                                        //
     TrianglesLayer();
-    void generate_gui(std::string name);
     void reset() override;
     void init(MeshPath obj);
     void render();
@@ -27,7 +26,6 @@ struct TrianglesLayer : public Layer{
     template<class T> void update_data_for_scalar_facet_attribute();
     template<class T> void update_data_for_scalar_corner_attribute();
     template<class T> void update_data_for_scalar_corner_glyph_attribute();
-    template<class T> void update_data_for_scalar_halfedge_glyph_attribute();
     template<class T> void update_data_for_scalar_point_attribute();
     template<class T> void update_data_for_scalar_point_attribute_as_sphere();
     void update_data_for_plain();
@@ -47,4 +45,5 @@ struct TrianglesLayer : public Layer{
 
     float shrink = 0.f;
     float corner_size = 1.f;
+    
 };

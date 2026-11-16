@@ -6,12 +6,12 @@
 struct InteractorPickerTest2 : public Interactor {
     InteractorPickerTest2() {  }
 
-    void init(ObjectId p_attr_id, ObjectId p_mesh) {
+    void init(AttributePath p_attr_id, MeshPath p_mesh) {
         attr_id = p_attr_id;
         mesh_id = p_mesh;
     }
-    ObjectId attr_id;
-    ObjectId mesh_id;
+    AttributePath attr_id;
+    MeshPath mesh_id;
     FacetAttribute<int> flag;
 
     
@@ -55,11 +55,11 @@ struct BenjiMode : public Mode{
 
     void handle(Event event) { 
         
-        if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL))
-            send_instruction_to_react(event,camera_react);
-        else {
-            send_instruction_to_react(event, pick_react);
-        }
+        // if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL))
+        //     send_instruction_to_react(event,camera_react);
+        // else {
+        //     send_instruction_to_react(event, pick_react);
+        // }
     }
 
 

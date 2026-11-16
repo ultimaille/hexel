@@ -23,47 +23,6 @@ bool no_gl_error() {
     return true;
 }
 
-
-void Renderer::generate_gui(std::string name){
-    ImGui::PushItemWidth(120);
-    ImGui::SliderFloat(label("ambient_M##slider", name), &ambient_prop, 0.0f, 1.0f, "%.3f", 0);
-    ImGui::SliderFloat(label("color/texture##slider", name), &color_map_prop, 0.0f, 1.0f, "%.3f", 0);
-
-    // need the constant color
-    if (color_map_prop < 1)
-        ImGui::ColorEdit3(label("ConstColor##", name), (float*)&color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
-
-    // need a colormap
-    if (color_map_prop > 0){
-        int prev = texture_id;
-        ColormapCombo("Colormap", texture_id);
-        if (texture_id != prev) {
-            glDeleteTextures(1, &colormap);
-            load_colormap(texture_id, colormap);
-        }
-        {
-            std::string msg = "Data range: [" + std::to_string(value_range[0]) + "," + std::to_string(value_range[1])+"]";
-                ImGui::Text(msg.c_str());
-        }
-        ImGui::InputFloat2(label("show range##range", name), texture_range);
-        if (ImGui::InputInt(label("texture repeat##texture_repeat", name), &texture_repeat)) {
-            texture_repeat = std::clamp(texture_repeat, 0, 1000000);
-        }
-        {
-            bool tmp = auto_range;
-            ImGui::Checkbox(label("autorange##autorange", name), &auto_range);
-            if (auto_range){
-                texture_range[0] = value_range[0];
-                texture_range[1] = value_range[1];
-            }
-                
-        }
-    }
-    ImGui::Checkbox(label("clip", name), &clipping.enabled);
-
-    ImGui::PopItemWidth();
-}
-
 void Renderer::shared_setup_before_rendering(){
     if (texture_repeat > 0) {
         glBindTexture(GL_TEXTURE_1D, colormap);
@@ -135,14 +94,6 @@ constexpr std::array<float, 3> to_float3(const vec3& v) {
     return {static_cast<float>(v.x),static_cast<float>(v.y),static_cast<float>(v.z)};
 }
 
-
-void PointRenderer::generate_gui(std::string name){
-    ImGui::PushItemWidth(80);
-    ImGui::InputInt(("point size##point_size" + name).c_str(), &radius_in_pixel);
-    ImGui::PopItemWidth();
-    Renderer::generate_gui(name);
-}
-
 void PointRenderer::init(){
 
         God::shaders.create_if_needed(std::string(SHADERS_DIR), "point_as_sphere");
@@ -209,17 +160,6 @@ void PointRenderer::render(){
     glDrawArrays(GL_POINTS, 0, GLsizei(npts));
     glBindVertexArray(0);
     um_assert(no_gl_error());
-}
-
-
-
-void SegmentRenderer::generate_gui(std::string name){
-    ImGui::PushItemWidth(80);
-    ImGui::InputInt("line width", &line_width);
-    line_width = std::clamp(line_width, int(width_range[0]), int(width_range[1]));
-    ImGui::SliderFloat(("origin scale##slider" + name).c_str(), &origin_scale, 0.4f, 1.0f, "%.3f", 0);
-    ImGui::PopItemWidth();
-    Renderer::generate_gui(name);
 }
 
 void SegmentRenderer::init(){
@@ -303,25 +243,6 @@ void SegmentRenderer::render(){
     glDrawArrays(GL_LINES, 0, GLsizei(npts));
     glBindVertexArray(0);
     um_assert(no_gl_error());
-}
-
-
-
-
-
-
-void TriangleRenderer::generate_gui(std::string name){
-    Renderer::generate_gui(name);
-    static const char* cull_modes[] = { "NONE","BACK","FRONT" };
-    const char* combo_preview_value = cull_modes[cull_mode];
-    if (ImGui::BeginCombo(label("CULL " + std::string(cull_modes[cull_mode])), combo_preview_value, ImGuiComboFlags_NoPreview)){
-        for (int n = 0; n < 3; n++){
-            const bool is_selected = (cull_mode == n);
-            if (ImGui::Selectable(cull_modes[n], is_selected)) cull_mode = n;
-            if (is_selected)ImGui::SetItemDefaultFocus();
-        }
-        ImGui::EndCombo();
-    }
 }
 
 void TriangleRenderer::init(){
