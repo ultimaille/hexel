@@ -303,8 +303,16 @@ void LayerExplorer::draw_layer_gui() {
     }
 
     if (ImGui::SmallButton("Add SSAO")) {
-        int group_id = God::layers.add_group("Post processing");
-        auto &layer = God::layers.add<SSAO>("SSAO", group_id);
+        const std::string group_label = "Post processing";
+        auto group_opt = God::layers.find_group(group_label);
+        int group_id = group_opt.has_value() ? group_opt.value().get().id : God::layers.add_group(group_label);
+        std::string ssao_layer_name = "SSAO";
+        std::string layer_name = ssao_layer_name;
+        int i = 0;
+        while (God::layers.find(layer_name) != -1) {
+            layer_name = ssao_layer_name + "_" + std::to_string(++i);
+        }
+        auto &layer = God::layers.add<SSAO>(layer_name, group_id);
         layer.init();
         layer.visible = true;
         ImGui::CloseCurrentPopup();
