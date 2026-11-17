@@ -37,7 +37,6 @@ struct SegmentRenderer: public Renderer{
 	int line_width=10;
 	float origin_scale = 1.;
 
-	void generate_gui(std::string name);
 	void init();
 	void update(PolyLine& pl, EdgeAttribute<bool>& visible, PointAttribute<float>& value, EdgeAttribute<int>& primitive_id);
 	void render();
@@ -59,7 +58,6 @@ struct TriangleRenderer: public Renderer{
 		int primitive_id;
 	};
 
-	void generate_gui(std::string name);
 
 	void init();
 

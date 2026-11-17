@@ -29,7 +29,6 @@ struct Renderer {
 
     bool is_autorange = true;
 
-    void generate_gui(std::string name);
     void shared_setup_before_rendering();
 
     // declare uniforms for raytraced primitives (sphere and cylinder)
