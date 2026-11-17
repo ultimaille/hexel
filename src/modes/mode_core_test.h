@@ -3,77 +3,128 @@
 #include <layers/ssao.h>
 #include "algo.h"
 
-struct InteractorPickerTest2 : public Interactor {
-    InteractorPickerTest2() {  }
+struct PickFacetInteractor : public Interactor {
 
-    void init(AttributePath p_attr_id, MeshPath p_mesh) {
-        attr_id = p_attr_id;
-        mesh_id = p_mesh;
+    vec2 proj(vec3 a) {
+        auto proj_a = God::camera.projection_matrix() * God::camera.view_matrix() * vec4(a, 1.);
+        auto ndc_a = vec2(proj_a[0], proj_a[1]) / proj_a[3];
+        const int w = God::context.render_target.targets[0].width;
+        const int h = God::context.render_target.targets[0].height;
+        vec2 scr_a(w * (ndc_a.x + 1.0f) * 0.5f, h * (1.0f - ndc_a.y) * 0.5f);
+        return scr_a;
     }
-    AttributePath attr_id;
-    MeshPath mesh_id;
-    FacetAttribute<int> flag;
 
-    
-    void on_click(int button, vec2 p) {
-        Log::add("click " + std::to_string(button));
+    void on_press(int button, vec2 p) override {
         Picker picker;
+        auto pr = picker.at(p);
 
-        for (auto &d : picker.data) {
-            auto result = d.at(p);
-            std::cout << "coords: (" << result.x << ", " << result.y << ")" << std::endl;
-            std::cout << "layer_id: " << result.layer_id << std::endl;
-            std::cout << "primitive_id: " << result.raw_primitive_id << std::endl;
-            std::cout << "depth: " << result.depth << std::endl;
-            std::cout << "point: " << result.point() << std::endl;
+        if (pr.mesh_id == hex_path) {
+            facet_id = pr.filtered_primitive_id(hex_path, AttributeBase::CELLFACETS);
 
-            auto layer_opt = God::layers.find_by_id(result.layer_id);
-            if (layer_opt.has_value()) {
-                auto &layer = layer_opt.value().get();
-                auto mesh_id = layer.mesh;
-                // FacetAttribute<int> fa("flag", attr, mesh);
-                // if (result.raw_primitive_id != -1) {
-                //     fa[result.raw_primitive_id] = 1;
-                // }
+            Hexahedra &hex = hex_path;
+            Quad3 facet_quad = hex.facet(facet_id);
+            vec3 a = pr.point();
+            // project
+            vec2 scr_a = proj(a);
+            vec2 scr_b = proj(a + facet_quad.normal());
 
-                // Beuuuurk !!!!
-                // Je convertis en object id pour bind ???!!!
-                // ObjectId flag_id(ObjectType::TRIANGLES_ATTR, { "hexski", "","int","facets","flag" });
-                // layer.bind_attribute(ObjectId{});
-            }
+            vec2 projected_normal = scr_b - scr_a;
+            pixels_per_unit = projected_normal.norm();
 
-        }
+            if (pixels_per_unit > 1e-6f)
+                n = projected_normal / pixels_per_unit;
+        } 
     }
+
+    void on_drag(int button, vec2 a, vec2 b) override {
+        if (button != 0) return;
+        if (facet_id < 0) return;
+
+        // Signed mouse movement along the projected face normal, in pixels.
+        double pixel_delta = (b - a) * n;
+        // Convert pixels to world units along the face normal.
+        double world_delta = pixel_delta / pixels_per_unit;
+
+        Hexahedra &hex = hex_path;
+        auto f = hex.facet(facet_id);
+        Quad3 facet_quad = hex.facet(facet_id);
+        vec3 displacement = world_delta * facet_quad.normal();
+
+        for (int lv = 0; lv < 4; ++lv) {
+            auto v = f.vertex(lv);
+            v.pos() += displacement;
+             
+        }
+
+        hex_path.broadcast(EventTypes::UPDATED);
+    }
+
+    void on_release(int button, vec2 p) override {
+        facet_id = -1;
+    }
+
+    MultiMeshPath::Volumes::Volume hex_path;
+    int facet_id = -1;
+    vec2 n;
+    vec3 n3;
+    double pixels_per_unit;
 };
 
 struct CoreTestMode : public Mode {
 
-    InteractorTrackBallCamera camera_react;
+    InteractorTrackBallCamera camera_interactor;
+    PickFacetInteractor pick_facet_interactor;
 
-    CoreTestMode(){
-        
+    CoreTestMode() {
+        camera_interactor.ctrl_must_be_down = true;
+        pick_facet_interactor.ctrl_must_be_down = false;
+        interactors.push_back(&camera_interactor);
+        interactors.push_back(&pick_facet_interactor);
     }
 
-    void handle(Event event) { 
+    void create_box() {
+        auto hex_path = root.xcf["box"].hexahedra["hex"];
+        God::xcf.add("box");
+        God::xcf.add_mesh(hex_path); // Note: add_mesh should be splitted into multiple overloads
         
-        if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL)){
-            camera_react.handle(event);
-        }
-        // if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL))
-        //     send_instruction_to_react(event,camera_react);
-        // else {
-        //     send_instruction_to_react(event, pick_react);
-        // }
-    }
+        Hexahedra &hex = hex_path;
+        hex.points.create_points(8);
+        hex.create_cells(1);
+        hex.points[0] = {-0.5,-0.5,-0.5};
+        hex.points[1] = {0.5,-0.5,-0.5};
+        hex.points[2] = {-0.5,0.5,-0.5};
+        hex.points[3] = {0.5,0.5,-0.5};
+        hex.points[4] = {-0.5,-0.5,0.5};
+        hex.points[5] = {0.5,-0.5,0.5};
+        hex.points[6] = {-0.5,0.5,0.5};
+        hex.points[7] = {0.5,0.5,0.5};
+        hex.vert(0, 0) = 0;
+        hex.vert(0, 1) = 1;
+        hex.vert(0, 2) = 2;
+        hex.vert(0, 3) = 3;
+        hex.vert(0, 4) = 4;
+        hex.vert(0, 5) = 5;
+        hex.vert(0, 6) = 6;
+        hex.vert(0, 7) = 7;
 
+        // Add group => add layer => init layer passing mesh path
+        // We just want to do
+        // God::layers.add_init("box", hex_path);
+        // 
+        int group_id = God::layers.add_group("box_group");
+        auto &hex_layer = God::layers.add<HexahedraLayer>("box", group_id); // TODO here get default layer for hex ?
+        hex_layer.init(hex_path);
+        hex_path.broadcast(EventTypes::UPDATED);
+
+        pick_facet_interactor.hex_path = hex_path;
+    }
 
     void define_gui() {
-        // ImGui::Begin("Mode", nullptr);
-        // ImGui::Text("Window used to launch debug tests");
-        // if (ImGui::Button("LoadSomething")) {
-        //     load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "B0.step.mesh");
-        //     load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "B1.geogram");
-        // }
-        // ImGui::End();
+        // Note: use delegate pattern here to avoid declaring ImGui::Begin("Mode")
+        ImGui::Begin("Mode", nullptr);
+        if (ImGui::Button("Create box")) {
+            create_box();
+        }
+        ImGui::End();
     }
 };
