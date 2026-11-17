@@ -46,12 +46,12 @@ struct InteractorPickerTest2 : public Interactor {
     }
 };
 
-struct BenjiMode : public Mode{
+struct CoreTestMode : public Mode{
 
     InteractorTrackBallCamera camera_react;
     InteractorPickerTest2 pick_react;
 
-    BenjiMode(){}
+    CoreTestMode(){}
 
     void handle(Event event) { 
         
