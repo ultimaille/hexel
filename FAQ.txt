@@ -9,20 +9,25 @@ Convention et choix d'implementation peu intuitifs:
 ==================================================================
 TODO
 ==================================================================
-* Light / Clipping as "global" parameters + light trackball for orientation
-* GUI plus compressée encore
-* UNDO / REDO global
-* Problème avec events
-* Different config by dev
-* Bug sur mode HexEdit, load mm, supprime, reload, attribut déjà bindé
-* Camera resize ?
-* Config fichier !
-* Bug on Picker::at when no buffer
-* Completer chargement des multimesh (layer + xcf explorer), faire en sorte que ce soit bien (pointset, poly, triangle, hex, bien gérés, pour les autres message)
-* Renommer les groupes
-* Ne pas calculer les frames de rendu non nécessaires
-* Perf.
-* Messages d'erreurs
+* GUI
+  * light / clipping as "global" parameters 
+  * light trackball for orientation
+  * mesh wireframe slider
+  * one line GUI for basic parameters
+  * Enable group renaming
+* Shader
+  * mesh wireframe
+* App
+  * UNDO / REDO global
+  * config by dev / make a config file
+* Design
+  * Problème avec events
+* Bug
+  * Picker::at when no framebuffer
+  * Camera resize ?
+* Improvement
+  * Ne pas calculer les frames de rendu non nécessaires
+  * Shared VBO, UBO for global parameters...
 
 
 ==================================================================

@@ -46,15 +46,19 @@ struct InteractorPickerTest2 : public Interactor {
     }
 };
 
-struct CoreTestMode : public Mode{
+struct CoreTestMode : public Mode {
 
     InteractorTrackBallCamera camera_react;
-    InteractorPickerTest2 pick_react;
 
-    CoreTestMode(){}
+    CoreTestMode(){
+        
+    }
 
     void handle(Event event) { 
         
+        if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL)){
+            camera_react.handle(event);
+        }
         // if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL))
         //     send_instruction_to_react(event,camera_react);
         // else {
@@ -64,12 +68,12 @@ struct CoreTestMode : public Mode{
 
 
     void define_gui() {
-        ImGui::Begin("Mode", nullptr);
-        ImGui::Text("Window used to launch debug tests");
-        if (ImGui::Button("LoadSomething")) {
-            load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "B0.step.mesh");
-            load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "B1.geogram");
-        }
-        ImGui::End();
+        // ImGui::Begin("Mode", nullptr);
+        // ImGui::Text("Window used to launch debug tests");
+        // if (ImGui::Button("LoadSomething")) {
+        //     load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "B0.step.mesh");
+        //     load_mm_with_default_layers(std::string(TEST_INPUT_DIR) + "B1.geogram");
+        // }
+        // ImGui::End();
     }
 };
