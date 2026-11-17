@@ -96,7 +96,7 @@ constexpr std::array<float, 3> to_float3(const vec3& v) {
 
 void PointRenderer::init(){
 
-        God::shaders.create_if_needed(std::string(SHADERS_DIR), "point_as_sphere");
+    God::shaders.create_if_needed(std::string(SHADERS_DIR), "point_as_sphere");
     shaderProgram = God::shaders["point_as_sphere"];
     load_colormap(texture_id, colormap);
     glGenVertexArrays(1, &vao);

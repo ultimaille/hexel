@@ -20,6 +20,9 @@ struct HexModelerMode : public Mode{
     std::vector<HexModelerSubMode*> sub_modes;
 
    
+
+
+
     void set_active_mode(SubModes sub);
 
     inline HexModelerSubMode& sub_mode(){ return *sub_modes[active_mode_id]; }

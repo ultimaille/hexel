@@ -71,7 +71,14 @@ bool HexModelerSubMode::update_hex(){
     for (auto e : pl.iter_edges()) if (visible_pts[e.from()] && visible_pts[e.to()])
         visible_edge[e] = true;
 
+    PointAttribute<int> emb_lock("emb_lock", God::xcf["mesh"].pointset_attributes, God::xcf["mesh"].pointset, 0);
+    FOR(v, pts.size()){
+        Embedding emb = get_embedding(pts[v]);
+        if (emb_lock[v] != 5)
+            emb_lock[v] = emb.dim;
+    }
     if (!topo_is_valid(hex)) return false;
+
 
     hex_id().broadcast(Event::UPDATED);
     pl_id().broadcast(Event::UPDATED);
@@ -169,7 +176,7 @@ void HexModelerSubMode::reset_layers_options(){
 
             {
                 auto& layer = static_cast<PointSetLayer&>(God::layers["geomLock"]);
-                layer.point_renderer.radius_in_pixel = 7;
+                layer.point_renderer.radius_in_pixel = 10;
                 layer.skip_value = 0;
                 layer.mask = true;
                 layer.update();
@@ -180,17 +187,27 @@ void HexModelerSubMode::reset_layers_options(){
     {// rendering of the hexahedral mesh
         {// hex points are shown with their lock attribute
             God::layers["meshPts"].visible = true;
-            PointAttribute<int> touch_lock("lock", God::xcf["mesh"].pointset_attributes, God::xcf["mesh"].pointset, 0);
-            God::layers["meshPts"].bind_attribute(root.xcf["mesh"].pointset.attr_points["lock"]);
+            PointAttribute<int> emb_lock("emb_lock", God::xcf["mesh"].pointset_attributes, God::xcf["mesh"].pointset, 0);
+            God::layers["meshPts"].bind_attribute(root.xcf["mesh"].pointset.attr_points["emb_lock"]);
             {
                 auto& layer = static_cast<PointSetLayer&>(God::layers["meshPts"]);
                 layer.point_renderer.radius_in_pixel = 10;
+                glDeleteTextures(1, &layer.point_renderer.colormap);
+                layer.point_renderer.texture_id = 9;
+                layer.point_renderer.auto_range = false;
+                layer.point_renderer.texture_range[0] = -1;
+                layer.point_renderer.texture_range[1] = 5;
+                load_colormap(layer.point_renderer.texture_id, layer.point_renderer.colormap);
             }
         }
 
         {// hexahedra arr shown with their block id
             God::layers["meshHex"].visible = true;
             God::layers["meshHex"].bind_attribute(root.xcf["mesh"].hexahedra[""].attr_cells["block_id"]);
+            HexahedraLayer& layer = static_cast<HexahedraLayer&>(God::layers["meshHex"]);
+            glDeleteTextures(1, &layer.tri_renderer.colormap);
+            layer.tri_renderer.texture_id = 7;
+            load_colormap(layer.tri_renderer.texture_id, layer.tri_renderer.colormap);
         }
 
         {// mesh edges are rendered with plain style
