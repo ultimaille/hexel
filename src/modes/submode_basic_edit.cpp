@@ -14,7 +14,7 @@ namespace  AlgoRaw{
 namespace AlgoMesh{
     bool merge_vertices(Hexahedra& hex, int source, int target){
         AlgoRaw::merge_vertices(hex, source, target);
-        FOR(c, hex.ncells())FOR(lv0, 8) FOR(lv, 8) if (hex.vert(c, lv) == source)hex.vert(c, lv) = target;
+        FOR(c, hex.ncells())FOR(lv0, 8) FOR(lv1, lv0) if (hex.vert(c, lv0) == hex.vert(c, lv1)) return false;
         return true;
     }
 };
@@ -82,8 +82,6 @@ struct AlgoXCFLevel {
         mode.hex_id().broadcast(Event::UPDATED);
         return true;
     }
-
-
 
     enum Quad2HexGeomStrategy {
         OFFSET_BY_QUAD_NORMAL,
@@ -173,26 +171,75 @@ struct AlgoXCFLevel {
         mode.update_hex();
         mode.hex_id().broadcast(Event::UPDATED);
         return true;
-
-
-        //int offset = hex.points.create_points(8);
-        //FOR(lv, 4) hex.points[offset + lv] = pts[lv];
-        //int c = hex.create_cells(1);
-        //block_id[c] = c;
-        //hex.vert(c, 0) = offset + 0;
-        //hex.vert(c, 1) = offset + 1;
-        //hex.vert(c, 2) = offset + 3;
-        //hex.vert(c, 3) = offset + 2;
-        //FOR(lv, 4) hex.vert(c, 4 + lv) = offset + 4 + lv;
-        //FOR(lv, 4) hex.points[offset + 4 + lv] = hex.points[hex.vert(c, lv)] + decal;
-        //mode.update_hex();
-        //mode.hex_id().broadcast(Event::UPDATED);
-        //return true;
     }
 
+    bool extend_mesh_from_face(int f_id){
+        mode.backup();
+
+        MultiMesh& mm = God::xcf["mesh"];
+        Hexahedra& hex = mode.hex_id();
+        CellAttribute<int> block_id("block_id", mm.hexahedra[""].attributes, mm.hexahedra[""].mesh);
+
+        Volume::Facet f(hex, f_id);
+        // create an hex
+        vec3 n = Quad3(f).normal();
+        double scale  = std::sqrt(Quad3(f).unsigned_area());
+        int hex_vert[8] ;
+        hex_vert[0] = f.vertex(0);
+        hex_vert[1] = f.vertex(1);
+        hex_vert[2] = f.vertex(3);
+        hex_vert[3] = f.vertex(2);
+        int offset = hex.points.create_points(4);
+        FOR(lv, 4) {
+            hex_vert[4 + lv] = offset + lv;
+            hex.points[offset + lv] = hex.points[hex_vert[lv]]+ scale*n;
+        }
+
+        int new_cell = hex.create_cells(1);
+        block_id[new_cell] = new_cell;
+        FOR(lv, 8) hex.vert(new_cell, lv) = hex_vert[lv];
+        hex.connect();
+
+        // try to connect the other faces of the hex
+        bool no_more_possible_face_connection = false;
+        while(!no_more_possible_face_connection){
+            no_more_possible_face_connection = true;
+            Volume::Cell c(hex, new_cell);
+            for (auto f : c.iter_facets()){
+                if (!f.opposite().active()) continue;
+                for (auto h : f.iter_halfedges()){
+                    Volume::Halfedge it = h.opposite_f();
+                    if (it.facet().opposite().active()) continue;//  face is already connected
+                    int nn = 0;
+                    while (it.active()) {
+                        it = it.opposite_f().opposite_c();
+                        nn++;
+                    }
+                    plop(nn);
+                    if (nn == 4){
+                        no_more_possible_face_connection = false;
+                        it = h;
+                        FOR(i, 3) it = it.opposite_c().opposite_f();
+                        int to_merge[2][2] = {
+                            { h.opposite_f().next().to(),it.prev().from() },
+                            { h.opposite_f().prev().from(),it.next().to() }
+                        };
+                        FOR(i, 2) AlgoRaw::merge_vertices(hex, to_merge[i][0], to_merge[i][1]);
+                    }
+                }
+            }
+            hex.connect();
+        }
 
 
-
+        if (!mode.update_hex()) {
+            mode.undo();
+            return false;
+        }
+        mode.forget_last_backup();
+        mode.hex_id().broadcast(Event::UPDATED);
+        return true;
+    }
 
 };
 
@@ -414,8 +461,21 @@ void InteractorCreateHex::on_click(int button, vec2 p) {
             feedback.add_point(hex.points[picked_vert]);
             pts.push_back(hex.points[picked_vert]);
             picked_a_mesh_vertex = true;
+        } 
+    }
+
+    // create an hex from a picked facet... may not be always avalaible (e.g. check group merge fct) 
+    if (pts.empty()) for (auto& d : picker.data) {
+        auto result = d.at(p);
+        int picked_facet = result.filtered_primitive_id(mode.hex_id(), AttributeBase::TYPE::CELLFACETS);
+        if (picked_facet != -1){
+            AlgoXCFLevel(mode).extend_mesh_from_face(picked_facet);
+            reset();
+            return;
         }
     }
+
+
     if (!picked_a_mesh_vertex) for (auto& d : picker.data) {
         auto result = d.at(p);
         int picked_triangle = result.filtered_primitive_id(mode.geom_tri_id(), AttributeBase::TYPE::FACETS);
