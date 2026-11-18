@@ -28,6 +28,7 @@ TODO
 * Improvement
   * Ne pas calculer les frames de rendu non nécessaires
   * Shared VBO, UBO for global parameters...
+  * When creating new mesh, need to add / init it with its default layers (like load_mm)
 
 
 ==================================================================
