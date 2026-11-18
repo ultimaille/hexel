@@ -38,6 +38,7 @@ struct Mode{
     virtual void handle(Event event);
     void draw_data_gui();
     void generate_interactor_gui();
+    virtual void update(){}
 };
 
 
@@ -76,5 +77,6 @@ struct ModeManager : private Registry<Mode> {
     }
     inline void define_gui()        { (*this)[current_mode].define_gui(); }
     inline void handle(Event event) { (*this)[current_mode].handle(event); };
+    inline void update()            { (*this)[current_mode].update(); };
 };
 

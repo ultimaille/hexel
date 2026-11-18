@@ -8,7 +8,6 @@
 struct RenderTargetComposition {
 
     RenderTargetComposition() {
-
     }
 
     ~RenderTargetComposition() {
@@ -57,6 +56,7 @@ struct RenderTargetComposition {
     int width, height;
     RenderTarget composite;
     std::map<int, RenderTarget> targets;
+    vec4 background_color = { 0,0,0,1 };
 
 private:
 

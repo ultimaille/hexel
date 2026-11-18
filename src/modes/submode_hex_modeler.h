@@ -14,6 +14,8 @@ struct HexModelerSubMode : public Mode{
     HexModelerSubMode(HexModelerMode& mode);
     HexModelerMode& mode;
 
+    bool mesh_is_valid = true;
+
     // access to xcf objects
     static MeshPath hex_id();
     static MeshPath pl_id();
@@ -65,6 +67,7 @@ struct HexModelerSubMode : public Mode{
 
     virtual void define_gui(){};
     virtual void handle(Event event) {};
+    virtual void update() ;
 
 };
 

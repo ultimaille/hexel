@@ -137,7 +137,8 @@ void WindowContext::begin_frame(bool offscreen) {
         Log::error("RenderTarget is invalid");
         return;
     }
-    render_target.clear(0.05f, 0.05f, 0.08f, 1.0f);
+    render_target.clear(background_color[0], background_color[1], background_color[2], background_color[3]);
+    //render_target.clear(1.,1.,1.,1.);
     render_target.begin();
 
     ImGui_ImplOpenGL3_NewFrame();

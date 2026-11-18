@@ -31,7 +31,7 @@ struct RenderTarget {
 
     static void bind_default(int w, int h);
 
-    void clear(float r = 0, float g = 0, float b = 0, float a = 1) const;
+    void clear(float r , float g , float b , float a ) const;
 
     void destroy();
 

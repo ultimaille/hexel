@@ -44,7 +44,7 @@ void RenderTargetComposition::bind(int group_id) {
     // This behavior implicitly don't bind if there is no blending,
     // enabling drawing in the same render target
     if (targets.contains(group_id)) {
-        targets[group_id].clear(); // clear & bind framebuffer
+        targets[group_id].clear(background_color[0], background_color[1], background_color[2], background_color[3]); // clear & bind framebuffer
         cur_target = group_id;
     }
 }
@@ -54,7 +54,7 @@ void RenderTargetComposition::end() {
         return;
 
     composite.resize(width, height);
-    composite.clear();
+    composite.clear(background_color[0], background_color[1], background_color[2], background_color[3]);
     // Merge all color attachments into main render target, keeping its depth
     glBindFramebuffer(GL_FRAMEBUFFER, composite.framebuffer);
     glEnable(GL_DEPTH_TEST);

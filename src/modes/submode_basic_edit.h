@@ -55,6 +55,7 @@ struct BasicEditMode : public HexModelerSubMode {
     inline void activate(){Log::add("BasicEditMode activated");}
     BasicEditMode(HexModelerMode& mode);
     void handle(Event event);
+    
     void define_gui();
     bool merge_vertices(int v0, int v1);
     InteractorKillHex interactor_kill_kex;

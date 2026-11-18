@@ -12,10 +12,90 @@ namespace  AlgoRaw{
 
 // Algorithms assumed to preserve some properties (returns bool if it doesn't) 
 namespace AlgoMesh{
+    
+
+    bool validate_hexahedra(Hexahedra& hex){
+        {// each hexahedron is valid
+            // vertices in good range
+            for (auto c : hex.iter_corners()) if (c.vertex() < 0 || c.vertex() >= hex.nverts()) return false;
+
+            // no duplicated vertices
+            FOR(c, hex.ncells())FOR(lv0, 8) FOR(lv1, lv0) if (hex.vert(c, lv0) == hex.vert(c, lv1)) return false;
+        }
+
+        // compute some connectivity
+        PointAttribute<int> v2c(hex, -1);
+        CellCornerAttribute<int> c2c(hex, -1);
+        for (auto c : hex.iter_corners()) {
+            c2c[c] = v2c[c.vertex()];
+            v2c[c.vertex()] = c;
+        }
+
+        {
+            for (auto c : hex.iter_corners()) {
+                Volume::Corner cir(hex, v2c[c.vertex()]);
+                while (cir.active()){
+                    if (c == cir) {
+                        cir = c2c[cir];
+                        continue;
+                    }
+                    int nb_shared_vertices = 0;
+                    FOR(lv_c, 8)FOR(lv_cir, 8)
+                        if (hex.vert(c.cell(), lv_c) == hex.vert(cir.cell(), lv_cir))
+                            nb_shared_vertices++;
+
+                    //plop(nb_shared_vertices);
+                    switch (nb_shared_vertices){
+                    case 0: Log::error("Cannot not share vertices");
+                    case 1: break;// share a vertex
+                    case 2:{
+                        // share and edge ?
+                        bool is_an_edge = false;
+                        Volume::Halfedge h_c = c.halfedge();
+                        FOR(i, 3){
+                            Volume::Halfedge h_cir = c.halfedge();
+                            FOR(j, 3){
+                                is_an_edge = is_an_edge || (h_c.to() == h_cir.to());
+                                h_cir = h_cir.prev().opposite_f();
+                            }
+                            h_c = h_c.prev().opposite_f();
+                        }
+                        if (!is_an_edge) return false;
+                        break;
+                    }
+                    case 4:{
+                        // share a facet?
+                        bool is_a_facet = false;
+                        Volume::Halfedge h_c = c.halfedge();
+                        FOR(i, 3){
+                            Volume::Halfedge h_cir = cir.halfedge();
+                            FOR(j, 3){
+                                is_a_facet = is_a_facet || (
+                                    h_c.to() == h_cir.prev().from()
+                                    && h_c.next().to() == h_cir.prev().prev().from()
+                                    && h_c.next().next().to() == h_cir.prev().prev().prev().from()
+                                    //&& h_c.next().next().next().to() == h_cir.prev().prev().prev().prev().from()
+                                    );
+                                h_cir = h_cir.prev().opposite_f();
+                            }
+                            h_c = h_c.prev().opposite_f();
+                        }
+                        if (!is_a_facet) return false;
+                        break;
+                    }
+                    default:
+                        return false;
+                    }
+                     cir = c2c[cir];
+                }
+            }
+        }
+        return true;
+    }
+
     bool merge_vertices(Hexahedra& hex, int source, int target){
         AlgoRaw::merge_vertices(hex, source, target);
-        FOR(c, hex.ncells())FOR(lv0, 8) FOR(lv1, lv0) if (hex.vert(c, lv0) == hex.vert(c, lv1)) return false;
-        return true;
+        return validate_hexahedra(hex);
     }
 };
 
@@ -67,10 +147,12 @@ private:
 struct AlgoXCFLevel {
     AlgoXCFLevel(HexModelerSubMode& mode) :mode(mode) {}
     HexModelerSubMode& mode;
-    bool merge_vertices(int source, int target) {
+
+    void prepare_editing(){
         mode.backup();
-        Hexahedra& hex = mode.hex_id();
-        if (!AlgoMesh::merge_vertices(hex, source, target)) {
+    }
+    bool validate_editing(){
+        if (!AlgoMesh::validate_hexahedra(mode.hex_id())){
             mode.undo();
             return false;
         }
@@ -83,6 +165,20 @@ struct AlgoXCFLevel {
         return true;
     }
 
+    bool merge_vertices(int source, int target) {
+        prepare_editing();
+        Hexahedra& hex = mode.hex_id();
+        if (!AlgoMesh::merge_vertices(hex, source, target)) {
+            mode.mesh_is_valid = false;
+            mode.update_hex();
+            //mode.hex_id().broadcast(Event::UPDATED);
+            //mode.undo();
+            return false;
+        }   
+        mode.mesh_is_valid = true;
+        return validate_editing();
+    }
+
     enum Quad2HexGeomStrategy {
         OFFSET_BY_QUAD_NORMAL,
         RAYTRACE
@@ -92,6 +188,7 @@ struct AlgoXCFLevel {
         NO_MERGE
     };
     bool create_hex_from_quad(std::vector<vec3>& pts, Quad2HexGeomStrategy geom_strat, Quad2HexTopoStrategy topo_strat) {
+        prepare_editing();
         MultiMesh& mm = God::xcf["mesh"];
         Hexahedra& hex = mode.hex_id();
         CellAttribute<int> block_id("block_id", mm.hexahedra[""].attributes, mm.hexahedra[""].mesh);
@@ -168,14 +265,12 @@ struct AlgoXCFLevel {
         block_id[c] = c;
         FOR(lv, 8) hex.vert(c, lv) = hex_vert[lv];
         FOR(lv, 8) hex.points[hex_vert[lv]] = hex_pts[lv];
-        mode.update_hex();
-        mode.hex_id().broadcast(Event::UPDATED);
-        return true;
+
+        return validate_editing();
     }
 
     bool extend_mesh_from_face(int f_id){
-        mode.backup();
-
+        prepare_editing();
         MultiMesh& mm = God::xcf["mesh"];
         Hexahedra& hex = mode.hex_id();
         CellAttribute<int> block_id("block_id", mm.hexahedra[""].attributes, mm.hexahedra[""].mesh);
@@ -215,7 +310,6 @@ struct AlgoXCFLevel {
                         it = it.opposite_f().opposite_c();
                         nn++;
                     }
-                    plop(nn);
                     if (nn == 4){
                         no_more_possible_face_connection = false;
                         it = h;
@@ -230,15 +324,7 @@ struct AlgoXCFLevel {
             }
             hex.connect();
         }
-
-
-        if (!mode.update_hex()) {
-            mode.undo();
-            return false;
-        }
-        mode.forget_last_backup();
-        mode.hex_id().broadcast(Event::UPDATED);
-        return true;
+        return validate_editing();
     }
 
 };

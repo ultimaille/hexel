@@ -21,6 +21,10 @@ void HexModelerMode::reset_gui(){
     sub_mode().load_project(project_directory);
 }
 
+void HexModelerMode::update(){
+    sub_mode().update();
+}
+
 
 
 void HexModelerMode::header_gui_for_submodes(){

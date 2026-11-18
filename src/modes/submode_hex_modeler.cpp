@@ -259,3 +259,12 @@ void HexModelerSubMode::load_project(std::string directory){
     //set_active_mode("BasicEditMode");
 }
 
+void HexModelerSubMode::update() {
+    static auto t = std::chrono::high_resolution_clock::now();
+    auto nt = std::chrono::high_resolution_clock::now();
+    if (mesh_is_valid)
+        God::context.render_target.background_color = vec4(1., 1., 1., 1.);
+    else 
+        God::context.render_target.background_color = .4 * vec4(1.2 + std::cos(double(duration_cast<std::chrono::milliseconds>(nt - t).count()) / 50.), 0, 0, 1);
+}
+

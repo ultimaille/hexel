@@ -31,6 +31,7 @@ struct HexModelerMode : public Mode{
     void header_gui_for_submodes();
     void define_gui();
     void handle(Event event);
+    void update();
     void reset_gui();
 
     StartingMode sub_mode_start;

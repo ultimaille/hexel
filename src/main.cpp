@@ -48,7 +48,8 @@ int main(int argc, const char* argv[]) {
         if (!ImGui::GetIO().WantCaptureKeyboard || !ImGui::GetIO().WantCaptureMouse)
             God::keys.update();
 
-    
+        God::modes.update();
+
         God::context.begin_frame();
         
         for (auto &group : God::layers.groups) {
