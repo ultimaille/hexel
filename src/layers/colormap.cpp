@@ -214,63 +214,50 @@ void DrawColormapPreview(ImVec4(*sample)(float), ImVec2 size) {
 	ImGui::Dummy(size);
 }
 
-Colormap viridis   = { "Viridis",   SampleViridis   };
-Colormap plasma    = { "Plasma",    SamplePlasma    };
-Colormap inferno   = { "Inferno",   SampleInferno   };
-Colormap magma     = { "Magma",     SampleMagma     };
-Colormap cividis   = { "Cividis",   SampleCividis   };
-Colormap turbo     = { "Turbo",     SampleTurbo     };
-Colormap jet       = { "Jet",       SampleJet       };
-Colormap cool_warm  = { "CoolWarm",  SampleCoolWarm  };
-Colormap grayscale = { "Grayscale", SampleGrayscale };
-Colormap rainbow   = { "Rainbow",   SampleRainbow   };
-Colormap ocean     = { "Ocean",     SampleOcean     };
-Colormap fire      = { "Fire",      SampleFire      };
-
-std::vector<Colormap> colormaps = {
-	viridis,
-    plasma,
-    inferno,
-    magma,
-    cividis,
-    turbo,
-    jet,
-    cool_warm,
-    grayscale,
-    rainbow,
-    ocean,
-    fire
+std::vector<ColormapSampler> colormaps = {
+	{ "Viridis",   SampleViridis   },
+	{ "Plasma",    SamplePlasma    },
+	{ "Inferno",   SampleInferno   },
+	{ "Magma",     SampleMagma     },
+	{ "Cividis",   SampleCividis   },
+	{ "Turbo",     SampleTurbo     },
+	{ "Jet",       SampleJet       },
+	{ "CoolWarm",  SampleCoolWarm  },
+	{ "Grayscale", SampleGrayscale },
+	{ "Rainbow",   SampleRainbow   },
+	{ "Ocean",     SampleOcean     },
+	{ "Fire",      SampleFire      }
 };
 
-bool ColormapCombo(const char* label, std::string &selected){
+bool ColormapCombo(const char* label, int& selected){
 	const int count = colormaps.size();
 	bool changed = false;
 
-	if (ImGui::BeginCombo(label, selected.c_str())) {
+	if (ImGui::BeginCombo(label, colormaps[selected].name)) {
 		const float preview_width = 140.0f;
 		const float preview_height = 10.0f;
 		const float right_padding = 8.0f;
 
-		for (auto &colormap : colormaps) {
-			bool is_selected = (selected == colormap.name);
+		for (int i = 0; i < colormaps.size(); ++i) {
+			bool is_selected = (selected == i);
 
-			ImGui::PushID(colormap.name.c_str());
+			ImGui::PushID(i);
 
 			ImVec2 item_pos = ImGui::GetCursorScreenPos();
 			float item_width = ImGui::GetContentRegionAvail().x;
 
 			// Toute la ligne est cliquable
 			if (ImGui::Selectable("##colormap", is_selected, ImGuiSelectableFlags_None, ImVec2(item_width, 10.0f)))
-				selected = colormap.name;
+				selected = i;
 
 			// Texte
 			ImGui::SetCursorScreenPos(ImVec2(item_pos.x + 4.0f, item_pos.y - 2.0f));
-			ImGui::TextUnformatted(colormap.name.c_str());
+			ImGui::TextUnformatted(colormaps[i].name);
 			// Preview alignée à droite
 			float preview_x = item_pos.x + item_width - preview_width - right_padding;
 			ImGui::SetCursorScreenPos(ImVec2(preview_x, item_pos.y + 0.0f));
 
-			DrawColormapPreview(colormap.sample, ImVec2(preview_width, preview_height));
+			DrawColormapPreview(colormaps[i].sample, ImVec2(preview_width, preview_height));
 			if (is_selected) ImGui::SetItemDefaultFocus();
 			ImGui::PopID();
 		}
@@ -279,7 +266,7 @@ bool ColormapCombo(const char* label, std::string &selected){
 	return changed;
 }
 
-Colormap find_colormap(const std::string& name) {
+ColormapSampler find_colormap(const std::string& name) {
     for (auto &c : colormaps) {
         if (c.name == name)
             return c;
@@ -287,9 +274,7 @@ Colormap find_colormap(const std::string& name) {
     throw std::runtime_error("no colormap: " + name);
 }
 
-void load_colormap(std::string name, GLuint& colormap) {
-    auto cm = find_colormap(name);
-
+void load_colormap(Colormap name, GLuint& colormap) {
     glGenTextures(1, &colormap);
     glBindTexture(GL_TEXTURE_1D, colormap);
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -297,7 +282,7 @@ void load_colormap(std::string name, GLuint& colormap) {
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     unsigned char data[3 * 64];
     FOR(p, 64)FOR(c, 3) {
-        auto sample = cm.sample(float(p) / 63.);
+        auto sample = colormaps[static_cast<int>(name)].sample(float(p) / 63.);
         data[3 * p + 0] = sample.x * 255.;
         data[3 * p + 1] = sample.y * 255.;
         data[3 * p + 2] = sample.z * 255.;

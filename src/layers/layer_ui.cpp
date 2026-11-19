@@ -13,9 +13,9 @@ bool RendererUI::color_picker() {
 }
 
 bool RendererUI::colormap_combo() {
-    auto colormap_name = renderer().texture_id;
-    bool used = ColormapCombo("##combo_colormap", colormap_name);
-    renderer().set_colormap(colormap_name);
+    int texture = static_cast<int>(renderer().texture_id);
+    bool used = ColormapCombo("##combo_colormap", texture);
+    renderer().set_colormap(static_cast<Colormap>(texture));
     return used;
 }
 

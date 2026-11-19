@@ -58,7 +58,7 @@ void Renderer::shared_setup_before_rendering(){
     glUniform1i(glGetUniformLocation(shaderProgram, "layer_id"), layer_id);
 }
 
-void Renderer::set_colormap(std::string name) {
+void Renderer::set_colormap(Colormap name) {
     if (texture_id != name) {
         texture_id = name;
         glDeleteTextures(1, &colormap);
