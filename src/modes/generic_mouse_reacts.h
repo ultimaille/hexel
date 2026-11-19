@@ -2,11 +2,11 @@
 #include <core/all.h>
 #include <algo/raster_iterator.h>
 
-struct HexModelerSubMode;
+struct SubModeX;
 
 struct InteractorLayerSelection : public Interactor {
-    InteractorLayerSelection(HexModelerSubMode& mode):hexmode(mode) {}
-    HexModelerSubMode &hexmode;
+    InteractorLayerSelection(SubModeX& mode):hexmode(mode) {}
+    SubModeX &hexmode;
 
     void on_click(int button, vec2 p);
 };

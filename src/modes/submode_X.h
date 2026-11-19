@@ -8,11 +8,11 @@
 #include <modes/generic_mouse_reacts.h>
 #include <core/mode.h>
 
-struct HexModelerMode;
+struct ModeX;
 
-struct HexModelerSubMode : public Mode{
-    HexModelerSubMode(HexModelerMode& mode);
-    HexModelerMode& mode;
+struct SubModeX : public Mode{
+    SubModeX(ModeX& mode);
+    ModeX& mode;
 
     bool mesh_is_valid = true;
 

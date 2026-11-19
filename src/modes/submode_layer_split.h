@@ -1,8 +1,8 @@
-#include <modes/mode_hex_modeler.h>
+#include <modes/mode_X.h>
 
 
 
-//struct LayerSplitMode : public HexModelerMode::SubMode{
+//struct LayerSplitMode : public ModeX::SubMode{
 //
 //    InteractorMultiSelector multi_selector_react_left;
 //    InteractorMultiSelector multi_selector_react_right;

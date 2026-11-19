@@ -4,7 +4,7 @@
 #include "algo.h"
 #include <algo/pillowing.h>
 #include <algo/raster_iterator.h>
-#include <modes/mode_hex_modeler.h>
+#include <modes/mode_X.h>
 #include <modes/submode_start.h>
 #include <modes/submode_layer_split.h>
 #include <modes/submode_feature_edit.h>
@@ -17,19 +17,19 @@
 
 
 
-HexModelerSubMode::HexModelerSubMode(HexModelerMode& mode) :layer_selection_react(*this), mode(mode){}
+SubModeX::SubModeX(ModeX& mode) :layer_selection_react(*this), mode(mode){}
 
 // access to xcf objects
-MeshPath HexModelerSubMode::hex_id(){ return root.xcf["mesh"].hexahedra[""]; }
-MeshPath HexModelerSubMode::pl_id(){ return  root.xcf["mesh"].polylines[""]; };
-PointSetPath HexModelerSubMode::pts_id(){ return root.xcf["mesh"].pointset; };
-MeshPath HexModelerSubMode::geom_tri_id(){ return  root.xcf["geom"].triangles[""]; }
-MeshPath HexModelerSubMode::geom_edge_id(){ return  root.xcf["geom"].polylines[""]; }
-PointSetPath HexModelerSubMode::geom_pts_id(){ return  root.xcf["geom"].pointset; }
+MeshPath SubModeX::hex_id(){ return root.xcf["mesh"].hexahedra[""]; }
+MeshPath SubModeX::pl_id(){ return  root.xcf["mesh"].polylines[""]; };
+PointSetPath SubModeX::pts_id(){ return root.xcf["mesh"].pointset; };
+MeshPath SubModeX::geom_tri_id(){ return  root.xcf["geom"].triangles[""]; }
+MeshPath SubModeX::geom_edge_id(){ return  root.xcf["geom"].polylines[""]; }
+PointSetPath SubModeX::geom_pts_id(){ return  root.xcf["geom"].pointset; }
 
 
 // update coherence constraints
-Volume::Halfedge HexModelerSubMode::hex_halfedge_from_edge(int e){
+Volume::Halfedge SubModeX::hex_halfedge_from_edge(int e){
     EdgeAttribute<int> edge2halfedge("hex_halfedge", God::xcf["mesh"].polylines[""].attributes, God::xcf["mesh"].polylines[""].mesh);
     Hexahedra& hex = hex_id();
     return hex.halfedge(edge2halfedge[e]);
@@ -46,7 +46,7 @@ bool topo_is_valid(Hexahedra& hex){
     return true;
 }
 
-bool HexModelerSubMode::update_hex(){
+bool SubModeX::update_hex(){
     Hexahedra& hex = hex_id();
     EdgeAttribute<int> edge2halfedge("hex_halfedge", God::xcf["mesh"].polylines[""].attributes, God::xcf["mesh"].polylines[""].mesh);
     generate_edge_graph(hex_id(), pl_id(), edge2halfedge);
@@ -87,13 +87,13 @@ bool HexModelerSubMode::update_hex(){
 }
 
 // manage camera + layer selection
-void HexModelerSubMode::handle_camera_and_layerselect(Event event){
+void SubModeX::handle_camera_and_layerselect(Event event){
     camera_react.handle(event);
     layer_selection_react.handle(event);
 }
 
 
-void HexModelerSubMode::backup(){
+void SubModeX::backup(){
     int undo_stack_size = 5;
     mode.undo_id++;
     if (mode.undo_begin < mode.undo_id - mode.undo_stack_size){
@@ -107,14 +107,14 @@ void HexModelerSubMode::backup(){
     save_project(dir);
 }
 
-void HexModelerSubMode::forget_last_backup(){
+void SubModeX::forget_last_backup(){
     if (mode.undo_id == mode.undo_begin) {
         Log::add("Undo stack is empty, not able to forget");
         return;
     }
     mode.undo_id--;
 }
-void HexModelerSubMode::undo(){
+void SubModeX::undo(){
     if (mode.undo_id == mode.undo_begin) {
         Log::add("Undo stack is empty");
         return;
@@ -136,7 +136,7 @@ void HexModelerSubMode::undo(){
 
 
 
-bool HexModelerSubMode::xcf_is_valid_for_editing(){
+bool SubModeX::xcf_is_valid_for_editing(){
     if (!God::xcf.contains("mesh")) goto reset;
     if (!God::xcf.contains("geom")) goto reset;
     return true;
@@ -145,7 +145,7 @@ reset:
     return false;
 }
 
-void HexModelerSubMode::reset_layers_options(){
+void SubModeX::reset_layers_options(){
     if (!xcf_is_valid_for_editing()) return;
 
     {// rendering of the geom object
@@ -225,20 +225,20 @@ void HexModelerSubMode::reset_layers_options(){
 
 
 // manage import/load/write of project
-void HexModelerSubMode::reset_xcf(){
+void SubModeX::reset_xcf(){
     std::vector<std::string> mms;
     for (auto& [key, value] : God::xcf) mms.push_back(key);
     for (auto it : mms) God::xcf.kill_multimesh(it);
     God::events.dispatch();
 }
-void HexModelerSubMode::save_project(std::string directory){
+void SubModeX::save_project(std::string directory){
     MultiMesh& geommm = God::xcf["geom"];
     geommm.save_to_path(directory + "geom", true);
     MultiMesh& meshmm = God::xcf["mesh"];
     meshmm.save_to_path(directory + "mesh", true);
 }
 
-void HexModelerSubMode::load_project(std::string directory){
+void SubModeX::load_project(std::string directory){
     reset_xcf();
     const std::filesystem::path project_dir{directory};
     load_mm_with_default_layers((project_dir / "geom").string());
@@ -259,7 +259,7 @@ void HexModelerSubMode::load_project(std::string directory){
     //set_active_mode("BasicEditMode");
 }
 
-void HexModelerSubMode::update() {
+void SubModeX::update() {
     static auto t = std::chrono::high_resolution_clock::now();
     auto nt = std::chrono::high_resolution_clock::now();
     if (mesh_is_valid)

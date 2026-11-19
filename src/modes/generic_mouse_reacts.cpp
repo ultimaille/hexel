@@ -1,7 +1,7 @@
 #include "generic_mouse_reacts.h"
 #include <core/all.h>
 #include <algo/raster_iterator.h>
-#include <modes/mode_hex_modeler.h>
+#include <modes/mode_X.h>
 
 void InteractorLayerSelection::on_click(int button, vec2 p) {
         if (!key_state_is_OK()) return;

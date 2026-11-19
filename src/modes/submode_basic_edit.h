@@ -1,28 +1,28 @@
 #pragma once
-#include <modes/submode_hex_modeler.h>
-struct HexModelerMode;
-struct BasicEditMode;
+#include <modes/submode_X.h>
+struct ModeX;
+struct SubModeBasicEdit;
 
 
 struct InteractorMoveVertex : public Interactor {
-    InteractorMoveVertex(BasicEditMode& mode);
+    InteractorMoveVertex(SubModeBasicEdit& mode);
     void on_press(int button, vec2 p);
     void on_release(int button, vec2 p);
     void generate_gui();
     void reset();
 
     Picker picker;
-    BasicEditMode& mode;
+    SubModeBasicEdit& mode;
     int moving_vertex;
 };
 
 
 
 struct InteractorKillHex : public Interactor {
-    InteractorKillHex(BasicEditMode& mode);
+    InteractorKillHex(SubModeBasicEdit& mode);
     void on_click(int button, vec2 p);
 
-    BasicEditMode& mode;
+    SubModeBasicEdit& mode;
 };
 
 
@@ -39,21 +39,21 @@ struct InteractorCreateHex: public Interactor {
         void add_point(vec3 v0);
         void pop_point();
     } ;
-    InteractorCreateHex(BasicEditMode& mode);
+    InteractorCreateHex(SubModeBasicEdit& mode);
     void on_click(int button, vec2 p);
     void handle(Event event);
     void reset();
     void generate_gui();
     inline bool in_progess(){ return !pts.empty(); }
 
-    BasicEditMode& mode;
+    SubModeBasicEdit& mode;
     FeedBack feedback;
     std::vector<vec3> pts;
 };
 
-struct BasicEditMode : public HexModelerSubMode {
+struct SubModeBasicEdit : public SubModeX {
     inline void activate(){Log::add("BasicEditMode activated");}
-    BasicEditMode(HexModelerMode& mode);
+    SubModeBasicEdit(ModeX& mode);
     void handle(Event event);
     
     void define_gui();

@@ -1,4 +1,4 @@
-#include <modes/mode_hex_modeler.h>
+#include <modes/mode_X.h>
 
 
 //
@@ -13,7 +13,7 @@
 //
 //
 //
-//struct FeatureEditMode : public HexModelerMode::SubMode{
+//struct FeatureEditMode : public ModeX::SubMode{
 //
 //    InteractorMultiSelector multi_selector_react_left;
 //    InteractorMultiSelector multi_selector_react_right;

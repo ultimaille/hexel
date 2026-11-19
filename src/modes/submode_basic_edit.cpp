@@ -1,5 +1,5 @@
 #include <modes/submode_basic_edit.h>
-#include <modes/mode_hex_modeler.h>
+#include <modes/mode_X.h>
 
 
 // low-level (at UM level), without guaranties
@@ -145,8 +145,8 @@ private:
 
 // algorithms that are ready to call from UI
 struct AlgoXCFLevel {
-    AlgoXCFLevel(HexModelerSubMode& mode) :mode(mode) {}
-    HexModelerSubMode& mode;
+    AlgoXCFLevel(SubModeX& mode) :mode(mode) {}
+    SubModeX& mode;
 
     void prepare_editing(){
         mode.backup();
@@ -212,7 +212,7 @@ struct AlgoXCFLevel {
             Triangles& tri = mode.geom_tri_id();
             FOR(lv, 4) {
                 vec3 dir = n;
-                HexModelerSubMode::Embedding emb = mode.get_embedding(hex_pts[lv]);
+                SubModeX::Embedding emb = mode.get_embedding(hex_pts[lv]);
                 if (emb.dim == 2) {
                     Surface::Facet f(tri, emb.id);
                     dir = Triangle3(f).normal();
@@ -331,7 +331,7 @@ struct AlgoXCFLevel {
 
 
 
-InteractorMoveVertex::InteractorMoveVertex(BasicEditMode& mode) :mode(mode){ moving_vertex = -1; }
+InteractorMoveVertex::InteractorMoveVertex(SubModeBasicEdit& mode) :mode(mode){ moving_vertex = -1; }
 void InteractorMoveVertex::on_press(int button, vec2 p) {
     if (!key_state_is_OK()) return;
     if (button != 0) return;
@@ -429,7 +429,7 @@ void InteractorMoveVertex::reset(){
 }
 
 
-InteractorKillHex::InteractorKillHex(BasicEditMode& mode) :mode(mode){}
+InteractorKillHex::InteractorKillHex(SubModeBasicEdit& mode) :mode(mode){}
 void InteractorKillHex::on_click(int button, vec2 p) {
     if (!key_state_is_OK()) return;
     if (button != 1) return;
@@ -516,7 +516,7 @@ void InteractorCreateHex::FeedBack::pop_point(){
 }
 
 
-InteractorCreateHex::InteractorCreateHex(BasicEditMode& mode) :mode(mode){}
+InteractorCreateHex::InteractorCreateHex(SubModeBasicEdit& mode) :mode(mode){}
 void InteractorCreateHex::reset(){
     if (pts.empty()) return;
     pts.clear();
@@ -608,8 +608,8 @@ void InteractorCreateHex::generate_gui(){
 }
 
 
-BasicEditMode::BasicEditMode(HexModelerMode& mode)
-    : HexModelerSubMode(mode),
+SubModeBasicEdit::SubModeBasicEdit(ModeX& mode)
+    : SubModeX(mode),
     interactor_kill_kex(*this),
     interactor_create_hex(*this),
     interactor_layer_selection(*this),
@@ -627,16 +627,16 @@ BasicEditMode::BasicEditMode(HexModelerMode& mode)
     interactors.push_back(&interactor_layer_selection);
     interactors.push_back(&interactor_move_vertex);
 }
-void BasicEditMode::handle(Event event) {
+void SubModeBasicEdit::handle(Event event) {
     Mode::handle(event);
 }
-void BasicEditMode::define_gui() {
+void SubModeBasicEdit::define_gui() {
     ImGui::Begin("HexModelerMode", nullptr);
     mode.header_gui_for_submodes();
     generate_interactor_gui();
     ImGui::End();
 }
-bool BasicEditMode::merge_vertices(int v0, int v1){
+bool SubModeBasicEdit::merge_vertices(int v0, int v1){
     Hexahedra& hex = hex_id();
     FOR(c, hex.ncells())FOR(lv, 8) if (hex.vert(c, lv) == v0)hex.vert(c, lv) = v1;
     return update_hex();

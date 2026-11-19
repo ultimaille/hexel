@@ -1,9 +1,9 @@
 #pragma once
-#include <modes/submode_hex_modeler.h>
-struct HexModelerMode;
+#include <modes/submode_X.h>
+struct ModeX;
 
-struct StartingMode : public HexModelerSubMode{
-    StartingMode(HexModelerMode& mode);
+struct StartingMode : public SubModeX{
+    StartingMode(ModeX& mode);
     void define_gui();
     void handle(Event event);
     void import_new_project_from_CAD(std::string filename);

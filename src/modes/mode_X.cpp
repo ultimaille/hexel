@@ -4,7 +4,7 @@
 #include "algo.h"
 #include <algo/pillowing.h>
 #include <algo/raster_iterator.h>
-#include <modes/mode_hex_modeler.h>
+#include <modes/mode_X.h>
 #include <modes/submode_start.h>
 #include <modes/submode_layer_split.h>
 #include <modes/submode_feature_edit.h>
@@ -17,17 +17,17 @@
 
 
 
-void HexModelerMode::reset_gui(){
+void ModeX::reset_gui(){
     sub_mode().load_project(project_directory);
 }
 
-void HexModelerMode::update(){
+void ModeX::update(){
     sub_mode().update();
 }
 
 
 
-void HexModelerMode::header_gui_for_submodes(){
+void ModeX::header_gui_for_submodes(){
     if (ImGui::Button("Backup")) sub_mode().backup();
     ImGui::SameLine();
     if (ImGui::Button("Undo")) sub_mode().undo();
@@ -48,17 +48,17 @@ void HexModelerMode::header_gui_for_submodes(){
     ImGui_help("Choose the current submode\n" "hopefully you can go there");
 }
 
-void HexModelerMode::define_gui(){
+void ModeX::define_gui(){
     sub_mode().define_gui();
 }
 
 
-void HexModelerMode::handle(Event event) {
+void ModeX::handle(Event event) {
     Mode::handle(event);
     sub_mode().handle(event);
 };
 
-void HexModelerMode::set_active_mode(SubModes sub){
+void ModeX::set_active_mode(SubModes sub){
     int id = sub;
     um_assert(id != -1);
     sub_mode().desactivate();
@@ -68,7 +68,7 @@ void HexModelerMode::set_active_mode(SubModes sub){
 
 
 
-HexModelerMode::HexModelerMode():sub_mode_start(*this),sub_mode_basic_edit(*this){
+ModeX::ModeX():sub_mode_start(*this),sub_mode_basic_edit(*this){
         working_directory = WORKING_DIR;
         project_directory = WORKING_DIR;
         CAD_file = std::string(TEST_INPUT_DIR) + "B1.geogram";

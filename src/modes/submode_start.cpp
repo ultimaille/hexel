@@ -1,9 +1,9 @@
 #include <modes/submode_start.h>
-#include <modes/mode_hex_modeler.h>
+#include <modes/mode_X.h>
 
 
 
-StartingMode::StartingMode(HexModelerMode& mode) : HexModelerSubMode(mode){}
+StartingMode::StartingMode(ModeX& mode) : SubModeX(mode){}
 
 void StartingMode::define_gui() {
     ImGui::Begin("HexModelerMode", nullptr);
