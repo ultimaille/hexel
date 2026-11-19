@@ -282,16 +282,26 @@ void XCF::add_mesh(MeshPath obj) {
     Log::error("Attempt to create a mesh that already exists");
 }
 
-// void XCF::add_mesh(MultiMeshPath::PolyLines::PolyLine polyline_path) {
-//     std::string mm_name = polyline_path.parent().name();
-//     um_assert(contains(mm_name));
+MeshPath XCF::add_hexahedra(const std::string& mm_name, const std::string& mesh_name) {
+    MultiMesh& mm = (*this)[mm_name];
 
-//     MultiMesh& mm = (*this)[mm_name];
-//     std::string mesh_name = polyline_path.name();
+    MeshPath path = root.xcf[mm_name].hexahedra[mesh_name];
 
-//     if (!!mm.polylines.contains(mesh_name))
-//         mm.polylines.try_emplace(mesh_name); 
-    
-//     polyline_path.broadcast(Event::CREATED); 
-// }
+    if (!mm.hexahedra.contains(mesh_name))
+        mm.hexahedra.try_emplace(mesh_name); 
 
+    path.broadcast(Event::CREATED); 
+    return path;
+}
+
+MeshPath XCF::add_triangles(const std::string& mm_name, const std::string& mesh_name) {
+    MultiMesh& mm = (*this)[mm_name];
+
+    MeshPath path = root.xcf[mm_name].triangles[mesh_name];
+
+    if (!mm.triangles.contains(mesh_name))
+        mm.triangles.try_emplace(mesh_name); 
+
+    path.broadcast(Event::CREATED); 
+    return path;
+}

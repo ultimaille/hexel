@@ -28,7 +28,6 @@ namespace UM {
         void load_geogram(std::string filename, bool connect = true);
         void save_to_path(std::string filename, bool geogram_compatible = false);
 
-        // /!\ Note: void add(std::string mesh_name, MeshAttrVariant &m); // add mesh
     };
 
     struct XCF: private std::map<std::string, MultiMesh> {
@@ -40,7 +39,9 @@ namespace UM {
 
 
         MultiMesh& add(std::string str);
-        void add_mesh(MeshPath obj); // /!\ Note: devrait être dans MultiMesh
+        void add_mesh(MeshPath obj);
+        MeshPath add_hexahedra(const std::string& mm_name, const std::string& mesh_name);
+        MeshPath add_triangles(const std::string& mm_name, const std::string& mesh_name);
 
         void kill_mesh(MeshPath obj);
         void kill_multimesh(const std::string& name);

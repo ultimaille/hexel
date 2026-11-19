@@ -11,10 +11,10 @@
 
 
 bool Interactor::key_state_is_OK(){
-    if (ctrl_must_be_down && !God::keys.pressed(GLFW_KEY_LEFT_CONTROL)) return false;
-    if (shift_must_be_down && !God::keys.pressed(GLFW_KEY_LEFT_SHIFT)) return false;
-    if (ctrl_must_be_up && God::keys.pressed(GLFW_KEY_LEFT_CONTROL)) return false;
-    if (shift_must_be_up && God::keys.pressed(GLFW_KEY_LEFT_SHIFT)) return false;
+    if (ctrl_must_be_down && !(God::keys.pressed(GLFW_KEY_LEFT_CONTROL) || God::keys.pressed(GLFW_KEY_RIGHT_CONTROL))) return false;
+    if (shift_must_be_down && !(God::keys.pressed(GLFW_KEY_LEFT_SHIFT) || God::keys.pressed(GLFW_KEY_RIGHT_SHIFT))) return false;
+    if (ctrl_must_be_up && (God::keys.pressed(GLFW_KEY_LEFT_CONTROL) || God::keys.pressed(GLFW_KEY_RIGHT_CONTROL))) return false;
+    if (shift_must_be_up && (God::keys.pressed(GLFW_KEY_LEFT_SHIFT) || God::keys.pressed(GLFW_KEY_RIGHT_SHIFT))) return false;
     return true;
 }
 
