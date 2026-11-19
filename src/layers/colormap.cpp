@@ -213,50 +213,64 @@ void DrawColormapPreview(ImVec4(*sample)(float), ImVec2 size) {
 	// Make ImGui advance its cursor.
 	ImGui::Dummy(size);
 }
+
+Colormap viridis   = { "Viridis",   SampleViridis   };
+Colormap plasma    = { "Plasma",    SamplePlasma    };
+Colormap inferno   = { "Inferno",   SampleInferno   };
+Colormap magma     = { "Magma",     SampleMagma     };
+Colormap cividis   = { "Cividis",   SampleCividis   };
+Colormap turbo     = { "Turbo",     SampleTurbo     };
+Colormap jet       = { "Jet",       SampleJet       };
+Colormap cool_warm  = { "CoolWarm",  SampleCoolWarm  };
+Colormap grayscale = { "Grayscale", SampleGrayscale };
+Colormap rainbow   = { "Rainbow",   SampleRainbow   };
+Colormap ocean     = { "Ocean",     SampleOcean     };
+Colormap fire      = { "Fire",      SampleFire      };
+
 std::vector<Colormap> colormaps = {
-	{ "Viridis",   SampleViridis   },
-	{ "Plasma",    SamplePlasma    },
-	{ "Inferno",   SampleInferno   },
-	{ "Magma",     SampleMagma     },
-	{ "Cividis",   SampleCividis   },
-	{ "Turbo",     SampleTurbo     },
-	{ "Jet",       SampleJet       },
-	{ "CoolWarm",  SampleCoolWarm  },
-	{ "Grayscale", SampleGrayscale },
-	{ "Rainbow",   SampleRainbow   },
-	{ "Ocean",     SampleOcean     },
-	{ "Fire",      SampleFire      }
+	viridis,
+    plasma,
+    inferno,
+    magma,
+    cividis,
+    turbo,
+    jet,
+    cool_warm,
+    grayscale,
+    rainbow,
+    ocean,
+    fire
 };
 
-bool ColormapCombo(const char* label, int& selected){
+bool ColormapCombo(const char* label, std::string &selected){
 	const int count = colormaps.size();
 	bool changed = false;
 
-	if (ImGui::BeginCombo(label, colormaps[selected].name)) {
+	if (ImGui::BeginCombo(label, selected.c_str())) {
 		const float preview_width = 140.0f;
 		const float preview_height = 10.0f;
 		const float right_padding = 8.0f;
 
-		for (int i = 0; i < colormaps.size(); ++i) {
-			bool is_selected = (selected == i);
+		for (auto &colormap : colormaps) {
+			bool is_selected = (selected == colormap.name);
 
-			ImGui::PushID(i);
+			ImGui::PushID(colormap.name.c_str());
 
 			ImVec2 item_pos = ImGui::GetCursorScreenPos();
 			float item_width = ImGui::GetContentRegionAvail().x;
 
 			// Toute la ligne est cliquable
 			if (ImGui::Selectable("##colormap", is_selected, ImGuiSelectableFlags_None, ImVec2(item_width, 10.0f)))
-				selected = i;
+				selected = colormap.name;
 
 			// Texte
 			ImGui::SetCursorScreenPos(ImVec2(item_pos.x + 4.0f, item_pos.y - 2.0f));
-			ImGui::TextUnformatted(colormaps[i].name);
+			ImGui::TextUnformatted(colormap.name.c_str());
 			// Preview alignée à droite
 			float preview_x = item_pos.x + item_width - preview_width - right_padding;
 			ImGui::SetCursorScreenPos(ImVec2(preview_x, item_pos.y + 0.0f));
 
-			DrawColormapPreview(colormaps[i].sample, ImVec2(preview_width, preview_height));
+			DrawColormapPreview(colormap.sample, ImVec2(preview_width, preview_height));
 			if (is_selected) ImGui::SetItemDefaultFocus();
 			ImGui::PopID();
 		}
@@ -265,19 +279,28 @@ bool ColormapCombo(const char* label, int& selected){
 	return changed;
 }
 
+Colormap find_colormap(const std::string& name) {
+    for (auto &c : colormaps) {
+        if (c.name == name)
+            return c;
+    }
+    throw std::runtime_error("no colormap: " + name);
+}
 
-void load_colormap(int id, GLuint& colormap) {
-	glGenTextures(1, &colormap);
-	glBindTexture(GL_TEXTURE_1D, colormap);
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	unsigned char data[3 * 64];
-	FOR(p, 64)FOR(c, 3) {
-		auto sample = colormaps[id].sample(float(p) / 63.);
-		data[3 * p + 0] = sample.x * 255.;
-		data[3 * p + 1] = sample.y * 255.;
-		data[3 * p + 2] = sample.z * 255.;
-	}
-	glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB8, 64, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+void load_colormap(std::string name, GLuint& colormap) {
+    auto cm = find_colormap(name);
+
+    glGenTextures(1, &colormap);
+    glBindTexture(GL_TEXTURE_1D, colormap);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    unsigned char data[3 * 64];
+    FOR(p, 64)FOR(c, 3) {
+        auto sample = cm.sample(float(p) / 63.);
+        data[3 * p + 0] = sample.x * 255.;
+        data[3 * p + 1] = sample.y * 255.;
+        data[3 * p + 2] = sample.z * 255.;
+    }
+    glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB8, 64, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 }

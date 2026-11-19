@@ -2,15 +2,17 @@
 #include "imgui.h"
 #include <algorithm>
 #include <vector>
+#include <string>
 #include <cmath>
 #include <glad/gl.h>
 
 
 struct Colormap {
-	const char* name;
-	ImVec4(*sample)(float t);
+    std::string name;
+    ImVec4(*sample)(float t);
 };
 extern std::vector<Colormap> colormaps;
+extern Colormap viridis;
 
 ImVec4 Lerp(const ImVec4& a, const ImVec4& b, float t);
 ImVec4 SampleGradient(float t, const ImVec4* colors, int count);
@@ -26,6 +28,7 @@ ImVec4 SampleGrayscale(float t);
 ImVec4 SampleRainbow(float t);
 ImVec4 SampleOcean(float t);
 ImVec4 SampleFire(float t);
+
 void DrawColormapPreview(ImVec4(*sample)(float), ImVec2 size);
-bool ColormapCombo(const char* label, int& selected);
-void load_colormap(int id, GLuint& colormap);
+bool ColormapCombo(const char* label, std::string& selected);
+void load_colormap(std::string name, GLuint& colormap);

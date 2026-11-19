@@ -73,7 +73,6 @@ struct PickFacetInteractor : public Interactor {
         for (int lv = 0; lv < 4; ++lv) {
             auto v = f.vertex(lv);
             v.pos() += displacement;
-             
         }
 
         hex_path.broadcast(EventTypes::UPDATED);
@@ -83,8 +82,7 @@ struct PickFacetInteractor : public Interactor {
         facet_id = -1;
     }
 
-    std::string mm_name;
-    std::string mesh_name;
+
     std::string layer_name;
 
     MeshPath hex_path;
@@ -110,9 +108,6 @@ struct CoreTestMode : public Mode {
         God::xcf.add("box");
         
         // Note: add_mesh should be splitted into multiple overloads
-        // Here why MeshPath ?
-        // add_mesh<MeshType>() return MeshPath
-        // auto hex_path = root.xcf["box"].hexahedra["hex"];
         // God::xcf.add_mesh(hex_path); 
         // auto hex_path = God::xcf.add_mesh<Hexahedra>("box", "hex");
         // Better, does not change nothing in term of code quantity, but 
@@ -158,8 +153,6 @@ struct CoreTestMode : public Mode {
         hex_path.broadcast(EventTypes::UPDATED);
 
         pick_facet_interactor.hex_path = hex_path;
-        pick_facet_interactor.mm_name = "box";
-        pick_facet_interactor.mesh_name = "hex";
         pick_facet_interactor.layer_name = "box";
     }
 

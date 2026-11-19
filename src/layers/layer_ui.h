@@ -285,8 +285,6 @@ struct RendererUI {
 struct PointRendererUI : RendererUI {
     PointRendererUI(PointRenderer &r) : r(r) {}
 
-    bool radius_input();
-
     void show_parameters(RendererUIMode mode) override;
     Renderer& renderer() override { return static_cast<Renderer&>(r); }
 
