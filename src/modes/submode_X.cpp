@@ -254,16 +254,13 @@ void SubModeX::load_project(std::string directory){
     generate_edge_graph(hex, pl, edge2halfedge);
 
     reset_layers_options();
-    //layer_selection_react.init(hex_id(), pl_id(), pts_id());
-
-    //set_active_mode("BasicEditMode");
 }
 
 void SubModeX::update() {
     static auto t = std::chrono::high_resolution_clock::now();
     auto nt = std::chrono::high_resolution_clock::now();
     if (mesh_is_valid)
-        God::context.render_target.background_color = vec4(1., 1., 1., 1.);
+        God::context.render_target.background_color = vec4(0,0,0, 1.);
     else 
         God::context.render_target.background_color = .4 * vec4(1.2 + std::cos(double(duration_cast<std::chrono::milliseconds>(nt - t).count()) / 50.), 0, 0, 1);
 }

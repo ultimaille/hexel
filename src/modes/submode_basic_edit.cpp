@@ -1,26 +1,22 @@
-#include <modes/submode_basic_edit.h>
 #include <modes/mode_X.h>
+#include <modes/submode_basic_edit.h>
 
+template<class T> struct ToolBox{ ToolBox(T& m) {}; };
 
 // low-level (at UM level), without guaranties
-namespace  AlgoRaw{
-    void merge_vertices(Hexahedra& hex, int source, int target){
+struct ToolBoxHexahedra{
+    ToolBoxHexahedra(Hexahedra& hex) :hex(hex){}
+    Hexahedra& hex;
+    void merge_vertices(int source, int target){
         FOR(c, hex.ncells())FOR(lv, 8) if (hex.vert(c, lv) == source)hex.vert(c, lv) = target;
     }
-
-};
-
-// Algorithms assumed to preserve some properties (returns bool if it doesn't) 
-namespace AlgoMesh{
-    
-
-    bool validate_hexahedra(Hexahedra& hex){
+    bool validate_topo(std::vector<int>& conficts){
         {// each hexahedron is valid
             // vertices in good range
             for (auto c : hex.iter_corners()) if (c.vertex() < 0 || c.vertex() >= hex.nverts()) return false;
 
             // no duplicated vertices
-            FOR(c, hex.ncells())FOR(lv0, 8) FOR(lv1, lv0) if (hex.vert(c, lv0) == hex.vert(c, lv1)) return false;
+            FOR(c, hex.ncells())FOR(lv0, 8) FOR(lv1, lv0) if (hex.vert(c, lv0) == hex.vert(c, lv1)) { conficts.push_back(hex.vert(c, lv0)); };
         }
 
         // compute some connectivity
@@ -47,7 +43,8 @@ namespace AlgoMesh{
                     //plop(nb_shared_vertices);
                     switch (nb_shared_vertices){
                     case 0: Log::error("Cannot not share vertices");
-                    case 1: break;// share a vertex
+                    case 1:                     cir = c2c[cir];
+                        continue;// share a vertex
                     case 2:{
                         // share and edge ?
                         bool is_an_edge = false;
@@ -60,8 +57,12 @@ namespace AlgoMesh{
                             }
                             h_c = h_c.prev().opposite_f();
                         }
-                        if (!is_an_edge) return false;
-                        break;
+                        if (!is_an_edge) { 
+                            FOR(lv, 8) conficts.push_back(c.cell().vertex(lv));
+                            FOR(lv, 8) conficts.push_back(cir.cell().vertex(lv));
+                        }//return false;
+                        cir = c2c[cir];
+                        continue;
                     }
                     case 4:{
                         // share a facet?
@@ -74,37 +75,52 @@ namespace AlgoMesh{
                                     h_c.to() == h_cir.prev().from()
                                     && h_c.next().to() == h_cir.prev().prev().from()
                                     && h_c.next().next().to() == h_cir.prev().prev().prev().from()
-                                    //&& h_c.next().next().next().to() == h_cir.prev().prev().prev().prev().from()
                                     );
                                 h_cir = h_cir.prev().opposite_f();
                             }
                             h_c = h_c.prev().opposite_f();
                         }
-                        if (!is_a_facet) return false;
-                        break;
+                        if (!is_a_facet) {
+                            FOR(lv, 8) conficts.push_back(c.cell().vertex(lv));
+                            FOR(lv, 8) conficts.push_back(cir.cell().vertex(lv));
+                        }//return false;
+                        cir = c2c[cir];
+                        continue;
                     }
                     default:
-                        return false;
+                        FOR(lv, 8) conficts.push_back(c.cell().vertex(lv));
+                        FOR(lv, 8) conficts.push_back(cir.cell().vertex(lv));
                     }
-                     cir = c2c[cir];
+                    cir = c2c[cir];
                 }
             }
         }
-        return true;
+        return conficts.empty();
     }
+    bool validate_geom(std::vector<int>& conficts) {
+        for (auto c : hex.iter_corners()){
+            Volume::Halfedge h = c.halfedge();
+            plop(int(h));
+            Tetrahedron tet(h.from().pos(), h.to().pos(), h.opposite_f().next().to(), h.prev().from().pos());
+            plop(tet.volume());
+            if (tet.volume() < 0) FOR(lv, 8) conficts.push_back(c.cell().vertex(lv));
+        }
+        return conficts.empty();
+    }
+};
 
-    bool merge_vertices(Hexahedra& hex, int source, int target){
-        AlgoRaw::merge_vertices(hex, source, target);
-        return validate_hexahedra(hex);
-    }
+template<> struct ToolBox<Hexahedra> :public ToolBoxHexahedra{
+    ToolBox(Hexahedra& hex) :ToolBoxHexahedra(hex){};
 };
 
 
 
 
 
-struct RayTracer{
-    RayTracer(Triangles& tri) : tri(tri){}
+
+struct ToolBoxTriangles{
+    ToolBoxTriangles(Triangles& tri) :tri(tri){}
+    Triangles& tri;
     vec3 next_intersection(vec3 O, vec3 dir){
         static const double infty = 1e20;
         double best_t = infty;
@@ -112,72 +128,111 @@ struct RayTracer{
             Triangle3 tr(f);
             vec3 A = tr[0]; vec3 B = tr[1]; vec3 C = tr[2];
             double t = 1e20;
-            if (intersectRayTriangle(O, dir, A, B, C, t))
-                best_t = std::min(t, best_t);
+
+
+            const double EPSILON = 1e-9;
+            vec3 AB = B - A;
+            vec3 AC = C - A;
+            vec3 h = cross(dir, AC);
+            double det = AB * h;
+            if (std::abs(det) < EPSILON) continue;
+            double invDet = 1.0 / det;
+            vec3 s = O - A;
+            double u = invDet * (s * h);
+            if (u < 0.0 || u > 1.0) continue;
+            vec3 q = cross(s, AB);
+            double v = invDet * (dir * q);
+            if (v < 0.0 || u + v > 1.0) continue;
+            t = invDet * (AC * q);
+            if (t < EPSILON) continue;
+            best_t = std::min(t, best_t);
         }
         if (best_t < infty)
             return O + best_t * dir;
         return O;
     }
-private:
-    bool intersectRayTriangle(const vec3& O, const vec3& dir, const vec3& A, const vec3& B, const vec3& C, double& t){
-        const double EPSILON = 1e-9;
-        vec3 AB = B - A;
-        vec3 AC = C - A;
-        vec3 h = cross(dir, AC);
-        double det = AB * h;
-        if (std::abs(det) < EPSILON) return false;
-        double invDet = 1.0 / det;
-        vec3 s = O - A;
-        double u = invDet * (s * h);
-        if (u < 0.0 || u > 1.0) return false;
-        vec3 q = cross(s, AB);
-        double v = invDet * (dir * q);
-        if (v < 0.0 || u + v > 1.0) return false;
-        t = invDet * (AC * q);
-        if (t < EPSILON) return false;
-        return true;
-    }
-    Triangles& tri;
+};
+
+template<> struct ToolBox<Triangles> :public ToolBoxTriangles{
+    ToolBox(Triangles& tri) :ToolBoxTriangles(tri){};
 };
 
 
 
+
+
+
+
+
 // algorithms that are ready to call from UI
-struct AlgoXCFLevel {
-    AlgoXCFLevel(SubModeX& mode) :mode(mode) {}
+struct ModeXCommands {
+    ModeXCommands(SubModeX& mode) :mode(mode){}
     SubModeX& mode;
+   
+
+    void update_panic_in_xcf(std::vector<int>& conflicts_topo, std::vector<int>& conflicts_geom){
+        std::string mm_name = "conflicts";
+        if (God::xcf.contains(mm_name)) God::xcf.kill_multimesh(mm_name);
+        if (conflicts_topo.empty() && conflicts_geom.empty())return;
+        
+        God::xcf.add(mm_name);
+        int group = God::layers.add_group(mm_name);
+        MultiMesh& mm = root.xcf[mm_name];
+        mm.polylines.try_emplace("");
+        mm.polylines[""].mesh.points = mm.pointset;
+        {// point set
+            PointSetLayer& layer = God::layers.add<PointSetLayer>(mm_name, group);
+            layer.init(root.xcf[mm_name].pointset);
+            layer.set_default_values();
+            layer.point_renderer.radius_in_pixel=15;
+        }
+        Hexahedra& hex = mode.hex_id();
+        {
+            int nv = mm.pointset.create_points(conflicts_topo.size());
+            FOR(lv, conflicts_topo.size()) mm.pointset[lv] = hex.points[conflicts_topo[lv]];
+        }
+        {
+            int nv = mm.pointset.create_points(conflicts_geom.size());
+            FOR(lv, conflicts_geom.size()) mm.pointset[lv + nv] = hex.points[conflicts_geom[lv]];
+        }
+        root.xcf[mm_name].pointset.broadcast(Event::UPDATED);
+
+    }
 
     void prepare_editing(){
         mode.backup();
     }
+
     bool validate_editing(){
-        if (!AlgoMesh::validate_hexahedra(mode.hex_id())){
-            mode.undo();
-            return false;
-        }
-        if (!mode.update_hex()) {
-            mode.undo();
-            return false;
-        }
+        mode.update_hex();
+        std::vector<int> conflicts_topo;
+        std::vector<int> conflicts_geom;
+        mode.mode.hex_state_is_valid =true;
+        mode.mode.hex_state_is_valid = mode.mode.hex_state_is_valid && ToolBoxHexahedra(mode.hex_id()).validate_topo(conflicts_topo);
+        mode.mode.hex_state_is_valid = mode.mode.hex_state_is_valid && ToolBoxHexahedra(mode.hex_id()).validate_geom(conflicts_geom);
+        update_panic_in_xcf(conflicts_topo, conflicts_geom);
+        if (!mode.mode.hex_state_is_valid)return false;
         mode.forget_last_backup();
         mode.hex_id().broadcast(Event::UPDATED);
         return true;
     }
 
+
     bool merge_vertices(int source, int target) {
         prepare_editing();
         Hexahedra& hex = mode.hex_id();
-        if (!AlgoMesh::merge_vertices(hex, source, target)) {
-            mode.mesh_is_valid = false;
-            mode.update_hex();
-            //mode.hex_id().broadcast(Event::UPDATED);
-            //mode.undo();
-            return false;
-        }   
-        mode.mesh_is_valid = true;
+        ToolBox(hex).merge_vertices(source, target);
         return validate_editing();
     }
+
+    bool move_vertex(int moving_vertex, vec3 new_pos){
+        prepare_editing();
+        PointSet& pts = mode.pts_id();
+        pts[moving_vertex] = new_pos;
+        return validate_editing();
+    }
+
+
 
     enum Quad2HexGeomStrategy {
         OFFSET_BY_QUAD_NORMAL,
@@ -205,9 +260,9 @@ struct AlgoXCFLevel {
         }
         else if (geom_strat == RAYTRACE){
             Quad3 quad(pts[0], pts[1], pts[2], pts[3]);
-            RayTracer ray_trace(mode.geom_tri_id());
+            //RayTracer ray_trace(mode.geom_tri_id());
             vec3 n = -quad.normal();
-            
+
             double min_decal = .05 * std::sqrt(quad.unsigned_area());
             Triangles& tri = mode.geom_tri_id();
             FOR(lv, 4) {
@@ -216,9 +271,9 @@ struct AlgoXCFLevel {
                 if (emb.dim == 2) {
                     Surface::Facet f(tri, emb.id);
                     dir = Triangle3(f).normal();
-                    if (dir * n < 0) dir = -dir ;
+                    if (dir * n < 0) dir = -dir;
                 }
-                hex_pts[lv] = ray_trace.next_intersection(hex_pts[lv] + min_decal * dir, dir);
+                hex_pts[lv] = ToolBox(tri).next_intersection(hex_pts[lv] + min_decal * dir, dir);
             }
         }
         else{
@@ -278,8 +333,8 @@ struct AlgoXCFLevel {
         Volume::Facet f(hex, f_id);
         // create an hex
         vec3 n = Quad3(f).normal();
-        double scale  = std::sqrt(Quad3(f).unsigned_area());
-        int hex_vert[8] ;
+        double scale = std::sqrt(Quad3(f).unsigned_area());
+        int hex_vert[8];
         hex_vert[0] = f.vertex(0);
         hex_vert[1] = f.vertex(1);
         hex_vert[2] = f.vertex(3);
@@ -287,7 +342,7 @@ struct AlgoXCFLevel {
         int offset = hex.points.create_points(4);
         FOR(lv, 4) {
             hex_vert[4 + lv] = offset + lv;
-            hex.points[offset + lv] = hex.points[hex_vert[lv]]+ scale*n;
+            hex.points[offset + lv] = hex.points[hex_vert[lv]] + scale * n;
         }
 
         int new_cell = hex.create_cells(1);
@@ -297,7 +352,7 @@ struct AlgoXCFLevel {
 
         // try to connect the other faces of the hex
         bool no_more_possible_face_connection = false;
-        while(!no_more_possible_face_connection){
+        while (!no_more_possible_face_connection){
             no_more_possible_face_connection = true;
             Volume::Cell c(hex, new_cell);
             for (auto f : c.iter_facets()){
@@ -318,7 +373,7 @@ struct AlgoXCFLevel {
                             { h.opposite_f().next().to(),it.prev().from() },
                             { h.opposite_f().prev().from(),it.next().to() }
                         };
-                        FOR(i, 2) AlgoRaw::merge_vertices(hex, to_merge[i][0], to_merge[i][1]);
+                        FOR(i, 2) ToolBoxHexahedra(hex).merge_vertices(to_merge[i][0], to_merge[i][1]);
                     }
                 }
             }
@@ -328,6 +383,7 @@ struct AlgoXCFLevel {
     }
 
 };
+
 
 
 
@@ -359,12 +415,13 @@ void InteractorMoveVertex::on_release(int button, vec2 p) {
         }
         if (target_vertex != -1) {
             Log::add("need to merge vertices");
-            AlgoXCFLevel(mode).merge_vertices(moving_vertex, target_vertex);
+            ModeXCommands(mode).merge_vertices(moving_vertex, target_vertex);
             reset();
             return;
         }
     }
-    bool new_position_is_found = false;;
+    bool new_position_is_found = false;
+    vec3 new_pos;
     {// try to move the vertex on the geometry
         for (auto& d : picker.data) {
             auto result = d.at(p);
@@ -373,7 +430,7 @@ void InteractorMoveVertex::on_release(int button, vec2 p) {
                 Log::add("need to move vertex to picked triangle");
                 Triangles& tri = mode.geom_tri_id();
                 Surface::Facet f(tri, picked_triangle);
-                pts[moving_vertex] = Triangle3(f).nearest_point(result.point());
+                new_pos = Triangle3(f).nearest_point(result.point());
                 new_position_is_found = true;
             }
         }
@@ -384,7 +441,7 @@ void InteractorMoveVertex::on_release(int button, vec2 p) {
                 Log::add("need to move vertex to picked edge");
                 PolyLine& pl = mode.geom_edge_id();
                 PolyLine::Edge e(pl, picked_edge);
-                pts[moving_vertex] = Segment3(e).nearest_point(result.point());
+                new_pos = Segment3(e).nearest_point(result.point());
                 new_position_is_found = true;
             }
         }
@@ -394,7 +451,7 @@ void InteractorMoveVertex::on_release(int button, vec2 p) {
             if (picked_point != -1) {
                 Log::add("need to move vertex to picked point");
                 PointSet& geom_pts = mode.geom_pts_id();
-                pts[moving_vertex] = geom_pts[picked_point];
+                new_pos = geom_pts[picked_point];
                 new_position_is_found = true;
             }
         }
@@ -410,14 +467,14 @@ void InteractorMoveVertex::on_release(int button, vec2 p) {
         vec4 clip_space{ (2.f * p.x) / width - 1.0f, 1.0f - (2.f * p.y) / height, 0, 1.0f };
         vec4 view_space = God::camera.projection_matrix().invert() * clip_space;
         mat4x4 inv_view = God::camera.view_matrix().invert();
-        vec4 world_space = inv_view * (view_space / view_space.data[3]);
+        vec4 world_space = inv_view * (view_space / view_space.data[3]);                  
 
-        pts[moving_vertex] = world_space.xyz() + (view_dir * (P - world_space.xyz())) * view_dir;
+        new_pos = world_space.xyz() + (view_dir * (P - world_space.xyz())) * view_dir;
     }
-
-    reset();
-    mode.update_hex();
-    mode.hex_id().broadcast(Event::UPDATED);
+    ModeXCommands(mode).move_vertex(moving_vertex, new_pos);
+    //reset();
+    //mode.update_hex();
+    //mode.hex_id().broadcast(Event::UPDATED);
 }
 void InteractorMoveVertex::generate_gui(){
     if (moving_vertex == -1) return;
@@ -547,7 +604,7 @@ void InteractorCreateHex::on_click(int button, vec2 p) {
             feedback.add_point(hex.points[picked_vert]);
             pts.push_back(hex.points[picked_vert]);
             picked_a_mesh_vertex = true;
-        } 
+        }
     }
 
     // create an hex from a picked facet... may not be always avalaible (e.g. check group merge fct) 
@@ -555,7 +612,7 @@ void InteractorCreateHex::on_click(int button, vec2 p) {
         auto result = d.at(p);
         int picked_facet = result.filtered_primitive_id(mode.hex_id(), AttributeBase::TYPE::CELLFACETS);
         if (picked_facet != -1){
-            AlgoXCFLevel(mode).extend_mesh_from_face(picked_facet);
+            ModeXCommands(mode).extend_mesh_from_face(picked_facet);
             reset();
             return;
         }
@@ -566,13 +623,14 @@ void InteractorCreateHex::on_click(int button, vec2 p) {
         auto result = d.at(p);
         int picked_triangle = result.filtered_primitive_id(mode.geom_tri_id(), AttributeBase::TYPE::FACETS);
         if (picked_triangle != -1){
-            Triangles &tri = mode.geom_tri_id();
+            Triangles& tri = mode.geom_tri_id();
             if (pts.size() != 4){
-                vec3 P = Triangle3(Surface::Facet(tri,picked_triangle)).nearest_point(result.point());
+                vec3 P = Triangle3(Surface::Facet(tri, picked_triangle)).nearest_point(result.point());
                 pts.push_back(P);
                 feedback.add_point(P);
             }
-        } else{
+        }
+        else{
             int picked_edge = result.filtered_primitive_id(mode.geom_edge_id(), AttributeBase::TYPE::EDGES);
             if (picked_edge != -1){
                 PolyLine& pl = mode.geom_edge_id();
@@ -581,7 +639,8 @@ void InteractorCreateHex::on_click(int button, vec2 p) {
                     pts.push_back(P);
                     feedback.add_point(P);
                 }
-            }else{
+            }
+            else{
                 int picked_point = result.filtered_primitive_id(mode.geom_pts_id(), AttributeBase::TYPE::POINTS);
                 if (picked_point != -1){
                     PointSet& ptset = mode.geom_pts_id();
@@ -595,7 +654,7 @@ void InteractorCreateHex::on_click(int button, vec2 p) {
         }
     }
     if (pts.size() == 4){
-        AlgoXCFLevel(mode).create_hex_from_quad(pts, AlgoXCFLevel::RAYTRACE, AlgoXCFLevel::AUTO_MERGE);
+        ModeXCommands(mode).create_hex_from_quad(pts, ModeXCommands::RAYTRACE, ModeXCommands::AUTO_MERGE);
         reset();
     }
 
@@ -606,6 +665,10 @@ void InteractorCreateHex::generate_gui(){
     for (auto v : pts) msg += "(" + std::to_string(v.x) + "," + std::to_string(v.y) + "," + std::to_string(v.z) + ")\n";
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), msg.c_str());
 }
+
+
+
+
 
 
 SubModeBasicEdit::SubModeBasicEdit(ModeX& mode)
@@ -626,6 +689,8 @@ SubModeBasicEdit::SubModeBasicEdit(ModeX& mode)
     interactors.push_back(&interactor_camera);
     interactors.push_back(&interactor_layer_selection);
     interactors.push_back(&interactor_move_vertex);
+
+
 }
 void SubModeBasicEdit::handle(Event event) {
     Mode::handle(event);

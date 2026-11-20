@@ -68,7 +68,7 @@ void ModeX::set_active_mode(SubModes sub){
 
 
 
-ModeX::ModeX():sub_mode_start(*this),sub_mode_basic_edit(*this){
+ModeX::ModeX():sub_mode_start(*this),sub_mode_basic_edit(*this), hex_state_is_valid(true) {
         working_directory = WORKING_DIR;
         project_directory = WORKING_DIR;
         CAD_file = std::string(TEST_INPUT_DIR) + "B1.geogram";

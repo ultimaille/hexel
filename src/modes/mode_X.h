@@ -45,6 +45,7 @@ struct ModeX : public Mode{
     int undo_begin = -1;
     int undo_stack_size = 5;
     int undo_id = -1;
+    bool hex_state_is_valid;
 };
 
 
