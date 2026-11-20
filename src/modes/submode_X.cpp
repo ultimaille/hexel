@@ -192,12 +192,12 @@ void SubModeX::reset_layers_options(){
             {
                 auto& layer = static_cast<PointSetLayer&>(God::layers["meshPts"]);
                 layer.point_renderer.radius_in_pixel = 10;
-                glDeleteTextures(1, &layer.point_renderer.colormap);
-                layer.point_renderer.texture_id = Colormap::RAINBOW;
+                glDeleteTextures(1, &layer.point_renderer.colormap_texture);
+                layer.point_renderer.colormap = Colormap::RAINBOW;
                 layer.point_renderer.auto_range = false;
                 layer.point_renderer.texture_range[0] = -1;
                 layer.point_renderer.texture_range[1] = 5;
-                load_colormap(layer.point_renderer.texture_id, layer.point_renderer.colormap);
+                load_colormap(layer.point_renderer.colormap, layer.point_renderer.colormap_texture);
             }
         }
 
@@ -205,9 +205,9 @@ void SubModeX::reset_layers_options(){
             God::layers["meshHex"].visible = true;
             God::layers["meshHex"].bind_attribute(root.xcf["mesh"].hexahedra[""].attr_cells["block_id"]);
             HexahedraLayer& layer = static_cast<HexahedraLayer&>(God::layers["meshHex"]);
-            glDeleteTextures(1, &layer.tri_renderer.colormap);
-            layer.tri_renderer.texture_id = Colormap::COOLWARM;
-            load_colormap(layer.tri_renderer.texture_id, layer.tri_renderer.colormap);
+            glDeleteTextures(1, &layer.tri_renderer.colormap_texture);
+            layer.tri_renderer.colormap = Colormap::COOLWARM;
+            load_colormap(layer.tri_renderer.colormap, layer.tri_renderer.colormap_texture);
         }
 
         {// mesh edges are rendered with plain style

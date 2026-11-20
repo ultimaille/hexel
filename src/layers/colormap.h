@@ -48,4 +48,4 @@ ImVec4 SampleFire(float t);
 
 void DrawColormapPreview(ImVec4(*sample)(float), ImVec2 size);
 bool ColormapCombo(const char* label, int& selected);
-void load_colormap(Colormap name, GLuint& colormap);
+void load_colormap(Colormap colormap, GLuint& colormap_texture);

@@ -274,15 +274,15 @@ ColormapSampler find_colormap(const std::string& name) {
     throw std::runtime_error("no colormap: " + name);
 }
 
-void load_colormap(Colormap name, GLuint& colormap) {
-    glGenTextures(1, &colormap);
-    glBindTexture(GL_TEXTURE_1D, colormap);
+void load_colormap(Colormap colormap, GLuint& colormap_texture) {
+    glGenTextures(1, &colormap_texture);
+    glBindTexture(GL_TEXTURE_1D, colormap_texture);
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     unsigned char data[3 * 64];
     FOR(p, 64)FOR(c, 3) {
-        auto sample = colormaps[static_cast<int>(name)].sample(float(p) / 63.);
+        auto sample = colormaps[static_cast<int>(colormap)].sample(float(p) / 63.);
         data[3 * p + 0] = sample.x * 255.;
         data[3 * p + 1] = sample.y * 255.;
         data[3 * p + 2] = sample.z * 255.;
