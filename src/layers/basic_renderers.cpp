@@ -58,6 +58,14 @@ void Renderer::shared_setup_before_rendering(){
     glUniform1i(glGetUniformLocation(shaderProgram, "layer_id"), layer_id);
 }
 
+void Renderer::set_colormap(Colormap name) {
+    if (texture_id != name) {
+        texture_id = name;
+        glDeleteTextures(1, &colormap);
+        load_colormap(texture_id, colormap);
+    }
+}
+
 // declare uniforms for raytraced primitives (sphere and cylinder)
 void Renderer::declare_inv_projection_matrix() {
     auto [w, h] = God::context.screen_size();
@@ -250,7 +258,7 @@ void TriangleRenderer::init(){
    
     God::shaders.create_if_needed(std::string(SHADERS_DIR), "triangle");
     shaderProgram = God::shaders["triangle"];
-    load_colormap(0, colormap);
+    load_colormap(texture_id, colormap);
 
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);

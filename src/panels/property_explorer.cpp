@@ -14,10 +14,11 @@ void PropertyExplorer::generate_gui(){
             auto layer_name = id.path.back(); // TODO maybe change that
             ImGui::PushID(layer_name.c_str());
 
-            ImGui::Separator();
-            ImGui::Checkbox("##visible", &layer.visible);
-            ImGui::SameLine();
-            ImGui::TextUnformatted(layer_name.c_str());
+            // ImGui::Separator();
+            // ImGui::Checkbox("##visible", &layer.visible);
+            // ImGui::SameLine();
+            // ImGui::TextUnformatted(layer_name.c_str());
+
 
             std::unique_ptr<LayerUI> layer_ui;
 

@@ -13,12 +13,9 @@ bool RendererUI::color_picker() {
 }
 
 bool RendererUI::colormap_combo() {
-    int prev = renderer().texture_id;
-    bool used = ColormapCombo("##combo_colormap", renderer().texture_id);
-    if (renderer().texture_id != prev) {
-        glDeleteTextures(1, &renderer().colormap);
-        load_colormap(renderer().texture_id, renderer().colormap);
-    }
+    int texture = static_cast<int>(renderer().texture_id);
+    bool used = ColormapCombo("##combo_colormap", texture);
+    renderer().set_colormap(static_cast<Colormap>(texture));
     return used;
 }
 
@@ -31,7 +28,7 @@ void RendererUI::show_range_input() {
 }
 
 void RendererUI::auto_range_checkbox() {
-    if (ImGui::Checkbox("##autorange", &renderer().auto_range)){
+    if (ImGui::Checkbox("##autorange", &renderer().auto_range)) {
         renderer().texture_range[0] = renderer().value_range[0];
         renderer().texture_range[1] = renderer().value_range[1];
     }
@@ -42,10 +39,6 @@ void RendererUI::texture_repeat_input() {
         renderer().texture_repeat = std::clamp(renderer().texture_repeat, 0, 1000000);
 }
 
-bool PointRendererUI::radius_input() {
-    return ImGui::InputInt("##point_size", &r.radius_in_pixel);
-}
-
 void PointRendererUI::show_parameters(RendererUIMode mode) {
     if (mode == RendererUIMode::BASIC) {
         PropertyTable("point_table_basic_parameter", {
@@ -53,7 +46,7 @@ void PointRendererUI::show_parameters(RendererUIMode mode) {
                 if (r.color_map_prop <= 0) color_picker();
                 ImGui::SameLine();
                 ImGui::PushItemWidth(80);
-                radius_input();
+                ImGui::InputInt("##point_size", &r.radius_in_pixel);
                 ImGui::PopItemWidth();
             }}
         });
@@ -164,8 +157,8 @@ void PointSetLayerUI::show_parameters(LayerUIMode mode) {
     PointRendererUI renderer_ui(l.point_renderer);
     renderer_ui.show_parameters(static_cast<RendererUI::RendererUIMode>(mode));
 
-    if (mode == LayerUIMode::BASIC) {
-        PropertyTable("point_set_layer_table_basic_parameter", {
+    if (mode == LayerUIMode::ADVANCED) {
+        PropertyTable("point_set_layer_table_advanced_parameter", {
             {"Mask value", [&] {
                 if (ImGui::Checkbox("##cb_mask_value", &l.mask)) l.update();
                 ImGui::SameLine();

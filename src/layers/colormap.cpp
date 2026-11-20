@@ -213,7 +213,8 @@ void DrawColormapPreview(ImVec4(*sample)(float), ImVec2 size) {
 	// Make ImGui advance its cursor.
 	ImGui::Dummy(size);
 }
-std::vector<Colormap> colormaps = {
+
+std::vector<ColormapSampler> colormaps = {
 	{ "Viridis",   SampleViridis   },
 	{ "Plasma",    SamplePlasma    },
 	{ "Inferno",   SampleInferno   },
@@ -265,19 +266,26 @@ bool ColormapCombo(const char* label, int& selected){
 	return changed;
 }
 
+ColormapSampler find_colormap(const std::string& name) {
+    for (auto &c : colormaps) {
+        if (c.name == name)
+            return c;
+    }
+    throw std::runtime_error("no colormap: " + name);
+}
 
-void load_colormap(int id, GLuint& colormap) {
-	glGenTextures(1, &colormap);
-	glBindTexture(GL_TEXTURE_1D, colormap);
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	unsigned char data[3 * 64];
-	FOR(p, 64)FOR(c, 3) {
-		auto sample = colormaps[id].sample(float(p) / 63.);
-		data[3 * p + 0] = sample.x * 255.;
-		data[3 * p + 1] = sample.y * 255.;
-		data[3 * p + 2] = sample.z * 255.;
-	}
-	glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB8, 64, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+void load_colormap(Colormap name, GLuint& colormap) {
+    glGenTextures(1, &colormap);
+    glBindTexture(GL_TEXTURE_1D, colormap);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    unsigned char data[3 * 64];
+    FOR(p, 64)FOR(c, 3) {
+        auto sample = colormaps[static_cast<int>(name)].sample(float(p) / 63.);
+        data[3 * p + 0] = sample.x * 255.;
+        data[3 * p + 1] = sample.y * 255.;
+        data[3 * p + 2] = sample.z * 255.;
+    }
+    glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB8, 64, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 }

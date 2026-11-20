@@ -16,7 +16,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 struct WindowContext {
     GLFWwindow* window = nullptr;
-    vec4 background_color = { 0.05, 0.05, 0.88, 1.0 };
+    vec4 background_color = { 0.05, 0.05, 0.05, 1.0 };
     RenderTargetComposition render_target = {};
 
     void init(int w = 1000, int h = 1000);
