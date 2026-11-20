@@ -311,7 +311,8 @@ MeshPath XCF::add_triangles(const std::string& mm_name, const std::string& mesh_
 }
 
 bool XCF::save(std::string filename, bool geogram_compatible) {
-    const std::string tar_filename = filename + ".hexel.tar";
+    // TODO create dir in temp directory & after create tar
+    const std::string tar_filename = filename + ".tar";
     const fs::path path = filename;
 
     if (fs::exists(tar_filename)) {
@@ -346,12 +347,11 @@ bool XCF::save(std::string filename, bool geogram_compatible) {
 
 bool XCF::load(std::string filename) {
     const fs::path archive = filename;
-    const std::string suffix = ".hexel.tar";
+    const std::string suffix = ".tar";
     const std::string archive_name = archive.filename().string();
 
-    if (archive.extension() != ".tar" ||
-        archive.stem().extension() != ".hexel") {
-        Log::error("XCF::load: expected a .hexel.tar file: " + filename);
+    if (archive.extension() != ".tar") {
+        Log::error("XCF::load: expected a .tar file: " + filename);
         return false;
     }
 

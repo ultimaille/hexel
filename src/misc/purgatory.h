@@ -30,6 +30,7 @@ inline std::string to_string(Path obj) {
 //}
 
 bool FilePopup(const char* id, std::string in, std::string& out, std::vector<const char*> extensions);
+bool SaveFilePopup(const char* id, std::string in, std::string& out, const std::vector<const char*>& extensions);
 void ImGui_help(const char* desc);
 void look_at_pointset(PointSet& ps);
 void load_mm_with_default_layers(std::string path);
