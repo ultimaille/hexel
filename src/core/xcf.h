@@ -49,7 +49,7 @@ namespace UM {
         std::string load_multimesh(std::string filename, bool connect = true);
 
         bool save(std::string filename, bool geogram_compatible);
-        void load(std::string filename);
+        bool load(std::string filename);
 
     };
 }
