@@ -8,9 +8,11 @@ void MainMenu::generate_gui() {
     bool load_mm = false;
     bool import_mesh = false;
     if (ImGui::BeginMainMenuBar()){
-        if (ImGui::BeginMenu("Files")){
+        if (ImGui::BeginMenu("Files")) {
 
             if (ImGui::MenuItem("Load MultiMesh", NULL)) load_mm = true;
+            if (ImGui::MenuItem("Save XCF", NULL)) God::xcf.save("testos", true);
+            if (ImGui::MenuItem("Load XCF", NULL)) God::xcf.load("testos.hexel.tar");
             if (ImGui::MenuItem("Import .geogram", NULL))import_mesh = true;
             ImGui::EndMenu();
         }

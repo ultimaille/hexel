@@ -10,7 +10,7 @@
 namespace fs = std::filesystem;
 
 // Helper to write a basic ustar header for a file
-void writeTarHeader(std::ofstream& tar, const std::string& filename, size_t fileSize, bool isDirectory) {
+void writeTarHeader(std::ofstream& tar, const std::string& filename, size_t file_size, bool is_directory) {
     char header[512];
     std::memset(header, 0, 512);
 
@@ -24,12 +24,12 @@ void writeTarHeader(std::ofstream& tar, const std::string& filename, size_t file
     // Group ID
     std::snprintf(header + 116, 8, "%07o", 1000);
     // File size in octal
-    std::snprintf(header + 124, 12, "%011zo", fileSize);
+    std::snprintf(header + 124, 12, "%011zo", file_size);
     // Modification time in octal
     std::snprintf(header + 136, 12, "%011llo", (long long)time(nullptr));
 
     // Typeflag: '0' or '\0' for regular file
-    header[156] = isDirectory ? '5' : '0';  // Set before checksum
+    header[156] = is_directory ? '5' : '0';  // Set before checksum
 
     // Ustar indicator magic string
     std::memcpy(header + 257, "ustar", 5);
@@ -49,14 +49,14 @@ void writeTarHeader(std::ofstream& tar, const std::string& filename, size_t file
     tar.write(header, 512);
 }
 
-bool create_tar(const std::string& tarPath, const std::string& directoryPath) {
-    fs::path root = fs::absolute(directoryPath);
+bool create_tar(const std::string& path, const std::string& directory_path) {
+    fs::path root = fs::absolute(directory_path);
     if (!fs::exists(root) || !fs::is_directory(root)) return false;
 
     // Make archive paths relative to the directory's parent.
     fs::path base = root.parent_path();
 
-    std::ofstream tar(tarPath, std::ios::binary);
+    std::ofstream tar(path, std::ios::binary);
     if (!tar) return false;
 
     auto addEntry = [&](const fs::path& path) -> bool {
@@ -124,8 +124,8 @@ static std::uint64_t parse_octal(const char* field, std::size_t length) {
     return foundDigit ? value : 0;
 }
 
-bool extract_tar(const std::string& tarPath, const std::string& destination) {
-    std::ifstream tar(tarPath, std::ios::binary);
+bool extract_tar(const std::string& path, const std::string& destination) {
+    std::ifstream tar(path, std::ios::binary);
     if (!tar) return false;
 
     fs::path root = fs::absolute(destination);

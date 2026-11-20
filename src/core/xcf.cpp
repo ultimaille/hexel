@@ -12,7 +12,11 @@
 #include "layers.h"
 #include "shaders.h"
 #include "mode.h"
+#include <utils/tar.h>
 
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 const std::string collection_names[8] = {
 "polylines",
@@ -304,4 +308,93 @@ MeshPath XCF::add_triangles(const std::string& mm_name, const std::string& mesh_
 
     path.broadcast(Event::CREATED); 
     return path;
+}
+
+bool XCF::save(std::string filename, bool geogram_compatible) {
+    auto tar_filename = filename + ".hexel.tar";
+    auto path = fs::path(filename);
+    auto name = path.stem();
+
+    if (fs::exists(tar_filename)) {
+        if (!fs::remove(tar_filename)) {
+            return false;
+        }
+    }
+
+    if (!fs::create_directory(path)) {
+        Log::error("Unable to create directory at " + filename + " on XCF::save_to_path");
+        return false;
+    }
+
+    for (auto &[mm_name, mm] : *this) {
+        auto mm_path = path / mm_name;
+        mm.save_to_path(mm_path, geogram_compatible);
+    }
+
+    if (!create_tar(tar_filename, filename)) {
+        return false;
+    }
+
+    // Clean up
+    std::error_code ec;
+    fs::remove_all(path, ec);
+    if (ec) {
+        Log::error("XCF::load: failed to remove temporary directory '" + path.string() + "': " + ec.message());
+    }
+
+    return true;
+}
+
+void XCF::load(std::string filename) {
+    const fs::path archive = filename;
+    const std::string suffix = ".hexel.tar";
+    const std::string archive_name = archive.filename().string();
+
+    if (archive_name.size() <= suffix.size() ||
+        archive_name.compare(archive_name.size() - suffix.size(),
+                           suffix.size(), suffix) != 0) {
+        Log::error("XCF::load: expected a .hexel.tar file: " + filename);
+        return;
+    }
+
+    if (!fs::is_regular_file(archive)) {
+        Log::error("XCF::load: archive not found: " + filename);
+        return;
+    }
+
+    const std::string directory_name =
+        archive_name.substr(0, archive_name.size() - suffix.size());
+
+    const fs::path temp = fs::temp_directory_path() / (directory_name + "_xcf_load");
+    std::error_code ec;
+    fs::remove_all(temp, ec);
+    if (ec) {
+        Log::error("XCF::load: failed to remove temporary directory '" + temp.string() + "': " + ec.message());
+        return;
+    }
+
+    fs::create_directories(temp);
+
+    if (!extract_tar(archive.string(), temp.string())) {
+        Log::error("XCF::load: failed to extract archive: " + filename);
+        fs::remove_all(temp, ec);
+        return;
+    }
+
+    const fs::path saved_dir = temp / directory_name;
+    if (!fs::is_directory(saved_dir)) {
+        Log::error("XCF::load: expected directory not found in archive: " +
+                   saved_dir.string());
+        fs::remove_all(temp, ec);
+        return;
+    }
+
+    clear();
+
+    for (const auto& entry : fs::directory_iterator(saved_dir)) {
+        if (!entry.is_directory()) continue;
+        load_multimesh(entry.path(), true);
+    }
+
+    fs::remove_all(temp, ec);
 }
