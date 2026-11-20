@@ -38,7 +38,7 @@ struct Renderer {
     bool is_autorange = true;
 
     void shared_setup_before_rendering();
-    void set_colormap(Colormap name);
+    void set_colormap(Colormap c);
 
     // declare uniforms for raytraced primitives (sphere and cylinder)
     void declare_inv_projection_matrix();
