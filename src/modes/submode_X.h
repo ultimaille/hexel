@@ -14,8 +14,7 @@ struct SubModeX : public Mode{
     SubModeX(ModeX& mode);
     ModeX& mode;
 
-    bool mesh_is_valid = true;
-
+    
     // access to xcf objects
     static MeshPath hex_id();
     static MeshPath pl_id();

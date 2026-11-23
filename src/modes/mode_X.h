@@ -13,6 +13,7 @@
 struct ModeX : public Mode{
 
     ModeX();
+    static std::string name() { return "modeX"; }
 
     enum SubModes{START,BASIC,LAYER,FEATURE};
 //    const char* sub_mode_names[4] = { "start","Basic","layer","feature" };
@@ -38,6 +39,7 @@ struct ModeX : public Mode{
     SubModeBasicEdit sub_mode_basic_edit;
 
     int active_mode_id = 0;
+    bool hex_state_is_valid =true;
 
     std::string working_directory;
     std::string project_directory;
@@ -45,7 +47,6 @@ struct ModeX : public Mode{
     int undo_begin = -1;
     int undo_stack_size = 5;
     int undo_id = -1;
-    bool hex_state_is_valid;
 };
 
 

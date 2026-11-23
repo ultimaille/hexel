@@ -57,7 +57,98 @@ bool FilePopup(const char* id, std::string in, std::string& out, std::vector<con
     return done;
 }
 
+// Generated like a pig, doesn't work well
+bool SaveFilePopup(const char* id, std::string in, std::string& out, const std::vector<const char*>& extensions) {
+    static std::filesystem::path path;
+    static char filename[512] = {};
+    static bool init = false;
 
+    if (!ImGui::BeginPopupModal(id, nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+        return false;
+
+    if (!init) {
+        path = in;
+        filename[0] = '\0';
+        init = true;
+    }
+
+    bool done = false;
+
+    ImGui::TextUnformatted(path.string().c_str());
+
+    if (ImGui::Button("[..]") && path.has_parent_path())
+        path = path.parent_path();
+
+    ImGui::SameLine();
+    if (ImGui::Button("Save") && filename[0] != '\0') {
+        std::filesystem::path file = filename;
+
+        if (file.extension().empty() && !extensions.empty())
+            file += extensions.front();
+
+        out = (path / file).string();
+        done = true;
+    }
+
+    ImGui::SameLine();
+    if (ImGui::Button("Cancel")) {
+        out.clear();
+        done = true;
+    }
+
+    ImGui::InputText("Filename", filename, sizeof(filename));
+
+    ImGui::BeginChild("save_files", {400, 250}, true);
+
+    std::error_code ec;
+    for (std::filesystem::directory_iterator it(path, ec), end;
+         !ec && it != end;
+         it.increment(ec))
+    {
+        const auto& entry = *it;
+        const auto& p = entry.path();
+
+        std::error_code type_ec;
+        const bool is_dir = entry.is_directory(type_ec);
+        if (type_ec)
+            continue;
+
+        if (!is_dir && !extensions.empty()) {
+            bool allowed = false;
+            for (const char* ext : extensions) {
+                if (p.extension() == ext) {
+                    allowed = true;
+                    break;
+                }
+            }
+            if (!allowed)
+                continue;
+        }
+
+        std::string label = (is_dir ? "[D] " : "") + p.filename().string();
+
+        if (ImGui::Selectable(label.c_str())) {
+            if (is_dir) {
+                filename[0] = '\0';
+                if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+                    path = p;
+            } else {
+                std::snprintf(filename, sizeof(filename), "%s",
+                              p.filename().string().c_str());
+            }
+        }
+    }
+
+    ImGui::EndChild();
+
+    if (done) {
+        init = false;
+        ImGui::CloseCurrentPopup();
+    }
+
+    ImGui::EndPopup();
+    return done;
+}
 
 
 void look_at_pointset(PointSet& ps) {

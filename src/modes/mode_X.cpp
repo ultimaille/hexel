@@ -22,6 +22,13 @@ void ModeX::reset_gui(){
 }
 
 void ModeX::update(){
+    static auto t = std::chrono::high_resolution_clock::now();
+    auto nt = std::chrono::high_resolution_clock::now();
+    if (hex_state_is_valid)
+        God::context.render_target.background_color = vec4(0, 0, 0, 1.);
+    else
+        God::context.render_target.background_color = .4 * vec4(1.2 + std::cos(double(duration_cast<std::chrono::milliseconds>(nt - t).count()) / 50.), 0, 0, 1);
+
     sub_mode().update();
 }
 

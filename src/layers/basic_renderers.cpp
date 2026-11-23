@@ -25,18 +25,18 @@ bool no_gl_error() {
 
 void Renderer::shared_setup_before_rendering(){
     if (texture_repeat > 0) {
-        glBindTexture(GL_TEXTURE_1D, colormap);
+        glBindTexture(GL_TEXTURE_1D, colormap_texture);
         glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     }
     else {
-        glBindTexture(GL_TEXTURE_1D, colormap);
+        glBindTexture(GL_TEXTURE_1D, colormap_texture);
         glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     }
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
     glUseProgram(shaderProgram);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_1D, colormap);
+    glBindTexture(GL_TEXTURE_1D, colormap_texture);
     glBindVertexArray(vao);
     glUniform1f(glGetUniformLocation(shaderProgram, "texture_repeat"), std::max(1,texture_repeat));
     glUniform2fv(glGetUniformLocation(shaderProgram, "data_range"), 1, texture_range);
@@ -58,11 +58,11 @@ void Renderer::shared_setup_before_rendering(){
     glUniform1i(glGetUniformLocation(shaderProgram, "layer_id"), layer_id);
 }
 
-void Renderer::set_colormap(Colormap name) {
-    if (texture_id != name) {
-        texture_id = name;
-        glDeleteTextures(1, &colormap);
-        load_colormap(texture_id, colormap);
+void Renderer::set_colormap(Colormap c) {
+    if (colormap != c) {
+        colormap = c;
+        glDeleteTextures(1, &colormap_texture);
+        load_colormap(colormap, colormap_texture);
     }
 }
 
@@ -106,7 +106,7 @@ void PointRenderer::init(){
 
     God::shaders.create_if_needed(std::string(SHADERS_DIR), "point_as_sphere");
     shaderProgram = God::shaders["point_as_sphere"];
-    load_colormap(texture_id, colormap);
+    load_colormap(colormap, colormap_texture);
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
     glBindVertexArray(vao);
@@ -176,7 +176,7 @@ void SegmentRenderer::init(){
     God::shaders.create_if_needed(std::string(SHADERS_DIR), "segment_as_tube");
     shaderProgram = God::shaders["segment_as_tube"];
 
-    load_colormap(texture_id, colormap);
+    load_colormap(colormap, colormap_texture);
     um_assert(no_gl_error());
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
@@ -258,7 +258,7 @@ void TriangleRenderer::init(){
    
     God::shaders.create_if_needed(std::string(SHADERS_DIR), "triangle");
     shaderProgram = God::shaders["triangle"];
-    load_colormap(texture_id, colormap);
+    load_colormap(colormap, colormap_texture);
 
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);

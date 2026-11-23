@@ -166,7 +166,24 @@ template<> struct ToolBox<Triangles> :public ToolBoxTriangles{
 
 // algorithms that are ready to call from UI
 struct ModeXCommands {
-    ModeXCommands(SubModeX& mode) :mode(mode){}
+    ModeXCommands(SubModeX& mode) :mode(mode) {
+        mode.backup();
+    }
+    ~ModeXCommands() {
+        mode.update_hex();
+        std::vector<int> conflicts_topo;
+        std::vector<int> conflicts_geom;
+        mode.mode.hex_state_is_valid = true;
+        mode.mode.hex_state_is_valid = mode.mode.hex_state_is_valid && ToolBoxHexahedra(mode.hex_id()).validate_topo(conflicts_topo);
+        mode.mode.hex_state_is_valid = mode.mode.hex_state_is_valid && ToolBoxHexahedra(mode.hex_id()).validate_geom(conflicts_geom);
+        update_panic_in_xcf(conflicts_topo, conflicts_geom);
+        if (!mode.mode.hex_state_is_valid) {
+            Log::info("Hex state is broken");
+            return;
+        }
+        mode.forget_last_backup();
+        mode.hex_id().broadcast(Event::UPDATED);
+    }
     SubModeX& mode;
    
 
@@ -199,39 +216,17 @@ struct ModeXCommands {
 
     }
 
-    void prepare_editing(){
-        mode.backup();
-    }
-
-    bool validate_editing(){
-        mode.update_hex();
-        std::vector<int> conflicts_topo;
-        std::vector<int> conflicts_geom;
-        mode.mode.hex_state_is_valid =true;
-        mode.mode.hex_state_is_valid = mode.mode.hex_state_is_valid && ToolBoxHexahedra(mode.hex_id()).validate_topo(conflicts_topo);
-        mode.mode.hex_state_is_valid = mode.mode.hex_state_is_valid && ToolBoxHexahedra(mode.hex_id()).validate_geom(conflicts_geom);
-        update_panic_in_xcf(conflicts_topo, conflicts_geom);
-        if (!mode.mode.hex_state_is_valid)return false;
-        mode.forget_last_backup();
-        mode.hex_id().broadcast(Event::UPDATED);
-        return true;
-    }
 
 
-    bool merge_vertices(int source, int target) {
-        prepare_editing();
+    void merge_vertices(int source, int target) {
         Hexahedra& hex = mode.hex_id();
         ToolBox(hex).merge_vertices(source, target);
-        return validate_editing();
     }
 
-    bool move_vertex(int moving_vertex, vec3 new_pos){
-        prepare_editing();
+    void move_vertex(int moving_vertex, vec3 new_pos){
         PointSet& pts = mode.pts_id();
         pts[moving_vertex] = new_pos;
-        return validate_editing();
     }
-
 
 
     enum Quad2HexGeomStrategy {
@@ -242,8 +237,7 @@ struct ModeXCommands {
         AUTO_MERGE,
         NO_MERGE
     };
-    bool create_hex_from_quad(std::vector<vec3>& pts, Quad2HexGeomStrategy geom_strat, Quad2HexTopoStrategy topo_strat) {
-        prepare_editing();
+    void create_hex_from_quad(std::vector<vec3>& pts, Quad2HexGeomStrategy geom_strat, Quad2HexTopoStrategy topo_strat) {
         MultiMesh& mm = God::xcf["mesh"];
         Hexahedra& hex = mode.hex_id();
         CellAttribute<int> block_id("block_id", mm.hexahedra[""].attributes, mm.hexahedra[""].mesh);
@@ -278,7 +272,7 @@ struct ModeXCommands {
         }
         else{
             Log::error("Strategy is not yet implemented, abort hex creation");
-            return false;
+            return ;
         }
         int hex_vert[8];
         if (topo_strat == NO_MERGE){
@@ -313,19 +307,16 @@ struct ModeXCommands {
         }
         else{
             Log::error("Strategy is not yet implemented, abort hex creation");
-            return false;
+            return ;
         }
 
         int c = hex.create_cells(1);
         block_id[c] = c;
         FOR(lv, 8) hex.vert(c, lv) = hex_vert[lv];
         FOR(lv, 8) hex.points[hex_vert[lv]] = hex_pts[lv];
-
-        return validate_editing();
     }
 
-    bool extend_mesh_from_face(int f_id){
-        prepare_editing();
+    void extend_mesh_from_face(int f_id){
         MultiMesh& mm = God::xcf["mesh"];
         Hexahedra& hex = mode.hex_id();
         CellAttribute<int> block_id("block_id", mm.hexahedra[""].attributes, mm.hexahedra[""].mesh);
@@ -379,7 +370,6 @@ struct ModeXCommands {
             }
             hex.connect();
         }
-        return validate_editing();
     }
 
 };

@@ -5,11 +5,15 @@
 void MainMenu::generate_gui() {
     static std::string path; 
 
+    bool load_xcf = false;
+    bool save_xcf = false;
     bool load_mm = false;
     bool import_mesh = false;
     if (ImGui::BeginMainMenuBar()){
-        if (ImGui::BeginMenu("Files")){
+        if (ImGui::BeginMenu("Files")) {
 
+            if (ImGui::MenuItem("Load XCF", NULL)) load_xcf = true;
+            if (ImGui::MenuItem("Save XCF", NULL)) save_xcf = true;
             if (ImGui::MenuItem("Load MultiMesh", NULL)) load_mm = true;
             if (ImGui::MenuItem("Import .geogram", NULL))import_mesh = true;
             ImGui::EndMenu();
@@ -22,6 +26,20 @@ void MainMenu::generate_gui() {
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();
+    }
+
+    if (load_xcf){ ImGui::OpenPopup("LoadXCFFilePopup"); load_xcf = false; }
+    if (FilePopup("LoadXCFFilePopup", std::string(TEST_INPUT_DIR), path, { ".tar" })) {
+        if (!path.empty()) {
+            God::xcf.load(path);
+        }
+    }
+
+    if (save_xcf){ ImGui::OpenPopup("SaveXCFFilePopup"); save_xcf = false; }
+    if (SaveFilePopup("SaveXCFFilePopup", std::string(TEST_INPUT_DIR), path, { })) {
+        if (!path.empty()) {
+            God::xcf.save(path, true);
+        }
     }
 
     if (load_mm){ ImGui::OpenPopup("MMFilePopup"); load_mm = false; }

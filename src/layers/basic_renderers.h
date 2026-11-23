@@ -17,9 +17,9 @@ struct Renderer {
     float light_direction[3] = { 1,1,1 };
     int layer_id = -1;
 
-    GLuint colormap;
+    GLuint colormap_texture;
     int texture_repeat = 0;
-    Colormap texture_id = VIRIDIS;
+    Colormap colormap = VIRIDIS;
     bool auto_range = true;
     float value_range[2] = { 0,0 };
     float texture_range[2] = { 0,0 };
@@ -38,7 +38,7 @@ struct Renderer {
     bool is_autorange = true;
 
     void shared_setup_before_rendering();
-    void set_colormap(Colormap name);
+    void set_colormap(Colormap c);
 
     // declare uniforms for raytraced primitives (sphere and cylinder)
     void declare_inv_projection_matrix();
