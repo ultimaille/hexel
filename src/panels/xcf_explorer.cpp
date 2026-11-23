@@ -182,9 +182,9 @@ void XCFExplorer::generate_gui() {
                     add_attribute(
                         selected, 
                         mesh_id, 
-//                      ObjectId(ObjectType::POINTSET_ATTR, { mm_name, attribute_type(&*it.ptr), "points", it.name }), 
-                        root.xcf[mm_name].pointset.attr_points[it.name],
-                        "points." + it.name
+//                      ObjectId(ObjectType::POINTSET_ATTR, { mm_name, attribute_type(&*it.ptr), "points", it.first }), 
+                        root.xcf[mm_name].pointset.attr_points[it.first],
+                        "points." + it.first
                     );
                 }
                 add_mesh_layers(selected, root.xcf[mm_name].pointset, "pointset");
@@ -232,13 +232,13 @@ void XCFExplorer::generate_gui() {
                 if (!open) continue;
 
                 for (auto& it : obj.attributes.points) add_attribute(selected, mesh_id,
-                        root.xcf[mm_name].polylines[mesh_name].attr_points[it.name],
-//                  ObjectId(ObjectType::POLYLINES_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"points",it.name }),
-                    "points." + it.name);
+                        root.xcf[mm_name].polylines[mesh_name].attr_points[it.first],
+//                  ObjectId(ObjectType::POLYLINES_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"points",it.first }),
+                    "points." + it.first);
                 for (auto& it : obj.attributes.edges) add_attribute(selected, mesh_id,
-                        root.xcf[mm_name].polylines[mesh_name].attr_edges[it.name],
-//                  ObjectId(ObjectType::POLYLINES_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"edges",it.name }),
-                    "edges." + it.name);
+                        root.xcf[mm_name].polylines[mesh_name].attr_edges[it.first],
+//                  ObjectId(ObjectType::POLYLINES_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"edges",it.first }),
+                    "edges." + it.first);
 
                 add_mesh_layers(selected, root.xcf[mm_name].polylines[mesh_name], "polylines");
                 ImGui::TreePop();
@@ -279,14 +279,14 @@ void XCFExplorer::generate_gui() {
 
                 if (!open) continue;
                 for (auto& it : obj.attributes.points) add_attribute(selected, mesh_id,
-                        root.xcf[mm_name].triangles[mesh_name].attr_points[it.name],
-                    "points." + it.name);
+                        root.xcf[mm_name].triangles[mesh_name].attr_points[it.first],
+                    "points." + it.first);
                 for (auto& it : obj.attributes.corners) add_attribute(selected, mesh_id,
-                        root.xcf[mm_name].triangles[mesh_name].attr_corners[it.name],
-                    "corners." + it.name);
+                        root.xcf[mm_name].triangles[mesh_name].attr_corners[it.first],
+                    "corners." + it.first);
                 for (auto& it : obj.attributes.facets) add_attribute(selected, mesh_id,
-                        root.xcf[mm_name].triangles[mesh_name].attr_facets[it.name],
-                    "facets." + it.name);
+                        root.xcf[mm_name].triangles[mesh_name].attr_facets[it.first],
+                    "facets." + it.first);
                 add_mesh_layers(selected, root.xcf[mm_name].triangles[mesh_name], "triangles");
                 ImGui::TreePop();
 
@@ -305,14 +305,14 @@ void XCFExplorer::generate_gui() {
             //     }
             //     if (!open) continue;
             //     for (auto& it : obj.attributes.points) add_attribute(selected, mesh_id,
-            //         ObjectId(ObjectType::QUADS_ATTR, { mm_name, mesh_name, attribute_type(&*it.ptr),"points", it.name}),
-            //         "points." + it.name);
+            //         ObjectId(ObjectType::QUADS_ATTR, { mm_name, mesh_name, attribute_type(&*it.ptr),"points", it.first}),
+            //         "points." + it.first);
             //     for (auto& it : obj.attributes.corners) add_attribute(selected, mesh_id,
-            //         ObjectId(ObjectType::QUADS_ATTR, { mm_name, mesh_name, attribute_type(&*it.ptr),"corners", it.name}),
-            //         "corners." + it.name);
+            //         ObjectId(ObjectType::QUADS_ATTR, { mm_name, mesh_name, attribute_type(&*it.ptr),"corners", it.first}),
+            //         "corners." + it.first);
             //     for (auto& it : obj.attributes.facets) add_attribute(selected, mesh_id,
-            //         ObjectId(ObjectType::QUADS_ATTR, { mm_name, mesh_name, attribute_type(&*it.ptr),"facets", it.name}),
-            //         "facets." + it.name);
+            //         ObjectId(ObjectType::QUADS_ATTR, { mm_name, mesh_name, attribute_type(&*it.ptr),"facets", it.first}),
+            //         "facets." + it.first);
             //     add_mesh_layers(selected, mm_name, mesh_name, QUADS, "quads");
             //     ImGui::TreePop();
 
@@ -331,17 +331,17 @@ void XCFExplorer::generate_gui() {
             //     }
             //     if (!open) continue;
             //     for (auto& it : obj.attributes.points) add_attribute(selected, mesh_id,
-            //         ObjectId(ObjectType::TETRAHEDRA_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"points",it.name }),
-            //         "points." + it.name);
+            //         ObjectId(ObjectType::TETRAHEDRA_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"points",it.first }),
+            //         "points." + it.first);
             //     for (auto& it : obj.attributes.cell_corners) add_attribute(selected, mesh_id,
-            //         ObjectId(ObjectType::TETRAHEDRA_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"corners",it.name }),
-            //         "corners." + it.name);
+            //         ObjectId(ObjectType::TETRAHEDRA_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"corners",it.first }),
+            //         "corners." + it.first);
             //     for (auto& it : obj.attributes.cell_facets) add_attribute(selected, mesh_id,
-            //         ObjectId(ObjectType::TETRAHEDRA_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"facets",it.name }),
-            //         "facets." + it.name);
+            //         ObjectId(ObjectType::TETRAHEDRA_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"facets",it.first }),
+            //         "facets." + it.first);
             //     for (auto& it : obj.attributes.cells) add_attribute(selected, mesh_id,
-            //         ObjectId(ObjectType::TETRAHEDRA_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"cells",it.name}),
-            //         "cells." + it.name);
+            //         ObjectId(ObjectType::TETRAHEDRA_ATTR, { mm_name, mesh_name ,attribute_type(&*it.ptr),"cells",it.first}),
+            //         "cells." + it.first);
             //     add_mesh_layers(selected, mm_name, mesh_name, TETRAHEDRA, "tetrahedra");
             //     ImGui::TreePop();
             // }
@@ -375,18 +375,19 @@ void XCFExplorer::generate_gui() {
                     ImGui::EndPopup();
                 }
                 if (!open) continue;
+
                 for (auto& it : obj.attributes.points) add_attribute(selected, mesh_id,
-                        root.xcf[mm_name].hexahedra[mesh_name].attr_points[it.name],
-                    "points." + it.name);
+                        root.xcf[mm_name].hexahedra[mesh_name].attr_points[it.first],
+                    "points." + it.first);
                 for (auto& it : obj.attributes.cell_corners) add_attribute(selected, mesh_id,
-                        root.xcf[mm_name].hexahedra[mesh_name].attr_corners[it.name],
-                    "corners." + it.name);
+                        root.xcf[mm_name].hexahedra[mesh_name].attr_corners[it.first],
+                    "corners." + it.first);
                 for (auto& it : obj.attributes.cell_facets) add_attribute(selected, mesh_id,
-                        root.xcf[mm_name].hexahedra[mesh_name].attr_facets[it.name],
-                    "facets." + it.name);
+                        root.xcf[mm_name].hexahedra[mesh_name].attr_facets[it.first],
+                    "facets." + it.first);
                 for (auto& it : obj.attributes.cells) add_attribute(selected, mesh_id,
-                        root.xcf[mm_name].hexahedra[mesh_name].attr_cells[it.name],
-                    "cells." + it.name);
+                        root.xcf[mm_name].hexahedra[mesh_name].attr_cells[it.first],
+                    "cells." + it.first);
                 add_mesh_layers(selected, root.xcf[mm_name].hexahedra[mesh_name], "hexahedra");
                 ImGui::TreePop();
             }

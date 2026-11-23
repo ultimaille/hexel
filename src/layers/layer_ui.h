@@ -131,11 +131,11 @@ struct AttrItem {
 template <typename Containers>
 static void AddItems(std::vector<AttrItem> &items, Containers &containers,
                      const char *section, MultiMeshPath::AttributeCollection attributes_path) {
-    for (auto &container : containers) {
+    for (const auto& [name, container] : containers) {
         items.push_back({
-            attributes_path[container.name],
-            std::string(section) + "/" + container.name,
-            std::string(section) + ": " + container.name,
+            attributes_path[name],
+            std::string(section) + "/" + name,
+            std::string(section) + ": " + name,
             GetPalette(section).base   // same color key ColoredButton uses
         });
     }

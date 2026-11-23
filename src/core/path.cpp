@@ -31,9 +31,8 @@ bool Path::has_prefix(const Path& other) const {
 }
 
 template<class Collection> Path::ObjectPtr find_attribute_ptr(Collection& attributes, const std::string& name) {
-    for (auto& attribute : attributes)
-        if (attribute.name == name && attribute.ptr)
-            return static_cast<ContainerBase*>(&*attribute.ptr);
+    if (attributes.contains(name) && attributes[name] != nullptr)
+        return static_cast<ContainerBase*>(&*attributes[name]);
     return std::monostate{};
 }
 
