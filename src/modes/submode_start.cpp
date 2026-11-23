@@ -6,8 +6,6 @@
 StartingMode::StartingMode(ModeX& mode) : SubModeX(mode){}
 
 void StartingMode::define_gui() {
-    ImGui::Begin("HexModelerMode", nullptr);
-    mode.header_gui_for_submodes();
 
     if (ImGui::Button("Import From CAD")) ImGui::OpenPopup("CAD_file");
     if (FilePopup("CAD_file", std::filesystem::path(mode.CAD_file).parent_path().string(), mode.CAD_file, { ".geogram",".meshb",".mesh" }))
@@ -15,16 +13,15 @@ void StartingMode::define_gui() {
             mode.project_directory = mode.working_directory + std::filesystem::path(mode.CAD_file).stem().string();
             std::filesystem::create_directory(mode.project_directory);
             import_new_project_from_CAD(mode.CAD_file);
-            load_project(mode.project_directory);
+            scene().load_project(mode.project_directory);
         }
 
     if (ImGui::Button("Load project")) ImGui::OpenPopup("Load project");
     if (FilePopup("Load project", mode.project_directory, mode.project_directory, { "*" })) {
         if (!mode. project_directory.empty()){
-            load_project(mode.project_directory);
+            scene().load_project(mode.project_directory);
         }
     }
-    ImGui::End();
 }
 
 

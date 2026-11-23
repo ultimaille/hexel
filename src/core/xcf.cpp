@@ -44,7 +44,6 @@ void MultiMesh::load_from_path(std::string filename, bool connect){
     std::filesystem::path path(filename);
     if (!std::filesystem::exists(path / "pointset.geogram")) return;
 
-    std::cerr << "Load pointset\n";
     pointset_attributes = read_by_extension((path / "pointset.geogram").string(), pointset);
 
 
@@ -133,7 +132,6 @@ void save_meshes(PointSet& pointset, std::filesystem::path mesh_path, T& collect
 void MultiMesh::save_to_path(std::string filename, bool geogram_compatible){
     std::filesystem::path path(filename);
     if (std::filesystem::exists(path)){
-        std::cerr << "Erase directory\n";
         std::filesystem::remove_all(path);
     }
     std::ofstream file(path.string() + ".mm");

@@ -20,36 +20,20 @@
 SubModeX::SubModeX(ModeX& mode) :layer_selection_react(*this), mode(mode){}
 
 // access to xcf objects
-MeshPath SubModeX::hex_id(){ return root.xcf["mesh"].hexahedra[""]; }
-MeshPath SubModeX::pl_id(){ return  root.xcf["mesh"].polylines[""]; };
-PointSetPath SubModeX::pts_id(){ return root.xcf["mesh"].pointset; };
-MeshPath SubModeX::geom_tri_id(){ return  root.xcf["geom"].triangles[""]; }
-MeshPath SubModeX::geom_edge_id(){ return  root.xcf["geom"].polylines[""]; }
-PointSetPath SubModeX::geom_pts_id(){ return  root.xcf["geom"].pointset; }
+MeshPath ModeXObject::hex_id(){ return root.xcf["mesh"].hexahedra[""]; }
+MeshPath ModeXObject::pl_id(){ return  root.xcf["mesh"].polylines[""]; };
+PointSetPath ModeXObject::pts_id(){ return root.xcf["mesh"].pointset; };
+MeshPath ModeXObject::geom_tri_id(){ return  root.xcf["geom"].triangles[""]; }
+MeshPath ModeXObject::geom_edge_id(){ return  root.xcf["geom"].polylines[""]; }
+PointSetPath ModeXObject::geom_pts_id(){ return  root.xcf["geom"].pointset; }
 
 
-// update coherence constraints
-Volume::Halfedge SubModeX::hex_halfedge_from_edge(int e){
-    EdgeAttribute<int> edge2halfedge("hex_halfedge", God::xcf["mesh"].polylines[""].attributes, God::xcf["mesh"].polylines[""].mesh);
+
+
+bool ModeXScene::update_hex(){
     Hexahedra& hex = hex_id();
-    return hex.halfedge(edge2halfedge[e]);
-}
-
-
-bool topo_is_valid(Hexahedra& hex){
-    // no duplicated vertice on a cell
-    FOR(c, hex.ncells()) FOR(lv0, 8) for (int lv1 = lv0 + 1; lv1 < 8; lv1++)
-        if (hex.vert(c, lv0) == hex.vert(c, lv1)){
-            Log::error("Duplicated vertices on a cell");
-            return false;
-        }
-    return true;
-}
-
-bool SubModeX::update_hex(){
-    Hexahedra& hex = hex_id();
-    EdgeAttribute<int> edge2halfedge("hex_halfedge", God::xcf["mesh"].polylines[""].attributes, God::xcf["mesh"].polylines[""].mesh);
-    generate_edge_graph(hex_id(), pl_id(), edge2halfedge);
+    //EdgeAttribute<int> edge2halfedge("hex_halfedge", God::xcf["mesh"].polylines[""].attributes, God::xcf["mesh"].polylines[""].mesh);
+    generate_edge_graph(hex_id(), pl_id());
 
     VolumeAttributes& hex_attr = hex_id();
     CellAttribute<bool> visible_cell("visible", hex_attr, hex);
@@ -73,11 +57,11 @@ bool SubModeX::update_hex(){
 
     PointAttribute<int> emb_lock("emb_lock", God::xcf["mesh"].pointset_attributes, God::xcf["mesh"].pointset, 0);
     FOR(v, pts.size()){
-        Embedding emb = get_embedding(pts[v]);
+        auto emb = ModeXInspect(mode).get_embedding(pts[v]);
         if (emb_lock[v] != 5)
             emb_lock[v] = emb.dim;
     }
-    if (!topo_is_valid(hex)) return false;
+    //if (!topo_is_valid(hex)) return false;
 
 
     hex_id().broadcast(Event::UPDATED);
@@ -93,7 +77,7 @@ void SubModeX::handle_camera_and_layerselect(Event event){
 }
 
 
-void SubModeX::backup(){
+void ModeXScene::backup(){
     int undo_stack_size = 5;
     mode.undo_id++;
     if (mode.undo_begin < mode.undo_id - mode.undo_stack_size){
@@ -107,14 +91,14 @@ void SubModeX::backup(){
     save_project(dir);
 }
 
-void SubModeX::forget_last_backup(){
+void ModeXScene::forget_last_backup(){
     if (mode.undo_id == mode.undo_begin) {
         Log::add("Undo stack is empty, not able to forget");
         return;
     }
     mode.undo_id--;
 }
-void SubModeX::undo(){
+void ModeXScene::undo(){
     if (mode.undo_id == mode.undo_begin) {
         Log::add("Undo stack is empty");
         return;
@@ -136,7 +120,7 @@ void SubModeX::undo(){
 
 
 
-bool SubModeX::xcf_is_valid_for_editing(){
+bool ModeXScene::xcf_is_valid_for_editing(){
     if (!God::xcf.contains("mesh")) goto reset;
     if (!God::xcf.contains("geom")) goto reset;
     return true;
@@ -145,7 +129,7 @@ reset:
     return false;
 }
 
-void SubModeX::reset_layers_options(){
+void ModeXScene::restore_default_scene_rendering(){
     if (!xcf_is_valid_for_editing()) return;
 
     {// rendering of the geom object
@@ -168,7 +152,7 @@ void SubModeX::reset_layers_options(){
             if (!God::layers.contains("geomLock")){
                 PointSetLayer& layer = God::layers.add<PointSetLayer>("geomLock", 1);
                 layer.group = 0;
-                layer.init(geom_pts_id());
+                layer.init(root.xcf["mesh"].pointset);
             }
 
             PointAttribute<int> touch_lock("lock", God::xcf["geom"].pointset_attributes, God::xcf["geom"].pointset, 0);
@@ -213,7 +197,7 @@ void SubModeX::reset_layers_options(){
         {// mesh edges are rendered with plain style
             if (!God::layers.contains("meshEdges")){
                 PolyLineLayer& layer = God::layers.add<PolyLineLayer>("meshEdges", 1);
-                layer.init(pl_id());
+                layer.init(root.xcf["mesh"].polylines[""]);
             }
             God::layers["meshEdges"].visible = true;
         }
@@ -225,35 +209,35 @@ void SubModeX::reset_layers_options(){
 
 
 // manage import/load/write of project
-void SubModeX::reset_xcf(){
+void ModeXScene::reset_xcf(){
     std::vector<std::string> mms;
     for (auto& [key, value] : God::xcf) mms.push_back(key);
     for (auto it : mms) God::xcf.kill_multimesh(it);
     God::events.dispatch();
 }
-void SubModeX::save_project(std::string directory){
+void ModeXScene::save_project(std::string directory){
     MultiMesh& geommm = God::xcf["geom"];
     geommm.save_to_path(directory + "geom", true);
     MultiMesh& meshmm = God::xcf["mesh"];
     meshmm.save_to_path(directory + "mesh", true);
 }
 
-void SubModeX::load_project(std::string directory){
+void ModeXScene::load_project(std::string directory){
     reset_xcf();
     const std::filesystem::path project_dir{directory};
     load_mm_with_default_layers((project_dir / "geom").string());
     load_mm_with_default_layers((project_dir / "mesh").string());
 
-    Hexahedra& hex = hex_id();                                       
+    Hexahedra& hex = God::xcf["mesh"].hexahedra[""].mesh;
     God::xcf["mesh"].polylines.clear();
     God::xcf["mesh"].polylines.try_emplace("");
-    PolyLine& pl = pl_id();
+    PolyLine& pl = God::xcf["mesh"].polylines[""].mesh;
     pl.points = hex.points;
 
     EdgeAttribute<int> edge2halfedge("hex_halfedge", God::xcf["mesh"].polylines[""].attributes, God::xcf["mesh"].polylines[""].mesh);
-    generate_edge_graph(hex, pl, edge2halfedge);
+    generate_edge_graph(hex, pl);
 
-    reset_layers_options();
+    //reset_layers_options();
 }
 
 void SubModeX::update() {

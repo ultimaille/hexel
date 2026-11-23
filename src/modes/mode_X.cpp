@@ -17,47 +17,60 @@
 
 
 
-void ModeX::reset_gui(){
-    sub_mode().load_project(project_directory);
-}
+
 
 void ModeX::update(){
     static auto t = std::chrono::high_resolution_clock::now();
     auto nt = std::chrono::high_resolution_clock::now();
-    if (hex_state_is_valid)
+    if (hex_state == ModeX::ALL_OK)
         God::context.render_target.background_color = vec4(0, 0, 0, 1.);
-    else
-        God::context.render_target.background_color = .4 * vec4(1.2 + std::cos(double(duration_cast<std::chrono::milliseconds>(nt - t).count()) / 50.), 0, 0, 1);
-
+    else {
+        double oscillation = 1.2 + std::cos(double(duration_cast<std::chrono::milliseconds>(nt - t).count()) / 50.);
+        oscillation *= .3;
+        if (hex_state == ModeX::TOPO_OK)
+            God::context.render_target.background_color = .4 * vec4(.5 * oscillation, .5 * oscillation, 0, 1);
+        else if(hex_state == ModeX::GEOM_OK)
+            God::context.render_target.background_color = .4 * vec4(.5*oscillation, .1 * oscillation, 0, 1);
+        else
+            God::context.render_target.background_color = .4 * vec4(oscillation, 0, 0, 1);
+    }
     sub_mode().update();
 }
 
 
 
-void ModeX::header_gui_for_submodes(){
-    if (ImGui::Button("Backup")) sub_mode().backup();
-    ImGui::SameLine();
-    if (ImGui::Button("Undo")) sub_mode().undo();
-    ImGui::SameLine();
-    if (ImGui::Button("Reset GUI")) reset_gui();
-    ImGui::Separator();
-
-    //const char* items[] = { "Load/Import", "BasicEdit", "LayerSplit", "CAD_feature" };
-
-    if (ImGui::Combo("SubMode", &active_mode_id, sub_mode_names, IM_COUNTOF(sub_mode_names))){
-
-        if (active_mode_id == 0) set_active_mode(START);
-        if (active_mode_id == 1) set_active_mode(BASIC);
-        if (active_mode_id == 2) set_active_mode(LAYER);
-        if (active_mode_id == 3) set_active_mode(FEATURE);
-    }
-    
-    ImGui_help("Choose the current submode\n" "hopefully you can go there");
-}
 
 void ModeX::define_gui(){
+
+    ImGui::Begin("ModeX", nullptr);
+    if (ImGui::Button("Backup")) scene().backup();
+    ImGui::SameLine();
+    if (ImGui::Button("Undo")) scene().undo();
+    ImGui::SameLine();
+    if (ImGui::Button("Reset GUI"))  scene().restore_default_scene_rendering();
+    ImGui::Separator();
+
+    const int nmaxsubmode = 10;
+    static std::vector<std::string> mode_names;
+    if (mode_names.empty()) for (auto m : sub_modes)mode_names.push_back(m->name());
+    um_assert(mode_names.size() < nmaxsubmode);
+    const char* str[nmaxsubmode] = { NULL };
+    FOR(i, mode_names.size())str[i] = mode_names[i].c_str();
+
+    int nv_active_mode_id = active_mode_id;
+    if (ImGui::Combo("SubMode", &nv_active_mode_id, str, mode_names.size())){
+        sub_mode().desactivate();
+        active_mode_id = nv_active_mode_id;
+        sub_mode().activate();
+    }
+    ImGui_help("Choose the current submode\n" "hopefully you can go there");
     sub_mode().define_gui();
+    ImGui::End();
+
 }
+
+
+
 
 
 void ModeX::handle(Event event) {
@@ -65,17 +78,11 @@ void ModeX::handle(Event event) {
     sub_mode().handle(event);
 };
 
-void ModeX::set_active_mode(SubModes sub){
-    int id = sub;
-    um_assert(id != -1);
-    sub_mode().desactivate();
-    active_mode_id = id;
-    sub_mode().activate();
-}
 
 
 
-ModeX::ModeX():sub_mode_start(*this),sub_mode_basic_edit(*this), hex_state_is_valid(true) {
+
+ModeX::ModeX():sub_mode_start(*this),sub_mode_basic_edit(*this) {
         working_directory = WORKING_DIR;
         project_directory = WORKING_DIR;
         CAD_file = std::string(TEST_INPUT_DIR) + "B1.geogram";
@@ -91,8 +98,8 @@ ModeX::ModeX():sub_mode_start(*this),sub_mode_basic_edit(*this), hex_state_is_va
     if (1){
         project_directory = WORKING_DIR + "B1";
         sub_mode_start.import_new_project_from_CAD(CAD_file);
-        set_active_mode(BASIC);
-        sub_mode().load_project(project_directory);
+        active_mode_id = 1;
+        scene().load_project(project_directory);
     }else
-        set_active_mode(START);
+        active_mode_id = 0;
 }

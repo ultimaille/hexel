@@ -8,45 +8,40 @@
 
 
 
+//namespace ModeX{
+
+    struct ModeX : public Mode{
+
+        ModeX();
+        virtual std::string name(){ return "modeX"; }
+
+        // manage sub modes
+        std::vector<SubModeX*> sub_modes;
+        inline SubModeX& sub_mode(){ return *sub_modes[active_mode_id]; }
+
+        StartingMode sub_mode_start;
+        SubModeBasicEdit sub_mode_basic_edit;
+        int active_mode_id = 0;
 
 
-struct ModeX : public Mode{
+        void define_gui();
+        void handle(Event event);
+        void update();
 
-    ModeX();
-    static std::string name() { return "modeX"; }
-
-    enum SubModes{START,BASIC,LAYER,FEATURE};
-//    const char* sub_mode_names[4] = { "start","Basic","layer","feature" };
-    const char* sub_mode_names[2] = { "start","Basic"};
-    std::vector<SubModeX*> sub_modes;
-
-   
+        ModeXScene scene(){ return ModeXScene(*this); }
 
 
+        // share data between submodes: hex validity + serialization parameters
+        enum HexState{ TOPO_OK = 1, GEOM_OK = 2, ALL_OK = 3 };
+        int hex_state = TOPO_OK + GEOM_OK;
 
-    void set_active_mode(SubModes sub);
+        std::string working_directory;
+        std::string project_directory;
+        std::string CAD_file;
 
-    inline SubModeX& sub_mode(){ return *sub_modes[active_mode_id]; }
+        int undo_begin = -1;
+        int undo_stack_size = 5;
+        int undo_id = -1;
+    };
 
-
-    void header_gui_for_submodes();
-    void define_gui();
-    void handle(Event event);
-    void update();
-    void reset_gui();
-
-    StartingMode sub_mode_start;
-    SubModeBasicEdit sub_mode_basic_edit;
-
-    int active_mode_id = 0;
-    bool hex_state_is_valid =true;
-
-    std::string working_directory;
-    std::string project_directory;
-    std::string CAD_file;
-    int undo_begin = -1;
-    int undo_stack_size = 5;
-    int undo_id = -1;
-};
-
-
+//};

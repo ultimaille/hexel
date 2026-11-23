@@ -39,6 +39,7 @@ struct Mode{
     void draw_data_gui();
     void generate_interactor_gui();
     virtual void update(){}
+    virtual std::string name(){ return "undefined"; }
 };
 
 

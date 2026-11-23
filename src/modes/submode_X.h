@@ -10,11 +10,8 @@
 
 struct ModeX;
 
-struct SubModeX : public Mode{
-    SubModeX(ModeX& mode);
-    ModeX& mode;
 
-    
+struct ModeXObject{
     // access to xcf objects
     static MeshPath hex_id();
     static MeshPath pl_id();
@@ -22,31 +19,35 @@ struct SubModeX : public Mode{
     static MeshPath geom_tri_id();
     static MeshPath geom_edge_id();
     static PointSetPath geom_pts_id();
+};
 
-    // update coherence constraints
-    Volume::Halfedge hex_halfedge_from_edge(int e);
-    bool update_hex();
 
-    // manage camera + layer selection
-    InteractorTrackBallCamera camera_react;
-    InteractorLayerSelection layer_selection_react;
-    void handle_camera_and_layerselect(Event event);
+struct ModeXScene : public ModeXObject{
+    ModeXScene(ModeX& mode) : mode(mode){}
+    ModeX& mode;
 
     // manage import/load/write of project
     void reset_xcf();
     void load_project(std::string directory);
     void save_project(std::string directory);
-    
+    bool xcf_is_valid_for_editing();
+
     // manage undo
     void backup();
     void forget_last_backup();
     void undo();
 
+    void restore_default_scene_rendering();
+    
+    // update coherence constraints
+    bool update_hex();
+};
 
-    struct Embedding{
-        int dim = -1;
-        int id = -1;
-    };
+struct ModeXInspect : public ModeXObject{
+    ModeXInspect(ModeX& mode) : mode(mode){}
+    ModeX& mode;
+
+    struct Embedding{int dim = -1;int id = -1;};
     inline bool on_point(vec3 P, vec3 point){ return (P - point).norm2() < 1e-20; }
     inline bool on_edge(vec3 P, Segment3 s){ return (P - s.nearest_point(P)).norm2() < 1e-15; }
     inline bool on_triangle(vec3 P, Triangle3 tr){ return (P - tr.nearest_point(P)).norm2() < 1e-15; }
@@ -59,10 +60,21 @@ struct SubModeX : public Mode{
         for (auto f : tri.iter_facets())if (on_triangle(P, f)) return { 2,f };
         return { -1,-1 };
     }
+};
 
-    bool xcf_is_valid_for_editing();
-    void reset_layers_options();
 
+struct SubModeX : public Mode, public ModeXObject{
+    SubModeX(ModeX& mode);
+    ModeX& mode;
+
+    // manage camera + layer selection
+    InteractorTrackBallCamera camera_react;
+    InteractorLayerSelection layer_selection_react;
+    void handle_camera_and_layerselect(Event event);
+
+
+    ModeXScene scene(){ return ModeXScene(mode); }
+    ModeXInspect inspect(){ return ModeXInspect(mode); }
 
     virtual void define_gui(){};
     virtual void handle(Event event) {};

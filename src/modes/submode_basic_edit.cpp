@@ -166,27 +166,29 @@ template<> struct ToolBox<Triangles> :public ToolBoxTriangles{
 
 // algorithms that are ready to call from UI
 struct ModeXCommands {
+
     ModeXCommands(SubModeX& mode) :mode(mode) {
-        mode.backup();
+        mode.scene().backup();
     }
     ~ModeXCommands() {
-        mode.update_hex();
+        mode.scene().update_hex();
         std::vector<int> conflicts_topo;
         std::vector<int> conflicts_geom;
-        mode.mode.hex_state_is_valid = true;
-        mode.mode.hex_state_is_valid = mode.mode.hex_state_is_valid && ToolBoxHexahedra(mode.hex_id()).validate_topo(conflicts_topo);
-        mode.mode.hex_state_is_valid = mode.mode.hex_state_is_valid && ToolBoxHexahedra(mode.hex_id()).validate_geom(conflicts_geom);
+        mode.mode.hex_state = mode.mode.ALL_OK; 
+        if (!ToolBoxHexahedra(mode.hex_id()).validate_topo(conflicts_topo))
+            mode.mode.hex_state = mode.mode.hex_state - ModeX::TOPO_OK;
+        if (!ToolBoxHexahedra(mode.hex_id()).validate_geom(conflicts_geom))
+            mode.mode.hex_state = mode.mode.hex_state - ModeX::GEOM_OK;
         update_panic_in_xcf(conflicts_topo, conflicts_geom);
-        if (!mode.mode.hex_state_is_valid) {
+        if (mode.mode.hex_state != ModeX::ALL_OK) {
             Log::info("Hex state is broken");
             return;
         }
-        mode.forget_last_backup();
+        mode.scene().forget_last_backup();
         mode.hex_id().broadcast(Event::UPDATED);
     }
     SubModeX& mode;
-   
-
+  
     void update_panic_in_xcf(std::vector<int>& conflicts_topo, std::vector<int>& conflicts_geom){
         std::string mm_name = "conflicts";
         if (God::xcf.contains(mm_name)) God::xcf.kill_multimesh(mm_name);
@@ -215,28 +217,17 @@ struct ModeXCommands {
         root.xcf[mm_name].pointset.broadcast(Event::UPDATED);
 
     }
-
-
-
     void merge_vertices(int source, int target) {
         Hexahedra& hex = mode.hex_id();
         ToolBox(hex).merge_vertices(source, target);
     }
-
     void move_vertex(int moving_vertex, vec3 new_pos){
         PointSet& pts = mode.pts_id();
         pts[moving_vertex] = new_pos;
     }
 
-
-    enum Quad2HexGeomStrategy {
-        OFFSET_BY_QUAD_NORMAL,
-        RAYTRACE
-    };
-    enum Quad2HexTopoStrategy {
-        AUTO_MERGE,
-        NO_MERGE
-    };
+    enum Quad2HexGeomStrategy {OFFSET_BY_QUAD_NORMAL,RAYTRACE};
+    enum Quad2HexTopoStrategy {AUTO_MERGE,NO_MERGE};
     void create_hex_from_quad(std::vector<vec3>& pts, Quad2HexGeomStrategy geom_strat, Quad2HexTopoStrategy topo_strat) {
         MultiMesh& mm = God::xcf["mesh"];
         Hexahedra& hex = mode.hex_id();
@@ -261,7 +252,7 @@ struct ModeXCommands {
             Triangles& tri = mode.geom_tri_id();
             FOR(lv, 4) {
                 vec3 dir = n;
-                SubModeX::Embedding emb = mode.get_embedding(hex_pts[lv]);
+                ModeXInspect::Embedding emb = mode.inspect().get_embedding(hex_pts[lv]);
                 if (emb.dim == 2) {
                     Surface::Facet f(tri, emb.id);
                     dir = Triangle3(f).normal();
@@ -284,7 +275,7 @@ struct ModeXCommands {
             FOR(lv, 8) {
                 hex_vert[lv] = -1;
                 for (auto v : hex.iter_vertices())
-                    if (mode.on_point(hex_pts[lv], v.pos()))
+                    if (mode.inspect().on_point(hex_pts[lv], v.pos()))
                         hex_vert[lv] = v;
                 if (hex_vert[lv] == -1)
                     hex_vert[lv] = hex.points.create_points(1);
@@ -315,7 +306,6 @@ struct ModeXCommands {
         FOR(lv, 8) hex.vert(c, lv) = hex_vert[lv];
         FOR(lv, 8) hex.points[hex_vert[lv]] = hex_pts[lv];
     }
-
     void extend_mesh_from_face(int f_id){
         MultiMesh& mm = God::xcf["mesh"];
         Hexahedra& hex = mode.hex_id();
@@ -371,7 +361,6 @@ struct ModeXCommands {
             hex.connect();
         }
     }
-
 };
 
 
@@ -493,7 +482,7 @@ void InteractorKillHex::on_click(int button, vec2 p) {
             for (auto c : hex.iter_cells()) to_kill[c] = block_id[c] == block2kill;
             hex.delete_cells(to_kill);
             hex.connect();
-            mode.update_hex();
+            mode.scene().update_hex();
             mode.hex_id().broadcast(Event::UPDATED);
         }
     }
@@ -686,14 +675,14 @@ void SubModeBasicEdit::handle(Event event) {
     Mode::handle(event);
 }
 void SubModeBasicEdit::define_gui() {
-    ImGui::Begin("HexModelerMode", nullptr);
-    mode.header_gui_for_submodes();
+    //ImGui::Begin("HexModelerMode", nullptr);
+    //mode.header_gui_for_submodes();
     generate_interactor_gui();
-    ImGui::End();
+    //ImGui::End();
 }
 bool SubModeBasicEdit::merge_vertices(int v0, int v1){
     Hexahedra& hex = hex_id();
     FOR(c, hex.ncells())FOR(lv, 8) if (hex.vert(c, lv) == v0)hex.vert(c, lv) = v1;
-    return update_hex();
+    return scene().update_hex();
 }
 

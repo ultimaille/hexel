@@ -53,6 +53,8 @@ struct InteractorCreateHex: public Interactor {
 
 struct SubModeBasicEdit : public SubModeX {
     inline void activate(){Log::add("BasicEditMode activated");}
+    virtual std::string name(){ return "Basic"; }
+
     SubModeBasicEdit(ModeX& mode);
     void handle(Event event);
     

@@ -4,6 +4,8 @@ struct ModeX;
 
 struct StartingMode : public SubModeX{
     StartingMode(ModeX& mode);
+    virtual std::string name(){ return "Start"; }
+
     void define_gui();
     void handle(Event event);
     void import_new_project_from_CAD(std::string filename);
