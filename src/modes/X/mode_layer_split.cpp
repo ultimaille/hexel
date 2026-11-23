@@ -1,4 +1,4 @@
-//#include <modes/submode_layer_split.h>
+//#include <modes/X/mode_layer_split.h>
 //
 //
 //

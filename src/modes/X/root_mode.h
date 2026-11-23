@@ -2,22 +2,22 @@
 #include "misc/purgatory.h"
 #include "algo.h"
 #include <core/mode.h>
-#include<modes/submode_X.h>
-#include<modes/submode_start.h>
-#include<modes/submode_basic_edit.h>
+#include<modes/X/abstract_mode.h>
+#include<modes/X/mode_start.h>
+#include<modes/X/mode_basic_edit.h>
 
 
 
-//namespace ModeX{
+namespace ModeX{
 
-    struct ModeX : public Mode{
+    struct RootMode : public Mode{
 
-        ModeX();
+        RootMode();
         virtual std::string name(){ return "modeX"; }
 
         // manage sub modes
-        std::vector<SubModeX*> sub_modes;
-        inline SubModeX& sub_mode(){ return *sub_modes[active_mode_id]; }
+        std::vector<AbstractMode*> sub_modes;
+        inline AbstractMode& sub_mode(){ return *sub_modes[active_mode_id]; }
 
         StartingMode sub_mode_start;
         SubModeBasicEdit sub_mode_basic_edit;
@@ -28,7 +28,7 @@
         void handle(Event event);
         void update();
 
-        ModeXScene scene(){ return ModeXScene(*this); }
+        Scene scene(){ return Scene(*this); }
 
 
         // share data between submodes: hex validity + serialization parameters
@@ -44,4 +44,4 @@
         int undo_id = -1;
     };
 
-//};
+};

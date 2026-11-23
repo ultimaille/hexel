@@ -1,4 +1,4 @@
-//#include <modes/submode_feature_edit.h>
+//#include <modes/X/mode_feature_edit.h>
 //#include <algo/shuffle_for_colormap.h>
 //
 //void InteractorSplitAddFeature::init(MeshPath p_pl, MeshPath p_pts) {
