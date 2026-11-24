@@ -22,8 +22,8 @@ namespace ModeX{
         AbstractMode(RootMode& mode);
 
         // manage camera + layer selection
-        InteractorTrackBallCamera camera_react;
-        InteractorLayerSelection layer_selection_react;
+        InteractorTrackBallCamera interactor_camera;
+        InteractorLayerSelection interactor_layer_selection;
         void handle_camera_and_layerselect(Event event);
 
 

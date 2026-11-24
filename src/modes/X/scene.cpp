@@ -7,8 +7,8 @@
 #include <modes/X/root_mode.h>
 #include <modes/X/mode_start.h>
 #include <modes/X/mode_layer_split.h>
-#include <modes/X/mode_feature_edit.h>
-#include <modes/X/mode_basic_edit.h>
+#include <modes/X/mode_feature.h>
+#include <modes/X/mode_basic.h>
 #include <modes/X/scene.h>
 #include <modes/X/inspect.h>
 
@@ -29,8 +29,32 @@ namespace ModeX{
 
     bool Scene::update_hex(){
         Hexahedra& hex = hex_id();
-        //EdgeAttribute<int> edge2halfedge("hex_halfedge", God::xcf["mesh"].polylines[""].attributes, God::xcf["mesh"].polylines[""].mesh);
-        generate_edge_graph(hex_id(), pl_id());
+        PolyLine& pl = pl_id();
+        {//clean_up
+            std::vector<bool> to_kill(pl.nedges(), true);
+            pl.delete_edges(to_kill);
+            hex.delete_isolated_vertices();
+        }
+        {//generate_edge_graph
+            if (!hex.connected()) hex.connect();
+            DisjointSet ds(hex.nhalfedges());
+            for (auto h : hex.iter_halfedges())
+                if (h.facet().opposite().active())
+                    ds.merge(h, h.opposite_c().opposite_f());
+
+            std::vector<int> edges_;
+            int nedges = ds.get_sets_id(edges_);
+            pl.create_edges(nedges);
+            for (auto h : hex.iter_halfedges()) {
+                int e = edges_[h];
+                pl.vert(e, 0) = h.from();
+                pl.vert(e, 1) = h.to();
+            }
+            pl.connect();
+        }
+
+
+
 
         VolumeAttributes& hex_attr = hex_id();
         CellAttribute<bool> visible_cell("visible", hex_attr, hex);
@@ -46,7 +70,6 @@ namespace ModeX{
             FOR(lv, 8)visible_pts[c.vertex(lv)] = true;
 
         PolyLineAttributes& pl_attr = pl_id();
-        PolyLine& pl = pl_id();
         EdgeAttribute<bool> visible_edge("visible", pl_attr, pl);
         visible_edge.fill(false);
         for (auto e : pl.iter_edges()) if (visible_pts[e.from()] && visible_pts[e.to()])
@@ -58,8 +81,6 @@ namespace ModeX{
             if (emb_lock[v] != 5)
                 emb_lock[v] = emb.dim;
         }
-        //if (!topo_is_valid(hex)) return false;
-
 
         hex_id().broadcast(Event::UPDATED);
         pl_id().broadcast(Event::UPDATED);
@@ -193,6 +214,7 @@ namespace ModeX{
                 God::layers["meshEdges"].visible = true;
             }
         }
+        
         for (auto& group : God::layers.groups)
             if (group.name == "mesh")
                 group.blend_op = Group::BlendOp::AVERAGE;
@@ -227,8 +249,7 @@ namespace ModeX{
 
         EdgeAttribute<int> edge2halfedge("hex_halfedge", God::xcf["mesh"].polylines[""].attributes, God::xcf["mesh"].polylines[""].mesh);
         generate_edge_graph(hex, pl);
-
-        //reset_layers_options();
+        restore_default_scene_rendering();
     }
 
 

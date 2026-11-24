@@ -126,12 +126,12 @@
 //
 //
 //
-//FeatureEditMode::FeatureEditMode(HexModelerMode& mode) : HexModelerMode::SubMode(mode){
+//SubModeFeature::SubModeFeature(HexModelerMode& mode) : HexModelerMode::SubMode(mode){
 //    multi_selector_react_left.init(0);
 //    multi_selector_react_right.init(1);
 //    split_add_react.init(geom_edge_id(), geom_pts_id());
 //}
-//void FeatureEditMode::define_gui() {
+//void SubModeFeature::define_gui() {
 //    ImGui::Begin("HexModelerMode", nullptr);
 //    mode.header_gui_for_submodes();
 //
@@ -141,8 +141,8 @@
 //    ImGui::End();
 //}
 //
-//void FeatureEditMode::activate(){
-//    Log::add("FeatureEditMode::activate()");
+//void SubModeFeature::activate(){
+//    Log::add("SubModeFeature::activate()");
 //    God::layers["meshPts"].visible = false;
 //    God::layers["meshHex"].visible = false;
 //    God::layers["meshEdges"].visible = false;
@@ -151,7 +151,7 @@
 //    static_cast<PointSetLayer&>(God::layers["geomPts"]).point_renderer.radius_in_pixel = 7;
 //}
 //
-//void FeatureEditMode::handle(Event event) {
+//void SubModeFeature::handle(Event event) {
 //    // forward mouse events to mouse reacts 
 //    if (God::keys.pressed(GLFW_KEY_LEFT_CONTROL)){
 //        mode.handle_camera_and_layerselect(event);

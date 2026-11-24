@@ -4,7 +4,7 @@
 #include <core/mode.h>
 #include<modes/X/abstract_mode.h>
 #include<modes/X/mode_start.h>
-#include<modes/X/mode_basic_edit.h>
+#include<modes/X/mode_basic.h>
 
 
 
@@ -20,7 +20,7 @@ namespace ModeX{
         inline AbstractMode& sub_mode(){ return *sub_modes[active_mode_id]; }
 
         StartingMode sub_mode_start;
-        SubModeBasicEdit sub_mode_basic_edit;
+        SubModeBasic sub_mode_basic_edit;
         int active_mode_id = 0;
 
 

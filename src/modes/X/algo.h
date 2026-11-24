@@ -17,6 +17,7 @@ inline int compute_hex_layer_id(Hexahedra& hex, CellFacetAttribute<int>& layer_i
 inline void generate_edge_graph(Hexahedra& hex, PolyLine& pl) {
     std::vector<bool> to_kill(pl.nedges(), true);
     pl.delete_edges(to_kill);
+    hex.delete_isolated_vertices();
     if (!hex.connected()) hex.connect();
     DisjointSet ds(hex.nhalfedges());
     for (auto h : hex.iter_halfedges())

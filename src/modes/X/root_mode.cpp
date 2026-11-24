@@ -7,8 +7,8 @@
 #include <modes/X/root_mode.h>
 #include <modes/X/mode_start.h>
 #include <modes/X/mode_layer_split.h>
-#include <modes/X/mode_feature_edit.h>
-#include <modes/X/mode_basic_edit.h>
+#include <modes/X/mode_feature.h>
+#include <modes/X/mode_basic.h>
 
 
 
@@ -21,20 +21,21 @@ namespace ModeX{
 
 
     void RootMode::update(){
-        static auto t = std::chrono::high_resolution_clock::now();
-        auto nt = std::chrono::high_resolution_clock::now();
-        if (hex_state == RootMode::ALL_OK)
-            God::context.render_target.background_color = vec4(0, 0, 0, 1.);
-        else {
-            double oscillation = 1.2 + std::cos(double(duration_cast<std::chrono::milliseconds>(nt - t).count()) / 50.);
-            oscillation *= .3;
-            if (hex_state == RootMode::TOPO_OK)
-                God::context.render_target.background_color = .4 * vec4(.5 * oscillation, .5 * oscillation, 0, 1);
-            else if (hex_state == RootMode::GEOM_OK)
-                God::context.render_target.background_color = .4 * vec4(.5 * oscillation, .1 * oscillation, 0, 1);
-            else
-                God::context.render_target.background_color = .4 * vec4(oscillation, 0, 0, 1);
-        }
+        //static auto t = std::chrono::high_resolution_clock::now();
+        //auto nt = std::chrono::high_resolution_clock::now();
+        //if (hex_state == RootMode::ALL_OK)
+        //    God::context.render_target.background_color = vec4(0, 0, 0, 1.);
+        //else {
+        //    double oscillation = 1.2 + std::cos(double(duration_cast<std::chrono::milliseconds>(nt - t).count()) / 50.);
+        //    oscillation *= .3;
+        //    if (hex_state == RootMode::TOPO_OK)
+        //        God::context.render_target.background_color = .4 * vec4(.5 * oscillation, .5 * oscillation, 0, 1);
+        //    else if (hex_state == RootMode::GEOM_OK)
+        //        God::context.render_target.background_color = .4 * vec4(.5 * oscillation, .1 * oscillation, 0, 1);
+        //    else
+        //        God::context.render_target.background_color = .4 * vec4(oscillation, 0, 0, 1);
+        //}
+        God::context.render_target.background_color = vec4(0, 0, 0, 1.);
         sub_mode().update();
     }
 
@@ -91,10 +92,6 @@ namespace ModeX{
         active_mode_id = 0;
         sub_modes.push_back(&sub_mode_start);
         sub_modes.push_back(&sub_mode_basic_edit);
-        //sub_modes.emplace_back<StartingMode>("StartingMode", *this);
-        //sub_modes.emplace_back<BasicEditMode>("BasicEditMode", *this);
-        //modes.emplace_back<LayerSplitMode>("LayerSplitMode", *this);
-        //modes.emplace_back<FeatureEditMode>("FeatureEditMode", *this);
 
         if (1){
             project_directory = WORKING_DIR + "B1";

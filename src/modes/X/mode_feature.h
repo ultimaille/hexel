@@ -13,13 +13,13 @@
 //
 //
 //
-//struct FeatureEditMode : public ModeX::SubMode{
+//struct SubModeFeature : public ModeX::SubMode{
 //
 //    InteractorMultiSelector multi_selector_react_left;
 //    InteractorMultiSelector multi_selector_react_right;
 //    InteractorSplitAddFeature split_add_react;
 //
-//    FeatureEditMode(HexModelerMode& mode);
+//    SubModeFeature(HexModelerMode& mode);
 //    void activate();
 //    void define_gui();
 //    void handle(Event event);

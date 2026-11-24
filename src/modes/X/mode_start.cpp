@@ -98,9 +98,8 @@ namespace ModeX{
 
     void StartingMode::handle(Event event) {
         // forward mouse events to mouse reacts 
-        camera_react.handle(event);
-        layer_selection_react.handle(event);
-        //mode.handle_camera_and_layerselect(event);
+        interactor_camera.handle(event);
+        interactor_layer_selection.handle(event);
     }
 
 };

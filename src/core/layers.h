@@ -4,7 +4,6 @@
 #include "registry.h"
 #include "basic.h"
 
-struct Renderer;
 
 struct Layer {
     Layer();
@@ -33,7 +32,8 @@ struct Layer {
 struct Group {
     enum BlendOp {
         NONE,
-        AVERAGE
+        AVERAGE,
+        ADD
     };
 
     int id;

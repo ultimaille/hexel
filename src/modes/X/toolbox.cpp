@@ -1,5 +1,5 @@
-#include <modes/X/toolbox.h>
 #include <core/basic.h>
+#include <modes/X/toolbox.h>
 #include <ultimaille/all.h>
 
 
@@ -97,9 +97,7 @@ ToolBoxHexahedra::ToolBoxHexahedra(Hexahedra& hex) :hex(hex){}
     bool ToolBoxHexahedra::validate_geom(std::vector<int>& conficts) {
         for (auto c : hex.iter_corners()){
             Volume::Halfedge h = c.halfedge();
-            //plop(int(h));
             Tetrahedron tet(h.from().pos(), h.to().pos(), h.opposite_f().next().to(), h.prev().from().pos());
-            //plop(tet.volume());
             if (tet.volume() < 0) FOR(lv, 8) conficts.push_back(c.cell().vertex(lv));
         }
         return conficts.empty();

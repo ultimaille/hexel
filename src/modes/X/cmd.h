@@ -1,17 +1,19 @@
+#include <modes/X/feedback_3d.h>
 #include <modes/X/root_mode.h>
 #include <modes/X/toolbox.h>
-
 namespace ModeX{
 
 
 
     // algorithms that are ready to call from UI
-    struct ModeXCommands {
+    struct Commands {
 
-        ModeXCommands(AbstractMode& mode) :mode(mode) {
+        Commands(AbstractMode& mode) :mode(mode) {
             mode.scene().backup();
         }
-        ~ModeXCommands() {
+        static FeedBack3D feedback;
+
+        ~Commands() {
             mode.scene().update_hex();
             std::vector<int> conflicts_topo;
             std::vector<int> conflicts_geom;
@@ -25,39 +27,34 @@ namespace ModeX{
                 Log::info("Hex state is broken");
                 return;
             }
-            mode.scene().forget_last_backup();
+            //mode.scene().forget_last_backup();
             mode.hex_id().broadcast(Event::UPDATED);
         }
         AbstractMode& mode;
 
         void update_panic_in_xcf(std::vector<int>& conflicts_topo, std::vector<int>& conflicts_geom){
-            std::string mm_name = "conflicts";
-            if (God::xcf.contains(mm_name)) God::xcf.kill_multimesh(mm_name);
-            if (conflicts_topo.empty() && conflicts_geom.empty())return;
-
-            God::xcf.add(mm_name);
-            int group = God::layers.add_group(mm_name);
-            MultiMesh& mm = root.xcf[mm_name];
-            mm.polylines.try_emplace("");
-            mm.polylines[""].mesh.points = mm.pointset;
-            {// point set
-                PointSetLayer& layer = God::layers.add<PointSetLayer>(mm_name, group);
-                layer.init(root.xcf[mm_name].pointset);
-                layer.set_default_values();
-                layer.point_renderer.radius_in_pixel = 15;
+            feedback.name = "panic";
+            if (conflicts_topo.empty() && conflicts_geom.empty()){
+                if (feedback.activated) feedback.desactivate();
+                return;
             }
             Hexahedra& hex = mode.hex_id();
-            {
-                int nv = mm.pointset.create_points(conflicts_topo.size());
-                FOR(lv, conflicts_topo.size()) mm.pointset[lv] = hex.points[conflicts_topo[lv]];
-            }
-            {
-                int nv = mm.pointset.create_points(conflicts_geom.size());
-                FOR(lv, conflicts_geom.size()) mm.pointset[lv + nv] = hex.points[conflicts_geom[lv]];
-            }
-            root.xcf[mm_name].pointset.broadcast(Event::UPDATED);
+            if (!feedback.activated) feedback.activate();
+            auto& layer = static_cast<PointSetLayer&>(God::layers[feedback.name + "Pts"]);
+            layer.point_renderer.radius_in_pixel = 15;
+            FOR(d, 3) layer.point_renderer.color[d] = d == 0 ? 255 : 0;
 
+
+            feedback.begin_mesh_update();
+            for (auto &set : { conflicts_topo ,conflicts_geom }){
+                std::vector<vec3> pts(set.size());
+                FOR(i, pts.size())pts[i] = hex.points[set[i]];
+                feedback.add_points(pts);
+            }
+            feedback.end_mesh_update();
         }
+
+
         void merge_vertices(int source, int target) {
             Hexahedra& hex = mode.hex_id();
             ToolBox(hex).merge_vertices(source, target);
@@ -202,5 +199,12 @@ namespace ModeX{
                 hex.connect();
             }
         }
-    };
+    
+        void kill_hexes(std::vector<bool>& to_kill){
+            Hexahedra& hex = mode.hex_id();
+            hex.disconnect();
+            hex.delete_cells(to_kill);
+        }
+
+};
 };
