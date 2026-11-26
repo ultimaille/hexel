@@ -16,7 +16,7 @@ struct RenderTarget {
     int height = 0;
 
     RenderTarget() = default;
-    RenderTarget(RenderTarget&&) = default;
+//  RenderTarget(RenderTarget&&) = default; // WHY? It copies the GL handles without zeroing the source, so moving one would delete the same textures twice!
     RenderTarget(const RenderTarget&) = delete;
     RenderTarget& operator=(const RenderTarget&) = delete;
 
