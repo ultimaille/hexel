@@ -1,7 +1,6 @@
 #pragma once
 #include <misc/purgatory.h>
 #include <layers/ssao.h>
-#include "algo.h"
 
 struct PickFacetInteractor : public Interactor {
 
@@ -107,8 +106,6 @@ struct CoreTestMode : public Mode {
     void create_box() {
         God::xcf.add("box");
         
-        // Note: add_mesh should be splitted into multiple overloads
-        // God::xcf.add_mesh(hex_path); 
         // auto hex_path = God::xcf.add_mesh<Hexahedra>("box", "hex");
         // Better, does not change nothing in term of code quantity, but 
         // no need to construct path before (that can be unvalid), function return valid path & pointer to new hex

@@ -10,7 +10,7 @@
 namespace fs = std::filesystem;
 
 // Helper to write a basic ustar header for a file
-void writeTarHeader(std::ofstream& tar, const std::string& filename, size_t file_size, bool is_directory) {
+void write_tar_header(std::ofstream& tar, const std::string& filename, size_t file_size, bool is_directory) {
     char header[512];
     std::memset(header, 0, 512);
 
@@ -59,21 +59,21 @@ bool create_tar(const std::string& path, const std::string& directory_path) {
     std::ofstream tar(path, std::ios::binary);
     if (!tar) return false;
 
-    auto addEntry = [&](const fs::path& path) -> bool {
-        bool isDirectory = fs::is_directory(path);
-        fs::path archivePath = fs::relative(path, base);
-        std::string name = archivePath.generic_string();
+    auto add_entry = [&](const fs::path& path) -> bool {
+        bool is_directory = fs::is_directory(path);
+        fs::path archive_path = fs::relative(path, base);
+        std::string name = archive_path.generic_string();
 
-        if (isDirectory && !name.empty() && name.back() != '/')
+        if (is_directory && !name.empty() && name.back() != '/')
             name += '/';
 
         // Basic ustar headers support at most 100 filename bytes.
         if (name.size() > 100) return false;
 
-        std::uintmax_t size = isDirectory ? 0 : fs::file_size(path);
-        writeTarHeader(tar, name, static_cast<size_t>(size), isDirectory);
+        std::uintmax_t size = is_directory ? 0 : fs::file_size(path);
+        write_tar_header(tar, name, static_cast<size_t>(size), is_directory);
 
-        if (!isDirectory) {
+        if (!is_directory) {
             std::ifstream src(path, std::ios::binary);
             if (!src) return false;
 
@@ -99,29 +99,29 @@ bool create_tar(const std::string& path, const std::string& directory_path) {
         return static_cast<bool>(tar);
     };
 
-    if (!addEntry(root)) return false;
+    if (!add_entry(root)) return false;
 
     for (const auto& entry : fs::recursive_directory_iterator(root)) {
-        if (!addEntry(entry.path())) return false;
+        if (!add_entry(entry.path())) return false;
     }
 
-    char endBlocks[1024] = {};
-    tar.write(endBlocks, sizeof(endBlocks));
+    char end_blocks[1024] = {};
+    tar.write(end_blocks, sizeof(end_blocks));
     return static_cast<bool>(tar);
 }
 
 static std::uint64_t parse_octal(const char* field, std::size_t length) {
     std::uint64_t value = 0;
-    bool foundDigit = false;
+    bool found_digit = false;
 
     for (std::size_t i = 0; i < length && field[i] != '\0'; ++i) {
         if (field[i] == ' ') continue;
         if (field[i] < '0' || field[i] > '7')
             throw std::runtime_error("Invalid octal field in tar header");
-        foundDigit = true;
+        found_digit = true;
         value = value * 8 + (field[i] - '0');
     }
-    return foundDigit ? value : 0;
+    return found_digit ? value : 0;
 }
 
 bool extract_tar(const std::string& path, const std::string& destination) {
@@ -135,14 +135,14 @@ bool extract_tar(const std::string& path, const std::string& destination) {
     std::array<char, 8192> buffer{};
 
     while (tar.read(header.data(), header.size())) {
-        bool allZero = true;
+        bool all_zero = true;
         for (char c : header) {
             if (c != '\0') {
-                allZero = false;
+                all_zero = false;
                 break;
             }
         }
-        if (allZero) return true; // End of archive
+        if (all_zero) return true; // End of archive
 
         std::string name(header.data(), strnlen(header.data(), 100));
         if (name.empty()) return false;

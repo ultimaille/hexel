@@ -39,9 +39,14 @@ namespace UM {
 
 
         MultiMesh& add(std::string str);
-        void add_mesh(MeshPath obj);
-        MeshPath add_hexahedra(const std::string& mm_name, const std::string& mesh_name);
+        MeshPath add_polylines(const std::string& mm_name, const std::string& mesh_name);
         MeshPath add_triangles(const std::string& mm_name, const std::string& mesh_name);
+        MeshPath add_quads(const std::string& mm_name, const std::string& mesh_name);
+        MeshPath add_polygons(const std::string& mm_name, const std::string& mesh_name);
+        MeshPath add_tetrahedra(const std::string& mm_name, const std::string& mesh_name);
+        MeshPath add_hexahedra(const std::string& mm_name, const std::string& mesh_name);
+        MeshPath add_wedges(const std::string& mm_name, const std::string& mesh_name);
+        MeshPath add_pyramids(const std::string& mm_name, const std::string& mesh_name);
 
         void kill_mesh(MeshPath obj);
         void kill_multimesh(const std::string& name);

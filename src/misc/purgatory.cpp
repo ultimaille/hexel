@@ -57,7 +57,7 @@ bool FilePopup(const char* id, std::string in, std::string& out, std::vector<con
     return done;
 }
 
-// Generated like a pig, doesn't work well
+// Generated
 bool SaveFilePopup(const char* id, std::string in, std::string& out, const std::vector<const char*>& extensions) {
     static std::filesystem::path path;
     static char filename[512] = {};
@@ -127,7 +127,7 @@ bool SaveFilePopup(const char* id, std::string in, std::string& out, const std::
 
         std::string label = (is_dir ? "[D] " : "") + p.filename().string();
 
-        if (ImGui::Selectable(label.c_str())) {
+        if (ImGui::Selectable(label.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick)) {
             if (is_dir) {
                 filename[0] = '\0';
                 if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
