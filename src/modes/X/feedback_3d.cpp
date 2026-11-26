@@ -9,7 +9,6 @@ MultiMeshPath::PolyLines::PolyLine FeedBack3D::pl_id(){ return root.xcf[name].po
 MultiMeshPath::Surfaces::Surface FeedBack3D::tri_id(){ return root.xcf[name].triangles[""]; }
 
 void FeedBack3D::activate(){
-    activated = true;
     God::xcf.add(name);
     int group = God::layers.add_group(name);
     MultiMesh& mm = root.xcf[name];
@@ -35,17 +34,21 @@ void FeedBack3D::activate(){
         layer.init(tri_id());
         layer.set_default_values();
     }
-    for (auto& group : God::layers.groups) if (group.name == name)
-            group.blend_op = Group::BlendOp::AVERAGE;
+    God::layers.find_group_ptr(name)->blend_op = Group::BlendOp::AVERAGE;;
+    //for (auto& group : God::layers.groups) if (group.name == name)
+    //        group.blend_op = Group::BlendOp::AVERAGE;
 
 }
 void FeedBack3D::desactivate(){
-    activated = false;
-    God::xcf.kill_multimesh(name);
+    if (activated()) God::xcf.kill_multimesh(name);
+}
+bool FeedBack3D::activated(){
+    return God::xcf.contains(name);
 }
 
+
 void FeedBack3D::begin_mesh_update(){
-    um_assert(activated);
+    um_assert(activated());
     MultiMesh& mm = root.xcf[name];
     std::vector<bool> edges_to_kill(mm.polylines[""].mesh.nedges(), true);
     mm.polylines[""].mesh.delete_edges(edges_to_kill);
@@ -56,7 +59,7 @@ void FeedBack3D::begin_mesh_update(){
 }
 
 void FeedBack3D::add_polyline(std::vector<vec3>& verts){
-    um_assert(activated);
+    um_assert(activated());
     MultiMeshPath mm_id = root.xcf[name];
     if (!mm_id.valid()) activate();
     MultiMesh& mm = God::xcf[name];
@@ -72,7 +75,7 @@ void FeedBack3D::add_polyline(std::vector<vec3>& verts){
 }
 
 void FeedBack3D::add_points(std::vector<vec3>& verts){
-    um_assert(activated);
+    um_assert(activated());
     MultiMeshPath mm_id = root.xcf[name];
     if (!mm_id.valid()) activate();
     MultiMesh& mm = God::xcf[name];
@@ -81,7 +84,7 @@ void FeedBack3D::add_points(std::vector<vec3>& verts){
 }
 
 void FeedBack3D::end_mesh_update(){
-    um_assert(activated);
+    um_assert(activated());
     root.xcf[name].pointset.broadcast(Event::UPDATED);
     root.xcf[name].polylines[""].broadcast(Event::UPDATED);
     root.xcf[name].triangles[""].broadcast(Event::UPDATED);

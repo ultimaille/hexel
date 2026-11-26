@@ -65,6 +65,9 @@ namespace ModeX{
 
         Interactor* has_lock=NULL;
 
+        bool drop_vertices_on_geometry=true;
+
+
     };
 
 }

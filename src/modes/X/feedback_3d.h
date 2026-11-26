@@ -8,7 +8,7 @@ struct FeedBack3D{
 
     FeedBack3D(std::string name = "feedback") :name(name){}
     std::string name;
-    bool activated = false;
+    bool activated();
     void activate();
     void desactivate();
     void begin_mesh_update();

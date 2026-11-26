@@ -57,6 +57,7 @@ namespace ModeX{
         }
         bool new_position_is_found = false;
         vec3 new_pos;
+        if (mode.drop_vertices_on_geometry)
         {// try to move the vertex on the geometry
             for (auto& d : picker.data) {
                 auto result = d.at(p);
@@ -163,7 +164,7 @@ namespace ModeX{
         }
         if (pts.size() == 1) if (!have_lock()) get_lock();
         um_assert(have_lock());
-        if (!feedback.activated) feedback.activate();
+        if (!feedback.activated()) feedback.activate();
         feedback.begin_mesh_update();
         feedback.add_polyline(pts);
         feedback.end_mesh_update();
@@ -284,6 +285,9 @@ namespace ModeX{
     }
     void SubModeBasic::define_gui() {
 
+        ImGui::Checkbox("Try to land vertices on geometry", &drop_vertices_on_geometry);
+        
+        ImGui::Separator();
         if (has_lock != NULL){
             std::string msg;
             if (has_lock == &interactor_move_vertex)

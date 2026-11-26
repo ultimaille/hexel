@@ -8,10 +8,11 @@ namespace ModeX{
     // algorithms that are ready to call from UI
     struct Commands {
 
-        Commands(AbstractMode& mode) :mode(mode) {
-            mode.scene().backup();
+        Commands(AbstractMode& mode,bool backup=true) :mode(mode) {
+            if (backup) mode.scene().backup();
         }
         static FeedBack3D feedback;
+
 
         ~Commands() {
             mode.scene().update_hex();
@@ -27,19 +28,17 @@ namespace ModeX{
                 Log::info("Hex state is broken");
                 return;
             }
-            //mode.scene().forget_last_backup();
             mode.hex_id().broadcast(Event::UPDATED);
         }
         AbstractMode& mode;
 
         void update_panic_in_xcf(std::vector<int>& conflicts_topo, std::vector<int>& conflicts_geom){
-            feedback.name = "panic";
             if (conflicts_topo.empty() && conflicts_geom.empty()){
-                if (feedback.activated) feedback.desactivate();
+                if (feedback.activated()) feedback.desactivate();
                 return;
             }
             Hexahedra& hex = mode.hex_id();
-            if (!feedback.activated) feedback.activate();
+            if (!feedback.activated()) feedback.activate();
             auto& layer = static_cast<PointSetLayer&>(God::layers[feedback.name + "Pts"]);
             layer.point_renderer.radius_in_pixel = 15;
             FOR(d, 3) layer.point_renderer.color[d] = d == 0 ? 255 : 0;

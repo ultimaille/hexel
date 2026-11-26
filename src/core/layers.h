@@ -32,8 +32,7 @@ struct Layer {
 struct Group {
     enum BlendOp {
         NONE,
-        AVERAGE,
-        ADD
+        AVERAGE
     };
 
     int id;
@@ -63,6 +62,13 @@ struct LayerManager: private Registry<Layer> {
     std::optional<std::reference_wrapper<Group>> find_group(Pred &&pred);
     std::optional<std::reference_wrapper<Group>> find_group(const std::string name);
     std::optional<std::reference_wrapper<Group>> find_group(int id);
+
+    // dsl pour le wrapper, mais j'ai besoin d'un truc qui fonctionne
+    inline Group* find_group_ptr(const std::string name){
+        auto bof = find_group(name);
+        if (!bof.has_value()) return NULL;
+        return &(bof.value().get());
+    }
 
     int add_group(const std::string& name);
     void remove_group(int group_id);

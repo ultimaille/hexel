@@ -2,29 +2,30 @@
 #include <modes/X/root_mode.h>
 
 namespace ModeX{
-
     StartingMode::StartingMode(RootMode& mode) : AbstractMode(mode){}
-
     void StartingMode::define_gui() {
 
-        if (ImGui::Button("Import From CAD")) ImGui::OpenPopup("CAD_file");
-        if (FilePopup("CAD_file", std::filesystem::path(mode.CAD_file).parent_path().string(), mode.CAD_file, { ".geogram",".meshb",".mesh" }))
+        if (ImGui::Button("Load/Import From CAD")) ImGui::OpenPopup("load_CAD_file");
+        if (FilePopup("load_CAD_file", std::filesystem::path(mode.CAD_file).parent_path().string(), mode.CAD_file, { ".geogram",".meshb",".mesh" }))
             if (!mode.CAD_file.empty()) {
+                //scene().reset_xcf();
                 mode.project_directory = mode.working_directory + std::filesystem::path(mode.CAD_file).stem().string();
-                std::filesystem::create_directory(mode.project_directory);
-                import_new_project_from_CAD(mode.CAD_file);
+                if (!std::filesystem::exists(mode.project_directory)){
+                    Log::info(mode.project_directory+" doesn't exist, need to import file " + mode.CAD_file);
+                    std::filesystem::create_directory(mode.project_directory);
+                    import_new_project_from_CAD(mode.CAD_file);
+                }
+                Log::info("Loading project " + mode.CAD_file);
                 scene().load_project(mode.project_directory);
-            }
+                
 
-        if (ImGui::Button("Load project")) ImGui::OpenPopup("Load project");
-        if (FilePopup("Load project", mode.project_directory, mode.project_directory, { "*" })) {
-            if (!mode.project_directory.empty()){
-                scene().load_project(mode.project_directory);
+                desactivate();
+                mode.active_mode_id = 1;
+                mode.sub_mode_basic_edit.activate();
+
+
             }
-        }
     }
-
-
     void StartingMode::import_new_project_from_CAD(std::string filename){
         const std::filesystem::path project_dir{ mode.project_directory };
         std::filesystem::create_directory(project_dir);
@@ -95,11 +96,7 @@ namespace ModeX{
             mm.save_to_path((project_dir / "mesh").string(), true);
         }
     }
-
     void StartingMode::handle(Event event) {
-        // forward mouse events to mouse reacts 
-        interactor_camera.handle(event);
-        interactor_layer_selection.handle(event);
+        Mode::handle(event);
     }
-
 };

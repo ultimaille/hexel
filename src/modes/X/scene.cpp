@@ -11,6 +11,7 @@
 #include <modes/X/mode_basic.h>
 #include <modes/X/scene.h>
 #include <modes/X/inspect.h>
+#include <modes/X/cmd.h>
 
 
 
@@ -113,7 +114,7 @@ namespace ModeX{
     void Scene::undo(){
         if (mode.undo_id == mode.undo_begin) {
             Log::add("Undo stack is empty");
-            return;
+            return;                                                                           
         }
         std::string dir = mode.working_directory + "undo" + std::to_string(mode.undo_id);
 
@@ -121,16 +122,15 @@ namespace ModeX{
         for (auto& [key, value] : God::xcf) mms.push_back(key);
         for (auto it : mms) God::xcf.kill_multimesh(it);
         God::events.queue.clear();
+        root.xcf["panic"].pointset.broadcast(Event::KILLED);
+        God::events.dispatch();
 
         reset_xcf();
         God::xcf.load_multimesh(dir + "/geom", true);
         God::xcf.load_multimesh(dir + "/mesh", true);
-        update_hex();
         mode.undo_id--;
+        Commands(mode.sub_mode(),false);
     }
-
-
-
 
     bool Scene::xcf_is_valid_for_editing(){
         if (!God::xcf.contains("mesh")) goto reset;
@@ -162,7 +162,7 @@ namespace ModeX{
 
             {// geomLock is created if needed, bound to locked vertices, and masked to show only locked vertices 
                 if (!God::layers.contains("geomLock")){
-                    PointSetLayer& layer = God::layers.add<PointSetLayer>("geomLock", 1);
+                    PointSetLayer& layer = God::layers.add<PointSetLayer>("geomLock", God::layers.find_group_ptr("geom")->id);
                     layer.group = 0;
                     layer.init(root.xcf["mesh"].pointset);
                 }
@@ -183,7 +183,7 @@ namespace ModeX{
         {// rendering of the hexahedral mesh
             {// hex points are shown with their lock attribute
                 God::layers["meshPts"].visible = true;
-                PointAttribute<int> emb_lock("emb_lock", God::xcf["mesh"].pointset_attributes, God::xcf["mesh"].pointset, 0);
+                PointAttribute<int> emb_lock("emb_lock", God::xcf["mesh"].pointset_attributes, God::xcf["mesh"].pointset, God::layers.find_group_ptr("geom")->id);
                 God::layers["meshPts"].bind_attribute(root.xcf["mesh"].pointset.attr_points["emb_lock"]);
                 {
                     auto& layer = static_cast<PointSetLayer&>(God::layers["meshPts"]);
@@ -208,7 +208,7 @@ namespace ModeX{
 
             {// mesh edges are rendered with plain style
                 if (!God::layers.contains("meshEdges")){
-                    PolyLineLayer& layer = God::layers.add<PolyLineLayer>("meshEdges", 1);
+                    PolyLineLayer& layer = God::layers.add<PolyLineLayer>("meshEdges", God::layers.find_group_ptr("mesh")->id);
                     layer.init(root.xcf["mesh"].polylines[""]);
                 }
                 God::layers["meshEdges"].visible = true;
@@ -219,7 +219,6 @@ namespace ModeX{
             if (group.name == "mesh")
                 group.blend_op = Group::BlendOp::AVERAGE;
     }
-
 
     // manage import/load/write of project
     void Scene::reset_xcf(){
@@ -234,7 +233,6 @@ namespace ModeX{
         MultiMesh& meshmm = God::xcf["mesh"];
         meshmm.save_to_path(directory + "mesh", true);
     }
-
     void Scene::load_project(std::string directory){
         reset_xcf();
         const std::filesystem::path project_dir{ directory };
@@ -251,6 +249,4 @@ namespace ModeX{
         generate_edge_graph(hex, pl);
         restore_default_scene_rendering();
     }
-
-
 };

@@ -14,7 +14,7 @@
 
 //#define WORKING_DIR std::string("/home/ssloy/+/hexel/build/NICO/")
 #define WORKING_DIR std::string("C:\\NICOTMP\\tmp\\")
-
+#define TEST_INPUT_DIR std::string("C:\\NICO\\data\\preprocessed\\hexel\\")
 
 
 namespace ModeX{
@@ -45,11 +45,13 @@ namespace ModeX{
     void RootMode::define_gui(){
 
         ImGui::Begin("ModeX", nullptr);
-        if (ImGui::Button("Backup")) scene().backup();
-        ImGui::SameLine();
+        //if (ImGui::Button("Backup")) scene().backup();
+        //ImGui::SameLine();
         if (ImGui::Button("Undo")) scene().undo();
         ImGui::SameLine();
         if (ImGui::Button("Reset GUI"))  scene().restore_default_scene_rendering();
+        ImGui::SameLine();
+        if (ImGui::Button("SAVE"))  scene().save_project(project_directory+"/");
         ImGui::Separator();
 
         const int nmaxsubmode = 10;
@@ -68,16 +70,14 @@ namespace ModeX{
         ImGui_help("Choose the current submode\n" "hopefully you can go there");
         sub_mode().define_gui();
         ImGui::End();
-
     }
-
 
 
 
 
     void RootMode::handle(Event event) {
         Mode::handle(event);
-        sub_mode().handle(event);
+        sub_mode().handle(event);                                                  
     };
 
 
@@ -93,7 +93,7 @@ namespace ModeX{
         sub_modes.push_back(&sub_mode_start);
         sub_modes.push_back(&sub_mode_basic_edit);
 
-        if (1){
+        if (0){
             project_directory = WORKING_DIR + "B1";
             sub_mode_start.import_new_project_from_CAD(CAD_file);
             active_mode_id = 1;
