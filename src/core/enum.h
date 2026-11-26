@@ -26,10 +26,17 @@ namespace enum_detail {
         }
 }
 
-#define ENUM(Name, ...)                                                                                      \
-    enum class Name { __VA_ARGS__ };                                                                         \
-    inline constexpr auto Name##_names = enum_detail::split<enum_detail::count(#__VA_ARGS__)>(#__VA_ARGS__); \
-    constexpr std::string_view to_string(Name e) { return Name##_names[static_cast<std::size_t>(e)]; }
+#define ENUM(Name, ...)                                                                                          \
+    struct Name {                                                                                                \
+        enum class Value { __VA_ARGS__ };                                                                        \
+        using enum Value;                                                                                        \
+        static constexpr auto names = enum_detail::split<enum_detail::count(#__VA_ARGS__)>(#__VA_ARGS__);        \
+        Value value{};                                                                                           \
+        constexpr Name() = default;                                                                              \
+        constexpr Name(Value v) : value(v) {}                                                                    \
+        constexpr operator Value() const { return value; }                                                       \
+        friend constexpr std::string_view to_string(Name e) { return names[static_cast<std::size_t>(e.value)]; } \
+    };
 
 #endif //__ENUM_H__
 
