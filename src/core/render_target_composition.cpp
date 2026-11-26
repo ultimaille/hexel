@@ -62,6 +62,20 @@ void RenderTargetComposition::bind(int group_id) {
     }
 }
 
+void RenderTargetComposition::render_groups() {
+    for (auto &group : God::layers.groups) {
+        bind(group.id);
+        God::layers.render(group.id);
+    }
+}
+
+void RenderTargetComposition::render_ids() {
+    if (targets.empty()) return;
+    for (auto &[id, t] : targets) t.draw_ids(true);
+    render_groups();
+    for (auto &[id, t] : targets) t.draw_ids(false);
+}
+
 void RenderTargetComposition::end() {
     if (!targets.size()) return;
 

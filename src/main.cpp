@@ -52,10 +52,7 @@ int main(int argc, const char* argv[]) {
 
         God::context.begin_frame();
         
-        for (auto &group : God::layers.groups) {
-            God::context.render_target.bind(group.id);
-            God::layers.render(group.id);
-        }
+        God::context.render_target.render_groups();
         
         God::events.dispatch();
 
