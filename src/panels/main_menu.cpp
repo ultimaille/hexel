@@ -25,6 +25,14 @@ void MainMenu::generate_gui() {
                     God::modes.current_mode = i;
             ImGui::EndMenu();
         }
+        {   // framerate display, right-aligned (ImGui averages over the last ~60 frames)
+            float fps = ImGui::GetIO().Framerate;
+            char buf[64];
+            snprintf(buf, sizeof(buf), "%.1f FPS", fps);
+            float text_w = ImGui::CalcTextSize(buf).x;
+            ImGui::SameLine(ImGui::GetWindowWidth() - text_w - ImGui::GetStyle().ItemSpacing.x * 2);
+            ImGui::TextUnformatted(buf);
+        }
         ImGui::EndMainMenuBar();
     }
 
