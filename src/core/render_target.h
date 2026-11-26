@@ -15,6 +15,8 @@ struct RenderTarget {
     int width  = 0;
     int height = 0;
 
+    bool ids_enabled = false;
+
     RenderTarget() = default;
 //  RenderTarget(RenderTarget&&) = default; // WHY? It copies the GL handles without zeroing the source, so moving one would delete the same textures twice!
     RenderTarget(const RenderTarget&) = delete;
@@ -32,6 +34,8 @@ struct RenderTarget {
     static void bind_default(int w, int h);
 
     void clear(float r , float g , float b , float a ) const;
+
+    void draw_ids(bool on);
 
     void destroy();
 

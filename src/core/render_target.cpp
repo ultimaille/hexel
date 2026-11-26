@@ -62,12 +62,29 @@ RenderTarget::~RenderTarget() {
         float color_clear[4] = { r, g, b, a };
         glClearBufferfv(GL_COLOR, 0, color_clear);
 
-        // Clear attachment 1 & 2 (layer and primitive IDs) to zero/background
-        float zero_clear[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-        glClearBufferfv(GL_COLOR, 1, zero_clear);
-        glClearBufferfv(GL_COLOR, 2, zero_clear);
+        // Clear attachment 1 & 2 (layer and primitive IDs) to zero/background, only when they are written
+        if (ids_enabled) {
+            float zero_clear[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+            glClearBufferfv(GL_COLOR, 1, zero_clear);
+            glClearBufferfv(GL_COLOR, 2, zero_clear);
+        }
 
         glClear(GL_DEPTH_BUFFER_BIT);
+    }
+
+static void set_draw_buffers(bool on) {
+    constexpr GLenum draw_buffers[] = {
+        GL_COLOR_ATTACHMENT0,
+        GL_COLOR_ATTACHMENT1,
+        GL_COLOR_ATTACHMENT2
+    };
+    glDrawBuffers(on ? 3 : 1, draw_buffers);
+}
+
+    void RenderTarget::draw_ids(bool on) {
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+        set_draw_buffers(on);
+        ids_enabled = on;
     }
 
     void RenderTarget::destroy() {
@@ -149,13 +166,7 @@ RenderTarget::~RenderTarget() {
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, layer, 0);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, primitive, 0);
 
-        constexpr GLenum draw_buffers[] = {
-            GL_COLOR_ATTACHMENT0,
-            GL_COLOR_ATTACHMENT1,
-            GL_COLOR_ATTACHMENT2
-        };
-
-        glDrawBuffers(3, draw_buffers);
+        set_draw_buffers(ids_enabled);
 
         GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
         if (status != GL_FRAMEBUFFER_COMPLETE)

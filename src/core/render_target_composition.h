@@ -29,6 +29,12 @@ struct RenderTargetComposition {
 
     void bind(int group_id);
 
+    // Draw all layer groups into their render targets (color + depth only)
+    void render_groups();
+
+    // Re-render all groups with the layer/primitive ID attachments enabled (for picking)
+    void render_ids();
+
     void clear(float r, float g, float b, float a) {
         composite.clear(r, g, b, a);
     }

@@ -18,7 +18,10 @@ Picker::Picker() :
 
 void Picker::reset() {
     data.clear();
-    
+
+    // ID attachments are not written during normal frames: render them now
+    God::context.render_target.render_ids();
+
     for (auto buffer_idx : God::context.render_target.buffer_indexes()) {
         BufferData r(w, h, buffer_idx);
         God::context.render_target.targets[buffer_idx].read_framebuffer(r.layer_ids, 0, 0, w, h, 1);
