@@ -29,12 +29,25 @@ void RenderTargetComposition::blend(GLuint a, GLuint b, Group::BlendOp blend_op)
 }
 
 void RenderTargetComposition::begin() {
-    // which groups need their own render target this frame
+    // Which groups need their own render target this frame.
+    // A target is owned by the first group and by every group with a blend op;
+    // groups with blend op NONE draw into the target of the closest owner above them.
+    // A target is skipped (no clear, no blend pass) when nothing in its chain is visible.
+    auto has_visible_layer = [](const Group &group) {
+        if (!group.visible) return false;
+        for (Layer &layer : God::layers.from_group(group.id))
+            if (layer.visible) return true;
+        return false;
+    };
+
     std::set<int> needed;
+    int owner = -1;
     for (int i = 0; i < God::layers.groups.size(); ++i) {
         auto &group = God::layers.groups[i];
         if (i == 0 || group.blend_op != Group::BlendOp::NONE)
-            needed.insert(group.id);
+            owner = group.id;
+        if (has_visible_layer(group))
+            needed.insert(owner);
     }
 
     // drop targets that are no longer needed (group deleted or blend op set to NONE)
