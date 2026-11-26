@@ -41,24 +41,32 @@ int main(int argc, const char* argv[]) {
         std::string path = argv[1];
     }
 
-    while (God::context.window_is_active()){
+    constexpr int settle_frames = 3;
+    int redraw_frames = settle_frames;
+
+    while (God::context.window_is_active()) {
         God::mouse.wheel_speed = 0;
         God::mouse.previous = God::mouse.current;
-        glfwPollEvents();
+        if (redraw_frames > 0) {
+            glfwPollEvents();
+        } else {
+            glfwWaitEventsTimeout(.5);
+            redraw_frames = settle_frames;
+        }
         if (!ImGui::GetIO().WantCaptureKeyboard || !ImGui::GetIO().WantCaptureMouse)
             God::keys.update();
-
         God::modes.update();
-
         God::context.begin_frame();
-        
         God::context.render_target.render_groups();
-        
         God::events.dispatch();
 
         God::panels.show_gui();
         God::modes.define_gui();
         God::context.end_frame();
+
+        if (!God::events.queue.empty())
+            redraw_frames = settle_frames;
+        --redraw_frames;
     }
     God::layers.destroy();
     God::context.destroy();

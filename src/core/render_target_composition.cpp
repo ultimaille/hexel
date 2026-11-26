@@ -1,5 +1,6 @@
 #include "render_target_composition.h"
 #include <set>
+#include <algorithm>
 
 void RenderTargetComposition::init(int w, int h) {
     God::shaders.create_if_needed(std::string(SHADERS_DIR), "blend");
@@ -29,12 +30,32 @@ void RenderTargetComposition::blend(GLuint a, GLuint b, Group::BlendOp blend_op)
 }
 
 void RenderTargetComposition::begin() {
+    auto has_visible_layer = [](const Group &group) {
+        if (!group.visible) return false;
+        for (Layer &layer : God::layers.from_group(group.id))
+            if (layer.visible) return true;
+        return false;
+    };
+
     // which groups need their own render target this frame
     std::set<int> needed;
+    int owner = -1;
     for (int i = 0; i < God::layers.groups.size(); ++i) {
         auto &group = God::layers.groups[i];
         if (i == 0 || group.blend_op != Group::BlendOp::NONE)
-            needed.insert(group.id);
+            owner = group.id;
+        if (has_visible_layer(group))
+            needed.insert(owner);
+    }
+
+    // the first group draws straight into the composite when it does not bleny to avoid an extra copy
+    direct_group = -1;
+    if (!God::layers.groups.empty()) {
+        auto &first = God::layers.groups[0];
+        if (first.blend_op == Group::BlendOp::NONE && needed.contains(first.id)) {
+            direct_group = first.id;
+            needed.erase(first.id);
+        }
     }
 
     // drop targets that are no longer needed (group deleted or blend op set to NONE)
@@ -56,7 +77,10 @@ void RenderTargetComposition::bind(int group_id) {
     // Only bind framebuffer if the target exists for group
     // This behavior implicitly don't bind if there is no blending,
     // enabling drawing in the same render target
-    if (targets.contains(group_id)) {
+    if (group_id == direct_group) {
+        composite.clear(background_color[0], background_color[1], background_color[2], background_color[3]); // clear & bind framebuffer
+        cur_target = group_id;
+    } else if (targets.contains(group_id)) {
         targets[group_id].clear(background_color[0], background_color[1], background_color[2], background_color[3]); // clear & bind framebuffer
         cur_target = group_id;
     }
@@ -70,16 +94,26 @@ void RenderTargetComposition::render_groups() {
 }
 
 void RenderTargetComposition::render_ids() {
-    if (targets.empty()) return;
-    for (auto &[id, t] : targets) t.draw_ids(true);
+    if (targets.empty() && direct_group == -1)
+        return;
+    for (auto &[id, t] : targets)
+        t.draw_ids(true);
+    if (direct_group != -1)
+        composite.draw_ids(true);
     render_groups();
-    for (auto &[id, t] : targets) t.draw_ids(false);
+    for (auto &[id, t] : targets)
+        t.draw_ids(false);
+    if (direct_group != -1)
+        composite.draw_ids(false);
 }
 
 void RenderTargetComposition::end() {
-    if (!targets.size()) return;
+    // The composite is cleared exactly once per frame: in bind() when the direct group draws into it, here otherwise
+    if (direct_group == -1)
+        composite.clear(background_color[0], background_color[1], background_color[2], background_color[3]);
 
-    composite.clear(background_color[0], background_color[1], background_color[2], background_color[3]);
+    if (targets.empty()) return;
+
     // Merge all color attachments into main render target, keeping its depth
     glBindFramebuffer(GL_FRAMEBUFFER, composite.framebuffer);
     glEnable(GL_DEPTH_TEST);
