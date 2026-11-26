@@ -51,8 +51,10 @@ void FeedBack3D::begin_mesh_update(){
     um_assert(activated());
     MultiMesh& mm = root.xcf[name];
     std::vector<bool> edges_to_kill(mm.polylines[""].mesh.nedges(), true);
+    mm.polylines[""].mesh.disconnect();
     mm.polylines[""].mesh.delete_edges(edges_to_kill);
     std::vector<bool> triangles_to_kill(mm.triangles[""].mesh.nfacets(), true);
+    mm.triangles[""].mesh.disconnect();
     mm.triangles[""].mesh.delete_facets(triangles_to_kill);
     std::vector<bool> points_to_kill(mm.pointset.size(), true);
     mm.pointset.delete_points(points_to_kill);

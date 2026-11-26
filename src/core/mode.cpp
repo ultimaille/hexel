@@ -45,16 +45,18 @@ void Mode::generate_interactor_gui(){
         it->generate_gui();
 }
 
-void Mode::handle(Event event){
 
-    for (auto& it : interactors){
-        if (event.who == root.mouse) {
-            it->handle(event);
-            continue;
-        }
-    }
+using Clock = std::chrono::high_resolution_clock;
+using namespace std::literals::chrono_literals;
+void Mode::handle(Event event){
+    if (event.who != root.mouse) return;
+
+    for (auto& it : interactors) it->handle(event);
+    
 
     static vec2 pos_on_press[3];
+    static Clock::time_point press_time[3] = { Clock::now(),Clock::now(),Clock::now() };
+                                                     
 
     if (event.who == root.mouse && !ImGui::GetIO().WantCaptureMouse) {
         static int npixels_tolerance_to_detect_click = 5;
@@ -62,6 +64,8 @@ void Mode::handle(Event event){
         vec2 b = { God::mouse.current.x,  God::mouse.current.y };
         bool in_click_zone[3];
         FOR(button, 3)  in_click_zone[button] = (b - pos_on_press[button]).norm2() < npixels_tolerance_to_detect_click * npixels_tolerance_to_detect_click;
+        //FOR(button, 3)  in_click_zone[button] = in_click_zone[button] || (Clock::now() - press_time[button] < .1s);
+
         const double wheel = God::mouse.wheel_speed;
 
         if (wheel != 0) for (auto& it : interactors) it->on_wheel(wheel);
@@ -74,6 +78,7 @@ void Mode::handle(Event event){
         // send pressed event
         FOR(button, 3) if (God::mouse.current.buttons[button] && !God::mouse.previous.buttons[button]) {
             pos_on_press[button] = b;
+            press_time[button] = Clock::now();
             for (auto& it : interactors) it->on_press(button, b);
         }
         // send released and clicked event

@@ -1,10 +1,13 @@
 #pragma once
 #include <modes/X/abstract_mode.h>
 #include <modes/X/feedback_3d.h>
+#include <modes/X/cmd.h>
+
 
 namespace ModeX{
     struct RootMode;
     struct SubModeBasic;
+    ENUM(QuadToHexStrategy, OFFSET_PROP_TO_QUAD, RAY_TRACE, FRAME_FIELD);
 
 
     struct BasicInteractor : public Interactor{
@@ -50,6 +53,7 @@ namespace ModeX{
 
 
 
+
     struct SubModeBasic : public AbstractMode {
         inline void activate(){ Log::add("BasicEditMode activated"); }
         virtual std::string name(){ return "Basic"; }
@@ -66,8 +70,9 @@ namespace ModeX{
         Interactor* has_lock=NULL;
 
         bool drop_vertices_on_geometry=true;
-
-
+        
+        QuadToHexStrategy::Choice quad_to_hex_strategy = QuadToHexStrategy::RAY_TRACE;
+                     
     };
 
 }

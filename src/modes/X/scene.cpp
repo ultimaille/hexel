@@ -8,11 +8,11 @@
 #include <modes/X/mode_start.h>
 #include <modes/X/mode_layer_split.h>
 #include <modes/X/mode_feature.h>
+#include <modes/X/cmd.h>
 #include <modes/X/mode_basic.h>
 #include <modes/X/scene.h>
 #include <modes/X/inspect.h>
-#include <modes/X/cmd.h>
-
+//
 
 
 namespace ModeX{
@@ -31,6 +31,8 @@ namespace ModeX{
     bool Scene::update_hex(){
         Hexahedra& hex = hex_id();
         PolyLine& pl = pl_id();
+        pl.disconnect();
+        hex.disconnect();
         {//clean_up
             std::vector<bool> to_kill(pl.nedges(), true);
             pl.delete_edges(to_kill);
@@ -245,8 +247,9 @@ namespace ModeX{
         PolyLine& pl = God::xcf["mesh"].polylines[""].mesh;
         pl.points = hex.points;
 
-        EdgeAttribute<int> edge2halfedge("hex_halfedge", God::xcf["mesh"].polylines[""].attributes, God::xcf["mesh"].polylines[""].mesh);
-        generate_edge_graph(hex, pl);
+        //EdgeAttribute<int> edge2halfedge("hex_halfedge", God::xcf["mesh"].polylines[""].attributes, God::xcf["mesh"].polylines[""].mesh);
+        //generate_edge_graph(hex, pl);
+        update_hex();
         restore_default_scene_rendering();
     }
 };

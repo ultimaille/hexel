@@ -231,7 +231,7 @@ void SegmentRenderer::update(PolyLine& pl, EdgeAttribute<bool>& visible, PointAt
 }
 
 void SegmentRenderer::render(){
-    um_assert(no_gl_error());
+    //um_assert(no_gl_error());
     glEnable(GL_DEPTH_TEST);
     glUseProgram(shaderProgram);
 

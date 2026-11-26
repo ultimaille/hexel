@@ -40,7 +40,7 @@ struct Picker{
         }
     };
 
-    Result at(vec2 uv, int buffer = 0);
+    Result at(vec2 uv, int buffer);
 
 
     std::vector<BufferData> data;

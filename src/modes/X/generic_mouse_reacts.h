@@ -38,8 +38,10 @@ namespace ModeX{
         inline void on_click(int button, vec2 p) {
             if (!key_state_is_OK()) return;
             if (button != active_button) return;
-            Picker::Result pr = picker.at(p);
-            picked.push_back(pr);
+            for (auto& d : picker.data) {
+                Picker::Result pr = d.at(p);
+                picked.push_back(pr);
+            }
             done = true;
         }
 
@@ -63,11 +65,15 @@ namespace ModeX{
             path.push_back(p);
             if (path.size() < 2) return;
             FOR(s, path.size() - 1) for (vec2 P : iter_raster_line(path[s], path[s + 1])){
-                Picker::Result pr = picker.at(P);
-                bool already_in = false;
-                for (auto pr_iter : picked)
-                    already_in = already_in || (pr.layer_id == pr_iter.layer_id && pr.raw_primitive_id == pr_iter.raw_primitive_id);
-                if (!already_in) picked.push_back(pr);
+                
+                for (auto& d : picker.data) {
+
+                    Picker::Result pr = d.at(P);
+                    bool already_in = false;
+                    for (auto pr_iter : picked)
+                        already_in = already_in || (pr.layer_id == pr_iter.layer_id && pr.raw_primitive_id == pr_iter.raw_primitive_id);
+                    if (!already_in) picked.push_back(pr);
+                }
             }
             done = true;
         }
