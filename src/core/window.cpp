@@ -108,7 +108,7 @@ void WindowContext::init_glfw(int& w, int& h) {
 
     um_assert(window != nullptr);
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(1);
+    glfwSwapInterval(0); // 0: do not vsync
 }
 
 void WindowContext::init_glad() {
