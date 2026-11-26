@@ -24,9 +24,9 @@ void Picker::reset() {
 
     for (auto buffer_idx : God::context.render_target.buffer_indexes()) {
         BufferData r(w, h, buffer_idx);
-        God::context.render_target.targets[buffer_idx].read_framebuffer(r.layer_ids, 0, 0, w, h, 1);
-        God::context.render_target.targets[buffer_idx].read_framebuffer(r.primitive_ids, 0, 0, w, h, 2);
-        God::context.render_target.targets[buffer_idx].read_depth(r.depths, 0, 0, w, h);
+        God::context.render_target.target(buffer_idx).read_framebuffer(r.layer_ids, 0, 0, w, h, 1);
+        God::context.render_target.target(buffer_idx).read_framebuffer(r.primitive_ids, 0, 0, w, h, 2);
+        God::context.render_target.target(buffer_idx).read_depth(r.depths, 0, 0, w, h);
         data.push_back(r);
     }
 }
@@ -70,7 +70,8 @@ vec3 Picker::Result::point() {
     float depth_ndc = depth * 2.f - 1.f; // Convert to NDC range [-1, 1]
 
     // Screen coordinates to NDC
-    vec2 ndc = God::context.render_target.targets[buffer_idx].get_ndc(x, y);
+    // all targets have the composite's size; the picked group's target may be gone by now
+    vec2 ndc = God::context.render_target.composite.get_ndc(x, y);
 
     // Clip space coordinates
     vec4 clip_space{ndc.x, ndc.y, depth_ndc, 1.0f};

@@ -43,18 +43,26 @@ struct RenderTargetComposition {
         return composite.valid();
     }
 
+    // ids of the groups that own a render target this frame (including the direct group), sorted
     std::vector<int> buffer_indexes() {
         std::vector<int> result;
+        if (direct_group != -1) result.push_back(direct_group);
         for (auto &[buffer_idx, _] : targets) {
             result.push_back(buffer_idx);
         }
+        std::sort(result.begin(), result.end());
         return result;
+    }
+
+    // render target a group owns: always go through this, never index `targets` directly
+    RenderTarget& target(int group_id) {
+        return group_id == direct_group ? composite : targets.at(group_id);
     }
 
     void destroy();
 
     RenderTarget& get_binded_target() {
-        return targets[cur_target];
+        return target(cur_target);
     }
 
     GLuint quad_vao = 0;
@@ -63,6 +71,9 @@ struct RenderTargetComposition {
     RenderTarget composite;
     std::map<int, RenderTarget> targets;
     vec4 background_color = { 0,0,0,1 };
+
+    // group whose chain is drawn straight into `composite` (the first group when its blend op is NONE and its chain has something visible)
+    int direct_group = -1;
 
 private:
 

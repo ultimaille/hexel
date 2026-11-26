@@ -7,8 +7,8 @@ struct PickFacetInteractor : public Interactor {
 
     // Note: put this function somewhere else (in camera for example ?) can be useful
     vec2 proj(vec3 a) {
-        const int w = God::context.render_target.targets[0].width;
-        const int h = God::context.render_target.targets[0].height;
+        const int w = God::context.render_target.width;
+        const int h = God::context.render_target.height;
 
         auto p = God::camera.projection_matrix() * God::camera.view_matrix() * vec4(a, 1.);
         auto ndc = vec2(p[0], p[1]) / p[3];
