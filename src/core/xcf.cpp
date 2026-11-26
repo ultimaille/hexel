@@ -308,78 +308,97 @@ MeshPath XCF::add_triangles(const std::string& mm_name, const std::string& mesh_
     return path;
 }
 
-bool XCF::save(std::string filename, bool geogram_compatible) {
-    // TODO create dir in temp directory & after create tar
-    const std::string tar_filename = filename + ".tar";
-    const fs::path path = filename;
+// Directory clean up guard
+struct TempDirCleanup {
+    fs::path path;
 
-    if (fs::exists(tar_filename)) {
-        if (!fs::remove(tar_filename)) {
+    ~TempDirCleanup() {
+        std::error_code ec;
+        fs::remove_all(path, ec);
+        if (ec)
+            Log::error("XCF::load: failed to remove temporary directory '" + path.string() + "': " + ec.message());
+    }
+};
+
+bool XCF::save(std::string fullpath, bool geogram_compatible) {
+    fs::path archive = fullpath;
+    if (archive.extension() != ".tar")
+        archive += ".tar";
+
+    // Overwrite
+    if (fs::exists(archive)) {
+        if (!fs::remove(archive)) {
             return false;
         }
     }
 
-    if (!fs::create_directory(path)) {
-        Log::error("Unable to create directory at " + filename + " on XCF::save_to_path");
+    fs::path temp = fs::temp_directory_path() / (archive.filename().string() + "_xcf_save");
+    
+    // Remove if a previous temp directory already exists
+    TempDirCleanup{temp};
+
+    if (!fs::create_directory(temp)) {
+        Log::error("Unable to create temporary directory at " + temp.string() + " on XCF::save_to_path");
+        return false;
+    }
+
+    // clean up guard, remove temp on destroy
+    // so it remove on exception, return...
+    TempDirCleanup cleanup{temp}; 
+
+    fs::path temp_root = temp / "xcf";
+    if (!fs::create_directory(temp_root)) {
+        Log::error("Unable to create temporary directory at " + temp_root.string() + " on XCF::save_to_path");
         return false;
     }
 
     for (auto &[mm_name, mm] : *this) {
-        auto mm_path = path / mm_name;
-        mm.save_to_path(mm_path.string(), geogram_compatible);
+        auto mm_temp_path = temp_root / mm_name;
+        mm.save_to_path(mm_temp_path.string(), geogram_compatible);
     }
 
-    if (!create_tar(tar_filename, filename)) {
+    if (!create_tar(archive.string(), temp_root.string())) {
         return false;
-    }
-
-    // Clean up
-    std::error_code ec;
-    fs::remove_all(path, ec);
-    if (ec) {
-        Log::error("XCF::load: failed to remove temporary directory '" + path.string() + "': " + ec.message());
     }
 
     return true;
 }
 
-bool XCF::load(std::string filename) {
-    const fs::path archive = filename;
-    const std::string suffix = ".tar";
-    const std::string archive_name = archive.filename().string();
+bool XCF::load(std::string fullpath) {
+    fs::path archive = fullpath;
 
     if (archive.extension() != ".tar") {
-        Log::error("XCF::load: expected a .tar file: " + filename);
+        Log::error("XCF::load: expected a .tar file: " + fullpath);
         return false;
     }
 
     if (!fs::is_regular_file(archive)) {
-        Log::error("XCF::load: archive not found: " + filename);
+        Log::error("XCF::load: archive not found: " + fullpath);
         return false;
     }
 
-    const fs::path directory_name = archive.stem().stem();
+    fs::path temp = fs::temp_directory_path() / (archive.filename().string() + "_xcf_load");
 
-    const fs::path temp = fs::temp_directory_path() / (directory_name.string() + "_xcf_load");
-    std::error_code ec;
-    fs::remove_all(temp, ec);
-    if (ec) {
-        Log::error("XCF::load: failed to remove temporary directory '" + temp.string() + "': " + ec.message());
+    // Remove if a previous temp directory already exists
+    TempDirCleanup{temp};
+
+    if (!fs::create_directories(temp)) {
+        Log::error("Unable to create temporary directory at " + temp.string() + " on XCF::save_to_path");
         return false;
     }
 
-    fs::create_directories(temp);
+    // clean up guard, remove temp on destroy
+    // so it remove on exception, return...
+    TempDirCleanup cleanup{temp}; 
 
     if (!extract_tar(archive.string(), temp.string())) {
-        Log::error("XCF::load: failed to extract archive: " + filename);
-        fs::remove_all(temp, ec);
+        Log::error("XCF::load: failed to extract archive: " + fullpath);
         return false;
     }
 
-    const fs::path saved_dir = temp / directory_name;
+    fs::path saved_dir = temp / "xcf";
     if (!fs::is_directory(saved_dir)) {
         Log::error("XCF::load: expected directory not found in archive: " + saved_dir.string());
-        fs::remove_all(temp, ec);
         return false;
     }
 
@@ -390,10 +409,5 @@ bool XCF::load(std::string filename) {
         load_multimesh(entry.path().string(), true);
     }
 
-    fs::remove_all(temp, ec);
-    if (ec) {
-        Log::error("XCF::load: failed to remove temporary directory '" + temp.string() + "': " + ec.message());
-    }
-    
     return true;
 }
