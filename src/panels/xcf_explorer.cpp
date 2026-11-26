@@ -122,24 +122,15 @@ void XCFExplorer::generate_gui() {
                 ImGui::InputText(label("", "gloglo"), tmp, 1024);
 
                 if (ImGui::MenuItem(label("Polyline", mm_name))){
-                    God::xcf.add_mesh(root.xcf[mm_name].polylines[tmp]);
+                    God::xcf.add_polylines(mm_name, tmp);
                     ImGui::CloseCurrentPopup();
                 }
                 if (ImGui::MenuItem(label("Triangles", mm_name))){
-                    God::xcf.add_mesh(root.xcf[mm_name].triangles[tmp]);
+                    God::xcf.add_triangles(mm_name, tmp);
                     ImGui::CloseCurrentPopup();
                 }
-                // TODO: uncomment when layers implemented !
-                // if (ImGui::MenuItem(label("Quads", mm_name))){
-                    // God::xcf.add_mesh(ObjectId(ObjectType::QUADS, { mm_name,tmp }));
-                    // ImGui::CloseCurrentPopup();
-                // }
-                // if (ImGui::MenuItem(label("Tetrahedra", mm_name))){
-                    // God::xcf.add_mesh(ObjectId(ObjectType::TETRAHEDRA, { mm_name,tmp }));
-                    // ImGui::CloseCurrentPopup();
-                // }
                 if (ImGui::MenuItem(label("Hexahedra", mm_name))){
-                    God::xcf.add_mesh(root.xcf[mm_name].hexahedra[tmp]);
+                    God::xcf.add_hexahedra(mm_name, tmp);
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::EndMenu();

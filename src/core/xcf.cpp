@@ -228,69 +228,13 @@ MultiMesh& XCF::operator[](std::string str) {
     return  std::map<std::string, MultiMesh>::operator[](str);
 }
 
-void XCF::add_mesh(MeshPath obj) {
-    um_assert(obj.path.size() == 4);
-
-    std::string mm_name = obj.path[1];
-    um_assert(contains(mm_name));
-    std::string mesh = obj.path[3];
-    std::string mesh_type = obj.path[2];
-    MultiMesh& mm = (*this)[mm_name];
-    auto mmpath = obj.parent();
-
-    if (obj.has_prefix(mmpath.polylines)) {
-        if (!mm.polylines.contains(mesh))
-            mm.polylines.try_emplace(mesh); 
-        obj.broadcast(Event::CREATED); 
-        return;
-    }  else if (obj.has_prefix(mmpath.triangles)) {
-        if (!mm.triangles.contains(mesh))
-            mm.triangles.try_emplace(mesh); 
-        obj.broadcast(Event::CREATED); 
-        return;
-    }  else if (obj.has_prefix(mmpath.quads)) {
-        if (!mm.quads.contains(mesh))
-            mm.quads.try_emplace(mesh); 
-        obj.broadcast(Event::CREATED); 
-        return;
-    }  else if (obj.has_prefix(mmpath.polygons)) {
-        if (!mm.polygons.contains(mesh))
-            mm.polygons.try_emplace(mesh); 
-        obj.broadcast(Event::CREATED); 
-        return;
-    }  else if (obj.has_prefix(mmpath.tetrahedra)) {
-        if (!mm.tetrahedra.contains(mesh))
-            mm.tetrahedra.try_emplace(mesh); 
-        obj.broadcast(Event::CREATED); 
-        return;
-    }  else if (obj.has_prefix(mmpath.hexahedra)) {
-        if (!mm.hexahedra.contains(mesh))
-            mm.hexahedra.try_emplace(mesh); 
-        obj.broadcast(Event::CREATED); 
-        return;
-    }  else if (obj.has_prefix(mmpath.wedges)) {
-        if (!mm.wedges.contains(mesh))
-            mm.wedges.try_emplace(mesh); 
-        obj.broadcast(Event::CREATED); 
-        return;
-    }  else if (obj.has_prefix(mmpath.pyramids)) {
-        if (!mm.pyramids.contains(mesh))
-            mm.pyramids.try_emplace(mesh); 
-        obj.broadcast(Event::CREATED); 
-        return;
-    }  else {
-        um_assert(!"Something is missing");
-    }
-    Log::error("Attempt to create a mesh that already exists");
-}
-
-MeshPath XCF::add_hexahedra(const std::string& mm_name, const std::string& mesh_name) {
+MeshPath XCF::add_polylines(const std::string& mm_name, const std::string& mesh_name) {
     MultiMesh& mm = (*this)[mm_name];
 
-    MeshPath path = root.xcf[mm_name].hexahedra[mesh_name];
+    MeshPath path = root.xcf[mm_name].polylines[mesh_name];
 
-    if (!mm.hexahedra.contains(mesh_name))
-        mm.hexahedra.try_emplace(mesh_name); 
+    if (!mm.polylines.contains(mesh_name))
+        mm.polylines.try_emplace(mesh_name); 
 
     path.broadcast(Event::CREATED); 
     return path;
@@ -307,6 +251,79 @@ MeshPath XCF::add_triangles(const std::string& mm_name, const std::string& mesh_
     path.broadcast(Event::CREATED); 
     return path;
 }
+
+MeshPath XCF::add_quads(const std::string& mm_name, const std::string& mesh_name) {
+    MultiMesh& mm = (*this)[mm_name];
+
+    MeshPath path = root.xcf[mm_name].quads[mesh_name];
+
+    if (!mm.quads.contains(mesh_name))
+        mm.quads.try_emplace(mesh_name); 
+
+    path.broadcast(Event::CREATED); 
+    return path;
+}
+
+MeshPath XCF::add_polygons(const std::string& mm_name, const std::string& mesh_name) {
+    MultiMesh& mm = (*this)[mm_name];
+
+    MeshPath path = root.xcf[mm_name].polygons[mesh_name];
+
+    if (!mm.polygons.contains(mesh_name))
+        mm.polygons.try_emplace(mesh_name); 
+
+    path.broadcast(Event::CREATED); 
+    return path;
+}
+
+MeshPath XCF::add_tetrahedra(const std::string& mm_name, const std::string& mesh_name) {
+    MultiMesh& mm = (*this)[mm_name];
+
+    MeshPath path = root.xcf[mm_name].tetrahedra[mesh_name];
+
+    if (!mm.tetrahedra.contains(mesh_name))
+        mm.tetrahedra.try_emplace(mesh_name); 
+
+    path.broadcast(Event::CREATED); 
+    return path;
+}
+
+MeshPath XCF::add_hexahedra(const std::string& mm_name, const std::string& mesh_name) {
+    MultiMesh& mm = (*this)[mm_name];
+
+    MeshPath path = root.xcf[mm_name].hexahedra[mesh_name];
+
+    if (!mm.hexahedra.contains(mesh_name))
+        mm.hexahedra.try_emplace(mesh_name); 
+
+    path.broadcast(Event::CREATED); 
+    return path;
+}
+
+MeshPath XCF::add_wedges(const std::string& mm_name, const std::string& mesh_name) {
+    MultiMesh& mm = (*this)[mm_name];
+
+    MeshPath path = root.xcf[mm_name].wedges[mesh_name];
+
+    if (!mm.wedges.contains(mesh_name))
+        mm.wedges.try_emplace(mesh_name); 
+
+    path.broadcast(Event::CREATED); 
+    return path;
+}
+
+MeshPath XCF::add_pyramids(const std::string& mm_name, const std::string& mesh_name) {
+    MultiMesh& mm = (*this)[mm_name];
+
+    MeshPath path = root.xcf[mm_name].pyramids[mesh_name];
+
+    if (!mm.pyramids.contains(mesh_name))
+        mm.pyramids.try_emplace(mesh_name); 
+
+    path.broadcast(Event::CREATED); 
+    return path;
+}
+
 
 // Directory clean up guard
 struct TempDirCleanup {
