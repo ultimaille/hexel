@@ -7,35 +7,46 @@
 namespace enum_detail {
     constexpr std::size_t count(std::string_view s) {
         std::size_t n = 1;
-        for (char c : s) 
+        for (char c : s)
             n += c == ',';
         return n;
     }
 
-    template <std::size_t N>
-        constexpr std::array<std::string_view, N> split(std::string_view s) {
-            std::array<std::string_view, N> out{};
-            for (auto &token : out) {
-                auto comma = s.find(',');
-                token = s.substr(0, comma);
-                while (!token.empty() && token.front() == ' ') token.remove_prefix(1);
-                while (!token.empty() && token.back()  == ' ') token.remove_suffix(1);
-                s = comma == s.npos ? std::string_view{} : s.substr(comma + 1);
-            }
+    constexpr bool is_space(char c) {
+        return c == ' ' || c == '\t' || c == '\n' || c == '\r';
+    }
+
+    // "A, B, C" -> "A\0B\0C\0\0"
+    template <std::size_t L>
+        constexpr std::array<char, L + 2> zero_separated(std::string_view s) {
+            std::array<char, L + 2> out{};
+            std::size_t j = 0;
+            for (char c : s)
+                if (!is_space(c))
+                    out[j++] = c == ',' ? '\0' : c;
             return out;
         }
+
+    constexpr const char *nth(const char *p, std::size_t i) {
+        while (i--)
+            p += std::char_traits<char>::length(p) + 1;
+        return p;
+    }
 }
 
-#define ENUM(Name, ...)                                                                                          \
-    struct Name {                                                                                                \
-        enum class Value { __VA_ARGS__ };                                                                        \
-        using enum Value;                                                                                        \
-        static constexpr auto names = enum_detail::split<enum_detail::count(#__VA_ARGS__)>(#__VA_ARGS__);        \
-        Value value{};                                                                                           \
-        constexpr Name() = default;                                                                              \
-        constexpr Name(Value v) : value(v) {}                                                                    \
-        constexpr operator Value() const { return value; }                                                       \
-        friend constexpr std::string_view to_string(Name e) { return names[static_cast<std::size_t>(e.value)]; } \
+#define ENUM(Name, ...)                                                                                \
+    struct Name {                                                                                      \
+        enum class Choice { __VA_ARGS__ };                                                             \
+        using enum Choice;                                                                             \
+        static constexpr std::size_t size = enum_detail::count(#__VA_ARGS__);                          \
+        static constexpr auto names = enum_detail::zero_separated<sizeof(#__VA_ARGS__)>(#__VA_ARGS__); \
+        Choice choice{};                                                                               \
+        constexpr Name() = default;                                                                    \
+        constexpr Name(Choice v) : choice(v) {}                                                        \
+        constexpr operator Choice() const { return choice; }                                           \
+        friend constexpr const char *to_string(Name e) {                                               \
+            return enum_detail::nth(names.data(), static_cast<std::size_t>(e.choice));                 \
+        }                                                                                              \
     };
 
 #endif //__ENUM_H__
