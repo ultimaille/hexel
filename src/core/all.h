@@ -8,3 +8,5 @@
 #include <core/shaders.h>
 #include <core/mode.h>
 #include <core/path.h>
+#include <core/enum.h>
+
