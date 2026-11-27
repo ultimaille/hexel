@@ -213,9 +213,9 @@ static void set_draw_buffers(bool on) {
 
         glReadPixels(x, y, w, h, GL_DEPTH_COMPONENT, GL_FLOAT, data.data());
 
-        GLenum err = glGetError();
-        if (err != GL_NO_ERROR)
-            Log::error("Picking glReadPixels error: " + std::to_string(err));
+        //GLenum err = glGetError();
+        //if (err != GL_NO_ERROR)
+        //    Log::error("Picking glReadPixels error: " + std::to_string(err));
 
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
     }

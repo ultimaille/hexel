@@ -23,7 +23,7 @@ namespace ModeX{
     MeshPath XCFview::geom_tri_id(){ return  root.xcf["geom"].triangles[""]; }
     MeshPath XCFview::geom_edge_id(){ return  root.xcf["geom"].polylines[""]; }
     PointSetPath XCFview::geom_pts_id(){ return  root.xcf["geom"].pointset; }
-
+    Picker& XCFview::picker(){ return mode.picker; }
 
 
 
@@ -79,9 +79,10 @@ namespace ModeX{
 
         PointAttribute<int> emb_lock("emb_lock", God::xcf["mesh"].pointset_attributes, God::xcf["mesh"].pointset, 0);
         FOR(v, pts.size()){
-            auto emb = Inspect(mode).get_embedding(pts[v]);
-            if (emb_lock[v] != 5)
-                emb_lock[v] = emb.dim;
+            emb_lock[v] = 0;
+            //auto emb = Inspect(mode).get_embedding(pts[v]);
+            //if (emb_lock[v] != 5)
+            //    emb_lock[v] = emb.dim;
         }
 
         hex_id().broadcast(Event::UPDATED);

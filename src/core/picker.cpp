@@ -16,7 +16,8 @@ Picker::Picker() :
     reset();
 }
 
-void Picker::reset() {
+
+void Picker::jit_reset(){
     data.clear();
 
     // ID attachments are not written during normal frames: render them now
@@ -31,7 +32,24 @@ void Picker::reset() {
     }
 }
 
+void Picker::reset() {
+    need_reset = true;
+}
+
+int Picker::nbuffers(){
+    if (need_reset){
+        jit_reset();
+        need_reset = false;
+    }
+    return data.size();
+}
+
+
 Picker::Result Picker::at(vec2 uv, int buffer) {
+    if (need_reset){
+        jit_reset();
+        need_reset = false;
+    }
     return data[buffer].at(uv);
 }
 
