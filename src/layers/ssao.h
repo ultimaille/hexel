@@ -7,6 +7,14 @@
 #include <unordered_map>
 #include <core/all.h>
 
+// Screen-space ambient occlusion, applied in place to the color of the render target of the layer's group.
+// Every intermediate buffer is at half resolution and kept across frames:
+//   ssao_z          target depth          -> view-space z, level 0 of the z pyramid
+//   ssao_downsample z level l-1           -> z level l
+//   ssao            z pyramid             -> occlusion (GTAO)
+//   ssao_blur       occlusion, z          -> occlusion, horizontally then vertically
+//   ssao_composite  occlusion, z, depth   -> target color *= occlusion, upsampled to full resolution
+// Assumes the orthographic projection of TrackBallCamera.
 struct SSAO : Layer {
     // a framebuffer with a single texture: GL_R8 (occlusion) or GL_R32F (view z), optionally with mip levels
     struct Target {
@@ -234,9 +242,9 @@ struct SSAO : Layer {
             glBlendFuncSeparate(GL_ZERO, GL_SRC_COLOR, GL_ZERO, GL_ONE); // rgb *= ao, alpha unchanged
 
             composite_pass.use();
-            composite_pass.texture("source_ao", 0, ao.texture);
             composite_pass.texture("view_z", 1, z.texture);
             composite_pass.texture("source_depth", 2, target.depth);
+            composite_pass.texture("source_ao", 0, ao.texture); // last: leaves texture unit 0 active
             composite_pass.set("depth_to_z", 1.f / P[10], -P[11] / P[10]);
             composite_pass.set("tolerance", 4.f * pixel_size); // depth difference that halves an ao texel's weight
             draw_fullscreen();

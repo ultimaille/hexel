@@ -1,9 +1,12 @@
 #version 330 core
 
-// For each pixel, a few "slices" (half-planes containing the view vector) are marched in both screen directions
-// to find the highest horizon on each side. The cosine-weighted visible arc between the two horizons is integrated
-// analytically around the projected normal. Assumes an orthographic projection: the view vector is (0,0,1)
-// everywhere and the search radius has the same pixel size everywhere on screen.
+// Ground Truth Ambient Occlusion (Jimenez et al. 2016), run at half resolution on the view-space z pyramid
+// (ssao_z.frag, ssao_downsample.frag); the result is then blurred (ssao_blur.frag) and upsampled (ssao_composite.frag).
+//
+// For each texel, a few "slices" (half-planes containing the view vector) are marched in both screen directions
+// to find the highest horizon on each side; distant samples read coarser pyramid levels. The cosine-weighted visible
+// arc between the two horizons is integrated analytically around the projected normal. Assumes an orthographic
+// projection: the view vector is (0,0,1) everywhere and the search radius has the same pixel size everywhere on screen.
 
 uniform sampler2D view_z;   // view-space z pyramid
 uniform int   max_level;    // its coarsest level
