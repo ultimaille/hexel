@@ -1,12 +1,12 @@
 #version 330 core
 
-layout (location = 0) in vec2 position;
-layout (location = 1) in vec2 texcoord;
+// Shared by all SSAO passes: a quad covering the whole viewport, generated from gl_VertexID (no vertex buffer).
+// Draw with glDrawArrays(GL_TRIANGLE_STRIP, 0, 4) and an empty VAO. TexCoord spans [0,1] over the viewport.
 
 out vec2 TexCoord;
 
 void main() {
-    TexCoord = texcoord;
-    gl_Position = vec4(position, 0.0, 1.0);
+    vec2 p = vec2(gl_VertexID & 1, gl_VertexID >> 1); // (0,0) (1,0) (0,1) (1,1)
+    TexCoord = p;
+    gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0);
 }
-

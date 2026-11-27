@@ -62,11 +62,13 @@ struct ShaderManager : public std::map<std::string,GLuint> {
         return buffer.str();
     }
 
-    void create_if_needed(std::string path,std::string shader_name) {
+    // links <path><vertex_name>.vert with <path><shader_name>.frag; vertex_name defaults to shader_name
+    void create_if_needed(std::string path,std::string shader_name, std::string vertex_name = "") {
         if (contains(shader_name)) return;
-        
+        if (vertex_name.empty()) vertex_name = shader_name;
+
         operator [](shader_name) = createShaderProgram(
-                loadShader(path+shader_name+std::string(".vert")).c_str(),
+                loadShader(path+vertex_name+std::string(".vert")).c_str(),
                 loadShader(path+shader_name+std::string(".frag")).c_str()
                 );
         um_assert( operator[](shader_name) );
