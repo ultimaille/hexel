@@ -2,57 +2,69 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <string>
 #include <unordered_map>
 #include <core/all.h>
 
 struct SSAO : Layer {
+    // a framebuffer with a single texture: GL_R8 (occlusion) or GL_R32F (view z), optionally with mip levels
     struct Target {
         GLuint framebuffer = 0;
         GLuint texture = 0;
         int width = 0;
         int height = 0;
+        int levels = 0;
 
         Target() = default;
         Target(const Target&) = delete;
         Target& operator=(const Target&) = delete;
         ~Target() { destroy(); }
 
-        void ensure(int w, int h) {
-            um_assert(w > 0 && h > 0);
-            if (texture && w == width && h == height)
+        // (re)allocate only when the size or the number of levels changes
+        void ensure(int w, int h, GLenum internal_format, int nb_levels = 1) {
+            um_assert(w > 0 && h > 0 && nb_levels > 0);
+            um_assert(internal_format == GL_R8 || internal_format == GL_R32F);
+            if (texture && w == width && h == height && nb_levels == levels)
                 return;
             destroy();
             width = w;
             height = h;
+            levels = nb_levels;
 
+            const GLenum type = internal_format == GL_R8 ? GL_UNSIGNED_BYTE : GL_FLOAT;
             glGenTextures(1, &texture);
             glBindTexture(GL_TEXTURE_2D, texture);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            for (int l = 0; l < levels; ++l)
+                glTexImage2D(GL_TEXTURE_2D, l, internal_format, level_width(l), level_height(l), 0, GL_RED, type, nullptr);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, levels - 1);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, levels > 1 ? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
             glGenFramebuffers(1, &framebuffer);
-            glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+            bind(0);
             if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
                 Log::error("SSAO::Target framebuffer is incomplete");
         }
 
-        // bind for drawing, and set the viewport accordingly
-        void bind() const {
-            um_assert(framebuffer);
+        // bind for drawing into mip level `level`, and set the viewport accordingly
+        void bind(int level = 0) const {
+            um_assert(framebuffer && level < levels);
             glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-            glViewport(0, 0, width, height);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, level);
+            glViewport(0, 0, level_width(level), level_height(level));
         }
+
+        int level_width (int l) const { return std::max(1, width  >> l); }
+        int level_height(int l) const { return std::max(1, height >> l); }
 
         void destroy() {
             if (texture)     glDeleteTextures(1, &texture);
             if (framebuffer) glDeleteFramebuffers(1, &framebuffer);
             texture = framebuffer = 0;
-            width = height = 0;
+            width = height = levels = 0;
         }
     };
 
@@ -92,13 +104,15 @@ struct SSAO : Layer {
         std::unordered_map<std::string, GLint> locations;
     };
 
-    Pass ao_pass, blur_pass, composite_pass;
+    Pass z_pass, downsample_pass, ao_pass, blur_pass, composite_pass;
 
     GLuint empty_vao = 0; // the core profile requires a bound VAO, even to draw without attributes
 
     // intermediate buffers, kept across frames and only reallocated on resize
+    Target z;    // view-space z pyramid: distant samples read coarser levels
     Target ao;
     Target blur;
+    static constexpr int max_levels = 7;
 
     // parameters
     float radius = 0;      // world units; 0 means "not set yet": initialised from the view on the first frame
@@ -116,6 +130,8 @@ struct SSAO : Layer {
     }
 
     void init() {
+        z_pass.init("ssao_z");
+        downsample_pass.init("ssao_downsample");
         ao_pass.init("ssao");
         blur_pass.init("ssao_blur");
         composite_pass.init("ssao_composite");
@@ -130,8 +146,10 @@ struct SSAO : Layer {
         if (!target.valid())
             return;
 
-        ao.ensure(target.width, target.height);
-        blur.ensure(target.width, target.height);
+        const int levels = std::min(max_levels, 1 + int(std::log2(std::min(target.width, target.height))));
+        z.ensure(target.width, target.height, GL_R32F, levels);
+        ao.ensure(target.width, target.height, GL_R8);
+        blur.ensure(target.width, target.height, GL_R8);
 
         // orthographic projection, row major: ndc = P * view, with w = 1
         std::array<float, 16> P;
@@ -143,11 +161,33 @@ struct SSAO : Layer {
         glDepthMask(GL_FALSE);
         glDisable(GL_BLEND);
 
-        { // ambient occlusion: target depth -> ao
+        { // view z: target depth -> z level 0
+            z.bind(0);
+            z_pass.use();
+            z_pass.texture("source_depth", 0, target.depth);
+            z_pass.set("depth_to_z", 1.f / P[10], -P[11] / P[10]); // z_view = (ndc_z - P23) / P22
+            draw_fullscreen();
+        }
+
+        { // z pyramid: level l-1 -> level l
+            downsample_pass.use();
+            downsample_pass.texture("source_z", 0, z.texture);
+            downsample_pass.set("depth_range", .75f * radius);
+            for (int l = 1; l < levels; ++l) {
+                // only level l-1 is readable while level l is written: no feedback loop
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, l - 1);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL,  l - 1);
+                z.bind(l);
+                draw_fullscreen();
+            }
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL,  levels - 1);
+        }
+
+        { // ambient occlusion: z pyramid -> ao
             ao.bind();
             ao_pass.use();
-            ao_pass.texture("source_depth", 0, target.depth);
-            ao_pass.set("depth_to_z", 1.f / P[10], -P[11] / P[10]);                                        // z_view = (ndc_z - P23) / P22
+            ao_pass.texture("view_z", 0, z.texture);
             ao_pass.set("uv_to_view", 2.f / P[0], 2.f / P[5], (-1.f - P[3]) / P[0], (-1.f - P[7]) / P[5]); // x_view = (2 uv.x - 1 - P03) / P00, same for y
             ao_pass.set("radius_px", radius * P[5] * .5f * float(target.height)); // world -> ndc -> pixels
             const float falloff_range = std::max(1e-6f, falloff * radius);
@@ -156,6 +196,7 @@ struct SSAO : Layer {
             ao_pass.set("power", power);
             ao_pass.set("slice_count", slice_count);
             ao_pass.set("step_count", step_count);
+            ao_pass.set("max_level", levels - 1);
             draw_fullscreen();
         }
 
@@ -204,6 +245,7 @@ private:
     }
 
     void destroy() override {
+        z.destroy();
         ao.destroy();
         blur.destroy();
 

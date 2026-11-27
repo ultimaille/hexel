@@ -5,10 +5,9 @@
 // analytically around the projected normal. Assumes an orthographic projection: the view vector is (0,0,1)
 // everywhere and the search radius has the same pixel size everywhere on screen.
 
-uniform sampler2D source_depth;
-// orthographic projection: view-space coordinates are affine in uv and depth
-uniform vec2  depth_to_z;   // z_view  = depth_to_z.x * ndc_z + depth_to_z.y
-uniform vec4  uv_to_view;   // xy_view = uv * uv_to_view.xy + uv_to_view.zw
+uniform sampler2D view_z;   // view-space z pyramid
+uniform int   max_level;    // its coarsest level
+uniform vec4  uv_to_view;   // orthographic projection: xy_view = uv * uv_to_view.xy + uv_to_view.zw
 uniform float radius_px;    // search radius, in pixels
 uniform float falloff_mul;  // occluder weight = clamp(distance * falloff_mul + falloff_add, 0, 1)
 uniform float falloff_add;
@@ -20,18 +19,35 @@ out vec4 FragColor;
 
 const float PI = 3.14159265359;
 const float HALF_PI = 1.57079632679;
-const float BACKGROUND_Z = -1e6; // where nothing was drawn: far enough to never occlude
+const float BACKGROUND_Z = -1e6; // as written by ssao_z.frag where nothing was drawn
 
-ivec2 last_pixel = textureSize(source_depth, 0) - 1;
-vec2  texel = 1.0 / vec2(textureSize(source_depth, 0));
+ivec2 last_pixel = textureSize(view_z, 0) - 1;
+vec2  texel = 1.0 / vec2(textureSize(view_z, 0));
 
-// view-space position of the center of pixel p
-vec3 view_position(ivec2 p) {
-    p = clamp(p, ivec2(0), last_pixel);
-    float depth = texelFetch(source_depth, p, 0).r;
-    float z = depth >= 1. ? BACKGROUND_Z : depth_to_z.x * (2. * depth - 1.) + depth_to_z.y;
-    vec2 uv = (vec2(p) + 0.5) * texel;
+// view-space position of the center of texel q of the given pyramid level
+vec3 texel_position(ivec2 q, int level) {
+    float z = texelFetch(view_z, q, level).r;
+    vec2 uv = (vec2(q) + 0.5) * float(1 << level) * texel;
     return vec3(uv * uv_to_view.xy + uv_to_view.zw, z);
+}
+
+// view-space position of the center of pixel p, clamped to the screen
+vec3 view_position(ivec2 p) {
+    return texel_position(clamp(p, ivec2(0), last_pixel), 0);
+}
+
+// raise the horizon (cosine) of one side of a slice with the sample at pixel s of the given pyramid level.
+// Samples off the screen are unknown: they do not occlude. (Clamping them to the border would move them up to a
+// coarse texel back, possibly to the other side of P, where even a plane looks like an occluder.)
+float update_horizon(float horizon_cos, float low_cos, vec3 P, ivec2 s, int level) {
+    ivec2 q = s >> level;
+    if (any(lessThan(s, ivec2(0))) || any(greaterThanEqual(q, textureSize(view_z, level))))
+        return horizon_cos;
+    vec3 d = texel_position(q, level) - P;
+    float len = length(d);
+    // occluders fade out with distance (no dark halos behind silhouettes); background is infinitely far
+    float w = clamp(len * falloff_mul + falloff_add, 0.0, 1.0);
+    return max(horizon_cos, mix(low_cos, d.z / len, w));
 }
 
 // surface tangent at pixel p (position P) along the screen axis e: the one-sided difference with the smaller
@@ -86,17 +102,10 @@ void main() {
             float t = (float(j) + step_noise) / float(step_count);
             float offset_px = t * t * radius_px + 1.0; // denser near the center, never the center pixel itself
             ivec2 offset = ivec2(round(dir * offset_px));
-
-            vec3 d0 = view_position(p + offset) - P;
-            vec3 d1 = view_position(p - offset) - P;
-            float len0 = length(d0);
-            float len1 = length(d1);
-
-            // occluders fade out with distance (no dark halos behind silhouettes); background is infinitely far
-            float w0 = clamp(len0 * falloff_mul + falloff_add, 0.0, 1.0);
-            float w1 = clamp(len1 * falloff_mul + falloff_add, 0.0, 1.0);
-            horizon_cos0 = max(horizon_cos0, mix(low_cos0, d0.z / len0, w0));
-            horizon_cos1 = max(horizon_cos1, mix(low_cos1, d1.z / len1, w1));
+            // far samples read coarser levels (texels up to ~1/10 of the offset): sparse samples stay cache friendly
+            int level = clamp(int(log2(offset_px) - 3.3), 0, max_level);
+            horizon_cos0 = update_horizon(horizon_cos0, low_cos0, P, p + offset, level);
+            horizon_cos1 = update_horizon(horizon_cos1, low_cos1, P, p - offset, level);
         }
 
         // horizon angles from V, clamped to the hemisphere around the projected normal
