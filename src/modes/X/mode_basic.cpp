@@ -244,11 +244,7 @@ namespace ModeX{
             }
         }
         if (pts.size() == 4){
-            Commands::Quad2HexGeomStrategy  geo_strat;
-            if (mode.quad_to_hex_strategy == QuadToHexStrategy::OFFSET_PROP_TO_QUAD) geo_strat = Commands::Quad2HexGeomStrategy::OFFSET_BY_QUAD_NORMAL;
-            if (mode.quad_to_hex_strategy == QuadToHexStrategy::RAY_TRACE) geo_strat = Commands::Quad2HexGeomStrategy::RAYTRACE;
-            if (mode.quad_to_hex_strategy == QuadToHexStrategy::FRAME_FIELD) Log::error("Sorry, QuadToHexStrategy::FRAME_FIELD is not implemebted yet");
-            Commands(mode).create_hex_from_quad(pts, geo_strat, Commands::AUTO_MERGE);
+            Commands(mode).create_hex_from_quad(pts, mode.quad_to_hex_geom_strategy, mode.quad_to_hex_topo_strategy);
             reset();
         }
 
@@ -267,7 +263,9 @@ namespace ModeX{
 
 
     SubModeBasic::SubModeBasic(RootMode& mode)
-        : AbstractMode(mode),
+        : AbstractMode(mode), 
+        quad_to_hex_geom_strategy(QuadToHexGeomStrategy::RAY_TRACE),
+        quad_to_hex_topo_strategy(QuadToHexTopoStrategy::AUTO_MERGE),
         interactor_kill_kex(*this),
         interactor_create_hex(*this),
         interactor_move_vertex(*this){
@@ -290,9 +288,16 @@ namespace ModeX{
     void SubModeBasic::define_gui() {
 
         ImGui::Checkbox("Try to land vertices on geometry", &drop_vertices_on_geometry);
-        int i = int(quad_to_hex_strategy); 
-        ImGui::Combo("Quad=>Hex", &i, QuadToHexStrategy::names.data(), QuadToHexStrategy::size);
-        quad_to_hex_strategy = static_cast<QuadToHexStrategy::Choice>(i);
+        {
+            int i = int(quad_to_hex_geom_strategy);
+            ImGui::Combo("GeomQuad2Hex", &i, QuadToHexGeomStrategy::names.data(), QuadToHexGeomStrategy::size);
+            quad_to_hex_geom_strategy = static_cast<QuadToHexGeomStrategy::Choice>(i);
+        }
+        {
+            int i = int(quad_to_hex_topo_strategy);
+            ImGui::Combo("TopoQuad2Hex", &i, QuadToHexTopoStrategy::names.data(), QuadToHexTopoStrategy::size);
+            quad_to_hex_topo_strategy = static_cast<QuadToHexTopoStrategy::Choice>(i);
+        }
         ImGui::Separator();
         if (has_lock != NULL){
             std::string msg;

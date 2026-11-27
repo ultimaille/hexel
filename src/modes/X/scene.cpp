@@ -1,3 +1,5 @@
+#include <modes/X/cmd.h>
+#include <modes/X/scene.h>
 #include "misc/purgatory.h"
 #include <layers/ssao.h>
 #include <layers/basic_layers.h>
@@ -8,11 +10,8 @@
 #include <modes/X/mode_start.h>
 #include <modes/X/mode_layer_split.h>
 #include <modes/X/mode_feature.h>
-#include <modes/X/cmd.h>
 #include <modes/X/mode_basic.h>
-#include <modes/X/scene.h>
 #include <modes/X/inspect.h>
-//
 
 
 namespace ModeX{

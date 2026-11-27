@@ -14,7 +14,7 @@
 
 //#define WORKING_DIR std::string("/home/ssloy/+/hexel/build/NICO/")
 #define WORKING_DIR std::string("C:\\NICOTMP\\tmp\\")
-#define TEST_INPUT_DIR std::string("C:\\NICO\\data\\preprocessed\\hexel\\")
+//#define TEST_INPUT_DIR std::string("C:\\NICO\\data\\preprocessed\\hexel\\")
 
 
 namespace ModeX{

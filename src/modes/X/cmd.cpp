@@ -1,5 +1,6 @@
 #include <modes/X/cmd.h>
 #include <modes/X/toolbox.h>
+#include <modes/X/root_mode.h>
 
 namespace ModeX{
     FeedBack3D Commands::feedback("panic");
@@ -61,7 +62,7 @@ namespace ModeX{
             pts[moving_vertex] = new_pos;
         }
 
-        void Commands::create_hex_from_quad(std::vector<vec3>& pts, Quad2HexGeomStrategy geom_strat, Quad2HexTopoStrategy topo_strat) {
+        void Commands::create_hex_from_quad(std::vector<vec3>& pts, QuadToHexGeomStrategy geom_strat, QuadToHexTopoStrategy topo_strat) {
             MultiMesh& mm = God::xcf["mesh"];
             Hexahedra& hex = mode.hex_id();
             CellAttribute<int> block_id("block_id", mm.hexahedra[""].attributes, mm.hexahedra[""].mesh);
@@ -71,12 +72,12 @@ namespace ModeX{
                 pts[0], pts[1], pts[3], pts[2]
             };
 
-            if (geom_strat == OFFSET_BY_QUAD_NORMAL){
+            if (geom_strat == QuadToHexGeomStrategy::OFFSET_PROP_TO_QUAD){
                 Quad3 quad(pts[0], pts[1], pts[2], pts[3]);
                 vec3 decal = -.2 * std::sqrt(quad.unsigned_area()) * quad.normal();
                 FOR(lv, 4) hex_pts[lv] += decal;
             }
-            else if (geom_strat == RAYTRACE){
+            else if (geom_strat == QuadToHexGeomStrategy::RAY_TRACE){
                 Quad3 quad(pts[0], pts[1], pts[2], pts[3]);
                 //RayTracer ray_trace(mode.geom_tri_id());
                 vec3 n = -quad.normal();
@@ -99,11 +100,11 @@ namespace ModeX{
                 return;
             }
             int hex_vert[8];
-            if (topo_strat == NO_MERGE){
+            if (topo_strat == QuadToHexTopoStrategy::NO_MERGE){
                 int offset = hex.points.create_points(8);
                 FOR(lv, 8) hex_vert[lv] = offset + lv;
             }
-            else if (topo_strat == AUTO_MERGE){
+            else if (topo_strat == QuadToHexTopoStrategy::AUTO_MERGE){
                 // merge vertices clicked by the user
                 FOR(lv, 8) {
                     hex_vert[lv] = -1;

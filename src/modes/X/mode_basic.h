@@ -7,7 +7,6 @@
 namespace ModeX{
     struct RootMode;
     struct SubModeBasic;
-    ENUM(QuadToHexStrategy, OFFSET_PROP_TO_QUAD, RAY_TRACE, FRAME_FIELD);
 
 
     struct BasicInteractor : public Interactor{
@@ -71,8 +70,8 @@ namespace ModeX{
 
         bool drop_vertices_on_geometry=true;
         
-        QuadToHexStrategy::Choice quad_to_hex_strategy = QuadToHexStrategy::RAY_TRACE;
-                     
+        QuadToHexGeomStrategy::Choice quad_to_hex_geom_strategy;
+        QuadToHexTopoStrategy::Choice quad_to_hex_topo_strategy;
     };
 
 }
