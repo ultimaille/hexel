@@ -357,3 +357,13 @@ struct HexahedraLayerUI : public LayerUI {
     private:
     HexahedraLayer &l;
 };
+
+struct SSAO;
+struct SSAOUI : public LayerUI {
+    SSAOUI(SSAO &l) : l(l) {}
+
+    void show_parameters(LayerUIMode mode) override;
+
+    private:
+    SSAO &l;
+};

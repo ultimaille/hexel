@@ -1,5 +1,6 @@
 #include <core/all.h>
 #include <layers/layer_ui.h>
+#include <layers/ssao.h>
 #include "property_explorer.h"
 
 void PropertyExplorer::generate_gui(){
@@ -30,6 +31,8 @@ void PropertyExplorer::generate_gui(){
                 layer_ui = std::make_unique<TrianglesLayerUI>(*pl);
             } else if (HexahedraLayer *pl = dynamic_cast<HexahedraLayer*>(&layer)) {
                 layer_ui = std::make_unique<HexahedraLayerUI>(*pl);
+            } else if (SSAO *pl = dynamic_cast<SSAO*>(&layer)) {
+                layer_ui = std::make_unique<SSAOUI>(*pl);
             } else {
                 ImGui::PopID();
                 continue;

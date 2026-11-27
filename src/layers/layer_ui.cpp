@@ -1,6 +1,7 @@
 #include "layer_ui.h"
 #include <layers/basic_layers.h>
 #include <layers/basic_renderers.h>
+#include <layers/ssao.h>
 
 bool RendererUI::ambiant_slider() {
     float val = ImGui::SliderFloat("##slider_ambiant", &renderer().ambient_prop, 0.0f, 1.0f, "%.3f", 0);
@@ -395,3 +396,26 @@ void HexahedraLayerUI::show_parameters(LayerUIMode mode) {
     }
 }
 
+void SSAOUI::show_parameters(LayerUIMode mode) {
+    if (mode == LayerUIMode::BASIC) {
+        PropertyTable("ssao_table_basic_parameter", {
+            {"Radius", [&] {
+                if (l.radius <= 0) { // set from the view on the first frame
+                    ImGui::TextDisabled("first frame");
+                    return;
+                }
+                // world units: logarithmic, so that the drag speed follows the scale of the scene
+                ImGui::DragFloat("##ssao_radius", &l.radius, l.radius * .01f, 1e-6f, 1e6f, "%.4g", ImGuiSliderFlags_Logarithmic);
+                l.radius = std::max(l.radius, 1e-6f);
+            }},
+            {"Strength", [&] { ImGui::SliderFloat("##ssao_power", &l.power, .25f, 4.f, "%.2f"); }},
+        });
+    }
+    if (mode == LayerUIMode::ADVANCED) {
+        PropertyTable("ssao_table_advanced_parameter", {
+            {"Falloff", [&] { ImGui::SliderFloat("##ssao_falloff", &l.falloff, .05f, 1.f, "%.2f"); }},
+            {"Slices",  [&] { ImGui::SliderInt("##ssao_slices", &l.slice_count, 1, 8); }},
+            {"Steps",   [&] { ImGui::SliderInt("##ssao_steps",  &l.step_count,  1, 32); }},
+        });
+    }
+}
