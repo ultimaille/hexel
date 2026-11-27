@@ -95,11 +95,17 @@ struct SSAO : Layer {
     Pass ao_pass, blur_pass, composite_pass;
 
     GLuint empty_vao = 0; // the core profile requires a bound VAO, even to draw without attributes
-    GLuint random_texture = 0;
 
     // intermediate buffers, kept across frames and only reallocated on resize
     Target ao;
     Target blur;
+
+    // parameters
+    float radius = 0;      // world units; 0 means "not set yet": initialised from the view on the first frame
+    float falloff = .6f;   // fraction of the radius over which occluders fade out
+    float power = 1.5f;    // contrast of the occlusion
+    int   slice_count = 3; // directions per pixel (each marched both ways)
+    int   step_count = 12; // samples per direction and side
 
     SSAO() {
         visible = false;
@@ -114,7 +120,6 @@ struct SSAO : Layer {
         blur_pass.init("ssao_blur");
         composite_pass.init("ssao_composite");
         glGenVertexArrays(1, &empty_vao);
-        initialize_random_texture();
     }
 
     void render() override {
@@ -131,6 +136,8 @@ struct SSAO : Layer {
         // orthographic projection, row major: ndc = P * view, with w = 1
         std::array<float, 16> P;
         std::copy_n(God::camera.projection_ptr(), 16, P.begin());
+        if (radius <= 0)
+            radius = .5f * 2.f / P[5]; // half the view height (2 / P11)
 
         glDisable(GL_DEPTH_TEST);
         glDepthMask(GL_FALSE);
@@ -140,11 +147,15 @@ struct SSAO : Layer {
             ao.bind();
             ao_pass.use();
             ao_pass.texture("source_depth", 0, target.depth);
-            ao_pass.texture("random_texture", 1, random_texture);
             ao_pass.set("depth_to_z", 1.f / P[10], -P[11] / P[10]);                                        // z_view = (ndc_z - P23) / P22
             ao_pass.set("uv_to_view", 2.f / P[0], 2.f / P[5], (-1.f - P[3]) / P[0], (-1.f - P[7]) / P[5]); // x_view = (2 uv.x - 1 - P03) / P00, same for y
-            ao_pass.set("max_radius", 0.5f);
-            ao_pass.set("step_mul", 1.2f);
+            ao_pass.set("radius_px", radius * P[5] * .5f * float(target.height)); // world -> ndc -> pixels
+            const float falloff_range = std::max(1e-6f, falloff * radius);
+            ao_pass.set("falloff_mul", -1.f / falloff_range);
+            ao_pass.set("falloff_add", radius / falloff_range); // weight 1 up to radius - range, 0 at radius
+            ao_pass.set("power", power);
+            ao_pass.set("slice_count", slice_count);
+            ao_pass.set("step_count", step_count);
             draw_fullscreen();
         }
 
@@ -192,35 +203,9 @@ private:
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
 
-    void initialize_random_texture() {
-        constexpr int width  = 32;
-        constexpr int height = 32;
-
-        std::array<float, width * height> values;
-        uint32_t state = 0x12345678u;
-        for (float& value : values) {
-            state = 1664525u * state + 1013904223u;
-            value = float(state & 0x00ffffffu) / float(0x01000000u);
-        }
-
-        glGenTextures(1, &random_texture);
-        glBindTexture(GL_TEXTURE_2D, random_texture);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, values.data());
-    }
-
     void destroy() override {
         ao.destroy();
         blur.destroy();
-
-        if (random_texture != 0) {
-            glDeleteTextures(1, &random_texture);
-            random_texture = 0;
-        }
 
         if (empty_vao != 0) {
             glDeleteVertexArrays(1, &empty_vao);
