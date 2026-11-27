@@ -116,8 +116,8 @@ struct SSAO : Layer {
     static constexpr int max_levels = 7;
 
     // parameters
-    float radius = 0;      // world units; 0 means "not set yet": initialised from the view on the first frame
-    float falloff = .6f;   // fraction of the radius over which occluders fade out
+    float radius = 0;      // world units; 0 means automatic: a fraction of the scene's size, set once there is geometry
+    float falloff = .8f;   // fraction of the radius over which occluders fade out
     float power = 1.5f;    // contrast of the occlusion
     int   slice_count = 3; // directions per pixel (each marched both ways)
     int   step_count = 12; // samples per direction and side
@@ -158,8 +158,12 @@ struct SSAO : Layer {
         // orthographic projection, row major: ndc = P * view, with w = 1
         std::array<float, 16> P;
         std::copy_n(God::camera.projection_ptr(), 16, P.begin());
-        if (radius <= 0)
-            radius = 2.f / P[5]; // the view height (2 / P11)
+        if (radius <= 0) { // automatic
+            const double diagonal = scene_diagonal();
+            if (diagonal > 0)
+                radius = float(.75 * diagonal);
+        }
+        const float r = radius > 0 ? radius : 2.f / P[5]; // no geometry yet: the view height (2 / P11), not stored
         const float pixel_size = 2.f / P[5] / float(target.height); // in world units, at full resolution
 
         glDisable(GL_DEPTH_TEST);
@@ -177,7 +181,7 @@ struct SSAO : Layer {
         { // z pyramid: level l-1 -> level l
             downsample_pass.use();
             downsample_pass.texture("source_z", 0, z.texture);
-            downsample_pass.set("depth_range", .75f * radius);
+            downsample_pass.set("depth_range", .75f * r);
             for (int l = 1; l < levels; ++l) {
                 // only level l-1 is readable while level l is written: no feedback loop
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, l - 1);
@@ -195,10 +199,10 @@ struct SSAO : Layer {
             ao_pass.texture("view_z", 0, z.texture);
             ao_pass.set("uv_to_view", 2.f / P[0], 2.f / P[5], (-1.f - P[3]) / P[0], (-1.f - P[7]) / P[5]); // x_view = (2 uv.x - 1 - P03) / P00, same for y
             ao_pass.set("texel_uv", 2.f / float(target.width), 2.f / float(target.height)); // a level 0 texel covers 2x2 pixels
-            ao_pass.set("radius_px", radius / (2.f * pixel_size)); // in level 0 texels
-            const float falloff_range = std::max(1e-6f, falloff * radius);
+            ao_pass.set("radius_px", r / (2.f * pixel_size)); // in level 0 texels
+            const float falloff_range = std::max(1e-6f, falloff * r);
             ao_pass.set("falloff_mul", -1.f / falloff_range);
-            ao_pass.set("falloff_add", radius / falloff_range); // weight 1 up to radius - range, 0 at radius
+            ao_pass.set("falloff_add", r / falloff_range); // weight 1 up to radius - range, 0 at radius
             ao_pass.set("power", power);
             ao_pass.set("slice_count", slice_count);
             ao_pass.set("step_count", step_count);
@@ -248,6 +252,14 @@ struct SSAO : Layer {
     }
 
 private:
+
+    // diagonal of the bounding box of the scene (visible or not), 0 when there is no geometry
+    static double scene_diagonal() {
+        BBox3 box;
+        for (auto &[name, mm] : God::xcf) // all the meshes of a multimesh share its point set
+            box.add(UM::Inspect<PointSet>(mm.pointset).bbox());
+        return box.empty() ? 0. : box.size().norm();
+    }
 
     void draw_fullscreen() const {
         glBindVertexArray(empty_vao);

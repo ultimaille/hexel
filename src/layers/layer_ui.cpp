@@ -400,8 +400,8 @@ void SSAOUI::show_parameters(LayerUIMode mode) {
     if (mode == LayerUIMode::BASIC) {
         PropertyTable("ssao_table_basic_parameter", {
             {"Radius", [&] {
-                if (l.radius <= 0) { // set from the view on the first frame
-                    ImGui::TextDisabled("first frame");
+                if (l.radius <= 0) { // automatic, set once the scene has geometry
+                    ImGui::TextDisabled("auto");
                     return;
                 }
                 // world units: logarithmic, so that the drag speed follows the scale of the scene
