@@ -4,6 +4,55 @@
 #include <core/all.h>
 
 struct SSAO : Layer {
+    struct Target {
+        GLuint framebuffer = 0;
+        GLuint texture = 0;
+        int width = 0;
+        int height = 0;
+
+        Target() = default;
+        Target(const Target&) = delete;
+        Target& operator=(const Target&) = delete;
+        ~Target() { destroy(); }
+
+        void ensure(int w, int h) {
+            um_assert(w > 0 && h > 0);
+            if (texture && w == width && h == height)
+                return;
+            destroy();
+            width = w;
+            height = h;
+
+            glGenTextures(1, &texture);
+            glBindTexture(GL_TEXTURE_2D, texture);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+            glGenFramebuffers(1, &framebuffer);
+            glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+            if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+                Log::error("SSAO::Target framebuffer is incomplete");
+        }
+
+        // bind for drawing, and set the viewport accordingly
+        void bind() const {
+            um_assert(framebuffer);
+            glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+            glViewport(0, 0, width, height);
+        }
+
+        void destroy() {
+            if (texture)     glDeleteTextures(1, &texture);
+            if (framebuffer) glDeleteFramebuffers(1, &framebuffer);
+            texture = framebuffer = 0;
+            width = height = 0;
+        }
+    };
+
     const std::string ao_name = "ssao";
     const std::string blur_name = "ssao_blur";
     const std::string composite_name = "ssao_composite";
@@ -11,6 +60,10 @@ struct SSAO : Layer {
     GLuint quad_vao = 0;
     GLuint quad_vbo = 0;
     GLuint random_texture = 0;
+
+    // intermediate buffers, kept across frames and only reallocated on resize
+    Target ao;
+    Target blur;
 
     SSAO() {
         visible = false;
@@ -26,130 +79,94 @@ struct SSAO : Layer {
         God::shaders.create_if_needed(std::string(SHADERS_DIR), composite_name);
         initialize_quad();
         initialize_random_texture();
+
+        // sampler units never change: set them once
+        GLuint p = God::shaders[ao_name];
+        glUseProgram(p);
+        glUniform1i(glGetUniformLocation(p, "source_depth"), 0);
+        glUniform1i(glGetUniformLocation(p, "random_texture"), 1);
+
+        p = God::shaders[blur_name];
+        glUseProgram(p);
+        glUniform1i(glGetUniformLocation(p, "source_ao"), 0);
+        glUniform1i(glGetUniformLocation(p, "source_depth"), 1);
+
+        p = God::shaders[composite_name];
+        glUseProgram(p);
+        glUniform1i(glGetUniformLocation(p, "source_ao"), 0);
     }
 
     void render() override {
         if (!visible)
             return;
-            
-        GLuint ao_program = God::shaders[ao_name];
-        // RenderTarget& target = God::context.render_target.composite;
+
         RenderTarget& target = God::context.render_target.get_binded_target();
         if (!target.valid())
             return;
 
-        RenderTarget ao;
-        ao.init(target.width, target.height);
-//      if (!ao.valid()) return;
+        ao.ensure(target.width, target.height);
+        blur.ensure(target.width, target.height);
 
-        {
+        glDisable(GL_DEPTH_TEST);
+        glDepthMask(GL_FALSE);
+        glDisable(GL_BLEND);
+
+        { // ambient occlusion: target depth -> ao
+            GLuint program = God::shaders[ao_name];
             ao.bind();
-
-            glDisable(GL_DEPTH_TEST);
-            glDepthMask(GL_FALSE);
-            glDisable(GL_BLEND);
-
-            glUseProgram(ao_program);
-
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, target.color);
-            glUniform1i(glGetUniformLocation(ao_program, "source_color"), 0);
-
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, target.depth);
-            glUniform1i(glGetUniformLocation(ao_program, "source_depth"), 1);
-
-            glActiveTexture(GL_TEXTURE2);
-            glBindTexture(GL_TEXTURE_2D, random_texture);
-            glUniform1i(glGetUniformLocation(ao_program, "random_texture"), 2);
-
-            glUniformMatrix4fv(glGetUniformLocation(ao_program, "inverse_projection"), 1, GL_TRUE, God::camera.inverse_projection_ptr());
-
-            glUniform1f(glGetUniformLocation(ao_program, "max_radius"), 0.5f);
-            glUniform1f(glGetUniformLocation(ao_program, "step_mul"), 1.2f);
-
+            glUseProgram(program);
+            bind_texture(0, target.depth);
+            bind_texture(1, random_texture);
+            glUniformMatrix4fv(glGetUniformLocation(program, "inverse_projection"), 1, GL_TRUE, God::camera.inverse_projection_ptr());
+            glUniform1f(glGetUniformLocation(program, "max_radius"), 0.5f);
+            glUniform1f(glGetUniformLocation(program, "step_mul"), 1.2f);
             draw_quad();
         }
 
-        RenderTarget blur;
-        blur.init(target.width, target.height);
-        {
-            GLuint blur_program = God::shaders[blur_name];
+        { // separable depth-aware blur: ao -> blur -> ao
+            GLuint program = God::shaders[blur_name];
+            glUseProgram(program);
+            glUniform1i(glGetUniformLocation(program, "blur_radius"), 10);
+            bind_texture(1, target.depth); // the blur rejects samples across depth discontinuities of the scene
+
             blur.bind();
+            bind_texture(0, ao.texture);
+            glUniform2f(glGetUniformLocation(program, "texel_step"), 1.0f / float(target.width), 0.0f);
+            draw_quad();
 
-            glUseProgram(blur_program);
-
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, ao.color);
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, ao.depth);
-            glUniform1i(glGetUniformLocation(blur_program, "source_ao"), 0);
-            glUniform1i(glGetUniformLocation(blur_program, "source_depth"), 1);
-            glUniform2f(glGetUniformLocation(blur_program, "blur_direction"), 1.0f, 0.0f);
-            glUniform1f(glGetUniformLocation(blur_program, "texel_size"), 1.0f / float(target.width));
-            glUniform1i(glGetUniformLocation(blur_program, "blur_radius"), 10);
-
+            ao.bind();
+            bind_texture(0, blur.texture);
+            glUniform2f(glGetUniformLocation(program, "texel_step"), 0.0f, 1.0f / float(target.height));
             draw_quad();
         }
-        blur.copy_to(ao);
-        {
-            GLuint blur_program = God::shaders[blur_name];
-            blur.bind();
 
-            glUseProgram(blur_program);
-
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, ao.color);
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, ao.depth);
-            glUniform1i(glGetUniformLocation(blur_program, "source_ao"), 0);
-            glUniform1i(glGetUniformLocation(blur_program, "source_depth"), 1);
-            glUniform2f(glGetUniformLocation(blur_program, "blur_direction"), 0.0f, 1.0f);
-            glUniform1f(glGetUniformLocation(blur_program, "texel_size"), 1.0f / float(target.width));
-            glUniform1i(glGetUniformLocation(blur_program, "blur_radius"), 10);
-
-            draw_quad();
-        }
-        blur.copy_to(ao);
-
-        target.bind();
-
-        {
-            GLuint composite_program = God::shaders[composite_name];
-
-            RenderTarget copy;
-            copy.init(target.width, target.height);
-            //      if (!copy.valid()) return;
-            target.copy_to(copy);
-
+        { // composite: multiply the target's color by the ao, in place
             target.bind();
-            glUseProgram(composite_program);
+            constexpr GLenum attachment0 = GL_COLOR_ATTACHMENT0;
+            glDrawBuffers(1, &attachment0); // leave the layer/primitive id attachments untouched (picking re-renders this layer)
+            glEnable(GL_BLEND);
+            glBlendFuncSeparate(GL_ZERO, GL_SRC_COLOR, GL_ZERO, GL_ONE); // rgb *= ao, alpha unchanged
 
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, copy.color);
-            glUniform1i(glGetUniformLocation(composite_program, "source_color"), 0);
-
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, target.layer);
-            glUniform1i(glGetUniformLocation(composite_program, "source_layer"), 1);
-
-            glActiveTexture(GL_TEXTURE2);
-            glBindTexture(GL_TEXTURE_2D, target.primitive);
-            glUniform1i(glGetUniformLocation(composite_program, "source_primitive"), 2);
-
-            glActiveTexture(GL_TEXTURE3);
-            glBindTexture(GL_TEXTURE_2D, ao.color);
-            glUniform1i(glGetUniformLocation(composite_program, "source_ao"), 3);
-
+            glUseProgram(God::shaders[composite_name]);
+            bind_texture(0, ao.texture);
             draw_quad();
+
+            target.draw_ids(target.ids_enabled); // restore the target's draw buffers
         }
+
         // TODO this does not match the philosophy of "each guy must setup its own environment"
+        glBlendFunc(GL_ONE, GL_ZERO); // GL default, nobody else sets it
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
     }
 
 private:
+
+    static void bind_texture(int unit, GLuint texture) {
+        glActiveTexture(GL_TEXTURE0 + unit);
+        glBindTexture(GL_TEXTURE_2D, texture);
+    }
 
     void initialize_quad() {
         constexpr float vertices[] = {
@@ -199,7 +216,10 @@ private:
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     }
 
-    void destroy() {
+    void destroy() override {
+        ao.destroy();
+        blur.destroy();
+
         if (random_texture != 0) {
             glDeleteTextures(1, &random_texture);
             random_texture = 0;
@@ -216,4 +236,3 @@ private:
         }
     }
 };
-

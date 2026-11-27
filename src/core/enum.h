@@ -18,7 +18,7 @@ namespace enum_detail {
 
     // "A, B, C" -> "A\0B\0C\0\0"
     template <std::size_t L>
-    inline     constexpr std::array<char, L + 2> zero_separated(std::string_view s) {
+    inline constexpr std::array<char, L + 2> zero_separated(std::string_view s) {
             std::array<char, L + 2> out{};
             std::size_t j = 0;
             for (char c : s)
@@ -41,10 +41,10 @@ namespace enum_detail {
         static constexpr std::size_t size = enum_detail::count(#__VA_ARGS__);                          \
         static constexpr auto names = enum_detail::zero_separated<sizeof(#__VA_ARGS__)>(#__VA_ARGS__); \
         Choice choice{};                                                                               \
-        inline constexpr Name() = default;                                                                    \
-        inline constexpr Name(Choice v) : choice(v) {}                                                        \
-        inline constexpr operator Choice() const { return choice; }                                           \
-        inline friend constexpr const char *to_string(Name e) {                                               \
+        inline constexpr Name() = default;                                                             \
+        inline constexpr Name(Choice v) : choice(v) {}                                                 \
+        inline constexpr operator Choice() const { return choice; }                                    \
+        inline friend constexpr const char *to_string(Name e) {                                        \
             return enum_detail::nth(names.data(), static_cast<std::size_t>(e.choice));                 \
         }                                                                                              \
     };

@@ -3,14 +3,12 @@
 in vec2 TexCoord;
 
 uniform sampler2D source_ao;
-uniform sampler2D source_depth;
-uniform vec2 blur_direction;
-uniform float texel_size;
+uniform sampler2D source_depth; // scene depth
+uniform vec2 texel_step;        // one texel along the blur direction, in uv units
 uniform int blur_radius;
 
 out vec4 FragColor;
 
-const float PI = 3.14159265;
 const float THRESHOLD = 0.005;
 
 float gaussian(float x, float sigma) {
@@ -22,41 +20,22 @@ float get_z_coeff(vec2 uv) {
     return 3.0 * clamp(z - 0.1, 0.0, 1.0);
 }
 
-float get_z_dist(vec2 a, vec2 b) {
-    return abs(get_z_coeff(a) - get_z_coeff(b));
-}
-
 void main() {
-    float sigma = 2.0;
-    float sum = 0.0;
+    const float sigma = 2.0;
+    float center_z = get_z_coeff(TexCoord);
+    float weight_sum = 0.0;
     float ao_sum = 0.0;
 
-    vec2 offset = blur_direction * texel_size;
-
-    // first pass: compute valid weight sum
+    // single pass: accumulate the weights and the weighted values together, normalize at the end
     for (int i = -blur_radius; i <= blur_radius; ++i) {
-        vec2 uv = TexCoord + offset * float(i);
-        if (get_z_dist(TexCoord, uv) <= THRESHOLD) {
+        vec2 uv = TexCoord + texel_step * float(i);
+        if (abs(get_z_coeff(uv) - center_z) <= THRESHOLD) {
             float w = gaussian(float(i), sigma);
-            sum += w;
+            weight_sum += w;
+            ao_sum += w * texture(source_ao, uv).r;
         }
     }
 
-    if (sum <= 0.0) {
-        FragColor = vec4(texture(source_ao, TexCoord).r, texture(source_ao, TexCoord).r, texture(source_ao, TexCoord).r, 1.0);
-        return;
-    }
-
-    for (int i = -blur_radius; i <= blur_radius; ++i) {
-        vec2 uv = TexCoord + offset * float(i);
-
-        if (get_z_dist(TexCoord, uv) <= THRESHOLD) {
-            float w = gaussian(float(i), sigma);
-            float ao = texture(source_ao, uv).r;
-            ao_sum += ao * (w / sum);
-        }
-    }
-
-    FragColor = vec4(ao_sum, ao_sum, ao_sum, 1.0);
+    // the center tap always passes the depth test, so weight_sum > 0
+    FragColor = vec4(ao_sum / weight_sum);
 }
-
