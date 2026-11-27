@@ -65,6 +65,7 @@ void LayerExplorer::draw_layer_gui() {
     sync_layer_from_property();
 
     std::vector<std::string> to_kill;
+    int add_ssao_to_group = -1; // layers are added after the table: layer_pressed is sized for this frame's layers
 
     ImGui::Begin("LayersConfig", nullptr);
 
@@ -152,11 +153,11 @@ void LayerExplorer::draw_layer_gui() {
 
 
             if (is_tree_node_group_clicked) {
-                ImGui::OpenPopup("blend_context");
+                ImGui::OpenPopup("group_context");
             }
 
             // Popup with selection list
-            if (ImGui::BeginPopup("blend_context")) {
+            if (ImGui::BeginPopup("group_context")) {
                 ImGui::Text("Select merge option:");
                 ImGui::Separator();
                 
@@ -168,6 +169,12 @@ void LayerExplorer::draw_layer_gui() {
                         // Do something with the selected item
                         ImGui::CloseCurrentPopup();
                     }
+                }
+
+                ImGui::Separator();
+                if (ImGui::Selectable("Add SSAO")) { // at the end of the group: post-processes what the group drew before it
+                    add_ssao_to_group = group.id;
+                    ImGui::CloseCurrentPopup();
                 }
                 ImGui::EndPopup();
             }
@@ -286,6 +293,15 @@ void LayerExplorer::draw_layer_gui() {
         God::layers.kill(layer_name);
     }
 
+    if (add_ssao_to_group != -1) { // a new layer goes last in the registry, hence last in its group
+        std::string layer_name = "SSAO";
+        for (int i = 1; God::layers.find(layer_name) != -1; ++i)
+            layer_name = "SSAO_" + std::to_string(i);
+        auto &layer = God::layers.add<SSAO>(layer_name, add_ssao_to_group);
+        layer.init();
+        layer.visible = true;
+    }
+
     bool new_group_open = ImGui::TreeNodeEx(label("+", "group_new"), flag(false, true));
     // Drop target
     if (ImGui::BeginDragDropTarget()) {
@@ -300,22 +316,6 @@ void LayerExplorer::draw_layer_gui() {
     }
     if (new_group_open) {
         ImGui::TreePop();
-    }
-
-    if (ImGui::SmallButton("Add SSAO")) {
-        const std::string group_label = "Post processing";
-        auto group_opt = God::layers.find_group(group_label);
-        int group_id = group_opt.has_value() ? group_opt.value().get().id : God::layers.add_group(group_label);
-        std::string ssao_layer_name = "SSAO";
-        std::string layer_name = ssao_layer_name;
-        int i = 0;
-        while (God::layers.find(layer_name) != -1) {
-            layer_name = ssao_layer_name + "_" + std::to_string(++i);
-        }
-        auto &layer = God::layers.add<SSAO>(layer_name, group_id);
-        layer.init();
-        layer.visible = true;
-        ImGui::CloseCurrentPopup();
     }
 
     ImGui::End();
