@@ -6,14 +6,14 @@ namespace ModeX{
     struct AbstractMode;
 
     struct InteractorLayerSelection : public Interactor {
-        InteractorLayerSelection(AbstractMode& mode) :hexmode(mode) {}
-        AbstractMode& hexmode;
+        InteractorLayerSelection(AbstractMode& mode) :mode(mode) {}
+        AbstractMode& mode;
 
         void on_click(int button, vec2 p);
     };
 
     struct InteractorMultiSelector : public Interactor {
-        InteractorMultiSelector() {}
+        InteractorMultiSelector(Picker& picker) : picker(picker){}
 
         inline void init(int button){
             active_button = button;
@@ -38,8 +38,9 @@ namespace ModeX{
         inline void on_click(int button, vec2 p) {
             if (!key_state_is_OK()) return;
             if (button != active_button) return;
-            for (auto& d : picker.data) {
-                Picker::Result pr = d.at(p);
+            FOR(buf, picker.nbuffers()){
+                //for (auto& d : picker.data) {
+                Picker::Result pr = picker.at(p,buf);
                 picked.push_back(pr);
             }
             done = true;
@@ -48,7 +49,7 @@ namespace ModeX{
         inline void on_press(int button, vec2 p){
             if (!key_state_is_OK()) return;
             if (button != active_button) return;
-            picker.reset();
+            //picker.reset();
             reset();
             path.push_back(p);
         }
@@ -66,9 +67,10 @@ namespace ModeX{
             if (path.size() < 2) return;
             FOR(s, path.size() - 1) for (vec2 P : iter_raster_line(path[s], path[s + 1])){
                 
-                for (auto& d : picker.data) {
+                FOR(buf, picker.nbuffers()){
+                    //for (auto& d : picker.data) {
 
-                    Picker::Result pr = d.at(P);
+                    Picker::Result pr = picker.at(P,buf);
                     bool already_in = false;
                     for (auto pr_iter : picked)
                         already_in = already_in || (pr.layer_id == pr_iter.layer_id && pr.raw_primitive_id == pr_iter.raw_primitive_id);
@@ -91,7 +93,7 @@ namespace ModeX{
             }
         }
 
-        Picker picker;
+        Picker &picker;
         int active_button = 0;
         std::vector<vec2> path;
         std::vector<Picker::Result> picked;

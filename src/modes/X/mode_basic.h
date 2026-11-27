@@ -9,7 +9,7 @@ namespace ModeX{
     struct SubModeBasic;
 
 
-    struct BasicInteractor : public Interactor{
+    struct BasicInteractor : public Interactor, public XCFview{
         BasicInteractor(SubModeBasic& mode);
         bool is_locked();
         bool have_lock();
@@ -24,8 +24,6 @@ namespace ModeX{
         void on_release(int button, vec2 p);
         void generate_gui();
         void reset();
-
-        Picker picker;
         int moving_vertex;
     };
 

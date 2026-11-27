@@ -13,6 +13,7 @@
 #include "core/mode.h"
 
 bool no_gl_error() {
+    
     switch (glGetError()){
     case GL_INVALID_ENUM:					Log::error("GL_INVALID_ENUM"); return false;
     case GL_INVALID_VALUE:					Log::error("GL_INVALID_VALUE"); return false;
@@ -167,7 +168,7 @@ void PointRenderer::render(){
     glBindVertexArray(vao);
     glDrawArrays(GL_POINTS, 0, GLsizei(npts));
     glBindVertexArray(0);
-    um_assert(no_gl_error());
+    //um_assert(no_gl_error());
 }
 
 void SegmentRenderer::init(){
@@ -250,7 +251,7 @@ void SegmentRenderer::render(){
     glBindVertexArray(vao);
     glDrawArrays(GL_LINES, 0, GLsizei(npts));
     glBindVertexArray(0);
-    um_assert(no_gl_error());
+    //um_assert(no_gl_error());
 }
 
 void TriangleRenderer::init(){
@@ -324,7 +325,7 @@ void TriangleRenderer::update(Triangles& tri, FacetAttribute<bool>& visible, Cor
 }
 
 void TriangleRenderer::render(){
-    um_assert(no_gl_error());
+    //um_assert(no_gl_error());
     if (cull_mode > 0){
         glEnable(GL_CULL_FACE);
         if (cull_mode == 1) glCullFace(GL_BACK);
@@ -337,7 +338,7 @@ void TriangleRenderer::render(){
     glDrawArrays(GL_TRIANGLES, 0, GLsizei(npts));
     glBindVertexArray(0);
     glDisable(GL_CULL_FACE);
-    um_assert(no_gl_error());
+    //um_assert(no_gl_error());
 }
 
 

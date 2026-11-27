@@ -31,9 +31,9 @@ namespace ModeX{
         Inspect inspect(){ return Inspect(mode); }
 
         virtual void define_gui(){};
-        virtual void handle(Event event) {};
+        virtual void handle(Event event) ;
         virtual void update();
-
+        //bool need_update_picker = false;
     };
 
 

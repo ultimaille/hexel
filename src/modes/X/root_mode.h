@@ -21,6 +21,7 @@ namespace ModeX{
 
         StartingMode sub_mode_start;
         SubModeBasic sub_mode_basic_edit;
+        Picker picker;
         int active_mode_id = 0;
 
 

@@ -5,7 +5,7 @@
 
 namespace ModeX{
 
-        BasicInteractor::BasicInteractor(SubModeBasic& mode) : mode(mode){}
+        BasicInteractor::BasicInteractor(SubModeBasic& mode) : mode(mode), XCFview(mode.mode){}
         bool BasicInteractor::is_locked(){ return mode.has_lock != NULL; }
         bool BasicInteractor::have_lock(){ return mode.has_lock == this; }
         void BasicInteractor::get_lock(){ um_assert(!is_locked()); mode.has_lock = this; }
@@ -13,15 +13,16 @@ namespace ModeX{
 
 
 
+
     InteractorMoveVertex::InteractorMoveVertex(SubModeBasic& mode) :BasicInteractor(mode){ moving_vertex = -1; }
+
     void InteractorMoveVertex::on_press(int button, vec2 p) {
         if (!key_state_is_OK()) return;
         if (button != 0) return;
         if (is_locked() && !have_lock()) return;
 
-        picker.reset();
-        for (auto& d : picker.data) {
-            auto result = d.at(p);
+        FOR(buf, picker().nbuffers()){
+            auto result = picker().at(p,buf);
             int picked_vert = result.filtered_primitive_id(mode.pts_id(), AttributeBase::TYPE::POINTS);
             if (picked_vert != -1) {
                 moving_vertex = picked_vert;
@@ -40,12 +41,11 @@ namespace ModeX{
         }
         if (moving_vertex == -1) return;
         PointSet& pts = God::xcf["mesh"].pointset;
-        picker.reset();
 
         {// try to merge the vertex with another one
             int target_vertex = -1;
-            for (auto& d : picker.data) {
-                auto result = d.at(p);
+            FOR(buf, picker().nbuffers()){
+                auto result = picker().at(p, buf);
                 int picked_vert = result.filtered_primitive_id(mode.pts_id(), AttributeBase::TYPE::POINTS);
                 if (picked_vert != -1) target_vertex = picked_vert;
             }
@@ -59,8 +59,8 @@ namespace ModeX{
         vec3 new_pos;
         if (mode.drop_vertices_on_geometry)
         {// try to move the vertex on the geometry
-            for (auto& d : picker.data) {
-                auto result = d.at(p);
+            FOR(buf, picker().nbuffers()){
+                auto result = picker().at(p, buf);
                 int picked_triangle = result.filtered_primitive_id(mode.geom_tri_id(), AttributeBase::TYPE::FACETS);
                 if (picked_triangle != -1) {
                     Triangles& tri = mode.geom_tri_id();
@@ -69,8 +69,8 @@ namespace ModeX{
                     new_position_is_found = true;
                 }
             }
-            if (!new_position_is_found) for (auto& d : picker.data) {
-                auto result = d.at(p);
+            if (!new_position_is_found) FOR(buf, picker().nbuffers()){
+                auto result = picker().at(p,buf);
                 int picked_edge = result.filtered_primitive_id(mode.geom_edge_id(), AttributeBase::TYPE::EDGES);
                 if (picked_edge != -1) {
                     PolyLine& pl = mode.geom_edge_id();
@@ -79,8 +79,8 @@ namespace ModeX{
                     new_position_is_found = true;
                 }
             }
-            if (!new_position_is_found) for (auto& d : picker.data) {
-                auto result = d.at(p);
+            if (!new_position_is_found) FOR(buf, picker().nbuffers()){
+                auto result = picker().at(p,buf);
                 int picked_point = result.filtered_primitive_id(mode.geom_pts_id(), AttributeBase::TYPE::POINTS);
                 if (picked_point != -1) {
                     PointSet& geom_pts = mode.geom_pts_id();
@@ -123,9 +123,8 @@ namespace ModeX{
         if (!key_state_is_OK()) return;
         if (button != 1) return;
         if (is_locked()) return;
-        Picker picker;
-        for (auto& d : picker.data) {
-            auto result = d.at(p);
+        FOR(buf, picker().nbuffers()){
+            auto result = picker().at(p,buf);
             int picked_cell = result.filtered_primitive_id(mode.hex_id(), AttributeBase::TYPE::CELLS);
             if (picked_cell != -1){
                 Hexahedra& hex = *(Hexahedra*)mode.hex_id();
@@ -182,10 +181,9 @@ namespace ModeX{
             }
             return;
         }
-        Picker picker;
         // create an hex from a picked facet... may not be always avalaible (e.g. check group merge fct) 
-        if (pts.empty() && !is_locked() && !have_lock()) for (auto& d : picker.data) {
-            auto result = d.at(p);
+        if (pts.empty() && !is_locked() && !have_lock()) FOR(buf, picker().nbuffers()){
+            auto result = picker().at(p, buf);
             int picked_facet = result.filtered_primitive_id(mode.hex_id(), AttributeBase::TYPE::CELLFACETS);
             if (picked_facet != -1){
                 Commands(mode).extend_mesh_from_face(picked_facet);
@@ -197,8 +195,8 @@ namespace ModeX{
 
 
         bool picked_a_mesh_vertex = false;
-        for (auto& d : picker.data) {
-            auto result = d.at(p);
+        FOR(buf, picker().nbuffers()){
+            auto result = picker().at(p, buf);
             int picked_vert = result.filtered_primitive_id(mode.pts_id(), AttributeBase::TYPE::POINTS);
             if (picked_vert != -1){
                 Hexahedra& hex = mode.hex_id();
@@ -209,8 +207,8 @@ namespace ModeX{
         }
 
 
-        if (!picked_a_mesh_vertex) for (auto& d : picker.data) {
-            auto result = d.at(p);
+        if (!picked_a_mesh_vertex) FOR(buf, picker().nbuffers()){
+            auto result = picker().at(p,buf);
             int picked_triangle = result.filtered_primitive_id(mode.geom_tri_id(), AttributeBase::TYPE::FACETS);
             if (picked_triangle != -1){
                 Triangles& tri = mode.geom_tri_id();
@@ -283,6 +281,7 @@ namespace ModeX{
 
     }
     void SubModeBasic::handle(Event event) {
+        AbstractMode::handle(event);
         Mode::handle(event);
     }
     void SubModeBasic::define_gui() {

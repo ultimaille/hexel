@@ -26,6 +26,7 @@ bool Interactor::key_state_is_OK(){
 void InteractorTrackBallCamera::on_wheel(double v){
     if (!key_state_is_OK()) return;
     God::camera.zoom(-v);
+    root.camera.broadcast(EventTypes::UPDATED);
 }
 void InteractorTrackBallCamera::on_drag(int button, vec2 a, vec2 b){
     if (!key_state_is_OK()) return;
@@ -33,6 +34,7 @@ void InteractorTrackBallCamera::on_drag(int button, vec2 a, vec2 b){
     vec2 viewport (width,height);
     if (button == 0) God::camera.pan(b - a, viewport);
     if (button == 1) God::camera.rotate(a, b, viewport);
+    root.camera.broadcast(EventTypes::UPDATED);
 }
 
 

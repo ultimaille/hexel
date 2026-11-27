@@ -22,6 +22,7 @@ namespace ModeX{
         static MeshPath geom_tri_id();
         static MeshPath geom_edge_id();
         static PointSetPath geom_pts_id();
+        Picker& picker();
         RootMode& mode;
     };
 
