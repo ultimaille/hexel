@@ -8,7 +8,8 @@
 uniform sampler2D view_z;   // view-space z pyramid
 uniform int   max_level;    // its coarsest level
 uniform vec4  uv_to_view;   // orthographic projection: xy_view = uv * uv_to_view.xy + uv_to_view.zw
-uniform float radius_px;    // search radius, in pixels
+uniform vec2  texel_uv;     // size of a level 0 texel, in uv
+uniform float radius_px;    // search radius, in level 0 texels
 uniform float falloff_mul;  // occluder weight = clamp(distance * falloff_mul + falloff_add, 0, 1)
 uniform float falloff_add;
 uniform float power;        // contrast: visibility^power
@@ -22,12 +23,12 @@ const float HALF_PI = 1.57079632679;
 const float BACKGROUND_Z = -1e6; // as written by ssao_z.frag where nothing was drawn
 
 ivec2 last_pixel = textureSize(view_z, 0) - 1;
-vec2  texel = 1.0 / vec2(textureSize(view_z, 0));
 
-// view-space position of the center of texel q of the given pyramid level
+// view-space position of texel q of the given pyramid level. A level 0 texel is pixel 2q of the screen, centered
+// a quarter texel before the texel center; a coarser texel averages level 0 texels, so it has the same offset.
 vec3 texel_position(ivec2 q, int level) {
     float z = texelFetch(view_z, q, level).r;
-    vec2 uv = (vec2(q) + 0.5) * float(1 << level) * texel;
+    vec2 uv = ((vec2(q) + 0.5) * float(1 << level) - 0.25) * texel_uv;
     return vec3(uv * uv_to_view.xy + uv_to_view.zw, z);
 }
 

@@ -91,6 +91,7 @@ struct SSAO : Layer {
         void set(const char *name, int v)            { glUniform1i(location(name), v);    }
         void set(const char *name, float v)          { glUniform1f(location(name), v);    }
         void set(const char *name, float x, float y) { glUniform2f(location(name), x, y); }
+        void set(const char *name, int x, int y)     { glUniform2i(location(name), x, y); }
         void set(const char *name, float x, float y, float z, float w) { glUniform4f(location(name), x, y, z, w); }
 
         // bind texture to unit and point the sampler uniform name at it
@@ -146,22 +147,26 @@ struct SSAO : Layer {
         if (!target.valid())
             return;
 
-        const int levels = std::min(max_levels, 1 + int(std::log2(std::min(target.width, target.height))));
-        z.ensure(target.width, target.height, GL_R32F, levels);
-        ao.ensure(target.width, target.height, GL_R8);
-        blur.ensure(target.width, target.height, GL_R8);
+        // the occlusion is computed at half resolution, and upsampled by the composite
+        const int w = (target.width  + 1) / 2;
+        const int h = (target.height + 1) / 2;
+        const int levels = std::min(max_levels, 1 + int(std::log2(std::min(w, h))));
+        z.ensure(w, h, GL_R32F, levels);
+        ao.ensure(w, h, GL_R8);
+        blur.ensure(w, h, GL_R8);
 
         // orthographic projection, row major: ndc = P * view, with w = 1
         std::array<float, 16> P;
         std::copy_n(God::camera.projection_ptr(), 16, P.begin());
         if (radius <= 0)
-            radius = .5f * 2.f / P[5]; // half the view height (2 / P11)
+            radius = 2.f / P[5]; // the view height (2 / P11)
+        const float pixel_size = 2.f / P[5] / float(target.height); // in world units, at full resolution
 
         glDisable(GL_DEPTH_TEST);
         glDepthMask(GL_FALSE);
         glDisable(GL_BLEND);
 
-        { // view z: target depth -> z level 0
+        { // view z: target depth -> z level 0, at half resolution
             z.bind(0);
             z_pass.use();
             z_pass.texture("source_depth", 0, target.depth);
@@ -189,7 +194,8 @@ struct SSAO : Layer {
             ao_pass.use();
             ao_pass.texture("view_z", 0, z.texture);
             ao_pass.set("uv_to_view", 2.f / P[0], 2.f / P[5], (-1.f - P[3]) / P[0], (-1.f - P[7]) / P[5]); // x_view = (2 uv.x - 1 - P03) / P00, same for y
-            ao_pass.set("radius_px", radius * P[5] * .5f * float(target.height)); // world -> ndc -> pixels
+            ao_pass.set("texel_uv", 2.f / float(target.width), 2.f / float(target.height)); // a level 0 texel covers 2x2 pixels
+            ao_pass.set("radius_px", radius / (2.f * pixel_size)); // in level 0 texels
             const float falloff_range = std::max(1e-6f, falloff * radius);
             ao_pass.set("falloff_mul", -1.f / falloff_range);
             ao_pass.set("falloff_add", radius / falloff_range); // weight 1 up to radius - range, 0 at radius
@@ -200,19 +206,19 @@ struct SSAO : Layer {
             draw_fullscreen();
         }
 
-        { // separable depth-aware blur: ao -> blur -> ao
+        { // separable plane-aware blur, on the half resolution grid: ao -> blur -> ao
             blur_pass.use();
-            blur_pass.set("blur_radius", 10);
-            blur_pass.texture("source_depth", 1, target.depth); // the blur rejects samples across depth discontinuities of the scene
+            blur_pass.texture("view_z", 1, z.texture);
+            blur_pass.set("tolerance", 4.f * pixel_size);
 
             blur.bind();
             blur_pass.texture("source_ao", 0, ao.texture);
-            blur_pass.set("texel_step", 1.0f / float(target.width), 0.0f);
+            blur_pass.set("direction", 1, 0);
             draw_fullscreen();
 
             ao.bind();
             blur_pass.texture("source_ao", 0, blur.texture);
-            blur_pass.set("texel_step", 0.0f, 1.0f / float(target.height));
+            blur_pass.set("direction", 0, 1);
             draw_fullscreen();
         }
 
@@ -225,6 +231,10 @@ struct SSAO : Layer {
 
             composite_pass.use();
             composite_pass.texture("source_ao", 0, ao.texture);
+            composite_pass.texture("view_z", 1, z.texture);
+            composite_pass.texture("source_depth", 2, target.depth);
+            composite_pass.set("depth_to_z", 1.f / P[10], -P[11] / P[10]);
+            composite_pass.set("tolerance", 4.f * pixel_size); // depth difference that halves an ao texel's weight
             draw_fullscreen();
 
             target.draw_ids(target.ids_enabled); // restore the target's draw buffers

@@ -1,41 +1,48 @@
 #version 330 core
 
-in vec2 TexCoord;
+// One direction of a separable bilateral blur of the half resolution occlusion.
+// Plane-aware: each neighbor's z is compared with the z predicted by the local slope of the center's surface,
+// so the blur follows tilted surfaces but stops at creases and silhouettes.
 
 uniform sampler2D source_ao;
-uniform sampler2D source_depth; // scene depth
-uniform vec2 texel_step;        // one texel along the blur direction, in uv units
-uniform int blur_radius;
+uniform sampler2D view_z;   // half resolution view-space z (level 0 of the pyramid), same grid as source_ao
+uniform ivec2 direction;    // (1,0) or (0,1)
+uniform float tolerance;    // distance off the plane at which a neighbor gets no weight
 
 out vec4 FragColor;
 
-const float THRESHOLD = 0.005;
+const int   RADIUS = 4;
+const float SIGMA = 2.0;
+const float BACKGROUND_Z = -1e5; // ssao_z.frag writes -1e6 where nothing was drawn
 
-float gaussian(float x, float sigma) {
-    return exp(-(x * x) / (2.0 * sigma * sigma));
-}
+ivec2 last = textureSize(source_ao, 0) - 1;
 
-float get_z_coeff(vec2 uv) {
-    float z = texture(source_depth, uv).r;
-    return 3.0 * clamp(z - 0.1, 0.0, 1.0);
+float z_at(ivec2 p) {
+    return texelFetch(view_z, clamp(p, ivec2(0), last), 0).r;
 }
 
 void main() {
-    const float sigma = 2.0;
-    float center_z = get_z_coeff(TexCoord);
-    float weight_sum = 0.0;
-    float ao_sum = 0.0;
-
-    // single pass: accumulate the weights and the weighted values together, normalize at the end
-    for (int i = -blur_radius; i <= blur_radius; ++i) {
-        vec2 uv = TexCoord + texel_step * float(i);
-        if (abs(get_z_coeff(uv) - center_z) <= THRESHOLD) {
-            float w = gaussian(float(i), sigma);
-            weight_sum += w;
-            ao_sum += w * texture(source_ao, uv).r;
-        }
+    ivec2 p = ivec2(gl_FragCoord.xy);
+    float z = z_at(p);
+    if (z < BACKGROUND_Z) {
+        FragColor = vec4(1.0);
+        return;
     }
 
-    // the center tap always passes the depth test, so weight_sum > 0
+    // slope of the surface along the direction: the one-sided difference with the smaller depth jump
+    float next = z_at(p + direction) - z;
+    float prev = z - z_at(p - direction);
+    float slope = abs(next) < abs(prev) ? next : prev;
+
+    float ao_sum = 0.0;
+    float weight_sum = 0.0;
+    for (int i = -RADIUS; i <= RADIUS; ++i) {
+        ivec2 q = clamp(p + i * direction, ivec2(0), last);
+        float off_plane = abs(z_at(q) - (z + slope * float(i)));
+        float w = exp(-float(i * i) / (2.0 * SIGMA * SIGMA)) * max(0.0, 1.0 - off_plane / tolerance);
+        ao_sum += w * texelFetch(source_ao, q, 0).r;
+        weight_sum += w;
+    }
+    // the center tap is on the plane: weight_sum >= 1
     FragColor = vec4(ao_sum / weight_sum);
 }
