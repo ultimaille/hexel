@@ -4,7 +4,9 @@ in vec2 TexCoord;
 
 uniform sampler2D source_depth;
 uniform sampler2D random_texture;
-uniform mat4 inverse_projection;
+// orthographic projection (TrackBallCamera): view-space coordinates are affine in uv and depth
+uniform vec2 depth_to_z;    // z_view  = depth_to_z.x * ndc_z + depth_to_z.y
+uniform vec4 uv_to_view;    // xy_view = uv * uv_to_view.xy + uv_to_view.zw
 
 uniform float max_radius;
 uniform float step_mul;
@@ -15,28 +17,15 @@ float width  = float(textureSize(source_depth,0).x);
 float height = float(textureSize(source_depth,0).y);
 
 const float PI = 3.14159265359;
-
-vec3 get_obj_coords(in vec2 uv) {
-    vec4 p = vec4(uv, texture(source_depth, uv).r, 1.);
-    // Map [0,1] to [-1,1]
-    p.xyz = p.xyz * 2. - 1.;
-    p = inverse_projection * p;
-    if (p.w != 0.) {
-        p.xyz /= p.w;
-    }
-    return vec3(p);
-}
+const float BACKGROUND_Z = -10000.; // returned for pixels where nothing was drawn
 
 float get_obj_z(in vec2 uv) {
     float depth = texture(source_depth, uv).r;
-    // For background points, return infinite value.
-    if (depth >= 1.) {
-        return -10000.;
-    }
-    // Map from range 0 to 1 to range -1 to 1
-    depth = depth * 2. - 1.;
-    float z = (depth * inverse_projection[2][2] + inverse_projection[3][2]) / (depth * inverse_projection[2][3] + inverse_projection[3][3]);
-    return z;
+    return depth >= 1. ? BACKGROUND_Z : depth_to_z.x * (2. * depth - 1.) + depth_to_z.y;
+}
+
+vec3 get_obj_coords(in vec2 uv) {
+    return vec3(uv * uv_to_view.xy + uv_to_view.zw, get_obj_z(uv));
 }
 
 bool outside(vec2 uv) {
@@ -101,7 +90,7 @@ float ambient_occlusion(in vec2 from) {
 }
 
 void main() {
-    if (texture(source_depth, TexCoord).r >= 1.0) {
+    if (get_obj_z(TexCoord) <= BACKGROUND_Z) {
         FragColor = vec4(1.0);
         return;
     }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <string>
 #include <unordered_map>
@@ -78,6 +79,7 @@ struct SSAO : Layer {
         void set(const char *name, int v)            { glUniform1i(location(name), v);    }
         void set(const char *name, float v)          { glUniform1f(location(name), v);    }
         void set(const char *name, float x, float y) { glUniform2f(location(name), x, y); }
+        void set(const char *name, float x, float y, float z, float w) { glUniform4f(location(name), x, y, z, w); }
 
         // bind texture to unit and point the sampler uniform name at it
         void texture(const char *name, int unit, GLuint texture) {
@@ -126,6 +128,10 @@ struct SSAO : Layer {
         ao.ensure(target.width, target.height);
         blur.ensure(target.width, target.height);
 
+        // orthographic projection, row major: ndc = P * view, with w = 1
+        std::array<float, 16> P;
+        std::copy_n(God::camera.projection_ptr(), 16, P.begin());
+
         glDisable(GL_DEPTH_TEST);
         glDepthMask(GL_FALSE);
         glDisable(GL_BLEND);
@@ -135,7 +141,8 @@ struct SSAO : Layer {
             ao_pass.use();
             ao_pass.texture("source_depth", 0, target.depth);
             ao_pass.texture("random_texture", 1, random_texture);
-            glUniformMatrix4fv(ao_pass.location("inverse_projection"), 1, GL_TRUE, God::camera.inverse_projection_ptr());
+            ao_pass.set("depth_to_z", 1.f / P[10], -P[11] / P[10]);                                        // z_view = (ndc_z - P23) / P22
+            ao_pass.set("uv_to_view", 2.f / P[0], 2.f / P[5], (-1.f - P[3]) / P[0], (-1.f - P[7]) / P[5]); // x_view = (2 uv.x - 1 - P03) / P00, same for y
             ao_pass.set("max_radius", 0.5f);
             ao_pass.set("step_mul", 1.2f);
             draw_fullscreen();
